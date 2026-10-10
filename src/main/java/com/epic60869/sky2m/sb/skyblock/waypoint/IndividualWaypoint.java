@@ -1,0 +1,101 @@
+// Ported from Skyblocker (https://github.com/SkyblockerMod/Skyblocker), licensed under LGPL-3.0.
+package com.epic60869.sky2m.sb.skyblock.waypoint;
+
+import java.awt.Color;
+import java.util.function.Consumer;
+
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+
+import com.epic60869.sky2m.sb.SkyblockerMod;
+import com.epic60869.sky2m.sb.annotations.Init;
+import com.epic60869.sky2m.sb.utils.ColorUtils;
+import com.epic60869.sky2m.sb.utils.Constants;
+import com.epic60869.sky2m.sb.utils.render.LevelRenderExtractionCallback;
+import com.epic60869.sky2m.sb.utils.waypoint.NamedWaypoint;
+
+/**
+ * One single temporary waypoint that gets deleted when the player gets close or changes world.
+ * Used for sharing positions from chat or other temporary uses.
+ */
+public class IndividualWaypoint extends NamedWaypoint {
+	private static IndividualWaypoint waypoint;
+
+	@Init
+	public static void init() {
+		ClientTickEvents.END_CLIENT_TICK.register(IndividualWaypoint::onTick);
+		LevelRenderExtractionCallback.EVENT.register(collector -> { if (waypoint != null) waypoint.extractRendering(collector); });
+		ClientPlayConnectionEvents.JOIN.register((_, _, _) -> waypoint = null);
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> dispatcher.register(
+				ClientCommands.literal(SkyblockerMod.NAMESPACE).then(ClientCommands.literal("waypoints").then(ClientCommands.literal("individual")
+						.then(ClientCommands.argument("x", IntegerArgumentType.integer(Integer.MIN_VALUE))
+								.then(ClientCommands.argument("y", IntegerArgumentType.integer(Integer.MIN_VALUE))
+										.then(ClientCommands.argument("z", IntegerArgumentType.integer(Integer.MIN_VALUE))
+												.then(ClientCommands.argument("area", StringArgumentType.greedyString())
+														.executes(context -> setWaypoint(
+																context.getSource()::sendFeedback,
+																IntegerArgumentType.getInteger(context, "x"),
+																IntegerArgumentType.getInteger(context, "y"),
+																IntegerArgumentType.getInteger(context, "z"),
+																StringArgumentType.getString(context, "area")
+														))
+												)
+												.executes(context -> setWaypoint(
+														context.getSource()::sendFeedback,
+														IntegerArgumentType.getInteger(context, "x"),
+														IntegerArgumentType.getInteger(context, "y"),
+														IntegerArgumentType.getInteger(context, "z"),
+														""
+												))
+										)
+								)
+						)
+				))
+		));
+	}
+
+	public IndividualWaypoint(BlockPos pos, Component name, float[] colorComponents) {
+		super(pos, name, colorComponents, DEFAULT_HIGHLIGHT_ALPHA, true);
+	}
+
+	private static int setWaypoint(Consumer<Component> feedback, int x, int y, int z, String area) {
+		setWaypoint(x, y, z, area);
+		if (area != null && !area.isEmpty()) {
+			area = "| " + area;
+			feedback.accept(Constants.PREFIX.get().append(Component.translatable("skyblocker.waypoints.chat.displayed", x, y, z, area)));
+		} else {
+			feedback.accept(Constants.PREFIX.get().append(Component.translatable("skyblocker.waypoints.chat.displayed", x, y, z, "")));
+		}
+		return Command.SINGLE_SUCCESS;
+	}
+
+	private static void setWaypoint(int x, int y, int z, String area) {
+		String waypointName = area != null && !area.isEmpty() ? area : "Chat Waypoint";
+
+		Component waypointDisplay;
+		if (waypointName.charAt(0) == '⏣') {
+			waypointDisplay = Component.literal("⏣").withStyle(ChatFormatting.DARK_PURPLE)
+					.append(Component.literal(waypointName.substring(1)).withStyle(ChatFormatting.AQUA));
+		} else {
+			waypointDisplay = Component.literal(waypointName).withStyle(ChatFormatting.AQUA);
+		}
+
+		waypoint = new IndividualWaypoint(new BlockPos(x, y, z), waypointDisplay, ColorUtils.getFloatComponents(Color.GREEN.getRGB()));
+	}
+
+	private static void onTick(Minecraft client) {
+		if (waypoint != null && client.player != null && client.player.distanceToSqr(waypoint.centerPos) <= 36) {
+			waypoint = null;
+		}
+	}
+}

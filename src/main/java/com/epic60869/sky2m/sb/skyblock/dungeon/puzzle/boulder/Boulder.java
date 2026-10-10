@@ -1,0 +1,217 @@
+package com.epic60869.sky2m.sb.skyblock.dungeon.puzzle.boulder;
+
+import java.util.List;
+
+import org.jspecify.annotations.Nullable;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+import com.epic60869.sky2m.sb.annotations.Init;
+import com.epic60869.sky2m.sb.config.SkyblockerConfigManager;
+import com.epic60869.sky2m.sb.skyblock.dungeon.puzzle.DungeonPuzzle;
+import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager;
+import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.Room;
+import com.epic60869.sky2m.sb.utils.ColorUtils;
+import com.epic60869.sky2m.sb.utils.render.RenderHelper;
+import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;
+import com.epic60869.sky2m.sb.utils.render.title.Title;
+import com.epic60869.sky2m.sb.utils.render.title.TitleContainer;
+
+public class Boulder extends DungeonPuzzle {
+	@SuppressWarnings("unused")
+	private static final Boulder INSTANCE = new Boulder();
+	private static final float[] RED_COLOR_COMPONENTS = ColorUtils.getFloatComponents(DyeColor.RED);
+	private static final float[] ORANGE_COLOR_COMPONENTS = ColorUtils.getFloatComponents(DyeColor.ORANGE);
+	protected static final int BASE_Y = 65;
+	static Vec3 @Nullable [] linePoints;
+	static @Nullable AABB boundingBox;
+
+	private Boulder() {
+		super("boulder", "boxes-room");
+	}
+
+	@Init
+	public static void init() {}
+
+	@Override
+	public void tick(Minecraft client) {
+
+		if (!shouldSolve() || !SkyblockerConfigManager.get().dungeons.puzzleSolvers.solveBoulder || client.level == null || !DungeonManager.isCurrentRoomMatched()) {
+			return;
+		}
+
+		Room room = DungeonManager.getCurrentRoom();
+		if (room == null) {
+			return;
+		}
+
+		@SuppressWarnings("unused") // Kept for documentation purposes
+		BlockPos chestPos = new BlockPos(15, BASE_Y, 29);
+		BlockPos start = new BlockPos(25, BASE_Y, 25);
+		BlockPos end = new BlockPos(5, BASE_Y, 8);
+		// Create a BoulderBoard representing the puzzle's grid
+		BoulderBoard board = new BoulderBoard(7, 7);
+
+		// Populate the BoulderBoard grid with BoulderObjects based on block types in the room
+		int column = 0;
+		for (int z = start.getZ(); z > end.getZ(); z--) {
+			int row = 0;
+			for (int x = start.getX(); x > end.getX(); x--) {
+				if (Math.abs(start.getX() - x) % 3 == 1 && Math.abs(start.getZ() - z) % 3 == 1) {
+					String blockType = getBlockType(client.level, room, x, BASE_Y, z);
+					board.placeObject(column, row, new BoulderObject(x, BASE_Y, z, blockType));
+					row++;
+				}
+			}
+			if (row == board.getWidth()) {
+				column++;
+			}
+		}
+
+		// Generate initial game states for the A* solver
+		List<BoulderSolver.GameState> initialStates = getInitialStates(board);
+
+		// Solve the puzzle using the A* algorithm
+		List<int[]> solution = BoulderSolver.aStarSolve(initialStates);
+
+		if (solution != null) {
+			linePoints = new Vec3[solution.size()];
+			int index = 0;
+			// Convert solution coordinates to Vec3d points for rendering
+			for (int[] coord : solution) {
+				int x = coord[0];
+				int y = coord[1];
+				// Convert relative coordinates to actual coordinates
+				linePoints[index++] = Vec3.atCenterOf(room.relativeToActual(board.getObject3DPosition(x, y)));
+			}
+
+			BlockPos button = null;
+			if (linePoints != null && linePoints.length > 0) {
+				// Check for buttons along the path of the solution
+				for (int i = 0; i < linePoints.length - 1; i++) {
+					Vec3 point1 = linePoints[i];
+					Vec3 point2 = linePoints[i + 1];
+					button = checkForButtonBlocksOnLine(client.level, point1, point2);
+					if (button != null) {
+						// If a button is found, calculate its bounding box
+						boundingBox = RenderHelper.getBlockBoundingBox(client.level, button);
+						break;
+					}
+				}
+				if (button == null) {
+					// If no button is found along the path the puzzle is solved; reset the puzzle
+					reset();
+				}
+			}
+		} else {
+			// If no solution is found, display a title message and reset the puzzle
+			Title title = new Title("skyblocker.dungeons.puzzle.boulder.noSolution", ChatFormatting.GREEN);
+			TitleContainer.addTitleAndPlaySound(title, 15);
+			reset();
+		}
+	}
+
+	private static List<BoulderSolver.GameState> getInitialStates(BoulderBoard board) {
+		char[][] boardArray = board.getBoardCharArray();
+		return List.of(
+				new BoulderSolver.GameState(boardArray, board.getHeight() - 1, 0, 0),
+				new BoulderSolver.GameState(boardArray, board.getHeight() - 1, 1, 0),
+				new BoulderSolver.GameState(boardArray, board.getHeight() - 1, 2, 0),
+				new BoulderSolver.GameState(boardArray, board.getHeight() - 1, 3, 0),
+				new BoulderSolver.GameState(boardArray, board.getHeight() - 1, 4, 0),
+				new BoulderSolver.GameState(boardArray, board.getHeight() - 1, 5, 0),
+				new BoulderSolver.GameState(boardArray, board.getHeight() - 1, 6, 0)
+		);
+	}
+
+	/**
+	 * Retrieves the type of block at the specified position in the world.
+	 * If the block is Birch or Jungle plank, it will return "B"; otherwise, it will return ".".
+	 *
+	 * @param world The client world.
+	 * @param x     The x-coordinate of the block.
+	 * @param y     The y-coordinate of the block.
+	 * @param z     The z-coordinate of the block.
+	 * @return The type of block at the specified position.
+	 */
+	public static String getBlockType(ClientLevel world, Room room, int x, int y, int z) {
+		Block block = world.getBlockState(room.relativeToActual(new BlockPos(x, y, z))).getBlock();
+		return (block == Blocks.BIRCH_PLANKS || block == Blocks.JUNGLE_PLANKS) ? "B" : ".";
+	}
+
+	/**
+	 * Checks for blocks along the line between two points in the world.
+	 * Returns the position of a block if it found a button on the line, if any.
+	 *
+	 * @param world   The client world.
+	 * @param point1  The starting point of the line.
+	 * @param point2  The ending point of the line.
+	 * @return The position of the block found on the line, or null if no block is found.
+	 */
+	private static @Nullable BlockPos checkForButtonBlocksOnLine(ClientLevel world, Vec3 point1, Vec3 point2) {
+		double x1 = point1.x();
+		double y1 = point1.y() + 1;
+		double z1 = point1.z();
+
+		double x2 = point2.x();
+		double y2 = point2.y() + 1;
+		double z2 = point2.z();
+
+		int steps = (int) Math.max(Math.abs(x2 - x1), Math.max(Math.abs(y2 - y1), Math.abs(z2 - z1)));
+
+		double xStep = (x2 - x1) / steps;
+		double yStep = (y2 - y1) / steps;
+		double zStep = (z2 - z1) / steps;
+
+
+		for (int step = 0; step <= steps; step++) {
+			double currentX = x1 + step * xStep;
+			double currentY = y1 + step * yStep;
+			double currentZ = z1 + step * zStep;
+
+			BlockPos blockPos = BlockPos.containing(currentX, currentY, currentZ);
+			Block block = world.getBlockState(blockPos).getBlock();
+
+			if (block == Blocks.STONE_BUTTON) {
+				return blockPos;
+			}
+
+		}
+		return null;
+	}
+
+	@Override
+	public void extractRendering(PrimitiveCollector collector) {
+		if (!shouldSolve() || !SkyblockerConfigManager.get().dungeons.puzzleSolvers.solveBoulder || !DungeonManager.isCurrentRoomMatched())
+			return;
+		float alpha = 1.0f;
+		float lineWidth = 5.0f;
+
+		if (linePoints != null && linePoints.length > 0) {
+			for (int i = 0; i < linePoints.length - 1; i++) {
+				Vec3 startPoint = linePoints[i];
+				Vec3 endPoint = linePoints[i + 1];
+				collector.submitLinesFromPoints(new Vec3[]{startPoint, endPoint}, ORANGE_COLOR_COMPONENTS, alpha, lineWidth, true);
+			}
+			if (boundingBox != null) {
+				collector.submitFilledBox(boundingBox, RED_COLOR_COMPONENTS, 0.5f, false);
+				collector.submitOutlinedBox(boundingBox, RED_COLOR_COMPONENTS, 5f, false);
+			}
+		}
+	}
+
+	@Override
+	public void reset() {
+		super.reset();
+		linePoints = null;
+		boundingBox = null;
+	}
+}

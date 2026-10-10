@@ -11,7 +11,15 @@ base {
 }
 
 loom {
-    accessWidenerPath = file('src/main/resources/skyballs.classtweaker')
+    accessWidenerPath = file('src/main/resources/sky2m.classtweaker')
+
+    runs {
+        configureEach {
+            // MoulConfig crashes on its warnings in dev. Nesting @Accordion sections inside @ConfigEditorAccordion
+            // groups (the /s2 menu's dropdowns) warns "cannot mix" but works fine, as it does in production.
+            vmArg '-Dmoulconfig.warn.crash=false'
+        }
+    }
 }
 
 repositories {
@@ -71,13 +79,13 @@ tasks.register('downloadNopoEmojiAssets') {
             if (path == prefix + 'emojis.json') {
                 copy {
                     from details.file
-                    into new File(nopoEmojiGeneratedDir, 'assets/skyballs')
+                    into new File(nopoEmojiGeneratedDir, 'assets/sky2m')
                     rename { 'emojis.json' }
                 }
             } else if (path.startsWith(spritesPrefix) && path.endsWith('.png')) {
                 copy {
                     from details.file
-                    into new File(nopoEmojiGeneratedDir, 'assets/skyballs/textures/gui/sprites')
+                    into new File(nopoEmojiGeneratedDir, 'assets/sky2m/textures/gui/sprites')
                 }
             }
         }
@@ -94,9 +102,9 @@ processResources {
     filesMatching('fabric.mod.json') {
         expand 'version': project.version
     }
-    // /sj log reads the changelog from the jar.
+    // /s2 log reads the changelog from the jar.
     from(rootProject.file('CHANGELOG.md')) {
-        into 'assets/skyballs'
+        into 'assets/sky2m'
     }
 }
 

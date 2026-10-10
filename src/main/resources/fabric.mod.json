@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "skyballs",
+  "id": "sky2m",
   "version": "${version}",
-  "name": "SkyBalls",
-  "description": "SkyBalls utilities and Hypixel SkyBlock features.",
+  "name": "Sky2M",
+  "description": "Sky2M utilities and Hypixel SkyBlock features.",
   "authors": [
     "2m3s"
   ],
@@ -11,20 +11,20 @@
   "contributors": [
     "Firmament Contributors (storage overlay)"
   ],
-  "icon": "assets/skyballs/icon.png",
+  "icon": "assets/sky2m/icon.png",
   "environment": "client",
   "entrypoints": {
     "preLaunch": [
-      "com.epic60869.skyballs.SkyBallsMigration"
+      "com.epic60869.sky2m.Sky2MMigration"
     ],
     "client": [
-      "com.epic60869.skyballs.SkyBallsMod"
+      "com.epic60869.sky2m.Sky2MMod"
     ]
   },
   "mixins": [
-    "skyballs.mixins.json",
-    "skyballs.commandkeys.mixins.json",
-    "skyballs.sb.mixins.json"
+    "sky2m.mixins.json",
+    "sky2m.commandkeys.mixins.json",
+    "sky2m.sb.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.19.5",
@@ -32,5 +32,5 @@
     "minecraft": "26.3",
     "java": ">=25"
   },
-  "accessWidener": "skyballs.classtweaker"
+  "accessWidener": "sky2m.classtweaker"
 }

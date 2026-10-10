@@ -1,0 +1,101 @@
+/*
+ * Copyright 2026 TerminalMC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Modified for Sky2M: repackaged under com.epic60869.sky2m.commandkeys and integrated as /s2 keys.
+ */
+
+package com.epic60869.sky2m.commandkeys.command;
+
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.epic60869.sky2m.commandkeys.CommandKeys;
+import com.epic60869.sky2m.commandkeys.config.Config;
+import com.epic60869.sky2m.commandkeys.config.Profile;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+
+import static com.epic60869.sky2m.commandkeys.util.Localization.localized;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+
+@SuppressWarnings("unchecked")
+public class Commands {
+
+    private Commands() {
+        throw new UnsupportedOperationException("This class cannot be instantiated.");
+    }
+
+    public static <S> void register(CommandDispatcher<S> dispatcher, CommandBuildContext buildCtx) {
+        Minecraft mc = Minecraft.getInstance();
+        // Sky2M: registered as /s2 keys and /sky2m keys instead of /commandkeys.
+        for (String root : new String[] {"s2", "s2m"}) dispatcher.register((LiteralArgumentBuilder<S>) literal(root).then(literal("keys")
+                .executes((ctx) -> {
+                    mc.schedule(() -> mc.gui.setScreen(CommandKeys.getConfigScreen(null)));
+                    return Command.SINGLE_SUCCESS;
+                })
+                .then(literal("profile")
+                        .then(argument("name", StringArgumentType.greedyString())
+                                .suggests(((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                        Config.get()
+                                                .getProfiles()
+                                                .stream()
+                                                .map(Profile::getDisplayName), builder
+                                )))
+                                .executes(ctx -> {
+                                    String oldName = Config.get().activeProfile().name;
+                                    String name = StringArgumentType.getString(ctx, "name");
+
+                                    boolean success = false;
+                                    int i = 0;
+                                    for (Profile profile : Config.get().getProfiles()) {
+                                        if (profile.getDisplayName().equals(name)) {
+                                            Config.get().activateProfile(i);
+                                            success = true;
+                                            break;
+                                        }
+                                        i++;
+                                    }
+
+                                    MutableComponent msg = CommandKeys.PREFIX.copy();
+                                    if (success) {
+                                        msg.append(localized(
+                                                "message",
+                                                "command.profile.success",
+                                                Component.literal(oldName)
+                                                        .withStyle(ChatFormatting.RED),
+                                                Component.literal(name)
+                                                        .withStyle(ChatFormatting.GREEN)
+                                        ));
+                                    } else {
+                                        msg.append(localized(
+                                                "message",
+                                                "command.profile.failure"
+                                        ).withStyle(ChatFormatting.RED));
+                                    }
+
+                                    mc.gui.hud.getChat().addClientSystemMessage(msg);
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                        )
+                )
+        ));
+    }
+}

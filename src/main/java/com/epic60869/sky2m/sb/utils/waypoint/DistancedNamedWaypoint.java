@@ -1,0 +1,35 @@
+package com.epic60869.sky2m.sb.utils.waypoint;
+
+import java.util.function.Supplier;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+
+import com.epic60869.sky2m.sb.utils.render.RenderHelper;
+import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;
+
+public class DistancedNamedWaypoint extends NamedWaypoint {
+	public DistancedNamedWaypoint(BlockPos pos, Component name, float[] colorComponents, boolean enabled) {
+		super(pos, name, colorComponents, enabled);
+	}
+
+	public DistancedNamedWaypoint(BlockPos pos, Component name, Supplier<Type> typeSupplier, float[] colorComponents) {
+		super(pos, name, typeSupplier, colorComponents);
+	}
+
+	public boolean shouldRenderDistance() {
+		return shouldRenderName();
+	}
+
+	@Override
+	public void extractRendering(PrimitiveCollector collector) {
+		super.extractRendering(collector);
+		if (shouldRenderDistance()) {
+			double distance = RenderHelper.getCamera().position().distanceTo(centerPos);
+			float scale = Math.max((float) distance / 10, 1);
+			collector.submitText(Component.literal(Math.round(distance) + "m").withStyle(ChatFormatting.YELLOW), centerPos.add(0, 1, 0), scale, Minecraft.getInstance().font.lineHeight + 1, true);
+		}
+	}
+}

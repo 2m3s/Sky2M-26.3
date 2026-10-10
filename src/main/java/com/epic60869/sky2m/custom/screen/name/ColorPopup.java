@@ -1,0 +1,139 @@
+// Ported from Skyblocker (https://github.com/SkyblockerMod/Skyblocker, v6.10.4+26.2), licensed under LGPL-3.0.
+package com.epic60869.sky2m.custom.screen.name;
+
+import java.util.function.IntConsumer;
+
+import it.unimi.dsi.fastutil.ints.IntIntMutablePair;
+import it.unimi.dsi.fastutil.ints.IntIntPair;
+
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.layouts.GridLayout;
+import net.minecraft.client.gui.layouts.LayoutSettings;
+import net.minecraft.client.gui.layouts.SpacerElement;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+
+import com.epic60869.sky2m.custom.util.ARGBTextInput;
+import com.epic60869.sky2m.custom.util.AbstractPopupScreen;
+import com.epic60869.sky2m.custom.util.ColorPickerWidget;
+
+public class ColorPopup extends AbstractPopupScreen {
+
+	private final GridLayout layout = new GridLayout();
+
+	private final boolean gradient;
+	private final GradientConsumer gradientConsumer;
+	private final IntIntPair currentColor = new IntIntMutablePair(-1, -1);
+
+	private ColorPopup(Screen backgroundScreen, GradientConsumer gradientConsumer, boolean gradient) {
+		super(Component.literal("Color Popup"), backgroundScreen);
+		this.gradientConsumer = gradientConsumer;
+		this.gradient = gradient;
+		layout.defaultCellSetting().alignHorizontallyCenter();
+	}
+
+	private ColorPopup(Screen backgroundScreen, IntConsumer consumer) {
+		this(backgroundScreen, ((start, _) -> consumer.accept(start)), false);
+	}
+
+	public static ColorPopup create(Screen backgroundScreen, IntConsumer colorConsumer) {
+		return new ColorPopup(backgroundScreen, colorConsumer);
+	}
+
+	public static ColorPopup createGradient(Screen backgroundScreen, GradientConsumer gradientConsumer) {
+		return new ColorPopup(backgroundScreen, gradientConsumer, true);
+	}
+
+	@Override
+	protected void init() {
+		GridLayout.RowHelper adder = layout.createRowHelper(2);
+		addRenderableWidget(adder.addChild(new StringWidget(Component.translatable("sky2m.customItemNames.screen.customColorTitle"), font), 2));
+		if (gradient) {
+			createLayoutGradient(adder);
+		} else {
+			createLayout(adder);
+		}
+		adder.addChild(SpacerElement.height(15), 2);
+		addRenderableWidget(adder.addChild(Button.builder(Component.translatable("gui.cancel"), _ -> onClose()).build(), LayoutSettings.defaults().alignHorizontallyRight().paddingRight(2)));
+		addRenderableWidget(adder.addChild(Button.builder(Component.translatable("gui.done"), _ -> {
+			gradientConsumer.accept(currentColor.firstInt(), currentColor.secondInt());
+			onClose();
+		}).build(), LayoutSettings.defaults().alignHorizontallyLeft().paddingLeft(2)));
+		super.init();
+	}
+
+	@Override
+	protected void repositionElements() {
+		super.repositionElements();
+		layout.arrangeElements();
+		layout.setPosition((width - layout.getWidth()) / 2, (height - layout.getHeight()) / 2);
+	}
+
+	@Override
+	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+		super.extractBackground(graphics, mouseX, mouseY, a);
+		extractPopupBackground(graphics, layout.getX(), layout.getY(), layout.getWidth(), layout.getHeight());
+	}
+
+	private void createLayout(GridLayout.RowHelper adder) {
+		ColorPickerWidget colorPicker = new ColorPickerWidget(0, 0, 200, 100);
+		ARGBTextInput argb = new ARGBTextInput(0, 0, font, true, false);
+		addRenderableWidget(colorPicker);
+		addRenderableWidget(argb);
+
+		argb.setOnChange(color -> {
+			colorPicker.setARGBColor(color);
+			currentColor.first(color);
+		});
+		colorPicker.setOnColorChange((color, _) -> {
+			argb.setARGBColor(color);
+			currentColor.first(color);
+		});
+
+		adder.addChild(colorPicker, 2);
+		adder.addChild(argb, 2);
+	}
+
+	private void createLayoutGradient(GridLayout.RowHelper adder) {
+		ColorPickerWidget colorPickerStart = new ColorPickerWidget(0, 0, 200, 100);
+		ARGBTextInput argbStart = new ARGBTextInput(0, 0, font, true, false);
+		ColorPickerWidget colorPickerEnd = new ColorPickerWidget(0, 0, 200, 100);
+		ARGBTextInput argbEnd = new ARGBTextInput(0, 0, font, true, false);
+		addRenderableWidget(colorPickerStart);
+		addRenderableWidget(argbStart);
+		addRenderableWidget(colorPickerEnd);
+		addRenderableWidget(argbEnd);
+
+		argbStart.setOnChange(color -> {
+			colorPickerStart.setARGBColor(color);
+			currentColor.first(color);
+		});
+		colorPickerStart.setOnColorChange((color, _) -> {
+			argbStart.setARGBColor(color);
+			currentColor.first(color);
+		});
+		argbEnd.setOnChange(color -> {
+			colorPickerEnd.setARGBColor(color);
+			currentColor.second(color);
+		});
+		colorPickerEnd.setOnColorChange((color, _) -> {
+			argbEnd.setARGBColor(color);
+			currentColor.second(color);
+		});
+
+		addRenderableWidget(adder.addChild(new StringWidget(Component.translatable("sky2m.customItemNames.screen.gradientStart"), font)));
+		addRenderableWidget(adder.addChild(new StringWidget(Component.translatable("sky2m.customItemNames.screen.gradientEnd"), font)));
+
+		adder.addChild(colorPickerStart);
+		adder.addChild(colorPickerEnd);
+		adder.addChild(argbStart);
+		adder.addChild(argbEnd);
+	}
+
+	@FunctionalInterface
+	public interface GradientConsumer {
+		void accept(int start, int end);
+	}
+}

@@ -1,0 +1,113 @@
+package com.epic60869.sky2m.sb.skyblock.dungeon.terminal;
+
+import java.util.List;
+
+import com.google.common.collect.ImmutableMap;
+import com.mojang.blaze3d.platform.InputConstants;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+
+import com.epic60869.sky2m.sb.config.SkyblockerConfigManager;
+import com.epic60869.sky2m.sb.utils.container.SimpleContainerSolver;
+import com.epic60869.sky2m.sb.utils.render.gui.ColorHighlight;
+
+/**
+ * Solver for the "Change all to same color!" terminal.
+ * It displays the minimal number of clicks required to change each pane
+ * to the most common color in the grid.
+ */
+public final class SameColorTerminal extends SimpleContainerSolver implements TerminalSolver {
+	public static final SameColorTerminal INSTANCE = new SameColorTerminal();
+	private static final Item[] ORDER = new Item[]{
+			Items.STAINED_GLASS_PANE.red(),
+			Items.STAINED_GLASS_PANE.orange(),
+			Items.STAINED_GLASS_PANE.yellow(),
+			Items.STAINED_GLASS_PANE.green(),
+			Items.STAINED_GLASS_PANE.blue()
+	};
+	private static final ImmutableMap<Item, Integer> INDEX;
+
+	static {
+		ImmutableMap.Builder<Item, Integer> builder = ImmutableMap.builderWithExpectedSize(ORDER.length);
+		for (int i = 0; i < ORDER.length; i++) {
+			builder.put(ORDER[i], i);
+		}
+		INDEX = builder.build();
+	}
+
+	private final Int2IntMap clickMap = new Int2IntOpenHashMap();
+
+	private SameColorTerminal() {
+		super("^Change all to same color!$");
+	}
+
+	@Override
+	public boolean isEnabled() {
+		clickMap.clear();
+		return SkyblockerConfigManager.get().dungeons.terminals.solveSameColor;
+	}
+
+	private void computeClicks(Int2ObjectMap<ItemStack> slots) {
+		clickMap.clear();
+		int[] counts = new int[ORDER.length];
+		Int2IntMap slotColors = new Int2IntOpenHashMap();
+
+		for (Int2ObjectMap.Entry<ItemStack> entry : slots.int2ObjectEntrySet()) {
+			Item item = entry.getValue().getItem();
+			Integer idx = INDEX.get(item);
+			if (idx != null) {
+				slotColors.put(entry.getIntKey(), idx.intValue());
+				counts[idx]++;
+			}
+		}
+		if (slotColors.isEmpty()) {
+			return;
+		}
+
+		int target = 0;
+		for (int i = 1; i < counts.length; i++) {
+			if (counts[i] > counts[target]) target = i;
+		}
+
+		for (Int2IntMap.Entry entry : slotColors.int2IntEntrySet()) {
+			int slot = entry.getIntKey();
+			int color = entry.getIntValue();
+			int diffForward = Math.floorMod(target - color, ORDER.length);
+			int diffBackward = Math.floorMod(color - target, ORDER.length);
+			int clicks = diffForward <= diffBackward ? diffForward : -diffBackward;
+			clickMap.put(slot, clicks);
+		}
+	}
+
+	@Override
+	public List<ColorHighlight> getColors(Int2ObjectMap<ItemStack> slots) {
+		computeClicks(slots);
+		return List.of();
+	}
+
+	@Override
+	public boolean onClickSlot(int slot, ItemStack stack, int screenId, int button) {
+		if (clickMap.containsKey(slot)) {
+			int clicks = clickMap.get(slot);
+
+			if (clicks == 0) {
+				return shouldBlockIncorrectClicks();
+			} else {
+				boolean positive = Integer.signum(clicks) == 1;
+				//Require that positive moves use left click, and negative moves use right click
+				boolean usingCorrectButton = (positive && button == InputConstants.MOUSE_BUTTON_LEFT) || (!positive && button == InputConstants.MOUSE_BUTTON_RIGHT);
+
+				if (!usingCorrectButton) {
+					return shouldBlockIncorrectClicks();
+				}
+			}
+		}
+		return false;
+	}
+
+}

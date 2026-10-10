@@ -10,3 +10,4 @@ out/
 .classpath
 .project
 *.launch
+*-prompt.md

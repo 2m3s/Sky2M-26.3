@@ -1,0 +1,110 @@
+// Ported from Skyblocker (https://github.com/SkyblockerMod/Skyblocker), licensed under LGPL-3.0.
+package com.epic60869.sky2m.sb.utils;
+
+import java.util.Arrays;
+import java.util.EnumSet;
+
+import com.mojang.serialization.Codec;
+
+import net.minecraft.util.StringRepresentable;
+
+/**
+ * All Skyblock locations
+ */
+public enum Location implements StringRepresentable {
+	PRIVATE_ISLAND("dynamic", "Private Island"),
+	GARDEN("garden", "Garden"),
+	HUB("hub", "Hub"),
+	THE_FARMING_ISLAND("farming_1", "The Farming Islands"),
+	THE_PARK("foraging_1", "The Park"),
+	SPIDERS_DEN("combat_1", "Spider's Den"),
+	@Deprecated BLAZING_FORTRESS("combat_2", "Blazing Fortress"),
+	THE_END("combat_3", "The End"),
+	CRIMSON_ISLE("crimson_isle", "Crimson Isle"),
+	GOLD_MINE("mining_1", "Gold Mine"),
+	DEEP_CAVERNS("mining_2", "Deep Caverns"),
+	DWARVEN_MINES("mining_3", "Dwarven Mines"),
+	BACKWATER_BAYOU("fishing_1", "Backwater Bayou"),
+	DUNGEON_HUB("dungeon_hub", "Dungeon Hub"),
+	WINTER_ISLAND("winter", "Jerry's Workshop"),
+	THE_RIFT("rift", "The Rift"),
+	DARK_AUCTION("dark_auction", "Dark Auction"),
+	CRYSTAL_HOLLOWS("crystal_hollows", "Crystal Hollows"),
+	DUNGEON("dungeon", "Dungeons"),
+	KUUDRAS_HOLLOW("kuudra", "Kuudra's Hollow"),
+	/**
+	 * The freezing cold Glacite Mineshafts! *brr... so cold... :(*
+	 *
+	 * <p>This location might not exist according to the API? Try using {@link Area.DwarvenMines#GLACITE_MINESHAFTS}.
+	 */
+	GLACITE_MINESHAFTS("mineshaft", "Glacite Mineshafts"),
+	/**
+	 * <p>Goodbye 1.8 hello 1.21 (and foraging 50 for all)!</p>
+	 */
+	GALATEA("foraging_2", "Moonglade Marsh"),
+	TORRHUS_CANYON("foraging_3", "Torrhus Canyon"),
+	SAFARI("safari", "Safari"),
+	LOTUS_ATOLL("lotus_atoll", "Lotus Atoll"),
+	/**
+	 * Unknown Skyblock location
+	 */
+	UNKNOWN("unknown", "Unknown");
+
+	public static final Codec<Location> CODEC = StringRepresentable.fromEnum(Location::values);
+	public static final Codec<EnumSet<Location>> SET_CODEC = CodecUtils.enumSetCodec(CODEC, Location.class);
+
+	/**
+	 * location id from <a href="https://api.hypixel.net/v2/resources/games">Hypixel API</a>
+	 */
+	private final String id;
+
+	private final String friendlyName;
+
+	/**
+	 * @param id           location id from <a href="https://api.hypixel.net/v2/resources/games">Hypixel API</a>
+	 * @param friendlyName friendly name from <a href="https://api.hypixel.net/v2/resources/games">Hypixel API</a>
+	 */
+	Location(String id, String friendlyName) {
+		this.id = id;
+		this.friendlyName = friendlyName;
+	}
+
+	/**
+	 * @return location id
+	 */
+	public String id() {
+		return this.id;
+	}
+
+	@Override
+	public String getSerializedName() {
+		return id();
+	}
+
+	/**
+	 * @param id location id from <a href="https://api.hypixel.net/v2/resources/games">Hypixel API</a>
+	 * @return The {@link Location} with this id, or {@link #UNKNOWN} if not found
+	 */
+	public static Location from(String id) {
+		return Arrays.stream(Location.values())
+				.filter(loc -> loc.id.equals(id))
+				.findFirst()
+				.orElse(UNKNOWN);
+	}
+
+	/**
+	 * @param friendlyName friendly name from <a href="https://api.hypixel.net/v2/resources/games">Hypixel API</a>
+	 * @return The {@link Location} with this friendly name or {@link #UNKNOWN} if not found
+	 */
+	public static Location fromFriendlyName(String friendlyName) {
+		return Arrays.stream(Location.values())
+				.filter(loc -> loc.friendlyName.equalsIgnoreCase(friendlyName))
+				.findFirst()
+				.orElse(UNKNOWN);
+	}
+
+	@Override
+	public String toString() {
+		return friendlyName;
+	}
+}

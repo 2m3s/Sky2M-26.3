@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "package": "com.epic60869.sky2m.commandkeys.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "accessor.ChatComponentAccessor",
+    "accessor.ChatScreenAccessor",
+    "accessor.KeyMappingAccessor",
+    "accessor.MultiLineEditBoxAccessor",
+    "accessor.MultilineTextFieldAccessor",
+    "accessor.StringViewAccessor",
+    "gui.MultiLineEditBoxMixin",
+    "macro.KeyboardHandlerMixin",
+    "macro.MouseHandlerMixin",
+    "profile.ConnectScreenMixin",
+    "profile.MinecraftMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

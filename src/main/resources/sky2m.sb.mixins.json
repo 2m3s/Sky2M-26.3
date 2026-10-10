@@ -1,0 +1,19 @@
+{
+  "required": false,
+  "package": "com.epic60869.sky2m.sb.mixins",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "accessors.AbstractContainerScreenAccessor",
+    "accessors.EditBoxAccessor",
+    "accessors.CheckboxAccessor",
+    "accessors.MapItemSavedDataAccessor",
+    "accessors.MapRendererInvoker",
+    "ContainerSolverScreenMixin",
+    "ContainerSolverMenuMixin",
+    "ServerTickMixin",
+    "BlockUpdateMixin",
+    "BatMixin",
+    "ChestBlockEntityMixin",
+    "ClientPacketListenerMixin"
+  ]
+}

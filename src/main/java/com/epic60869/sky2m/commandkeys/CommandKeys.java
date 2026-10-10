@@ -1,0 +1,290 @@
+/*
+ * Copyright 2026 TerminalMC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Modified for Sky2M: repackaged under com.epic60869.sky2m.commandkeys and integrated as /s2 keys.
+ */
+
+package com.epic60869.sky2m.commandkeys;
+
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.datafixers.util.Pair;
+import com.epic60869.sky2m.commandkeys.config.Config;
+import com.epic60869.sky2m.commandkeys.config.Macro;
+import com.epic60869.sky2m.commandkeys.config.Profile;
+import com.epic60869.sky2m.commandkeys.gui.screen.EditScreen;
+import com.epic60869.sky2m.commandkeys.gui.screen.MainOptionScreen;
+import com.epic60869.sky2m.commandkeys.mixin.accessor.ChatScreenAccessor;
+import com.epic60869.sky2m.commandkeys.util.Logging;
+import com.epic60869.sky2m.commandkeys.util.PlaceholderUtil;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.toasts.SystemToast;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import static com.epic60869.sky2m.commandkeys.util.Localization.localized;
+import static com.epic60869.sky2m.commandkeys.util.Localization.translationKey;
+
+public class CommandKeys {
+
+    public static final String MOD_ID = "sky2m_commandkeys";
+    public static final String MOD_NAME = "Sky2M Keys";
+    public static final Logger LOG = Logging.getLogger(MOD_ID);
+    public static final Component PREFIX = Component.empty()
+            .append(Component.literal("[").withStyle(ChatFormatting.DARK_GRAY))
+            .append(Component.literal(MOD_NAME).withStyle(ChatFormatting.DARK_AQUA))
+            .append(Component.literal("] ").withStyle(ChatFormatting.DARK_GRAY))
+            .withStyle(ChatFormatting.GRAY);
+    // Sky2M change: Command Keys' binds are in the Sky2M key category.
+    public static final KeyMapping.Category CATEGORY = com.epic60869.sky2m.Sky2MKeyMappings.CATEGORY;
+    public static final KeyMapping CONFIG_KEY = new KeyMapping(
+            translationKey("key", "main.edit"),
+            InputConstants.Type.KEYBOARD,
+            InputConstants.KEY_K,
+            CATEGORY
+    );
+    public static final List<KeyMapping> KEYBINDS = new ArrayList<>();
+
+    public static boolean hasResetConfig = false;
+    public static String lastConnection = "";
+    public static @Nullable InputConstants.Key ratelimitedKey = null;
+
+    private static final List<TickCounter> rateLimiter = new ArrayList<>();
+
+    private static class TickCounter {
+
+        int time = 0;
+
+        int tick() {
+            return time++;
+        }
+    }
+
+    public static void init() {
+        Config.getAndSave();
+    }
+
+    public static Collection<KeyMapping> getKeybinds() {
+        KEYBINDS.add(CONFIG_KEY);
+        int macroKeyCount = Config.get().getMacroMcKeyCount();
+        for (int i = 1; i <= macroKeyCount; i++) {
+            KEYBINDS.add(new KeyMapping(
+                    translationKey("key", String.format("main.macro.%02d", i)),
+                    InputConstants.Type.KEYBOARD,
+                    InputConstants.UNKNOWN.getValue(),
+                    CATEGORY
+            ));
+        }
+        return KEYBINDS;
+    }
+
+    public static void afterClientTick(Minecraft mc) {
+        // Open config screen via keybind
+        while (CONFIG_KEY.consumeClick()) {
+            mc.gui.setScreen(new MainOptionScreen(mc.gui.screen(), true));
+        }
+
+        // Tick ratelimiter
+        rateLimiter.removeIf((tc) -> tc.tick() > Config.get().getRatelimitTicks());
+
+        // Tick macros
+        if (mc.player != null && mc.level != null && !mc.isPaused()) {
+            Config.get().activeProfile().getMacros().forEach(Macro::tick);
+            // Note: If multiple macros are triggered in the same tick, the
+            // message order will be based on their list positions, not the
+            // order in which they were triggered.
+        }
+
+        // Config reset warning toast
+        if (hasResetConfig && mc.gui.screen() instanceof TitleScreen) {
+            hasResetConfig = false;
+            mc.gui.toastManager().addToast(new SystemToast(
+                    new SystemToast.SystemToastId(15000L),
+                    localized("toast", "reset.title"),
+                    localized(
+                            "toast",
+                            "reset.message",
+                            Component.literal(Config.UNREADABLE_FILE_NAME)
+                                    .withStyle(ChatFormatting.GOLD)
+                    )
+            ));
+        }
+
+        for (int i = 1; i < KEYBINDS.size(); i++) {
+            while (KEYBINDS.get(i).consumeClick()) {
+                for (Macro m : profile().getMacros()) {
+                    if (m.mcActivatorKey == i) {
+                        m.trigger(m.getKeybind(), false);
+                    }
+                }
+            }
+        }
+    }
+
+    public static void onConfigSaved(Config config) {
+        // Cache update event (not currently used)
+    }
+
+    public static Profile profile() {
+        return Config.get().activeProfile();
+    }
+
+    public static Screen getConfigScreen(Screen lastScreen) {
+        return new MainOptionScreen(lastScreen, inGame());
+    }
+
+    public static boolean inGame() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        return (player != null && player.connection.getConnection().isConnected());
+    }
+
+    public static boolean inSingleplayer() {
+        return Minecraft.getInstance().getSingleplayerServer() != null;
+    }
+
+    public static boolean canTrigger(InputConstants.Key key, boolean sendMessage) {
+        if ((!inSingleplayer() || Config.get().ratelimitSp) && rateLimiter.size() >= Config.get()
+                .getRatelimitCount()) {
+            if (sendMessage && ratelimitedKey != key) {
+                Minecraft.getInstance().gui.hud.getChat()
+                        .addClientSystemMessage(PREFIX.copy().append(localized(
+                        "message",
+                        "blocked.ratelimit",
+                        key.getDisplayName().copy().withStyle(ChatFormatting.GRAY),
+                        Component.literal(String.valueOf(Config.get().getRatelimitCount()))
+                                .withStyle(ChatFormatting.GRAY),
+                        Component.literal(String.valueOf(Config.get().getRatelimitTicks()))
+                                .withStyle(ChatFormatting.GRAY)
+                ).withStyle(ChatFormatting.RED)));
+                ratelimitedKey = key;
+            }
+            if (Config.getAndSave().ratelimitStrict)
+                rateLimiter.add(new TickCounter());
+            return false;
+        }
+        rateLimiter.add(new TickCounter());
+        return true;
+    }
+
+    public static void send(String message, boolean addToHistory, boolean showHudMsg) {
+        send(message, false, false, addToHistory, showHudMsg);
+    }
+
+    public static void type(String message) {
+        send(message, true, false, false, false);
+    }
+
+    public static void edit(String message) {
+        send(message, false, true, false, false);
+    }
+
+    public static void send(
+            String message,
+            boolean type,
+            boolean edit,
+            boolean addToHistory,
+            boolean showHudMsg
+    ) {
+        ratelimitedKey = null;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null)
+            return;
+        if (!mc.player.connection.isAcceptingMessages())
+            return;
+        Pair<String, Integer> result = PlaceholderUtil.replace(message);
+        message = result.getFirst();
+        int faults = result.getSecond();
+        if (faults == 0) {
+            if (edit) {
+                String finalMessage = message;
+                mc.gui.setScreen(new EditScreen((str) -> send(
+                        type,
+                        finalMessage.replaceAll("%edit%", str),
+                        addToHistory,
+                        showHudMsg
+                )));
+            } else {
+                send(type, message, addToHistory, showHudMsg);
+            }
+        } else {
+            MutableComponent msg = PREFIX.copy();
+            msg.append(localized(
+                    "message",
+                    "placeholderFault",
+                    Component.literal(message).withStyle(ChatFormatting.GRAY)
+            ).withStyle(ChatFormatting.RED));
+            mc.gui.hud.getChat().addClientSystemMessage(msg);
+        }
+    }
+
+    private static void send(
+            boolean type,
+            String message,
+            boolean addToHistory,
+            boolean showHudMsg
+    ) {
+        Minecraft mc = Minecraft.getInstance();
+        if (type) {
+            ChatScreen screen = new ChatScreen(message, false);
+            mc.gui.setScreen(screen);
+            int index = message.indexOf("%edit%");
+            if (index != -1) {
+                EditBox input = ((ChatScreenAccessor) screen).commandkeys$getInput();
+                if (input != null) {
+                    input.moveCursorTo(index + "%edit%".length(), false);
+                    input.moveCursorTo(index, true);
+                }
+            }
+        } else if (message.length() > Config.get().getLengthLimitLength()) {
+            MutableComponent msg = PREFIX.copy();
+            msg.append(localized(
+                    "message",
+                    "blocked.lengthlimit",
+                    Component.literal(String.valueOf(message.length()))
+                            .withStyle(ChatFormatting.GRAY),
+                    Component.literal(String.valueOf(Config.get().getLengthLimitLength()))
+                            .withStyle(ChatFormatting.GRAY)
+            ).withStyle(ChatFormatting.RED));
+            mc.gui.hud.getChat().addClientSystemMessage(msg);
+        } else {
+            // new ChatScreen("").handleChatInput(message, addToHistory)
+            // could be slightly better for compat but costs performance.
+            if (message.startsWith("/")) {
+                mc.player.connection.sendCommand(message.substring(1));
+            } else {
+                mc.player.connection.sendChat(message);
+            }
+            if (addToHistory)
+                mc.gui.hud.getChat().addRecentChat(message);
+            if (showHudMsg)
+                mc.gui.hud.setOverlayMessage(
+                        Component.literal(message)
+                                .withStyle(ChatFormatting.GRAY), false
+                );
+        }
+    }
+}
