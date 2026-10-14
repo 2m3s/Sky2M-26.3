@@ -283,11 +283,8 @@ public class DungeonManager {
 	@Init
 	public static void init() {
 		WAYPOINT_COLOR_DATA.init();
-		// Execute with MinecraftClient as executor since we need to wait for MinecraftClient#resourceManager to be set
-		CompletableFuture.runAsync(DungeonManager::load, CLIENT).exceptionally(e -> {
-			LOGGER.error("[Skyblocker Dungeon Secrets] Failed to load dungeon secrets", e);
-			return null;
-		});
+		// Sky2M: the room skeletons (~15 MB decompressed) are no longer loaded at startup; see ensureRoomsLoading(),
+		// called once you're in the Dungeon Hub or a dungeon.
 		ClientLifecycleEvents.CLIENT_STOPPING.register(DungeonManager::saveCustomWaypoints);
 		Scheduler.INSTANCE.scheduleCyclic(DungeonManager::update, 5);
 		Scheduler.INSTANCE.scheduleCyclic(DungeonManager::updateAllRoomCheckmarks, 20);
@@ -344,6 +341,22 @@ public class DungeonManager {
 			))));
 		}
 		ClientPlayConnectionEvents.JOIN.register(((_, _, _) -> reset()));
+	}
+
+	private static volatile boolean loadStarted;
+
+	/**
+	 * Starts loading the dungeon secrets the first time it's called (asynchronously, as init() used to at startup).
+	 * {@link #isRoomsLoaded()} turns true once it's done.
+	 */
+	public static synchronized void ensureRoomsLoading() {
+		if (loadStarted) return;
+		loadStarted = true;
+		// Execute with MinecraftClient as executor since we need to wait for MinecraftClient#resourceManager to be set
+		CompletableFuture.runAsync(DungeonManager::load, CLIENT).exceptionally(e -> {
+			LOGGER.error("[Skyblocker Dungeon Secrets] Failed to load dungeon secrets", e);
+			return null;
+		});
 	}
 
 	private static void load() {
@@ -412,6 +425,8 @@ public class DungeonManager {
 	}
 
 	private static void saveCustomWaypoints(Minecraft client) {
+		// Not loaded this session (or still loading): the table doesn't hold the saved waypoints, so don't overwrite them.
+		if (!isRoomsLoaded()) return;
 		try (BufferedWriter writer = Files.newBufferedWriter(CUSTOM_WAYPOINTS_DIR)) {
 			JsonObject customWaypointsJson = new JsonObject();
 			customWaypoints.rowMap().forEach((room, waypoints) ->
@@ -593,6 +608,7 @@ public class DungeonManager {
 	private static @Nullable Room newDebugRoom(String roomName, Room.Direction direction, Player player, MapItemSavedData map) {
 		Room room = null;
 		int[] roomData;
+		if (!isRoomsLoaded()) return null;
 		// we will clean this up one day (no we won't)
 		if ((roomData = ROOMS_DATA.get("catacombs").get(Room.Shape.PUZZLE.shape).get(roomName)) != null) {
 			room = DebugRoom.ofSinglePossibleRoom(Room.Type.PUZZLE, DungeonMapUtils.getPhysicalRoomPos(player.position()), roomName, roomData, direction);
@@ -653,7 +669,15 @@ public class DungeonManager {
 	 */
 	@SuppressWarnings({"JavadocReference", "incomplete-switch"})
 	private static void update() {
-		if (!Utils.isInDungeons() || isInBoss() || runEnded) {
+		boolean inDungeon = Utils.isInDungeons();
+		// Load the room data on the way in (Dungeon Hub) or, at the latest, in the dungeon itself.
+		if (!loadStarted && (inDungeon || com.epic60869.sky2m.features.core.Sky2MLocation.areaIs("Dungeon Hub"))) ensureRoomsLoading();
+		if (!inDungeon || isInBoss() || runEnded) {
+			return;
+		}
+		// Rooms read the room data when they're created (Room#roomsData, getPossibleRooms), so none may be created
+		// before it has fully loaded; until then wait, as the room matching did for the startup load.
+		if (!isRoomsLoaded()) {
 			return;
 		}
 		if (CLIENT.player == null || CLIENT.level == null) {
@@ -1084,7 +1108,10 @@ public class DungeonManager {
 	}
 
 	public static Optional<int[]> getRoomBlockData(String roomType, String roomName) {
-		var typeData = DungeonManager.ROOMS_DATA.get("catacombs").get(roomType);
+		ensureRoomsLoading();
+		var catacombs = DungeonManager.ROOMS_DATA.get("catacombs");
+		if (catacombs == null) return Optional.empty();
+		var typeData = catacombs.get(roomType);
 		if (typeData == null) return Optional.empty();
 		return Optional.ofNullable(typeData.get(roomName));
 	}
@@ -1096,11 +1123,14 @@ public class DungeonManager {
 	}
 
 	public static CompletableFuture<Suggestions> suggestRoomTypes(CommandContext<FabricClientCommandSource> ctx, SuggestionsBuilder suggestionsBuilder) {
+		ensureRoomsLoading();
+		if (ROOMS_DATA.get("catacombs") == null) return Suggestions.empty();
 		return SharedSuggestionProvider.suggest(ROOMS_DATA.get("catacombs").keySet(), suggestionsBuilder);
 	}
 
 	public static CompletableFuture<Suggestions> suggestRooms(String roomType, SuggestionsBuilder suggestionsBuilder) {
-		if (ROOMS_DATA.get("catacombs").get(roomType) == null) return Suggestions.empty();
+		ensureRoomsLoading();
+		if (ROOMS_DATA.get("catacombs") == null || ROOMS_DATA.get("catacombs").get(roomType) == null) return Suggestions.empty();
 		return SharedSuggestionProvider.suggest(ROOMS_DATA.get("catacombs").get(roomType).keySet(), suggestionsBuilder);
 	}
 

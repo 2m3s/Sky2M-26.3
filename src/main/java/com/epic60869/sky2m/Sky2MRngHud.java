@@ -1,8 +1,11 @@
 package com.epic60869.sky2m;
 
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
@@ -10,8 +13,8 @@ import java.util.Locale;
 
 public final class Sky2MRngHud {
     private static final Identifier ID = Identifier.fromNamespaceAndPath("sky2m-mod", "farming_rng");
-    private static final int PADDING = 4;
-    private static final int LINE_HEIGHT = 14;
+    private static final int PADDING = 3;
+    private static final int LINE_HEIGHT = 11;
     private static Sky2MConfig config;
 
     private Sky2MRngHud() {}
@@ -19,21 +22,39 @@ public final class Sky2MRngHud {
     public static void register(Sky2MConfig cfg) {
         config = cfg;
         HudElementRegistry.addLast(ID, Sky2MRngHud::extract);
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> clientTicks++);
     }
 
-    /** One line: the item text (may carry colour codes), its colour, its price. */
-    private record Line(String item, int colour, String price) {}
+    private static long clientTicks;
+    private static long linesTick = -1;
+    private static List<Line> tickLines = List.of();
+
+    /**
+     * {@link #computeLines} once per client tick: extract, width() and height() each asked for it every frame, and
+     * it copies/prunes the RNG drops and builds new Components every time.
+     */
+    private static List<Line> lines() {
+        if (linesTick != clientTicks) {
+            tickLines = computeLines();
+            linesTick = clientTicks;
+        }
+        return tickLines;
+    }
+
+    /** One line, SkyHanni Item Pickup Log style: "+ 2x Chimera I (25.7M)". */
+    private record Line(Component text) {}
 
     /**
      * Everything the RNG HUD shows: farming RNG drops, then Item Notification items (one HUD for both). An item that
      * is already on the HUD as an RNG drop isn't listed a second time.
      */
-    private static List<Line> lines() {
+    private static List<Line> computeLines() {
         List<Line> out = new java.util.ArrayList<>();
         java.util.Set<String> names = new java.util.HashSet<>();
         if (config != null && config.farming.rng.enabled) {
             for (FarmingRngTracker.Drop drop : FarmingRngTracker.get().active()) {
-                out.add(new Line(itemText(drop), rarityColour(drop), priceText(drop)));
+                out.add(line(drop.amount(), Component.literal(drop.name()).withColor(rarityColour(drop)),
+                    drop.unitPrice() * drop.amount()));
                 names.add(drop.name().toLowerCase(Locale.ROOT));
             }
         }
@@ -42,10 +63,24 @@ public final class Sky2MRngHud {
         int nameColour = colour(notify == null ? null : notify.nameColour, 0xFFFFFFFF);
         for (com.epic60869.sky2m.features.misc.ItemNotification.Row row : com.epic60869.sky2m.features.misc.ItemNotification.rows()) {
             if (names.contains(row.plain().toLowerCase(Locale.ROOT))) continue;
-            String item = rarity ? row.item() : net.minecraft.ChatFormatting.stripFormatting(row.item());
-            out.add(new Line(item, rarity ? 0xFFFFFFFF : nameColour, row.price()));
+            Component name = rarity ? Component.literal(row.name())
+                : Component.literal(row.plain()).withColor(nameColour);
+            out.add(line(row.amount(), name, Math.round(row.value())));
         }
         return out;
+    }
+
+    /** "+ " in green, "2x " in grey when more than one, the name, then "(25.7M)" when the value is known. */
+    private static Line line(long amount, Component name, long value) {
+        MutableComponent text = Component.literal("+ ").withStyle(ChatFormatting.GREEN);
+        if (amount > 1) text.append(Component.literal(amount + "x ").withStyle(ChatFormatting.GRAY));
+        text.append(name);
+        if (value > 0) {
+            text.append(Component.literal(" (").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(formatCoins(value)).withColor(priceColour()))
+                .append(Component.literal(")").withStyle(ChatFormatting.GRAY));
+        }
+        return new Line(text);
     }
 
     private static void extract(GuiGraphicsExtractor graphics, net.minecraft.client.DeltaTracker deltaTracker) {
@@ -55,16 +90,18 @@ public final class Sky2MRngHud {
         render(graphics, drops, com.epic60869.sky2m.features.core.Sky2MHuds.mapX(positionX(), width()), com.epic60869.sky2m.features.core.Sky2MHuds.mapY(positionY(), height()));
     }
 
-    private static final List<Line> PREVIEW = List.of(
-        new Line("1x Crystalized Moonlight", 0xFF55FFFF, "500k"),
-        new Line("2x Designer Coffee Beans", 0xFF55FFFF, "1m"),
-        new Line("1x Legendary Slug Pet", 0xFFFFAA00, "5m"),
-        new Line("5x §9Enchanted Diamond", 0xFFFFFFFF, "8.5k")
-    );
+    private static List<Line> preview() {
+        return List.of(
+            line(1, Component.literal("Chimera I").withStyle(ChatFormatting.LIGHT_PURPLE), 25_700_000L),
+            line(2, Component.literal("Designer Coffee Beans").withColor(0xFF55FFFF), 1_000_000L),
+            line(1, Component.literal("Legendary Slug Pet").withColor(0xFFFFAA00), 5_000_000L),
+            line(5, Component.literal("Enchanted Diamond").withStyle(ChatFormatting.BLUE), 8_500L)
+        );
+    }
 
     private static List<Line> shown() {
         List<Line> active = lines();
-        return active.isEmpty() ? PREVIEW : active;
+        return active.isEmpty() ? preview() : active;
     }
 
     /** Scaled on-screen width, matching exactly what is drawn. */
@@ -80,9 +117,7 @@ public final class Sky2MRngHud {
     private static int contentWidth(List<Line> drops) {
         var font = Minecraft.getInstance().font;
         int w = 0;
-        for (Line drop : drops) {
-            w = Math.max(w, PADDING + font.width(drop.item()) + 8 + font.width(drop.price()) + PADDING);
-        }
+        for (Line drop : drops) w = Math.max(w, PADDING + font.width(drop.text()) + PADDING);
         return Math.max(40, w);
     }
 
@@ -90,12 +125,17 @@ public final class Sky2MRngHud {
         return PADDING + drops.size() * LINE_HEIGHT;
     }
 
-    /** Slug pets in their rarity colour (Epic purple, Legendary gold) if turned on; everything else the Drop Colour. */
+    /** Big drops in their chat colour; slug pets in their rarity colour (Epic purple, Legendary gold) if turned on; everything else the Drop Colour. */
     private static int rarityColour(FarmingRngTracker.Drop drop) {
+        if (drop.colour() != -1) return drop.colour();
         boolean pets = config == null || config.farming.rng.petRarityColours;
         if (pets && drop.rarity().equals("LEGENDARY")) return 0xFFFFAA00;
         if (pets && drop.rarity().equals("EPIC")) return 0xFFAA00AA;
         return colour(config == null ? null : config.farming.rng.dropColour, 0xFF55FFFF);
+    }
+
+    private static int priceColour() {
+        return colour(config == null ? null : config.farming.rng.valueColour, 0xFFFFAA00);
     }
 
     private static int colour(String special, int fallback) {
@@ -105,14 +145,6 @@ public final class Sky2MRngHud {
         } catch (Exception e) {
             return fallback;
         }
-    }
-
-    private static String itemText(FarmingRngTracker.Drop drop) {
-        return drop.amount() + "x " + drop.name();
-    }
-
-    private static String priceText(FarmingRngTracker.Drop drop) {
-        return drop.unitPrice() < 0 ? "—" : formatCoins(drop.unitPrice() * drop.amount());
     }
 
     public static float scale() {
@@ -175,50 +207,23 @@ public final class Sky2MRngHud {
 
         int yOffset = PADDING;
         for (Line drop : drops) {
-            String item = drop.item();
-            String price = drop.price();
-
-            // One complete drop per line: amount, item name, then total value. Names with colour codes (Item
-            // Notification) use the normal shadow so the codes don't tint the shadow.
-            if (item.indexOf('\u00a7') >= 0) graphics.text(Minecraft.getInstance().font, item, PADDING, yOffset, drop.colour(), true);
-            else drawShadowed(graphics, item, PADDING, yOffset, drop.colour(), true);
-            drawShadowed(graphics, price, w - PADDING - Minecraft.getInstance().font.width(price), yOffset,
-                colour(config == null ? null : config.farming.rng.priceColour, 0xFFB8B8B8), false);
+            graphics.text(Minecraft.getInstance().font, drop.text(), PADDING, yOffset, 0xFFFFFFFF, true);
             yOffset += LINE_HEIGHT;
         }
 
         graphics.pose().popMatrix();
     }
 
-    private static void drawShadowed(GuiGraphicsExtractor graphics,
-                                     String text,
-                                     int x,
-                                     int y,
-                                     int color,
-                                     boolean bold) {
-        var font = Minecraft.getInstance().font;
-        graphics.text(font, text, x + 1, y + 1, 0xAA000000, false);
-        graphics.text(font, text, x, y, color, bold);
-    }
-
+    /** SkyHanni style: "25.7M", "1.2B", "850K". */
     private static String formatCoins(long value) {
-        if (value >= 1_000_000_000L) {
-            return compactNumber(value / 1_000_000_000.0, "b");
-        }
-        if (value >= 1_000_000L) {
-            return compactNumber(value / 1_000_000.0, "m");
-        }
-        if (value >= 1_000L) {
-            return compactNumber(value / 1_000.0, "k");
-        }
+        if (value >= 1_000_000_000L) return compactNumber(value / 1_000_000_000.0, "B");
+        if (value >= 1_000_000L) return compactNumber(value / 1_000_000.0, "M");
+        if (value >= 1_000L) return compactNumber(value / 1_000.0, "K");
         return Long.toString(value);
     }
 
     private static String compactNumber(double value, String suffix) {
-        String formatted = String.format(Locale.ROOT, "%.2f", value)
-            .replaceAll("0+$", "")
-            .replaceAll("\\.$", "");
-        return formatted + suffix;
+        return String.format(Locale.ROOT, "%.1f", value).replaceAll("\\.0$", "") + suffix;
     }
 
     private static void save() {

@@ -1,0 +1,1471 @@
+/*
+ * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
+ * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ */
+package com.epic60869.sky2m.sim.livemap;
+
+import com.epic60869.sky2m.sim.dungeonclass.DungeonClass;
+import com.epic60869.sky2m.sim.roomdatabase.RoomDatabase;
+import com.epic60869.sky2m.sim.roomdatabase.RoomEntry;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+/**
+ * The one dungeon-map painter, shared by the {@link InteractiveMapScreen} and the
+ * {@link LiveMapFeature.LiveMapHudElement} HUD.
+ * <p>
+ * killer560, 2026-09-17 (screenshots {@code 14.17.05} = ours vs {@code 14.18.46} = the real held map): the HUD map
+ * "does not look like the real dungeon map" - it drew every room the same grey on a uniform 8px grid with a 1px inset
+ * on all four sides, so rooms, corridors and gaps were all the same size and nothing ever touched anything. Only the
+ * interactive map had the real layout, so that painter was pulled out here and the HUD now calls it too.
+ * <p>
+ * Geometry is NoammAddons' {@code MapRenderer.renderRooms}/{@code drawRoomConnector}: a room is 16 units, the gap
+ * between two rooms is 4 units, and a connector starts at exactly {@code +roomSize} so it is flush with both rooms
+ * (nothing is ever inset). The whole 11x11 grid is therefore {@link #MAP_UNITS} units square. Everything here works
+ * in those units and is placed by an (origin, units-per-pixel) pair, so the same code draws a 116px HUD map and a
+ * zoomed full-screen one.
+ * <p>
+ * Colours are the real map's own bytes, not invented: NoammAddons {@code RoomType.kt}/{@code DoorType.kt} decode
+ * Hypixel's {@code MapColor} ids, giving brown normal {@code #724318} (byte 63), green entrance (30), magenta puzzle
+ * (66), orange trap (62), yellow miniboss (74), pink fairy (82), red blood (18), grey unopened (85) and near-black
+ * wither doors (119). Every one of them is a colour picker in the Dungeon Map tab; these are just the defaults.
+ * A plain door takes the colour of its most interesting neighbouring room (NoammAddons {@code DoorTile.getColor},
+ * Devonian {@code doorColor}) - that is why corridors on the real map are the same brown as the rooms they join.
+ */
+public final class MapPainter {
+
+    /** 6 rooms of 16 units + 5 gaps of 4 units. */
+    static final int MAP_UNITS = 116;
+
+    /**
+     * Room slots, {@code {across, down}}, of the grid each Catacombs floor is generated on.
+     *
+     * <p>killer560 (2026-10-04): "It should always have the same outline, it should auto know the scale based on
+     * the floor I am playing to adjust that. It shouldn't do this weird fill in and shrink in real dungeons." The
+     * map used to zoom to the bounding box of the rooms REVEALED so far ({@code autoFit}/{@code panelUnits}, removed
+     * here), so the box changed shape and the rooms shrank every time a far room came into view. The scale now
+     * comes from the floor alone and is fixed from the moment the run starts.
+     *
+     * <p>Where the numbers come from. {@link DungeonMapScanner#calibrate}'s per-floor start corners (NoammAddons'
+     * {@code MapUtils}) put the Entrance at 4x4 (corner 22,22), Floor 1 at 4 across by 5 down (22,11), and Floors
+     * 2-3 at 5x5 (11,11); everything above that is the 16px-room map, i.e. a 6-wide grid. {@code FloorSizeLog}'s
+     * fully-revealed samples from his own runs agree (E 4x4, F1 4x5, F2/F3 5x5, F4 6x5, F5-F7 and M7 6x6) and
+     * settle F4's 6 across by 5 down. Master Mode floors are the same grid as the floor of the same number - the
+     * scanner's {@code floorNumber()} already calibrates M1 exactly like F1. Hypixel always lays a floor out from
+     * the dungeon's north-west corner, so a small floor occupies slots {@code 0..across-1, 0..down-1}.
+     *
+     * <p>The sim reports M7 ({@link com.epic60869.sky2m.sim.secrets.DungeonState#getFloor}) and its generator lays
+     * every floor out anywhere on the full 6x6 ({@code SimFloorGen.ROOM_GRID}), so the map fits a sim floor to its
+     * published extent instead ({@link #gridExtent}). Unknown or unparseable floor: 6x6, the largest, so nothing
+     * can fall outside it.
+     */
+    static int[] floorRooms(String floor) {
+        int number = -1;
+        if (floor != null && !floor.isEmpty()) {
+            if (floor.equals("E")) {
+                number = 0;
+            } else {
+                char last = floor.charAt(floor.length() - 1);
+                number = Character.isDigit(last) ? last - '0' : -1;
+            }
+        }
+        return switch (number) {
+            case 0 -> new int[]{4, 4};
+            case 1 -> new int[]{4, 5};
+            case 2, 3 -> new int[]{5, 5};
+            case 4 -> new int[]{6, 5};
+            default -> new int[]{6, 6};
+        };
+    }
+
+    /** Map units a run of {@code rooms} room slots covers: rooms of 16 with 4-unit gaps between them. */
+    private static int roomsToUnits(int rooms) {
+        return rooms * (ROOM_UNITS + GAP_UNITS) - GAP_UNITS;
+    }
+
+    /**
+     * The grid being drawn, in map units: {@code {unitsX, unitsZ}} - the size half of {@link #gridExtent}.
+     */
+    static int[] gridUnits(java.util.List<LiveMapFeature.RoomGroup> groups) {
+        int[] e = gridExtent(groups);
+        return new int[]{e[2], e[3]};
+    }
+
+    /** Room slots {@code {across, down}} of the floor being played - {@link #floorRooms} of the current floor. */
+    static int[] currentFloorRooms() {
+        return floorRooms(com.epic60869.sky2m.sim.secrets.DungeonState.getFloor());
+    }
+
+    /**
+     * The part of the 6x6 room grid the map shows, in map units: {@code {startX, startZ, unitsX, unitsZ}}.
+     *
+     * <p><b>On Hypixel:</b> the floor's own grid from its north-west corner ({@link #floorRooms}). It is widened
+     * only by a room the vanilla map ITEM shows outside it, which would mean the table is wrong for some floor.
+     * Until 2026-10-07 it was also widened by any room the WORLD SCAN or a teammate reported outside it, and that is
+     * exactly what broke small floors (killer560, 2026-10-07: "the map doesn't rescale very well for other floors").
+     * Floor 1's boss arena (Bonzo's, x &gt; -71, z &gt; -39) stands in room slots (4..5, 5) of the 6x6 footprint;
+     * the block scan read its roof as two ROOM tiles, the grid widened to 6x6 to take them in, and the real 4x5
+     * floor sat in the top-left two thirds of the frame with two brown "rooms" floating at the bottom right. The
+     * scan no longer looks outside the floor's grid ({@code LiveMapFeature.scan}), and nothing but the map item may
+     * widen it.
+     *
+     * <p><b>In the sim:</b> the sim reports M7 but lays out every floor size on the full 6x6, anywhere in it. The
+     * whole floor is published at once ({@code LiveMapFeature.publishSimFloor}), so its measured bounding box is
+     * known exactly from the start and is used instead - an F1-sized sim floor fills the frame like a real F1.
+     * A single room is published with the whole 6x6 as its extent instead (killer560, 2026-10-07: "if it is only a
+     * single room on the map for sim, then have it at the normal F7 scale size"), so it draws at F7's cell size in
+     * its own slot rather than blown up to fill the frame.
+     */
+    static int[] gridExtent(java.util.List<LiveMapFeature.RoomGroup> groups) {
+        int[] sim = LiveMapFeature.simRoomExtent();
+        int x0;
+        int z0;
+        int x1;
+        int z1;
+        if (sim != null && com.epic60869.sky2m.sim.roomsim.SimState.isActive()) {
+            x0 = sim[0];
+            z0 = sim[1];
+            x1 = sim[2];
+            z1 = sim[3];
+        } else {
+            int[] rooms = currentFloorRooms();
+            x0 = 0;
+            z0 = 0;
+            x1 = rooms[0] - 1;
+            z1 = rooms[1] - 1;
+            if (DungeonMapScanner.isCalibrated()) {
+                for (int idx = 0; idx < LiveMapFeature.GRID * LiveMapFeature.GRID; idx++) {
+                    if (DungeonMapScanner.kindAt(idx) == DungeonMapScanner.KIND_ROOM) {
+                        x1 = Math.max(x1, (idx % LiveMapFeature.GRID) / 2);
+                        z1 = Math.max(z1, (idx / LiveMapFeature.GRID) / 2);
+                    }
+                }
+            }
+        }
+        x1 = Math.min(x1, 5);
+        z1 = Math.min(z1, 5);
+        int step = ROOM_UNITS + GAP_UNITS;
+        return new int[]{x0 * step, z0 * step, roomsToUnits(x1 - x0 + 1), roomsToUnits(z1 - z0 + 1)};
+    }
+
+    /** Whether grid cell {@code idx} (of the 11x11) lies inside the part of the map {@link #gridExtent} shows. */
+    static boolean insideExtent(int[] extent, int idx) {
+        int step = ROOM_UNITS + GAP_UNITS;
+        int col = (idx % LiveMapFeature.GRID) / 2;
+        int row = (idx / LiveMapFeature.GRID) / 2;
+        int c0 = extent[0] / step;
+        int r0 = extent[1] / step;
+        int c1 = c0 + (extent[2] + GAP_UNITS) / step - 1;
+        int r1 = r0 + (extent[3] + GAP_UNITS) / step - 1;
+        return col >= c0 && col <= c1 && row >= r0 && row <= r1;
+    }
+
+    /** A teammate's report of a cell outside this floor's grid: an older scan of a boss arena (see
+     *  {@link #gridExtent}). Not drawn - it would land outside the fitted map. */
+    private static boolean outsideFloor(int idx) {
+        return !insideExtent(gridExtent(LiveMapFeature.groupsView()), idx);
+    }
+
+    /**
+     * How to draw the floor's grid inside the fixed {@link #MAP_UNITS}-square outline:
+     * {@code {scale, offsetUnitsX, offsetUnitsY}}.
+     *
+     * <p>{@code scale} blows the shown part of the grid ({@link #gridExtent}) up until its long side fills the
+     * outline (1 on a 6x6 floor, about 1.5 on the Entrance's 4x4); the offsets, in the floor's own units, centre the
+     * short side and shift a part that does not start at slot 0 (a sim floor) back to the outline's corner. Multiply
+     * the pixels-per-unit by the scale and add the offsets times that ppu to the origin, and every drawing call
+     * stays untouched.
+     */
+    static float[] floorFit(java.util.List<LiveMapFeature.RoomGroup> groups) {
+        int[] e = gridExtent(groups);
+        float scale = MAP_UNITS / (float) Math.max(e[2], e[3]);
+        float inner = MAP_UNITS / scale;
+        return new float[]{scale, (inner - e[2]) / 2f - e[0], (inner - e[3]) / 2f - e[1]};
+    }
+
+    static final int ROOM_UNITS = 16;
+    static final int GAP_UNITS = 4;
+
+    /**
+     * killer560, 2026-09-20: "the map the legit version should have is the non funnymap style where it only shows
+     * opened rooms". On the legit jar this painter must never draw anything Hypixel has not itself revealed, so a
+     * cell is painted only when the vanilla dungeon map item has data for it - our own world block scan and the room
+     * database are ignored for DRAWING. (They keep running: the solvers, Secret Waypoints and room names all still
+     * need {@code LiveMapFeature.currentRoomEntry()}, which is about the room you are standing in, not a reveal.)
+     * The cheat jar keeps the fuller map.
+     */
+    private static final boolean REVEAL_ONLY_FROM_MAP_ITEM = !false;
+
+    private MapPainter() {
+    }
+
+    // ------------------------------------------------------------------------------- what the map item has revealed
+
+    /** p3sim.net has no dungeon map item at all, so the strict reveal-only rule above would leave the map
+     *  permanently blank there. It is a practice site, not Hypixel, so the world scan still drives what
+     *  {@link #cellRevealed}/{@link #visibleState} allow onto the Interactive Map and the pathfinders that
+     *  read through it - same carve-out {@code SkyblockGate.isP3Sim} already makes for the Skyblock gate.
+     *  Package-visible (not {@code private}) so {@link LiveMapFeature.LiveMapHudElement} can reuse this same
+     *  server-IP test for its own, separate p3sim rule (killer560: hide the Dungeon Map HUD on p3sim, same
+     *  as a boss room) instead of a second copy of the check. */
+    /** The ServerData the cached answer was computed for; a different one recomputes. */
+    private static net.minecraft.client.multiplayer.ServerData p3SimCachedFor;
+    private static boolean p3SimCached;
+
+    /**
+     * Whether the current server is p3sim.
+     *
+     * <p>Cached on the server object. This is called from {@code hideUnrevealed}, which the cell painter asks
+     * per cell - up to 121 times a frame - and each call was {@code getCurrentServer} plus a
+     * {@code toLowerCase} allocation plus a {@code contains}. The answer cannot change without the server
+     * changing, and comparing the ServerData reference catches that exactly.
+     */
+    static boolean onP3Sim() {
+        net.minecraft.client.multiplayer.ServerData server =
+                net.minecraft.client.Minecraft.getInstance().getCurrentServer();
+        if (server != p3SimCachedFor) {
+            p3SimCachedFor = server;
+            p3SimCached = server != null && server.ip != null
+                    && server.ip.toLowerCase(Locale.ROOT).contains("p3sim");
+        }
+        return p3SimCached;
+    }
+
+    private static boolean hideUnrevealed() {
+        // The dungeon SIM is exempt, exactly as p3sim already is.
+        //
+        // The legit map only draws what the vanilla map ITEM has revealed, which is the right rule on Hypixel:
+        // it is what stops the legit build knowing more than the server told it. A singleplayer sim has no map
+        // item, so the scanner is never calibrated, every cell reads as undiscovered and the map is simply
+        // blank - on the legit jar the whole feature looked broken in there. Nothing is being revealed early:
+        // the floor is one the mod built itself and he drew or generated.
+        return REVEAL_ONLY_FROM_MAP_ITEM && !onP3Sim()
+                && !com.epic60869.sky2m.sim.roomsim.SimState.isActive();
+    }
+
+    /** @return whether this single cell may be painted at all. */
+    private static boolean cellRevealed(int idx) {
+        if (!hideUnrevealed()) {
+            return true;
+        }
+        return DungeonMapScanner.isCalibrated() && DungeonMapScanner.kindAt(idx) != DungeonMapScanner.KIND_NONE
+                && DungeonMapScanner.stateAt(idx) != DungeonMapScanner.STATE_UNDISCOVERED;
+    }
+
+    /** Map state of a whole room: the most progressed of its tiles, the way NoammAddons merges a {@code UniqueRoom}.
+     *  {@code STATE_UNDISCOVERED} means "do not draw this room". */
+    static int visibleState(LiveMapFeature.RoomGroup group) {
+        // The sim has no map item for the scanner to read, so a failed sim puzzle could never turn its room
+        // red the way a failed real one does. The sim says so directly instead - see SimRoomState. Checked
+        // first because it is an answer about THIS room, not a fallback for a missing map.
+        if (com.epic60869.sky2m.sim.roomsim.SimState.isActive() && group.entry != null) {
+            int simState = com.epic60869.sky2m.sim.roomsim.SimRoomState.stateFor(group.entry.name);
+            if (simState >= 0) {
+                return simState;
+            }
+        }
+        if (!DungeonMapScanner.isCalibrated()) {
+            // Before the map item exists (start of a run, boss, p3sim): the legit map has nothing to show.
+            return hideUnrevealed() ? DungeonMapScanner.STATE_UNDISCOVERED : DungeonMapScanner.STATE_DISCOVERED;
+        }
+        int best = DungeonMapScanner.STATE_UNDISCOVERED;
+        for (int tile : group.tiles) {
+            best = Math.min(best, DungeonMapScanner.stateAt(tile));
+        }
+        // killer560, 2026-09-20 (screenshot 14.52.05, cheat build): "it still isn't properly showing each room as
+        // grey - some still have question marks" - two teammates were standing INSIDE a room our own world scan had
+        // long since marked visited, yet it kept drawing grey with "?" because the held map's own byte for it was
+        // still STATE_UNOPENED, not STATE_UNDISCOVERED - the old check here only forgave UNDISCOVERED, so a room the
+        // map item is merely slow to redraw as opened stayed stuck behind its stale "?" even on the cheat build. Any
+        // world-scanned tile (grid[] != UNKNOWN, i.e. we resolved a real roof height there) proves the room is open,
+        // whatever the map item currently says - the legit build still never takes this branch (hideUnrevealed()).
+        if (!hideUnrevealed() && best >= DungeonMapScanner.STATE_UNOPENED) {
+            for (int tile : group.tiles) {
+                if (LiveMapFeature.isWorldScanned(tile)) {
+                    return DungeonMapScanner.STATE_DISCOVERED;
+                }
+            }
+        }
+        return best;
+    }
+
+    static boolean isRevealed(LiveMapFeature.RoomGroup group) {
+        return visibleState(group) != DungeonMapScanner.STATE_UNDISCOVERED;
+    }
+
+    /** On the legit map a room the game only shows as a grey "unopened" block must not carry its name, its secret
+     *  count or its real type - Hypixel has not told you what is in there yet. */
+    static boolean identityRevealed(LiveMapFeature.RoomGroup group) {
+        int state = visibleState(group);
+        if (state == DungeonMapScanner.STATE_UNDISCOVERED) {
+            return false;
+        }
+        return !hideUnrevealed() || state != DungeonMapScanner.STATE_UNOPENED;
+    }
+
+    // ------------------------------------------------------------------------------------------- geometry
+
+    /** Unit offset of grid index {@code g} (even = room, odd = gap). */
+    static int cellPos(int g) {
+        return (g / 2) * (ROOM_UNITS + GAP_UNITS) + (g % 2 == 1 ? ROOM_UNITS : 0);
+    }
+
+    static int cellSize(int g) {
+        return g % 2 == 0 ? ROOM_UNITS : GAP_UNITS;
+    }
+
+    /** Map-unit position of a world coordinate (tile centres land on tile centres). */
+    static double worldToUnits(double world) {
+        return (world - LiveMapFeature.START_X) * 0.625 + 8;
+    }
+
+    /** @return the grid index under a point given in map units, or -1. */
+    static int unitToGrid(double u) {
+        if (u < 0) {
+            return -1;
+        }
+        int k = (int) Math.floor(u / (ROOM_UNITS + GAP_UNITS));
+        double r = u - k * (double) (ROOM_UNITS + GAP_UNITS);
+        int g = r < ROOM_UNITS ? 2 * k : 2 * k + 1;
+        return g > 10 ? -1 : g;
+    }
+
+    private static int px(float origin, double units, float ppu) {
+        return Math.round(origin + (float) units * ppu);
+    }
+
+    // ------------------------------------------------------------------------------------------- colours
+
+    static int multiply(int argb, float f) {
+        int a = (argb >>> 24) & 0xFF;
+        int r = Math.min(255, Math.round(((argb >> 16) & 0xFF) * f));
+        int g = Math.min(255, Math.round(((argb >> 8) & 0xFF) * f));
+        int b = Math.min(255, Math.round((argb & 0xFF) * f));
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    /** QUOI {@code base.mix(roomInCol.withAlpha(255), roomInCol.alpha)}. */
+    static int mix(int base, int overlay) {
+        float t = ((overlay >>> 24) & 0xFF) / 255f;
+        int r = Math.round(((base >> 16) & 0xFF) * (1 - t) + ((overlay >> 16) & 0xFF) * t);
+        int g = Math.round(((base >> 8) & 0xFF) * (1 - t) + ((overlay >> 8) & 0xFF) * t);
+        int b = Math.round((base & 0xFF) * (1 - t) + (overlay & 0xFF) * t);
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
+
+    /** Database type where the room is identified, else the dungeon map item's own room byte
+     *  (NoammAddons {@code RoomType.fromMapColor}). */
+    static String roomType(LiveMapFeature.RoomGroup group) {
+        if (!identityRevealed(group)) {
+            return "UNKNOWN"; // legit map: unopened means unopened, type included
+        }
+        if (group.entry != null && group.entry.type != null) {
+            return group.entry.type.toUpperCase(Locale.ROOT);
+        }
+        return switch (DungeonMapScanner.roomColorAt(group.mainIdx)) {
+            case 18 -> "BLOOD";
+            case 82 -> "FAIRY";
+            case 34 -> "RARE";
+            case 74 -> "CHAMPION";
+            case 66 -> "PUZZLE";
+            case 62 -> "TRAP";
+            case 30 -> "ENTRANCE";
+            case 63, 85 -> "NORMAL";
+            default -> group.entry == null && !LiveMapFeature.isWorldScanned(group.mainIdx) ? "UNKNOWN" : "NORMAL";
+        };
+    }
+
+    static int typeColor(String type, LiveMapConfig cfg) {
+        return switch (type) {
+            case "ENTRANCE" -> cfg.getColorEntrance();
+            case "PUZZLE" -> cfg.getColorPuzzle();
+            case "TRAP" -> cfg.getColorTrap();
+            case "CHAMPION", "MINIBOSS", "YELLOW" -> cfg.getColorMiniboss();
+            case "BLOOD" -> cfg.getColorBlood();
+            case "FAIRY" -> cfg.getColorFairy();
+            case "RARE" -> cfg.getColorRare();
+            case "UNKNOWN" -> cfg.getColorUnopened();
+            default -> cfg.getColorNormal();
+        };
+    }
+
+    static String typeName(String type) {
+        return switch (type) {
+            case "CHAMPION", "MINIBOSS", "YELLOW" -> "Miniboss";
+            case "UNKNOWN" -> "Unknown";
+            default -> type.charAt(0) + type.substring(1).toLowerCase(Locale.ROOT);
+        };
+    }
+
+    /** Devonian {@code RoomTypes.prio} - which neighbour a plain door borrows its colour from. Fairy sits BELOW
+     *  normal because NoammAddons' {@code DoorTile.getColor} explicitly prefers a non-fairy neighbour. */
+    public static int typePriority(String type) {
+        return switch (type) {
+            case "BLOOD" -> 0;
+            case "ENTRANCE" -> 10;
+            case "PUZZLE" -> 20;
+            case "TRAP" -> 30;
+            case "CHAMPION", "MINIBOSS", "YELLOW" -> 40;
+            case "RARE" -> 50;
+            case "FAIRY" -> 85;
+            case "UNKNOWN" -> 90;
+            default -> 80;
+        };
+    }
+
+    /** Room fill before the current-room/hover tweaks. NoammAddons {@code RoomTile.getColor}: an unopened room is
+     *  grey whatever its real type is, because that is all the map itself knows about it. */
+    static int roomColor(LiveMapFeature.RoomGroup group, LiveMapConfig cfg) {
+        int state = visibleState(group);
+        if (state == DungeonMapScanner.STATE_UNOPENED) {
+            return cfg.getColorUnopened();
+        }
+        if (state == DungeonMapScanner.STATE_UNDISCOVERED) {
+            return multiply(cfg.getColorUnopened(), 1f - cfg.getDarkenUnopened());
+        }
+        int color = cfg.isColourByType() ? typeColor(roomType(group), cfg) : cfg.getColorNormal();
+        // A failed puzzle does NOT recolour its square. killer560, 2026-10-01: "no not the square the text
+        // should become red." The room keeps its own type colour and the NAME goes red, which it already does
+        // - every label's colour is stateColor(visibleState(group)), and STATE_FAILED's is 0xFFFF5555. So the
+        // only thing the sim had to add was a way to reach that state without a map item (SimRoomState).
+        // killer560, 2026-09-27: "if you have cheater map then it should highlight the room tha thas mimic
+        // as a faint red instead of the normal brown" - cheat build only, same live "is this known secret
+        // chest position actually a trapped_chest right now" check SecretWaypointsFeature already uses for
+        // its own per-chest tint (see isMimic() there), just evaluated for every identified+rotated room
+        // instead of only the one the player is standing in - this map shows the whole run at once, not
+        // just the current room. A faint blend (mix(), same helper reportedRoomColor's dimming above uses),
+        // not a flat overwrite, so it reads as "this brown room" plus a warning, not a different room type.
+        if (false && hasLiveMimic(group)) {
+            color = mix(color, MIMIC_TINT);
+        } else if (false && hasSimMimic(group)) {
+            // Same tint as the live mimic. It was the Blood colour (2026-10-01), which killer560 later rejected
+            // (2026-10-05: "I just don't like it and blood looking the exact same").
+            color = mix(color, MIMIC_TINT);
+        }
+        return color;
+    }
+
+    /** 20% red over the room's own colour - NoammAddons' mimic room highlight exactly: its MapRenderer draws
+     *  {@code ColorUtils.lerp(roomColour, colorMimic, 0.2)} with colorMimic defaulting to (255, 0, 0) (javap of
+     *  NoammAddons 1.2.7, 2026-10-05; his own Noamm config has the same #FF0000). 0x33 = 51/255 = 0.2. */
+    private static final int MIMIC_TINT = 0x33FF0000;
+
+    /**
+     * Whether the SIM's mimic is in this room.
+     *
+     * <p>Separate from {@link #hasLiveMimic} because the two know different things. On Hypixel the mimic is a
+     * {@code trapped_chest} standing where the database says a secret chest is, and that is what the live
+     * check looks for. The sim's mimic is an ordinary chest that {@code SimMimic} happened to pick, so there
+     * is nothing in the world to find - it has to be asked. Cheap: one cell comparison, no block reads, so it
+     * needs none of the once-a-second caching the live scan does.
+     */
+    private static boolean hasSimMimic(LiveMapFeature.RoomGroup group) {
+        if (!com.epic60869.sky2m.sim.roomsim.SimState.isActive()) {
+            return false;
+        }
+        int cell = com.epic60869.sky2m.sim.roomsim.SimMimic.mimicCell();
+        if (cell < 0) {
+            return false;
+        }
+        for (int c : group.cells) {
+            if (c == cell) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Once-a-second snapshot of which rooms (by {@code mainIdx}) currently have a live mimic - see
+     *  {@link #hasLiveMimic}. Rebuilt lazily, never more often than {@link #MIMIC_SCAN_TTL_MS}: a live block
+     *  check per room per frame is exactly the per-frame cost the 2026-09-20 fps pass removed elsewhere on
+     *  this same map. */
+    private static Set<Integer> mimicMainIdx = Set.of();
+    private static long mimicScanStampMs = 0L;
+    private static final long MIMIC_SCAN_TTL_MS = 1000L;
+
+    private static boolean hasLiveMimic(LiveMapFeature.RoomGroup group) {
+        RoomEntry entry = group.entry;
+        if (entry == null || entry.secretCoords == null || entry.secretCoords.chest == null
+                || entry.secretCoords.chest.isEmpty()) {
+            return false;
+        }
+        refreshMimicScanIfStale();
+        return mimicMainIdx.contains(group.mainIdx);
+    }
+
+    private static void refreshMimicScanIfStale() {
+        long now = System.currentTimeMillis();
+        if (now - mimicScanStampMs < MIMIC_SCAN_TTL_MS) {
+            return;
+        }
+        mimicScanStampMs = now;
+        var level = Minecraft.getInstance().level;
+        if (level == null) {
+            mimicMainIdx = Set.of();
+            return;
+        }
+        Set<Integer> found = new HashSet<>();
+        for (LiveMapFeature.RoomGroup group : LiveMapFeature.groupsView()) {
+            RoomEntry entry = group.entry;
+            if (entry == null || entry.secretCoords == null || entry.secretCoords.chest == null
+                    || entry.secretCoords.chest.isEmpty()) {
+                continue;
+            }
+            int[] clayRot = LiveMapFeature.clayAndRotation(group);
+            if (clayRot == null) {
+                continue;
+            }
+            for (RoomEntry.Pos relative : entry.secretCoords.chest) {
+                // Shifted with the floor, like Secret Waypoints' copy of the same transform. Without it the
+                // mimic tint reads air in the sim and the room is never marked, even with a mimic in it.
+                BlockPos real = RoomDatabase.toRealCoord(relative, clayRot[0], clayRot[1], clayRot[2])
+                        .above(DungeonLayout.simYOffset());
+                if (level.isLoaded(real) && level.getBlockState(real).getBlock() == Blocks.TRAPPED_CHEST) {
+                    found.add(group.mainIdx);
+                    break;
+                }
+            }
+        }
+        mimicMainIdx = found;
+    }
+
+    /** A teammate-reported room's fill colour: its real type colour once {@link RoomDatabase#lookupByName}
+     *  resolves it, else a plain generic box - never the "unopened"/grey treatment {@link #roomColor} gives
+     *  an unseen local cell, since a reported cell is not "unseen", it is "seen by someone else". Dimmed the
+     *  same way {@link #drawDoors} dims a reported door when {@link LiveMapConfig#isMarkReportedRooms()} is on. */
+    static int reportedRoomColor(PartyMapIntel.ReportedRoom room, LiveMapConfig cfg) {
+        int color;
+        if (room.entry() != null && room.entry().type != null) {
+            color = cfg.isColourByType() ? typeColor(room.entry().type.toUpperCase(Locale.ROOT), cfg) : cfg.getColorNormal();
+        } else {
+            color = cfg.getColorNormal(); // unresolved name - generic discovered room, never dropped
+        }
+        return cfg.isMarkReportedRooms() ? multiply(color, REPORTED_DIM) : color;
+    }
+
+    /** Fills a reported room's single 16-unit anchor cell - see {@link PartyMapIntel.ReportedRoom}'s doc for
+     *  why a multi-tile room only ever gets one box here. */
+    static void drawReportedRoom(GuiGraphicsExtractor graphics, PartyMapIntel.ReportedRoom room, LiveMapConfig cfg,
+                                 float ox, float oy, float ppu) {
+        if (outsideFloor(room.idx())) {
+            return;
+        }
+        int gx = room.col();
+        int gz = room.row();
+        int color = reportedRoomColor(room, cfg);
+        int x0 = px(ox, cellPos(gx), ppu);
+        int y0 = px(oy, cellPos(gz), ppu);
+        int x1 = px(ox, cellPos(gx) + ROOM_UNITS, ppu);
+        int y1 = px(oy, cellPos(gz) + ROOM_UNITS, ppu);
+        graphics.fill(x0, y0, x1, y1, color);
+        if (cfg.isMarkReportedRooms()) {
+            int m = Math.max(3, Math.round(4 * ppu));
+            graphics.fill(x0, y0, Math.min(x1, x0 + m), Math.min(y1, y0 + m), REPORTED_MARK_COLOR);
+        }
+    }
+
+    /** Same {@code found/total} shape {@link #secretsText} draws for a local room, for a reported one -
+     *  {@code found} can only ever come from a teammate's own {@code PartyInteropState} report here, since
+     *  this client has not opened the room itself. */
+    static String reportedSecretsText(PartyMapIntel.ReportedRoom room) {
+        RoomEntry entry = room.entry();
+        if (entry == null) {
+            return "?";
+        }
+        if (entry.secrets == 0) {
+            return "0";
+        }
+        com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Fact<com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.RoomSecrets> fact =
+                com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.rooms().get(entry.name);
+        int found = fact != null ? fact.value().found() : -1;
+        return (found < 0 ? "?" : String.valueOf(found)) + "/" + entry.secrets;
+    }
+
+    /** A reported room's name/secrets label, drawn independently of {@link #labels} (a reported room has no
+     *  {@code RoomGroup} - no tiles, no map-item state, no checkmark) but following the same
+     *  {@code roomLabels} style so it does not visually contradict the local rooms around it. */
+    static void drawReportedLabel(GuiGraphicsExtractor graphics, Font font, int style, LiveMapConfig cfg,
+                                  PartyMapIntel.ReportedRoom room, float ox, float oy, float ppu) {
+        if (style == 0 || style == 1 || outsideFloor(room.idx())) {
+            return; // style 1 (checkmarks) has nothing to draw here - a reported room has no scan state
+        }
+        RoomEntry entry = room.entry();
+        String type = entry != null && entry.type != null ? entry.type.toUpperCase(Locale.ROOT) : null;
+        List<String> lines = new ArrayList<>();
+        if (style == 2) {
+            lines.add(reportedSecretsText(room));
+        } else {
+            boolean skipName = "ENTRANCE".equals(type) || "FAIRY".equals(type) || "BLOOD".equals(type);
+            if (!skipName) {
+                String name = entry != null && entry.name != null ? entry.name : room.reportedName();
+                if (name != null && !name.isBlank()) {
+                    java.util.Collections.addAll(lines, name.split(" "));
+                }
+            }
+            if (style == 4 && entry != null && entry.secrets > 0) {
+                lines.add(reportedSecretsText(room));
+            }
+        }
+        if (lines.isEmpty()) {
+            return;
+        }
+        int maxWidth = 0;
+        for (String s : lines) {
+            maxWidth = Math.max(maxWidth, font.width(s));
+        }
+        float want = 0.4f * cfg.getFontScale() * ppu;
+        float fit = Math.min(ROOM_UNITS * ppu / Math.max(1, maxWidth), ROOM_UNITS * ppu / (lines.size() * font.lineHeight));
+        float scale = Math.max(0.3f, Math.min(want, fit));
+        float cx = ox + (cellPos(room.col()) + ROOM_UNITS / 2f) * ppu;
+        float cy = oy + (cellPos(room.row()) + ROOM_UNITS / 2f) * ppu;
+        int color = 0xFFCCCCCC; // neutral - a reported room has no cleared/failed/unopened state to colour by
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(cx, cy);
+        graphics.pose().scale(scale, scale);
+        int top = Math.round(-lines.size() * font.lineHeight / 2f);
+        for (int i = 0; i < lines.size(); i++) {
+            String s = lines.get(i);
+            graphics.text(font, s, -font.width(s) / 2, top + i * font.lineHeight, color, cfg.isTextShadow());
+        }
+        graphics.pose().popMatrix();
+    }
+
+    /** Colour a plain corridor inherits from the rooms it joins. */
+    private static int connectorColor(int idx, LiveMapConfig cfg) {
+        int g = LiveMapFeature.GRID;
+        int gx = idx % g;
+        int gz = idx / g;
+        int best = Integer.MAX_VALUE;
+        int color = cfg.getColorNormal();
+        for (int side = 0; side < 2; side++) {
+            int nx = gx % 2 == 1 ? gx + (side == 0 ? -1 : 1) : gx;
+            int nz = gz % 2 == 1 ? gz + (side == 0 ? -1 : 1) : gz;
+            if (nx == gx && nz == gz) {
+                continue;
+            }
+            if (nx < 0 || nz < 0 || nx >= g || nz >= g) {
+                continue;
+            }
+            int gid = LiveMapFeature.groupIdAt(nx + nz * g);
+            if (gid < 0) {
+                continue;
+            }
+            LiveMapFeature.RoomGroup group = LiveMapFeature.groupsView().get(gid);
+            if (!isRevealed(group)) {
+                continue;
+            }
+            String type = roomType(group);
+            int prio = typePriority(type);
+            if (prio < best) {
+                best = prio;
+                color = roomColor(group, cfg);
+            }
+        }
+        return color;
+    }
+
+    // ------------------------------------------------------------------------------------------- rooms
+
+    static void drawRoom(GuiGraphicsExtractor graphics, LiveMapFeature.RoomGroup group, int gid, int color,
+                         float ox, float oy, float ppu) {
+        com.epic60869.sky2m.sim.hud.GuiRects rects = com.epic60869.sky2m.sim.hud.GuiRects.begin(graphics);
+        drawRoom(rects, group, gid, color, ox, oy, ppu);
+        rects.submit();
+    }
+
+    /** {@link #drawRoom(GuiGraphicsExtractor, LiveMapFeature.RoomGroup, int, int, float, float, float)} into a batch,
+     *  so the HUD map can submit every room as one render-state element (rooms never overlap one another). */
+    static void drawRoom(com.epic60869.sky2m.sim.hud.GuiRects graphics, LiveMapFeature.RoomGroup group, int gid, int color,
+                         float ox, float oy, float ppu) {
+        int n = 0;
+        for (int c : group.cells) {
+            int gx = c % LiveMapFeature.GRID;
+            int gz = c / LiveMapFeature.GRID;
+            if (gx % 2 == 1 && gz % 2 == 1 && !centreOfSquare(gid, gx, gz)) {
+                continue; // an L-room's inner corner is not part of the room (QUOI lCorners)
+            }
+            if (!cellRevealed(c)) {
+                continue;
+            }
+            if (n * 4 + 4 > ROOM_RECTS.length) {
+                fillMerged(graphics, ROOM_RECTS, n, color);
+                n = 0;
+            }
+            ROOM_RECTS[n * 4] = px(ox, cellPos(gx), ppu);
+            ROOM_RECTS[n * 4 + 1] = px(oy, cellPos(gz), ppu);
+            ROOM_RECTS[n * 4 + 2] = px(ox, cellPos(gx) + cellSize(gx), ppu);
+            ROOM_RECTS[n * 4 + 3] = px(oy, cellPos(gz) + cellSize(gz), ppu);
+            n++;
+        }
+        fillMerged(graphics, ROOM_RECTS, n, color);
+    }
+
+    /** Scratch for {@link #drawRoom}'s cell rectangles (render thread only): x0, y0, x1, y1 per cell. */
+    private static final int[] ROOM_RECTS = new int[4 * 64];
+
+    /**
+     * Fills {@code n} disjoint rectangles of one colour as few fills as cover exactly the same pixels: rectangles that
+     * share a full edge are joined, along rows first and then down columns. A room of four cells and its connectors was
+     * nine fills, and every GUI fill is a render-state element that the next one is intersection-tested against (see
+     * the GUI fill lesson in docs/LESSONS-GUI.md); the map was ~120 fills a frame on F7 (FPS sweep, 2026-10-07). Only
+     * rectangles meeting edge to edge are joined, so nothing ever overlaps and a translucent room colour blends once.
+     */
+    static void fillMerged(com.epic60869.sky2m.sim.hud.GuiRects graphics, int[] r, int n, int color) {
+        boolean merged = true;
+        while (merged) {
+            merged = false;
+            for (int i = 0; i < n; i++) {
+                if (r[i * 4] == Integer.MIN_VALUE) {
+                    continue;
+                }
+                for (int j = 0; j < n; j++) {
+                    if (j == i || r[j * 4] == Integer.MIN_VALUE) {
+                        continue;
+                    }
+                    int a = i * 4;
+                    int b = j * 4;
+                    if (r[a + 1] == r[b + 1] && r[a + 3] == r[b + 3] && r[a + 2] == r[b]) {
+                        r[a + 2] = r[b + 2]; // b continues a's row to the right
+                        r[b] = Integer.MIN_VALUE;
+                        merged = true;
+                    } else if (r[a] == r[b] && r[a + 2] == r[b + 2] && r[a + 3] == r[b + 1]) {
+                        r[a + 3] = r[b + 3]; // b continues a's column downwards
+                        r[b] = Integer.MIN_VALUE;
+                        merged = true;
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            if (r[i * 4] != Integer.MIN_VALUE) {
+                graphics.fill(r[i * 4], r[i * 4 + 1], r[i * 4 + 2], r[i * 4 + 3], color);
+            }
+        }
+    }
+
+    static boolean centreOfSquare(int gid, int gx, int gz) {
+        int g = LiveMapFeature.GRID;
+        return gx > 0 && gz > 0 && gx < g - 1 && gz < g - 1
+                && LiveMapFeature.groupIdAt(gx - 1 + gz * g) == gid && LiveMapFeature.groupIdAt(gx + 1 + gz * g) == gid
+                && LiveMapFeature.groupIdAt(gx + (gz - 1) * g) == gid && LiveMapFeature.groupIdAt(gx + (gz + 1) * g) == gid;
+    }
+
+    static void outlineGroup(GuiGraphicsExtractor graphics, LiveMapFeature.RoomGroup group, int gid, int color,
+                             float ox, float oy, float ppu) {
+        int g = LiveMapFeature.GRID;
+        for (int c : group.cells) {
+            int gx = c % g;
+            int gz = c / g;
+            if (gx % 2 == 1 && gz % 2 == 1 && !centreOfSquare(gid, gx, gz)) {
+                continue;
+            }
+            int x0 = px(ox, cellPos(gx), ppu);
+            int y0 = px(oy, cellPos(gz), ppu);
+            int x1 = px(ox, cellPos(gx) + cellSize(gx), ppu);
+            int y1 = px(oy, cellPos(gz) + cellSize(gz), ppu);
+            if (!sameRoom(gid, gx - 1, gz)) graphics.fill(x0 - 1, y0 - 1, x0, y1 + 1, color);
+            if (!sameRoom(gid, gx + 1, gz)) graphics.fill(x1, y0 - 1, x1 + 1, y1 + 1, color);
+            if (!sameRoom(gid, gx, gz - 1)) graphics.fill(x0 - 1, y0 - 1, x1 + 1, y0, color);
+            if (!sameRoom(gid, gx, gz + 1)) graphics.fill(x0 - 1, y1, x1 + 1, y1 + 1, color);
+        }
+    }
+
+    private static boolean sameRoom(int gid, int gx, int gz) {
+        int g = LiveMapFeature.GRID;
+        if (gx < 0 || gz < 0 || gx >= g || gz >= g || LiveMapFeature.groupIdAt(gx + gz * g) != gid) {
+            return false;
+        }
+        if (gx % 2 == 1 && gz % 2 == 1) {
+            return centreOfSquare(gid, gx, gz);
+        }
+        return true;
+    }
+
+    // ------------------------------------------------------------------------------------------- doors
+
+    /** Fill colour a reported-but-unseen cell is dimmed by, when {@link LiveMapConfig#isMarkReportedRooms()}
+     *  is on - "subtly", per killer560s-mod-relay task (2026-09-21): still readable as its real colour, just
+     *  not mistaken for something this client actually saw. */
+    private static final float REPORTED_DIM = 0.78f;
+    /** Accent colour for the small reported-cell corner marker - the same amber already used for the
+     *  locked-wither-door outline below, so it reads as "the mod's own accent", not a new colour language. */
+    private static final int REPORTED_MARK_COLOR = 0xFFFFAA00;
+
+    /**
+     * A doorway's box in map units, {@code {x, z, width, height}}, for the odd grid cell {@code (gx, gz)} that
+     * holds it: the {@link #GAP_UNITS}-long stub across the gap, 6 units wide across the doorway, centred on the
+     * 16-unit room. Shared with the Dungeon Sim's map designer so both draw the same doorway.
+     */
+    public static float[] doorUnits(int gx, int gz) {
+        float ux = gx % 2 == 1 ? cellPos(gx) : cellPos(gx) + 5;
+        float uz = gz % 2 == 1 ? cellPos(gz) : cellPos(gz) + 5;
+        float uw = gx % 2 == 1 ? GAP_UNITS : 6;
+        float uh = gz % 2 == 1 ? GAP_UNITS : 6;
+        return new float[]{ux, uz, uw, uh};
+    }
+
+    /** Map units from one room's origin to the next: the room plus the gap after it. */
+    public static final int ROOM_PITCH_UNITS = ROOM_UNITS + GAP_UNITS;
+    /** Map units a room is wide; the rest of a pitch is the gap a doorway crosses. */
+    public static final int ROOM_SIZE_UNITS = ROOM_UNITS;
+
+    /**
+     * NoammAddons {@code drawRoomConnector}: the stub starts at exactly {@code +roomSize} so it is flush with the
+     *  rooms on both sides, is the 4-unit gap long, and 6 units wide across the doorway. */
+    static void drawDoors(GuiGraphicsExtractor graphics, DungeonLayout layout, LiveMapConfig cfg,
+                          float ox, float oy, float ppu, int hoveredDoor) {
+        // Every door's fill and outlines as ONE render-state element, in the same order (hud/GuiRects).
+        com.epic60869.sky2m.sim.hud.GuiRects rects = com.epic60869.sky2m.sim.hud.GuiRects.begin(graphics);
+        for (int idx = 0; idx < LiveMapFeature.GRID * LiveMapFeature.GRID; idx++) {
+            int type = layout.doorType(idx);
+            boolean locked = layout.isLocked(idx);
+            if (hideUnrevealed()) {
+                // Legit build: the door AND whether it is still locked come from the map item's own byte, never
+                // from the world scan or the chunk cache - an opened wither door turns room-coloured on the real
+                // map, so that is the only thing we are allowed to know.
+                type = switch (DungeonMapScanner.doorTileAt(idx)) {
+                    case DOOR_WITHER -> DungeonLayout.DOOR_WITHER;
+                    case DOOR_BLOOD -> DungeonLayout.DOOR_BLOOD;
+                    case DOOR_ENTRANCE -> DungeonLayout.DOOR_ENTRANCE;
+                    case DOOR_NORMAL -> DungeonLayout.DOOR_NORMAL;
+                    default -> DungeonLayout.DOOR_NONE;
+                };
+                locked = type == DungeonLayout.DOOR_WITHER || type == DungeonLayout.DOOR_BLOOD;
+            }
+            if (type == DungeonLayout.DOOR_NONE || !cellRevealed(idx)) {
+                continue;
+            }
+            // SIM ONLY (isTheoretical is false unless SimState.isActive()): an ordinary sim door where a real
+            // floor would have a wither door. Drawn in the wither colour with a SINGLE amber outline, against the
+            // double one a real locked wither door gets, because it is passable and the pathfinders treat it so.
+            boolean theoreticalWither = type == DungeonLayout.DOOR_NORMAL
+                    && com.epic60869.sky2m.sim.roomsim.SimWitherDoors.isTheoretical(idx);
+            int gx = idx % LiveMapFeature.GRID;
+            int gz = idx / LiveMapFeature.GRID;
+            int color = theoreticalWither ? cfg.getColorWitherDoor() : switch (type) {
+                case DungeonLayout.DOOR_WITHER -> locked ? cfg.getColorWitherDoor() : connectorColor(idx, cfg);
+                case DungeonLayout.DOOR_BLOOD -> locked ? cfg.getColorBlood() : connectorColor(idx, cfg);
+                case DungeonLayout.DOOR_ENTRANCE -> cfg.getColorEntrance();
+                default -> connectorColor(idx, cfg);
+            };
+            if (!LiveMapFeature.isWorldScanned(idx) && DungeonMapScanner.isCalibrated()
+                    && DungeonMapScanner.stateAt(idx) == DungeonMapScanner.STATE_UNOPENED) {
+                color = multiply(color, 1f - cfg.getDarkenUnopened());
+            }
+            float[] box = doorUnits(gx, gz);
+            float ux = box[0];
+            float uz = box[1];
+            float uw = box[2];
+            float uh = box[3];
+            if (idx == hoveredDoor) {
+                color = multiply(color, 1.15f);
+            }
+            int x0 = px(ox, ux, ppu);
+            int y0 = px(oy, uz, ppu);
+            int x1 = px(ox, ux + uw, ppu);
+            int y1 = px(oy, uz + uh, ppu);
+            rects.fill(x0, y0, x1, y1, color);
+            if (type == DungeonLayout.DOOR_WITHER && locked) {
+                // killer560, 2026-09-20: "wither doors are very hard to see on the map" - the real map's own byte
+                // for a locked wither door is near-black (default #101010), which vanishes into the HUD background.
+                // A double amber outline (the mod's own accent colour) makes it read as a warning at a glance
+                // without touching the fill colour itself, which is still the real map's own and still a picker.
+                rects.outline(x0 - 1, y0 - 1, x1 - x0 + 2, y1 - y0 + 2, 0xFFFFAA00);
+                rects.outline(x0, y0, x1 - x0, y1 - y0, 0xFFFFAA00);
+            }
+            if (theoreticalWither) {
+                rects.outline(x0, y0, x1 - x0, y1 - y0, 0xFFFFAA00);
+            }
+            if (idx == hoveredDoor) {
+                rects.outline(x0 - 1, y0 - 1, x1 - x0 + 2, y1 - y0 + 2, 0xB4FFFFFF);
+            }
+        }
+        rects.submit();
+    }
+
+    /**
+     * killer560s-mod-relay task (2026-09-21): teammate-reported doors this client has not scanned itself yet
+     * - drawn entirely independently of {@link #drawDoors}/{@link DungeonLayout}, which also feed the
+     * teleport pathfinders and Auto Blood Rush ({@code livemap.autoclear}). Unverified network data must
+     * never reach automation, only this display path, fed straight from {@link PartyMapIntel}. A cell
+     * {@link PartyMapIntel} has already dropped (local scan settled it) simply is not in
+     * {@link PartyMapIntel#reportedDoorsView()} any more, so this can never draw over a real local door.
+     * <p>
+     * The wire format carries only the door TYPE, never a lock state, so this always draws the LOCKED colour
+     * for a wither/blood door - the safer default for a door nobody here has actually checked.
+     */
+    static void drawReportedDoors(GuiGraphicsExtractor graphics, LiveMapConfig cfg, float ox, float oy, float ppu) {
+        boolean mark = cfg.isMarkReportedRooms();
+        for (PartyMapIntel.ReportedDoor door : PartyMapIntel.reportedDoorsView()) {
+            int idx = door.idx();
+            if (outsideFloor(idx)) {
+                continue;
+            }
+            int type = door.type();
+            int gx = idx % LiveMapFeature.GRID;
+            int gz = idx / LiveMapFeature.GRID;
+            int color = switch (type) {
+                case DungeonLayout.DOOR_WITHER -> cfg.getColorWitherDoor();
+                case DungeonLayout.DOOR_BLOOD -> cfg.getColorBlood();
+                case DungeonLayout.DOOR_ENTRANCE -> cfg.getColorEntrance();
+                default -> cfg.getColorNormal();
+            };
+            if (mark) {
+                color = multiply(color, REPORTED_DIM);
+            }
+            float[] box = doorUnits(gx, gz);
+            float ux = box[0];
+            float uz = box[1];
+            float uw = box[2];
+            float uh = box[3];
+            int x0 = px(ox, ux, ppu);
+            int y0 = px(oy, uz, ppu);
+            int x1 = px(ox, ux + uw, ppu);
+            int y1 = px(oy, uz + uh, ppu);
+            graphics.fill(x0, y0, x1, y1, color);
+            if (type == DungeonLayout.DOOR_WITHER) {
+                graphics.outline(x0 - 1, y0 - 1, x1 - x0 + 2, y1 - y0 + 2, 0xFFFFAA00);
+                graphics.outline(x0, y0, x1 - x0, y1 - y0, 0xFFFFAA00);
+            }
+            if (mark) {
+                int m = Math.max(2, Math.round(3 * ppu));
+                graphics.fill(x0, y0, Math.min(x1, x0 + m), Math.min(y1, y0 + m), REPORTED_MARK_COLOR);
+            }
+        }
+    }
+
+    /** A cell that is a door on the current layout (used for hover/click tests). */
+    static boolean isDoorCell(int idx) {
+        LiveMapFeature.Tile t = LiveMapFeature.effectiveTile(idx);
+        return t == LiveMapFeature.Tile.DOOR_NORMAL || t == LiveMapFeature.Tile.DOOR_WITHER
+                || t == LiveMapFeature.Tile.DOOR_BLOOD || t == LiveMapFeature.Tile.DOOR_ENTRANCE;
+    }
+
+    // ------------------------------------------------------------------------------------------- checkmarks
+
+    // The real map draws bitmap sprites, not font glyphs (killer560's screenshot: fat white/green checks, a red
+    // cross, a black '?'). These are the same shapes drawn as run-length filled rows so no texture is needed.
+    private static final String[] CHECK = {
+            "........##",
+            ".......##.",
+            "......##..",
+            "#....##...",
+            "##..##....",
+            ".##.##....",
+            "..####....",
+            "...##.....",
+    };
+    private static final String[] CROSS = {
+            "##....##",
+            "###..###",
+            ".######.",
+            "..####..",
+            "..####..",
+            ".######.",
+            "###..###",
+            "##....##",
+    };
+    private static final String[] QUESTION = {
+            ".#####..",
+            "##...##.",
+            "##...##.",
+            "....##..",
+            "...##...",
+            "...##...",
+            "........",
+            "...##...",
+    };
+
+    static int stateColor(int state) {
+        return switch (state) {
+            case DungeonMapScanner.STATE_GREEN -> 0xFF55FF55;
+            case DungeonMapScanner.STATE_CLEARED -> 0xFFFFFFFF;
+            case DungeonMapScanner.STATE_FAILED -> 0xFFFF5555;
+            default -> 0xFFAAAAAA;
+        };
+    }
+
+    /** @return the mark for a room state, or null when the room has none. */
+    private static String[] markSprite(int state) {
+        return switch (state) {
+            case DungeonMapScanner.STATE_CLEARED, DungeonMapScanner.STATE_GREEN -> CHECK;
+            case DungeonMapScanner.STATE_FAILED -> CROSS;
+            case DungeonMapScanner.STATE_UNOPENED -> QUESTION;
+            default -> null;
+        };
+    }
+
+    static String markGlyph(int state) {
+        return switch (state) {
+            case DungeonMapScanner.STATE_CLEARED, DungeonMapScanner.STATE_GREEN -> "✔";
+            case DungeonMapScanner.STATE_FAILED -> "✖";
+            case DungeonMapScanner.STATE_UNOPENED -> "?";
+            default -> null;
+        };
+    }
+
+    private static void drawSprite(GuiGraphicsExtractor graphics, String[] rows, float cx, float cy, float size, int color) {
+        int h = rows.length;
+        int w = rows[0].length();
+        float unit = size / w;
+        float x0 = cx - size / 2f;
+        float y0 = cy - h * unit / 2f;
+        for (int r = 0; r < h; r++) {
+            String row = rows[r];
+            int c = 0;
+            while (c < w) {
+                if (row.charAt(c) != '#') {
+                    c++;
+                    continue;
+                }
+                int start = c;
+                while (c < w && row.charAt(c) == '#') {
+                    c++;
+                }
+                int ry0 = Math.round(y0 + r * unit);
+                int ry1 = Math.max(ry0 + 1, Math.round(y0 + (r + 1) * unit));
+                int rx0 = Math.round(x0 + start * unit);
+                int rx1 = Math.max(rx0 + 1, Math.round(x0 + c * unit));
+                graphics.fill(rx0, ry0, rx1, ry1, color);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------- labels
+
+    /** One room's text label, in map units so the same cache serves the HUD and the full-screen map. */
+    private record Label(String[] lines, int maxWidth, int color, float boxW, float boxH, float cx, float cy,
+                         int fill) {
+    }
+
+    /**
+     * Whether text in {@code text} would be hard to read on a room filled with {@code fill}.
+     *
+     * <p>killer560 (2026-09-29): "for those rare rooms that are grey, make a way for the room name text on the
+     * map to stand out. Right now it doesnt." A rare room is grey and the label is light, so the two sit at
+     * nearly the same brightness and the name disappears into the fill.
+     *
+     * <p>Measured rather than special-cased on "RARE", because every one of these colours is his to change in
+     * the GUI - a rule written around today's grey would be wrong the moment he recolours anything. This
+     * compares perceived brightness (the usual 0.299/0.587/0.114 weighting, since green reads far brighter
+     * than blue at the same value) and calls it a problem when they are within a quarter of the range.
+     */
+    private static boolean lowContrast(int text, int fill) {
+        return Math.abs(luminance(text) - luminance(fill)) < 0.25;
+    }
+
+    private static double luminance(int argb) {
+        return (0.299 * ((argb >> 16) & 0xFF) + 0.587 * ((argb >> 8) & 0xFF) + 0.114 * (argb & 0xFF)) / 255.0;
+    }
+
+    private static final List<Label> LABEL_CACHE = new ArrayList<>();
+    private static int labelTick = Integer.MIN_VALUE;
+    private static int labelGeneration = Integer.MIN_VALUE;
+    private static int labelStyle = -1;
+
+    /** Rebuilt at most once a tick (fps report 2026-09-20: the map rebuilt every room's line list, and measured every
+     *  line, on every single frame). Nothing a label depends on - map state, found secrets, room identity - can
+     *  change more often than a tick. */
+    private static List<Label> labels(int style, Font font) {
+        int tick = LiveMapFeature.tickCount();
+        int generation = LiveMapFeature.resetGeneration();
+        if (tick == labelTick && generation == labelGeneration && style == labelStyle) {
+            return LABEL_CACHE;
+        }
+        labelTick = tick;
+        labelGeneration = generation;
+        labelStyle = style;
+        LABEL_CACHE.clear();
+        for (LiveMapFeature.RoomGroup group : LiveMapFeature.groupsView()) {
+            RoomEntry entry = group.entry;
+            if (entry == null || !identityRevealed(group)) {
+                continue; // unidentified (or, on the legit map, still-unopened) rooms only get a checkmark
+            }
+            String type = roomType(group);
+            List<String> lines = labelLines(style, type, group.nameLines, entry.secrets, secretsText(group), true);
+            if (lines.isEmpty()) {
+                continue;
+            }
+            int maxWidth = 0;
+            for (String s : lines) {
+                maxWidth = Math.max(maxWidth, font.width(s));
+            }
+            float boxW = group.lShape ? 36 : cellPos(group.maxGX) + ROOM_UNITS - cellPos(group.minGX);
+            float boxH = group.lShape ? ROOM_UNITS : cellPos(group.maxGZ) + ROOM_UNITS - cellPos(group.minGZ);
+            LABEL_CACHE.add(new Label(lines.toArray(new String[0]), maxWidth,
+                    stateColor(visibleState(group)), boxW, boxH,
+                    group.labelGX * 10 + 8, group.labelGZ * 10 + 8,
+                    roomColor(group, LiveMapConfig.getInstance())));
+        }
+        return LABEL_CACHE;
+    }
+
+    /**
+     * The text lines the live map writes on a room for a Room Labels style (2 secrets, 3 name, 4 name + secrets);
+     * shared so the sim's map designer writes the same lines.
+     *
+     * @param hideSpecialNames the live map writes no name on an Entrance, Fairy or Blood room; the designer keeps
+     *                         them (false) because there the name is how a placed room is told apart
+     * @param secretsText      the "found/total" line, already worked out by the caller
+     */
+    public static List<String> labelLines(int style, String type, String[] nameLines, int secrets,
+                                          String secretsText, boolean hideSpecialNames) {
+        List<String> lines = new ArrayList<>();
+        if (style == 2) {
+            lines.add(secretsText);
+            return lines;
+        }
+        if (hideSpecialNames && (type.equals("ENTRANCE") || type.equals("FAIRY") || type.equals("BLOOD"))) {
+            return lines; // QUOI renderName: no names on Entrance, Fairy or Blood.
+        }
+        java.util.Collections.addAll(lines, nameLines);
+        if (style == 4 && secrets > 0) {
+            lines.add(secretsText);
+        }
+        return lines;
+    }
+
+    /** The secrets line of a room nobody has opened: what {@link #secretsText} gives for a revealed room with
+     *  nothing found, {@code 0/N}, or a bare {@code 0} for a room with no secrets. */
+    public static String unvisitedSecretsText(int secrets) {
+        return secrets <= 0 ? "0" : "0/" + secrets;
+    }
+
+    /** The colour the live map writes an unopened room's text in. */
+    public static int unopenedTextColor() {
+        return stateColor(DungeonMapScanner.STATE_UNOPENED);
+    }
+
+    /** Whether the live map would put a shadow under text of this colour on this fill (its Text Shadow setting,
+     *  or low contrast), so the designer's labels read the way the map's do. */
+    public static boolean labelShadow(LiveMapConfig cfg, int textColor, int fillColor) {
+        return cfg.isTextShadow() || lowContrast(textColor, fillColor);
+    }
+
+    static String secretsText(LiveMapFeature.RoomGroup group) {
+        RoomEntry entry = group.entry;
+        if (entry == null || !identityRevealed(group)) {
+            return "?";
+        }
+        if (entry.secrets == 0) {
+            return "0";
+        }
+        int found = LiveMapFeature.foundSecrets(entry.name);
+        if (visibleState(group) == DungeonMapScanner.STATE_GREEN) {
+            found = entry.secrets;
+        } else {
+            // killer560s-mod-relay task (2026-09-21): a teammate's own found-count (PartyInteropState, RELAY
+            // source) is at least as fresh as ours - it is monotonic within a run, same as our own action-bar
+            // parse - so take whichever is higher instead of only ever trusting our own. Never regresses what
+            // we already show ourselves.
+            com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Fact<com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.RoomSecrets> fact =
+                    com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.rooms().get(entry.name);
+            if (fact != null) {
+                found = Math.max(found, fact.value().found());
+            }
+        }
+        return (found < 0 ? 0 : found) + "/" + entry.secrets;
+    }
+
+    /** Checkmarks / secrets / room names over the rooms. Style is
+     *  {@code LiveMapConfig.ROOM_LABEL_NAMES}: 0 Off, 1 Checkmarks, 2 Secrets, 3 Room Name, 4 Name + Secrets. */
+    static void drawLabels(GuiGraphicsExtractor graphics, Font font, int style, LiveMapConfig cfg,
+                           float ox, float oy, float ppu) {
+        if (style == 0) {
+            return;
+        }
+        // Rooms with no database entry can only ever show a mark, whatever the style is.
+        for (LiveMapFeature.RoomGroup group : LiveMapFeature.groupsView()) {
+            if (style != 1 && identityRevealed(group) && group.entry != null) {
+                continue;
+            }
+            if (!isRevealed(group)) {
+                continue;
+            }
+            drawMark(graphics, font, visibleState(group), cfg,
+                    ox + (group.labelGX * 10 + 8) * ppu, oy + (group.labelGZ * 10 + 8) * ppu, ppu);
+        }
+        if (style == 1) {
+            return;
+        }
+        for (Label label : labels(style, font)) {
+            float want = 0.4f * cfg.getFontScale() * ppu;
+            // A shadow whenever the name would otherwise blend into the room it is written on, whatever
+            // his Text Shadow setting says. The setting is about how he likes the map to look; this is
+            // about the name being readable at all, and it only overrides when it has to.
+            boolean shadow = cfg.isTextShadow() || lowContrast(label.color, label.fill);
+            drawFittedLines(graphics, font, label.lines, ox + label.cx * ppu, oy + label.cy * ppu,
+                    label.boxW * ppu, label.boxH * ppu, want, label.color, shadow);
+        }
+    }
+
+    /**
+     * Room-name text, one word per line, scaled down until it fits a box and centred on it - the live map's
+     * own fitting rule, shared so the sim's map designer writes names exactly the way this map does.
+     *
+     * @param boxW  the room's width in screen pixels
+     * @param boxH  the room's height in screen pixels
+     * @param want  the scale the text would like to be at; it only ever shrinks from there, never below 0.3
+     */
+    public static void drawFittedLines(GuiGraphicsExtractor graphics, Font font, String[] lines, float cx,
+                                       float cy, float boxW, float boxH, float want, int color, boolean shadow) {
+        if (lines == null || lines.length == 0) {
+            return;
+        }
+        int maxWidth = 0;
+        for (String s : lines) {
+            maxWidth = Math.max(maxWidth, font.width(s));
+        }
+        float fit = Math.min(boxW / Math.max(1, maxWidth), boxH / (lines.length * font.lineHeight));
+        float scale = Math.max(0.3f, Math.min(want, fit));
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(cx, cy);
+        graphics.pose().scale(scale, scale);
+        int top = Math.round(-lines.length * font.lineHeight / 2f);
+        for (int i = 0; i < lines.length; i++) {
+            String s = lines[i];
+            graphics.text(font, s, -font.width(s) / 2, top + i * font.lineHeight, color, shadow);
+        }
+        graphics.pose().popMatrix();
+    }
+
+    static void drawMark(GuiGraphicsExtractor graphics, Font font, int state, LiveMapConfig cfg,
+                         float cx, float cy, float ppu) {
+        int color = stateColor(state);
+        if (cfg.isCheckmarkSprites()) {
+            String[] sprite = markSprite(state);
+            if (sprite != null) {
+                drawSprite(graphics, sprite, cx, cy, Math.max(6f, 10f * ppu),
+                        state == DungeonMapScanner.STATE_UNOPENED ? 0xFF1A1A1A : color);
+            }
+            return;
+        }
+        String glyph = markGlyph(state);
+        if (glyph == null) {
+            return;
+        }
+        float scale = Math.max(0.3f, 0.75f * cfg.getFontScale() * ppu);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(cx, cy);
+        graphics.pose().scale(scale, scale);
+        graphics.text(font, glyph, -font.width(glyph) / 2, -font.lineHeight / 2, color, cfg.isTextShadow());
+        graphics.pose().popMatrix();
+    }
+
+    // ------------------------------------------------------------------------------------------- players
+
+    /** His own marker's fill. Unchanged green; what keeps it off a green room is the contrast outline below. */
+    static final int SELF_MARKER_COLOR = 0xFF55FF55;
+    /** Outline thickness of an arrow / heading tick, in marker units (one unit = one skin pixel on a head). */
+    private static final float MARKER_OUTLINE = 1f;
+    /** Sub-rows per unit a triangle is filled at, so a one-unit outline stays one unit at any rotation. */
+    private static final int TRI_RES = 2;
+
+    /** One player marker. {@code markerScale} is a straight multiplier on the icon size so the full-screen map can
+     *  keep its fixed 8px icons while the HUD scales them with the map.
+     *  <p>
+     *  killer560, 2026-10-07: "make an option to have people's symbols be by player head for the default ones. It
+     *  should work on your own head as well. Also don't make the green blend in so well with green room for the
+     *  arrow pointer." With Player Heads on, a player whose skin is known ({@link MapHeads}) is drawn as their face
+     *  turned so the TOP of the head points where they face (killer560, same day: "it shouldn't have that arrow for
+     *  where they face, it should just rotate their head ... with the top of their head being their facing
+     *  direction"; until then it was upright with a heading tick orbiting it); anyone else keeps the arrow.
+     *  (The skin-head option removed on 2026-09-20, "i do not want it showing the white heads for mobs", drew mobs
+     *  because the marker list took every Player entity; {@link InteractiveMapFeature#players} only takes vouched
+     *  teammates since, so no mob can get a head.) Every arrow and tick has a solid outline in the colour that
+     *  contrasts with its own fill ({@link #outlineFor}), which is what keeps the green arrow off a green room.
+     *  @return whether {@code (mouseX, mouseY)} is over this marker. */
+    static boolean drawMarker(GuiGraphicsExtractor graphics, Font font, InteractiveMapFeature.MapPlayer mp,
+                              LiveMapConfig cfg, float ox, float oy, float ppu, float markerScale,
+                              boolean classColours, boolean showName, double mouseX, double mouseY) {
+        float x = ox + (float) worldToUnits(mp.worldX()) * ppu;
+        float y = oy + (float) worldToUnits(mp.worldZ()) * ppu;
+        int size = Math.max(5, Math.round(8 * cfg.getIconScale() * markerScale));
+        DungeonClass cls = mp.dungeonClass();
+        int fillColor = mp.self() ? SELF_MARKER_COLOR : (classColours && cls != null ? cls.color() : 0xFFFFFFFF);
+
+        net.minecraft.world.entity.player.PlayerSkin skin = cfg.isPlayerHeads() ? MapHeads.skinFor(mp) : null;
+        if (skin != null) {
+            drawHead(graphics, skin, x, y, size, mp.yaw());
+        } else {
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(x, y);
+            graphics.pose().rotate((float) Math.toRadians(headRotationDegrees(mp.yaw())));
+            drawArrow(graphics, Math.round(size * 0.9f), fillColor);
+            graphics.pose().popMatrix();
+        }
+
+        if (showName) {
+            float nameScale = 0.6f * cfg.getIconScale();
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(x, y + size / 2f + 2);
+            graphics.pose().scale(nameScale, nameScale);
+            int nameColor = classColours && cls != null ? cls.color() : 0xFFFFFFFF;
+            graphics.text(font, mp.name(), -font.width(mp.name()) / 2, 0, nameColor, true);
+            graphics.pose().popMatrix();
+        }
+        return Math.abs(mouseX - x) <= size / 2f + 1 && Math.abs(mouseY - y) <= size / 2f + 1;
+    }
+
+    /** A {@code size}-unit face (skin face + hat layer) centred on {@code (x, y)}, framed by a one-unit black edge,
+     *  turned by exactly the arrow's rotation ({@link #headRotationDegrees}), so the top of the head is where the arrow
+     *  would point: facing north (yaw 180) the head is upright on the north-up map. No arrow or tick is drawn. */
+    private static void drawHead(GuiGraphicsExtractor graphics, net.minecraft.world.entity.player.PlayerSkin skin,
+                                 float x, float y, int size, float yaw) {
+        float half = size / 2f;
+        graphics.pose().pushMatrix();
+        try {
+            graphics.pose().translate(x, y);
+            graphics.pose().rotate((float) Math.toRadians(headRotationDegrees(yaw)));
+            graphics.pose().translate(-half, -half);
+            graphics.fill(-1, -1, size + 1, size + 1, 0xFF000000);
+            net.minecraft.resources.Identifier texture = skin.body().texturePath();
+            float scale = size / 8.0f;
+            graphics.pose().scale(scale, scale);
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, texture, 0, 0, 8f, 8f, 8, 8, 64, 64);
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, texture, 0, 0, 40f, 8f, 8, 8, 64, 64);
+        } finally {
+            graphics.pose().popMatrix();
+        }
+    }
+
+    /** The turn, in degrees clockwise on screen, that points a marker's local -y (the arrow's tip, the head's top)
+     *  where a player with this Minecraft yaw faces on the north-up map: yaw 180 (north) is 0, yaw 270 (east) 90. */
+    static float headRotationDegrees(float yaw) {
+        return 180f + yaw;
+    }
+
+    /** Map marker pointing towards local -y (rotated to the player's heading by the caller).
+     *  <p>
+     *  killer560, 2026-09-20 (screenshot 14.52.05): "the player arrow should read as an arrow at small scale" - a
+     *  plain triangle, width non-decreasing from the tip (the heading) to a flat back edge, at any size.
+     *  <p>
+     *  killer560, 2026-10-07: "don't make the green blend in so well with green room for the arrow pointer". The old
+     *  arrow's dark edge was one-unit side strips drawn row by row: the tip rows were all edge, the back edge had none,
+     *  and under the heading rotation the thin strips break up, so on the Entrance's #00FF00 his #55FF55 arrow had
+     *  next to nothing around it. It is now two solid triangles: an outline triangle {@link #MARKER_OUTLINE} unit
+     *  bigger on every side, then the fill. Same point, same back edge, same size setting. */
+    private static void drawArrow(GuiGraphicsExtractor graphics, int size, int color) {
+        int half = Math.max(3, size / 2);
+        outlinedTriangle(graphics, -half, half, color);
+    }
+
+    /** A filled triangle from {@code tipY} (point, x = 0) down to a flat edge at {@code baseY}, half as wide as it is
+     *  tall on each side, inside a solid outline {@link #MARKER_OUTLINE} unit thick on all three sides. */
+    private static void outlinedTriangle(GuiGraphicsExtractor graphics, float tipY, float baseY, int color) {
+        float t = MARKER_OUTLINE;
+        // Offsetting the two slanted sides (half-angle atan(0.5)) outward by t moves the point by t / sin = t * sqrt 5.
+        fillTriangle(graphics, tipY - t * 2.2360680f, baseY + t, outlineFor(color));
+        fillTriangle(graphics, tipY, baseY, color);
+    }
+
+    /** Rows of a point-up triangle at {@link #TRI_RES} sub-rows per unit, rows of equal width merged into one fill
+     *  (every GUI fill costs a render-state element; docs/LESSONS.md "Every GUI fill"). Full-width rows abut
+     *  exactly, so the shape has no gaps under any rotation. */
+    private static void fillTriangle(GuiGraphicsExtractor graphics, float tipY, float baseY, int color) {
+        int top = Math.round(tipY * TRI_RES);
+        int bottom = Math.round(baseY * TRI_RES);
+        if (bottom <= top) {
+            return;
+        }
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(1f / TRI_RES, 1f / TRI_RES);
+        int runStart = top;
+        int runW = -1;
+        for (int r = top; r < bottom; r++) {
+            // Half-width = half the distance from the point, at the row's middle; never less than one sub-unit.
+            int w = Math.max(1, Math.round((r + 0.5f - tipY * TRI_RES) * 0.5f));
+            if (w != runW) {
+                if (runW > 0) {
+                    graphics.fill(-runW, runStart, runW, r, color);
+                }
+                runStart = r;
+                runW = w;
+            }
+        }
+        graphics.fill(-runW, runStart, runW, bottom, color);
+        graphics.pose().popMatrix();
+    }
+
+    /** Black around a light fill, white around a dark one. Either way the outline is far from the fill, so whatever
+     *  colour a room is (and every room colour is a picker), it cannot match both: the marker always has an edge. */
+    static int outlineFor(int fill) {
+        int r = (fill >> 16) & 0xFF;
+        int g = (fill >> 8) & 0xFF;
+        int b = fill & 0xFF;
+        float luma = (0.2126f * r + 0.7152f * g + 0.0722f * b) / 255f;
+        return luma < 0.4f ? 0xFFFFFFFF : 0xFF000000;
+    }
+
+    // ------------------------------------------------------------------------------------------- etherwarp path
+
+    /** killer560, 2026-09-27: "if i click on a room to etherwarp to it ... it shows a small circle at each
+     *  etherwarp spot that it is going to take to get to the next room, and a line from one spot to another.
+     *  Make it a toggleable section." A small circle at each queued hop
+     *  ({@link com.epic60869.sky2m.sim.livemap.autoclear.ClearExecutor#plannedHopPositions()}), in order, with a line
+     *  joining consecutive hops - same orange {@link com.epic60869.sky2m.sim.livemap.autoclear.ClearNode#toEther}
+     *  already colours the in-world hop markers, just drawn flat on the map instead. Gated on
+     *  {@link LiveMapConfig#isShowEtherwarpPath()}, so it costs nothing when the section is off. */
+    static void drawEtherwarpPath(GuiGraphicsExtractor graphics, LiveMapConfig cfg, float ox, float oy, float ppu) {
+        if (!cfg.isShowEtherwarpPath()) {
+            return;
+        }
+        List<Vec3> hops = List.of(); // no auto-clear in Sky2M
+        if (hops.isEmpty()) {
+            return;
+        }
+        final int lineColor = 0xB4FFA500;
+        final int dotColor = 0xFFFFA500;
+        final int dotOutline = 0xFF000000;
+        float prevX = 0f;
+        float prevY = 0f;
+        boolean hasPrev = false;
+        for (Vec3 hop : hops) {
+            float x = ox + (float) worldToUnits(hop.x) * ppu;
+            float y = oy + (float) worldToUnits(hop.z) * ppu;
+            if (hasPrev) {
+                drawLineSegment(graphics, prevX, prevY, x, y, lineColor);
+            }
+            fillCircle(graphics, Math.round(x), Math.round(y), 3, dotColor, dotOutline);
+            prevX = x;
+            prevY = y;
+            hasPrev = true;
+        }
+    }
+
+    /** A small filled circle (scanline fill via {@code fill()} rects - {@code GuiGraphicsExtractor} has no
+     *  round-shape primitive) with a 1px darker ring so it reads against any room colour underneath it. */
+    private static void fillCircle(GuiGraphicsExtractor graphics, int cx, int cy, int radius, int argb, int outlineArgb) {
+        for (int dy = -radius - 1; dy <= radius + 1; dy++) {
+            int outerDx = (int) Math.round(Math.sqrt(Math.max(0, (radius + 1) * (radius + 1) - dy * dy)));
+            graphics.fill(cx - outerDx, cy + dy, cx + outerDx + 1, cy + dy + 1, outlineArgb);
+        }
+        for (int dy = -radius; dy <= radius; dy++) {
+            int dx = (int) Math.round(Math.sqrt(Math.max(0, radius * radius - dy * dy)));
+            graphics.fill(cx - dx, cy + dy, cx + dx + 1, cy + dy + 1, argb);
+        }
+    }
+
+    /** A 1px line between two arbitrary screen points, stepped in ~2px dabs (no arbitrary-angle line primitive
+     *  on {@code GuiGraphicsExtractor} either - {@code horizontalLine}/{@code verticalLine} are axis-only). */
+    private static void drawLineSegment(GuiGraphicsExtractor graphics, float x1, float y1, float x2, float y2, int argb) {
+        double dist = Math.hypot(x2 - x1, y2 - y1);
+        int steps = Math.max(1, (int) Math.ceil(dist / 2.0));
+        for (int i = 0; i <= steps; i++) {
+            float t = i / (float) steps;
+            int px = Math.round(x1 + (x2 - x1) * t);
+            int py = Math.round(y1 + (y2 - y1) * t);
+            graphics.fill(px, py, px + 1, py + 1, argb);
+        }
+    }
+}

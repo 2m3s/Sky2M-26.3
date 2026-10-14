@@ -1,0 +1,336 @@
+/*
+ * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
+ * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ */
+package com.epic60869.sky2m.sim.witherdoors;
+
+import com.epic60869.sky2m.sim.util.FeatureGuard;
+import com.epic60869.sky2m.sim.util.SimItemIds;
+import com.epic60869.sky2m.sim.secrets.DungeonState;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
+import com.epic60869.sky2m.sim.util.ModLog;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Wither Doors highlight. killer560: "Also add wither door highlight. Legit should only highlight the
+ * closest wither door, cheat should have an option to show every wither door/blood door. Make them red
+ * and the closest one green once you get a key and a different color than the other ones."
+ * <ul>
+ * <li><b>Wither vs Blood:</b> distinguished the same way {@code doorhelpers.DoorScanner} already does it -
+ * they are different {@link WitherDoorScanner.DoorType} values, read from the block sitting at the door's
+ * anchor position (COAL_BLOCK = Wither, RED_TERRACOTTA = Blood) the first time each door cell is scanned.
+ * The legit "closest door" search only ever looks at {@code DoorType.WITHER} cells - a locked Blood door is
+ * never considered a candidate for it, so a run with the Blood door closer than every Wither door still
+ * highlights the nearest Wither door, not the Blood door.
+ * <li><b>Key state:</b> ported from the same three chat lines {@code doorhelpers.LookAtDoorFeature.onChat}
+ * already trusts ("has obtained Wither/Blood Key", "Wither/Blood Key was picked up", the "RIGHT CLICK on a
+ * WITHER door"/"RIGHT CLICK on the BLOOD DOOR" prompts), independently tracked here since that class's
+ * state is private and its listener only fires useful renders while Door Helpers' own cheat-only toggles
+ * are on. Like that class, this does not filter by which player's name is in the message - any party
+ * member obtaining the key marks it held, same as the existing behaviour it mirrors.
+ * <li><b>Legit honesty:</b> the closest-door box is always drawn with {@code WorldRenderUtils.renderOutlineBox}
+ * (depth-tested, so it disappears behind geometry) - "Show All Doors" and "Through Walls" only exist as
+ * {@link WitherDoorsConfig} getters gated on {@link BuildVariant#CHEAT_FEATURES_ENABLED}, so the legit jar
+ * cannot compile a path that sets either true regardless of a hand-edited config file.
+ * <li><b>p3sim:</b> gated on {@code SimItemIds.isOnDungeonServer}, same as Door Helpers.
+ * <li><b>Render cost:</b> the door grid scan ({@link WitherDoorScanner}) only touches unscanned cells and
+ * re-checks every {@code RESCAN_TICKS} (10) ticks, same as the doorhelpers original. The highlight list
+ * itself is rebuilt on the client tick, not the render frame, at most every {@link #CACHE_TTL_MS}; the
+ * frame path only walks that cached, already distance-culled list. Everything above (scan, cache rebuild,
+ * even the chat listener's early-out) short-circuits the moment {@link WitherDoorsConfig#isEnabled()} is
+ * false, so an off Wither Doors costs one boolean check per tick and nothing per frame.
+ * </ul>
+ */
+public final class WitherDoorsFeature {
+
+    /** One ready-to-draw box. Built on the tick, consumed by {@link WitherDoorsRenderer} on the frame. {@code fr/fg/fb}
+     *  is the fill colour: the outline's own (the door's state colour) unless a custom Fill Color is set. */
+    record DoorBox(AABB box, float r, float g, float b, float fr, float fg, float fb) {
+    }
+
+    private static final Logger LOGGER = ModLog.get("sky2m-witherdoors");
+
+    private static boolean witherKeyHeld = false;
+    private static boolean bloodKeyHeld = false;
+    private static Object lastLevel = null;
+    /** A sim floor rebuilt in the same world is a new floor: its door cells must be scanned again. */
+    private static int lastGeneration = Integer.MIN_VALUE;
+
+    /** The per-tick snapshot the render path walks. Never rebuilt from inside a frame. */
+    private static final List<DoorBox> CACHED = new ArrayList<>();
+    private static long cacheStampMs = 0L;
+    /** Matches the scanner's own 10-tick (~500ms) rescan cadence - rebuilding the highlight list any
+     *  faster than the data underneath it can change would just be wasted work. */
+    private static final long CACHE_TTL_MS = 500L;
+
+    /** Half-width of the highlighted opening, and half-thickness of the wall it sits in - the real door
+     *  frame's exact footprint was not confirmed against a live client, so this is an approximation sized
+     *  like a normal dungeon corridor opening (same category of approximation as the aim point
+     *  {@code doorhelpers.LookAtDoorFeature.aimPoint} already uses for this same anchor). See staging notes.
+     *  <p>
+     *  killer560: "there is a 3 thick layer of door, and it only highlights the middle most portion not the
+     *  outermost as a whole box. It needs to be pushed back and brought forward one." A wither/blood door
+     *  is 3 blocks thick along the axis you walk through it (its anchor block at y=69 is the middle of
+     *  those 3), but the box only ever spanned {@code +-0.55} either side of that anchor - just the middle
+     *  layer. {@code HALF_THIN} now reaches one full block past the anchor in both directions
+     *  ({@code 0.55 + 1.0}), covering all 3 layers, while {@link #HALF_OPEN} (the door's width) and
+     *  {@link #DOOR_Y_MIN}/{@link #DOOR_Y_MAX} (its height) are untouched, per the request. */
+    private static final double HALF_OPEN = 1.5;
+    private static final double HALF_THIN = 1.55;
+    private static final double DOOR_Y_MIN = 69.0;
+    private static final double DOOR_Y_MAX = 73.0;
+
+
+    private WitherDoorsFeature() {
+    }
+
+    public static void register() {
+        if (false) {
+            WitherDoorsRenderer.init();
+            // The Fill style's through-walls pass is WorldRenderUtils' shared no-depth FILLED pipeline; like every
+            // pipeline it must exist before the level renderer precompiles the list, so touch its holder now.
+            com.epic60869.sky2m.sim.util.WorldRenderUtils.initThroughWalls();
+        }
+        ClientTickEvents.END_CLIENT_TICK.register(FeatureGuard.end("WitherDoorsFeature.tick", WitherDoorsFeature::tick));
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+            if (!overlay) {
+                onChat(message.getString());
+            }
+        });
+        LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(WitherDoorsFeature::onWorldRender);
+        LOGGER.info("[WitherDoors] Registered (cheatBuild={})", false);
+    }
+
+    /** Whether the party has a Wither Key (Hypixel's pickup lines, until a wither door is opened). Read by Auto Clear. */
+    public static boolean isWitherKeyHeld() {
+        return witherKeyHeld;
+    }
+
+    /** Forces the next client tick to rebuild the highlight snapshot (config change, world change). */
+    public static void invalidateCache() {
+        cacheStampMs = 0L;
+    }
+
+    /** "<Name> has obtained Wither Key!" - the server line, not anything a player can type. */
+    private static final java.util.regex.Pattern KEY_OBTAINED_WITHER =
+            java.util.regex.Pattern.compile("^[A-Za-z0-9_]{1,16} has obtained Wither Key!?$");
+
+    /** With or without the leading "A " - AutoDoorOpenerFeature had anchored the other form. */
+    private static final java.util.regex.Pattern WITHER_KEY_PICKED_UP =
+            java.util.regex.Pattern.compile("^(?:A )?Wither Key was picked up!?$");
+
+    /** "<Name> has obtained Blood Key!" - the Blood half of the pair above, same shape for the same reason. */
+    private static final java.util.regex.Pattern KEY_OBTAINED_BLOOD =
+            java.util.regex.Pattern.compile("^[A-Za-z0-9_]{1,16} has obtained Blood Key!?$");
+
+    private static final java.util.regex.Pattern BLOOD_KEY_PICKED_UP =
+            java.util.regex.Pattern.compile("^(?:A )?Blood Key was picked up!?$");
+
+    /** "<Name> opened a WITHER door!" - the server line; a player's chat always has a prefix before the name. */
+    private static final java.util.regex.Pattern WITHER_DOOR_OPENED =
+            java.util.regex.Pattern.compile("^[A-Za-z0-9_]{1,16} opened a WITHER door!?$");
+
+    private static final java.util.regex.Pattern BLOOD_DOOR_OPENED =
+            java.util.regex.Pattern.compile("^The BLOOD DOOR has been opened!?$");
+
+    private static void onChat(String raw) {
+        String msg = ChatFormatting.stripFormatting(raw);
+        if (msg == null) {
+            return;
+        }
+        msg = msg.trim();
+        // ANCHORED, mirroring AutoDoorOpenerFeature - which this class's own doc says it mirrors, and
+        // which was anchored on 2026-09-29 while this copy was left on contains(). Display only here (it
+        // recolours the nearest door's highlight), so this was never the ban-shaped version of the bug - but
+        // a stranger typing "has obtained Wither Key" turning his door green reads as the mod being wrong
+        // about a key he does not have.
+        if (KEY_OBTAINED_WITHER.matcher(msg).matches() || WITHER_KEY_PICKED_UP.matcher(msg).matches()
+                || msg.startsWith("RIGHT CLICK on a WITHER door")) {
+            if (!witherKeyHeld) {
+                witherKeyHeld = true;
+                invalidateCache();
+            }
+        // The Blood half was left on contains() when the Wither half above was anchored, so the fix only ever
+        // covered one of the two keys: a stranger typing "has obtained Blood Key" anywhere still turned his
+        // blood door green. Same shape, same reason.
+        } else if (KEY_OBTAINED_BLOOD.matcher(msg).matches() || BLOOD_KEY_PICKED_UP.matcher(msg).matches()
+                || msg.startsWith("RIGHT CLICK on the BLOOD DOOR")) {
+            if (!bloodKeyHeld) {
+                bloodKeyHeld = true;
+                invalidateCache();
+            }
+        } else if (WITHER_DOOR_OPENED.matcher(msg).matches()) {
+            witherKeyHeld = false;
+            invalidateCache();
+        } else if (BLOOD_DOOR_OPENED.matcher(msg).matches()) {
+            bloodKeyHeld = false;
+            invalidateCache();
+        }
+    }
+
+    private static void tick(Minecraft client) {
+        int generation = com.epic60869.sky2m.sim.livemap.LiveMapFeature.resetGeneration();
+        if (client.level != lastLevel || generation != lastGeneration) {
+            lastLevel = client.level;
+            lastGeneration = generation;
+            WitherDoorScanner.reset();
+            witherKeyHeld = false;
+            bloodKeyHeld = false;
+            invalidateCache();
+        }
+        WitherDoorsConfig cfg = WitherDoorsConfig.getInstance();
+        String gate = gate(client, cfg);
+        if (gate != null) {
+            CACHED.clear();
+            cacheStampMs = 0L;
+            if (-1 >= 0) {
+            }
+            return;
+        }
+        WitherDoorScanner.tick(client);
+        // Every tick, not on the cache's 500 ms: "till I enter Fairy" should clear on the step in.
+        if (cfg.isFairyDoor()) {
+        }
+        long now = System.currentTimeMillis();
+        if (cacheStampMs != 0L && now - cacheStampMs < CACHE_TTL_MS) {
+            return;
+        }
+        cacheStampMs = now;
+        rebuild(client, cfg);
+    }
+
+    /** @return null while Wither Doors may render, else the reason (mirrors doorhelpers' own gate shape). */
+    private static String gate(Minecraft client, WitherDoorsConfig cfg) {
+        if (!cfg.isEnabled()) {
+            return "disabled";
+        }
+        if (client.level == null || client.player == null) {
+            return "no-player";
+        }
+        // Or the dungeon sim, a singleplayer world with no server address (the same allowance Secret Aura makes).
+        if (!SimItemIds.isOnDungeonServer(client) && !com.epic60869.sky2m.sim.roomsim.SimState.isActive()) {
+            return "not on hypixel/p3sim/sim";
+        }
+        if (!DungeonState.isInDungeon()) {
+            return "not in dungeon";
+        }
+        if (DungeonState.isBossPhaseActive()) {
+            return "in boss";
+        }
+        return null;
+    }
+
+    private static void rebuild(Minecraft client, WitherDoorsConfig cfg) {
+        CACHED.clear();
+        addFairyDoor(client, cfg);
+        List<WitherDoorScanner.Door> locked = WitherDoorScanner.lockedDoors(client);
+        if (locked.isEmpty()) {
+            return;
+        }
+        Vec3 eye = client.player.getEyePosition();
+        WitherDoorScanner.Door nearestWither = null;
+        WitherDoorScanner.Door bloodDoor = null;
+        double nearestDistSq = Double.MAX_VALUE;
+        for (WitherDoorScanner.Door door : locked) {
+            if (door.type() == WitherDoorScanner.DoorType.WITHER) {
+                double distSq = eye.distanceToSqr(center(door));
+                if (distSq < nearestDistSq) {
+                    nearestDistSq = distSq;
+                    nearestWither = door;
+                }
+            } else if (door.type() == WitherDoorScanner.DoorType.BLOOD) {
+                bloodDoor = door; // exactly one Blood door per dungeon
+            }
+        }
+
+        double maxSq = (double) cfg.getRenderDistance() * cfg.getRenderDistance();
+        boolean showAll = cfg.isShowAllDoors();
+
+        if (nearestWither != null && nearestDistSq <= maxSq) {
+            int color = witherKeyHeld ? cfg.getWitherReadyColor() : cfg.getWitherLockedColor();
+            addBox(nearestWither, color);
+        }
+        if (!showAll) {
+            return;
+        }
+        for (WitherDoorScanner.Door door : locked) {
+            if (door.type() == WitherDoorScanner.DoorType.WITHER && door != nearestWither
+                    && eye.distanceToSqr(center(door)) <= maxSq) {
+                addBox(door, cfg.getWitherLockedColor());
+            }
+        }
+        if (bloodDoor != null && eye.distanceToSqr(center(bloodDoor)) <= maxSq) {
+            int color = bloodKeyHeld ? cfg.getBloodReadyColor() : cfg.getBloodLockedColor();
+            addBox(bloodDoor, color);
+        }
+    }
+
+    private static Vec3 center(WitherDoorScanner.Door door) {
+        return new Vec3(door.x() + 0.5, door.y() + (DOOR_Y_MAX - DOOR_Y_MIN) / 2.0, door.z() + 0.5);
+    }
+
+    private static void addBox(WitherDoorScanner.Door door, int argb) {
+        // From the door's own anchor height (69 on Hypixel, shifted in the sim), not a literal.
+        addBox(door.x(), door.z(), door.y(), door.wallAlongZ(), argb);
+    }
+
+    /** The Fairy Door ({@link FairyDoor}): the same box, style and fill settings as a wither door, in its own colour.
+     *  Its height comes from {@link com.epic60869.sky2m.sim.livemap.DungeonLayout#doorBlock}, which follows the sim's shift. */
+    private static void addFairyDoor(Minecraft client, WitherDoorsConfig cfg) {
+        int cell = cfg.isFairyDoor() ? -1 : -1;
+        if (cell < 0) {
+            return;
+        }
+        net.minecraft.core.BlockPos pos = com.epic60869.sky2m.sim.livemap.DungeonLayout.doorBlock(cell);
+        double maxSq = (double) cfg.getRenderDistance() * cfg.getRenderDistance();
+        Vec3 c = new Vec3(pos.getX() + 0.5, pos.getY() + (DOOR_Y_MAX - DOOR_Y_MIN) / 2.0, pos.getZ() + 0.5);
+        if (client.player.getEyePosition().distanceToSqr(c) > maxSq) {
+            return;
+        }
+        // A door cell with an odd column joins rooms side by side in x, so its wall runs along z.
+        boolean wallAlongZ = (cell % com.epic60869.sky2m.sim.livemap.DungeonLayout.GRID) % 2 == 1;
+        addBox(pos.getX(), pos.getZ(), pos.getY(), wallAlongZ, cfg.getFairyDoorColor());
+    }
+
+    private static void addBox(int x, int z, double yMin, boolean wallAlongZ, int argb) {
+        float[] rgba = com.epic60869.sky2m.sim.util.WorldRenderUtils.argbToFloats(argb);
+        WitherDoorsConfig cfg = WitherDoorsConfig.getInstance();
+        float[] fill = cfg.isCustomFillColor() ? com.epic60869.sky2m.sim.util.WorldRenderUtils.argbToFloats(cfg.getFillColor()) : rgba;
+        double cx = x + 0.5;
+        double cz = z + 0.5;
+        double yMax = yMin + (DOOR_Y_MAX - DOOR_Y_MIN);
+        AABB box = wallAlongZ
+                ? new AABB(cx - HALF_THIN, yMin, cz - HALF_OPEN, cx + HALF_THIN, yMax, cz + HALF_OPEN)
+                : new AABB(cx - HALF_OPEN, yMin, cz - HALF_THIN, cx + HALF_OPEN, yMax, cz + HALF_THIN);
+        CACHED.add(new DoorBox(box, rgba[0], rgba[1], rgba[2], fill[0], fill[1], fill[2]));
+    }
+
+    /** The boxes the last rebuild produced, for tests: {minX, minY, minZ, maxX, maxY, maxZ} each. */
+    public static List<double[]> cachedBoxes() {
+        List<double[]> out = new ArrayList<>();
+        for (DoorBox b : CACHED) {
+            out.add(new double[]{b.box().minX, b.box().minY, b.box().minZ, b.box().maxX, b.box().maxY, b.box().maxZ});
+        }
+        return out;
+    }
+
+    private static void onWorldRender(LevelRenderContext context) {
+        // The tick decides what is in here; an empty snapshot means "off, not in a dungeon clear, or
+        // nothing near" - no per-frame config or gate re-check needed on top of that.
+        if (CACHED.isEmpty()) {
+            return;
+        }
+        WitherDoorsConfig cfg = WitherDoorsConfig.getInstance();
+        WitherDoorsRenderer.draw(context, CACHED, cfg.isThroughWalls(), cfg.getStyle(), cfg.getFillOpacity() / 100f);
+    }
+}

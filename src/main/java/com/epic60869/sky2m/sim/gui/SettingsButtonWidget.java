@@ -1,0 +1,187 @@
+/*
+ * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
+ * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ */
+package com.epic60869.sky2m.sim.gui;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarratedElementType;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+
+/** Drop-in replacement for vanilla {@link net.minecraft.client.gui.components.Button}, matching its
+ *  builder API shape exactly (same method names/chaining, a {@code Component}+{@code OnPress}
+ *  constructor argument pair, {@code .bounds(x,y,w,h).build()}) so every existing
+ *  {@code Button.builder(...)} call site across the mod's tab files converts to
+ *  {@code SettingsButtonWidget.builder(...)} with just the class name changed - no other code needed to
+ *  change, since {@code btn -> { ...; btn.setMessage(...); }} lambdas keep working unchanged (this class
+ *  also extends {@link AbstractWidget} and exposes the same inherited {@code getMessage()}/
+ *  {@code setMessage(Component)}) and embedded legacy "§" color codes in a label still render correctly
+ *  via the {@code Component} text-draw overload, exactly like vanilla {@code Button} already did.
+ *  <p>
+ *  Built (2026-09-07), part 2 of the black+amber GUI overhaul: vanilla {@code Button} has no way to
+ *  recolor its own fixed 9-slice texture, so once the menu chrome (phase 1) was reworked, every actual
+ *  settings control still rendered as a plain grey vanilla button, clashing with the new theme - per
+ *  killer560's "make those boxes a different color, something more fitting." Deliberately styled with a
+ *  DIMMER border than {@link MenuRowWidget}'s accordion headers (full amber, always) so headers still
+ *  visually lead over individual controls instead of every box in the menu competing at once.
+ *  <p>
+ *  Extended (2026-09-27) per killer560's "for the sort buttons or any button that toggles through a
+ *  bunch of options, make it so if i right click then it goes back one" - a second, optional
+ *  {@code OnPress} set via {@code .secondaryPress(...)} fires on right-click instead of left. Left-click
+ *  is untouched: {@code onClick(...)} below is still only ever invoked by vanilla's own left-button-only
+ *  {@code mouseClicked}, so every existing call site with no {@code secondaryPress} keeps behaving
+ *  exactly as before (right-click on it simply does nothing, same as pre-2026-09-27). Only call sites
+ *  that opt in with {@code .secondaryPress(...)} - the enum-cycling buttons - respond to right-click. */
+public final class SettingsButtonWidget extends AbstractWidget {
+
+    private static final int BORDER = 0xFF663D1A;
+    private static final int BORDER_HOVER = 0xFFCC6600;
+    private static final int BG = 0xFF1A1A1A;
+    private static final int BG_HOVER = 0xFF262626;
+    private static final int TEXT = 0xFFFFFFFF;
+    /** The {@link Builder#primary()} style: an amber-filled box with a full-amber border, for a screen's one main
+     *  action (the Auto Routes node editor's Go To) so it reads first among plain buttons. */
+    private static final int PRIMARY_BORDER = 0xFFCC6600;
+    private static final int PRIMARY_BORDER_HOVER = 0xFFFFA040;
+    private static final int PRIMARY_BG = 0xFF4A2A08;
+    private static final int PRIMARY_BG_HOVER = 0xFF63380B;
+
+    public interface OnPress {
+        void onPress(SettingsButtonWidget button);
+    }
+
+    private final OnPress onPress;
+    private final OnPress onSecondaryPress;
+    private final boolean primary;
+
+    private SettingsButtonWidget(Component message, OnPress onPress, OnPress onSecondaryPress, boolean primary,
+            int x, int y, int width, int height) {
+        super(x, y, width, height, message);
+        this.onPress = onPress;
+        this.onSecondaryPress = onSecondaryPress;
+        this.primary = primary;
+    }
+
+    public static Builder builder(Component message, OnPress onPress) {
+        return new Builder(message, onPress);
+    }
+
+    public static final class Builder {
+        private final Component message;
+        private final OnPress onPress;
+        private OnPress onSecondaryPress;
+        private boolean primary;
+        private int x;
+        private int y;
+        private int width = 150;
+        private int height = 20;
+
+        private Builder(Component message, OnPress onPress) {
+            this.message = message;
+            this.onPress = onPress;
+        }
+
+        public Builder bounds(int x, int y, int width, int height) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            return this;
+        }
+
+        /** Right-click handler - used by cycling/toggle buttons to step backwards instead of forwards.
+         *  Left unset (the default) for ordinary buttons, so right-click on them stays a no-op. */
+        public Builder secondaryPress(OnPress onSecondaryPress) {
+            this.onSecondaryPress = onSecondaryPress;
+            return this;
+        }
+
+        /** Draws this as the screen's primary action (amber fill and border) instead of the plain dark box. */
+        public Builder primary() {
+            this.primary = true;
+            return this;
+        }
+
+        public SettingsButtonWidget build() {
+            return new SettingsButtonWidget(message, onPress, onSecondaryPress, primary, x, y, width, height);
+        }
+    }
+
+    @Override
+    protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        int x0 = getX();
+        int y0 = getY();
+        int bg = primary ? (isHovered ? PRIMARY_BG_HOVER : PRIMARY_BG) : (isHovered ? BG_HOVER : BG);
+        int border = primary ? (isHovered ? PRIMARY_BORDER_HOVER : PRIMARY_BORDER) : (isHovered ? BORDER_HOVER : BORDER);
+        graphics.fill(x0, y0, x0 + getWidth(), y0 + getHeight(), faded(bg));
+        graphics.outline(x0, y0, getWidth(), getHeight(), faded(border));
+        graphics.centeredText(Minecraft.getInstance().font, getMessage(), x0 + getWidth() / 2,
+                y0 + (getHeight() - 8) / 2, faded(TEXT));
+    }
+
+    /**
+     * Draws a box in this button's style, for a widget that has to be its own class but must look like one of these
+     * (the sim's filter chips, which carry a row and a selected state). {@code selected} is the mod's "this one is
+     * chosen" look: the full-amber border this button shows on hover, kept on, with the label in §6 by the caller.
+     */
+    public static void drawBox(GuiGraphicsExtractor graphics, int x, int y, int w, int h, boolean hovered,
+            boolean selected) {
+        int border = selected ? (hovered ? PRIMARY_BORDER_HOVER : BORDER_HOVER) : (hovered ? BORDER_HOVER : BORDER);
+        graphics.fill(x, y, x + w, y + h, hovered ? BG_HOVER : BG);
+        graphics.outline(x, y, w, h, border);
+    }
+
+    /**
+     * This colour at the widget's current opacity.
+     *
+     * <p>Every colour here was a hardcoded {@code 0xFF......}, so the widget drew fully opaque no matter what
+     * {@link #setAlpha} had been told. That is why the Dungeon Sim button did not fade in with the rest of the
+     * title screen (killer560, 2026-09-28 and again 2026-09-30).
+     *
+     * <p>Checked against the mapped 26.1.2 jar rather than assumed, because the first look was misleading:
+     * {@code TitleScreen} contains no {@code setAlpha} call at all. It calls {@code Screen.fadeWidgets(float)},
+     * and THAT walks {@code children()} calling {@code AbstractWidget.setAlpha} on every one. Our button is in
+     * that list and was being handed the right number every frame - it just threw it away.
+     *
+     * <p>Fixed here rather than on the menu, because it is true of the button everywhere it is used - anything
+     * that fades a screen holding one had the same problem.
+     */
+    private int faded(int argb) {
+        float a = Math.max(0f, Math.min(1f, this.alpha));
+        if (a >= 1f) {
+            return argb;
+        }
+        int base = (argb >>> 24) & 0xFF;
+        return (Math.round(base * a) << 24) | (argb & 0x00FFFFFF);
+    }
+
+    @Override
+    public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        if (onPress != null) {
+            onPress.onPress(this);
+        }
+    }
+
+    /** Vanilla's own {@code mouseClicked} only ever calls {@code onClick} above for the left button
+     *  (button 0), so left-click behavior here is completely untouched - this only adds a right-click
+     *  (button 1) path, and only when a {@code secondaryPress} was actually set, so a plain button with
+     *  no cycling behavior can never have right-click do anything. */
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (onSecondaryPress != null && active && visible && event.button() == 1
+                && isMouseOver(event.x(), event.y())) {
+            onSecondaryPress.onPress(this);
+            return true;
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
+    protected void updateWidgetNarration(NarrationElementOutput output) {
+        output.add(NarratedElementType.TITLE, getMessage());
+    }
+}

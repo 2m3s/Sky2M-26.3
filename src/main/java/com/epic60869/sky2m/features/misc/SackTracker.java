@@ -89,6 +89,7 @@ public final class SackTracker {
         String title = ChatFormatting.stripFormatting(screen.getTitle().getString());
         if (!title.contains("Sack") || title.contains("Sack of Sacks")) return;
         boolean changed = false;
+        boolean read = false;
         int containerSize = screen.getMenu().slots.size() - 36;
         for (Slot slot : screen.getMenu().slots) {
             if (slot.index >= containerSize) break;
@@ -103,9 +104,12 @@ public final class SackTracker {
                 long amount = Long.parseLong(m.group(1).replace(",", ""));
                 Long old = profile().put(name, amount);
                 if (old == null || old != amount) changed = true;
+                read = true;
                 break;
             }
         }
+        // A sack menu was read: the "(reopen sacks)" hint can go.
+        if (read && STALE.remove(profileKey())) changed = true;
         if (changed) changed();
     }
 
@@ -129,7 +133,94 @@ public final class SackTracker {
             if (e.getValue() != 0) for (var listener : CHANGE_LISTENERS) listener.accept(e.getKey(), e.getValue());
         }
         Map<String, Long> sacks = profile();
-        for (Map.Entry<String, Long> e : net.entrySet()) sacks.merge(e.getKey(), e.getValue(), (a, b) -> Math.max(0, a + b));
+        for (Map.Entry<String, Long> e : net.entrySet()) {
+            long delta = e.getValue();
+            // Already taken out for a bazaar sale (removeSold): don't take it out twice if Hypixel reports it too.
+            if (delta < 0) delta = -absorbSold(e.getKey(), -delta);
+            if (delta != 0) sacks.merge(e.getKey(), delta, (a, b) -> Math.max(0, a + b));
+        }
+        changed();
+    }
+
+    // ----- Bazaar sales and staleness (Sacks Value) -----
+
+    /** Lower-case item name -> {amount taken out by removeSold, when}, so a later "[Sacks]" -X isn't counted again. */
+    private static final Map<String, long[]> RECENTLY_SOLD = new ConcurrentHashMap<>();
+    /** Profiles whose model is known to be off (a bulk bazaar sale with no per-item amounts) until a sack menu is opened. */
+    private static final Set<String> STALE = ConcurrentHashMap.newKeySet();
+
+    private static long absorbSold(String name, long removed) {
+        long[] sold = RECENTLY_SOLD.get(name);
+        if (sold == null) return removed;
+        if (System.currentTimeMillis() - sold[1] > 60_000L) {
+            RECENTLY_SOLD.remove(name);
+            return removed;
+        }
+        long absorbed = Math.min(removed, sold[0]);
+        sold[0] -= absorbed;
+        if (sold[0] <= 0) RECENTLY_SOLD.remove(name);
+        return removed - absorbed;
+    }
+
+    /** A copy of the current profile's sacks: lower-case item name -> amount. */
+    public static Map<String, Long> snapshot() {
+        return new HashMap<>(profile());
+    }
+
+    /** The current profile's id in the save file ("default" before it's known), to notice profile switches. */
+    public static String profileKey() {
+        String id = Sky2MStorageSearch.currentProfile();
+        return id.isEmpty() ? "default" : id;
+    }
+
+    /**
+     * Takes up to {@code amount} of an item (plain name, any case) out of the sacks, for a bazaar sale that took it
+     * from them. Returns how many were taken (never more than the sacks were known to hold).
+     */
+    public static long removeSold(String itemName, long amount) {
+        if (amount <= 0) return 0;
+        Map<String, Long> sacks = profile();
+        String key = findKey(sacks, itemName);
+        if (key == null) return 0;
+        long have = sacks.getOrDefault(key, 0L);
+        long taken = Math.min(have, amount);
+        if (taken <= 0) return 0;
+        sacks.put(key, have - taken);
+        RECENTLY_SOLD.merge(key, new long[]{taken, System.currentTimeMillis()},
+            (a, b) -> new long[]{a[0] + b[0], b[1]});
+        changed();
+        return taken;
+    }
+
+    /** The key an item name is saved under: exact (lower-case), else ignoring symbols (gemstone glyphs). */
+    private static String findKey(Map<String, Long> sacks, String itemName) {
+        String exact = ChatFormatting.stripFormatting(itemName).trim().toLowerCase(Locale.ROOT);
+        if (sacks.containsKey(exact)) return exact;
+        String loose = loose(exact);
+        if (loose.isEmpty()) return null;
+        for (String key : sacks.keySet()) if (loose(key).equals(loose)) return key;
+        return null;
+    }
+
+    private static String loose(String name) {
+        return name.replaceAll("[^\\p{L}\\p{N}' -]", "").replaceAll("\\s+", " ").trim().toLowerCase(Locale.ROOT);
+    }
+
+    /** Marks the current profile's sacks as unknown until a sack menu is opened again. */
+    public static void markStale() {
+        if (STALE.add(profileKey())) changed();
+    }
+
+    /** Whether the current profile's sacks need a sack menu opened to be right again. */
+    public static boolean isStale() {
+        return STALE.contains(profileKey());
+    }
+
+    /** Forgets everything in the current profile's sacks (/s2 resetsacks). */
+    public static void reset() {
+        profile().clear();
+        STALE.remove(profileKey());
+        RECENTLY_SOLD.clear();
         changed();
     }
 

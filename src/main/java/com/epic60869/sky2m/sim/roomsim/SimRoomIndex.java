@@ -1,0 +1,186 @@
+/*
+ * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
+ * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ */
+package com.epic60869.sky2m.sim.roomsim;
+
+import com.epic60869.sky2m.sim.livemap.DungeonLayout;
+import com.epic60869.sky2m.sim.roomdatabase.RoomDatabase;
+import com.epic60869.sky2m.sim.roomdatabase.RoomEntry;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+/**
+ * What room is where, for a floor the sim built.
+ *
+ * <p>killer560 (2026-09-29): "Then the secret waypoints need to show in rooms."
+ *
+ * <p>Secret Waypoints asks {@code LiveMapFeature} which rooms have been identified and where each one's clay
+ * corner is, and {@code LiveMapFeature} works that out by reading the dungeon map ITEM off the real server.
+ * The sim has no map item, so that list was always empty and the waypoints had nothing to draw - not because
+ * the feature was off, but because it was asking a question only Hypixel can answer.
+ *
+ * <p>The sim already knows the answer exactly - it placed the rooms - so it records them here in the shape
+ * Secret Waypoints already consumes. No new transform: the clay corner is computed by the same code
+ * {@link SimSecrets} uses to put the secrets there in the first place, so a waypoint cannot end up somewhere
+ * the secret is not. That is the whole reason the sim shares the transform rather than owning a second one.
+ */
+public final class SimRoomIndex {
+
+    /**
+     * One placed room.
+     *
+     * @param clayX the corner the room database's relative coordinates are measured from, at this rotation
+     * @param rotation the DATABASE rotation, not the rotation the room was pasted at - the paste rotation
+     *                 decides the footprint, but everything downstream of this record is translating database
+     *                 coordinates, and those two numbers differ by the capture's own turn
+     *                 ({@link RoomCaptureRotation}) in 88 of his 122 identifiable rooms
+     * @param cells the 11x11 grid cells this room covers, so "am I in it" is a lookup
+     * @param gridX the 11x11 grid coordinates of the room's top-left cell - kept because
+     *              {@link SimRoomPuzzles} has to recompute the clay corner at a DIFFERENT rotation when it
+     *              checks a puzzle's own furniture against the room, and {@code clayX}/{@code clayZ} alone
+     *              cannot be turned back into a corner
+     * @param pasteRotation the rotation the room was physically pasted at, which is what decides its
+     *                      footprint - {@code rotation} above is that plus the capture's own turn
+     */
+    public record Placed(String name, int clayX, int clayZ, int rotation, int[] cells,
+                         int gridX, int gridZ, int pasteRotation) {
+    }
+
+    private static final List<Placed> ROOMS = new CopyOnWriteArrayList<>();
+
+    private SimRoomIndex() {
+    }
+
+    /** Forgets the floor. Called before a build, so a new floor never shows the last one's waypoints. */
+    public static void clear() {
+        ROOMS.clear();
+    }
+
+    /**
+     * Records a placed room.
+     *
+     * @param gridX the 11x11 grid coordinates of the room's top-left cell
+     */
+    public static void add(RoomLibrary.Room room, int gridX, int gridZ, int rotation) {
+        if (room == null) {
+            return;
+        }
+        // Must match what SimSecrets actually did, or the waypoints point at where the secrets are not -
+        // and the waypoints are the thing being practised against.
+        int dbRotation = Math.floorMod(rotation + RoomCaptureRotation.of(room), 360);
+        int[] clay = SimSecrets.clayCorner(room, gridX, gridZ, rotation, dbRotation);
+        int tilesX = (rotation == 90 || rotation == 270)
+                ? tiles(room.sizeZ) : tiles(room.sizeX);
+        int tilesZ = (rotation == 90 || rotation == 270)
+                ? tiles(room.sizeX) : tiles(room.sizeZ);
+        List<Integer> cells = new ArrayList<>();
+        for (int a = 0; a < tilesX; a++) {
+            for (int b = 0; b < tilesZ; b++) {
+                int gx = gridX + a * 2;
+                int gz = gridZ + b * 2;
+                if (gx >= 0 && gz >= 0 && gx < DungeonLayout.GRID && gz < DungeonLayout.GRID) {
+                    cells.add(gz * DungeonLayout.GRID + gx);
+                }
+            }
+        }
+        int[] cellArray = new int[cells.size()];
+        for (int i = 0; i < cellArray.length; i++) {
+            cellArray[i] = cells.get(i);
+        }
+        ROOMS.add(new Placed(room.name, clay[0], clay[1], dbRotation, cellArray, gridX, gridZ, rotation));
+    }
+
+    /** Every placed room on the floor, in paste order. Read by {@link SimRoomPuzzles} to arm the puzzles. */
+    public static List<Placed> placed() {
+        return List.copyOf(ROOMS);
+    }
+
+    /**
+     * Re-records one room's corner and rotation, because its own FURNITURE disagreed with the recovered turn.
+     *
+     * <p>{@link RoomCaptureRotation} is recovered rather than recorded, and {@code docs/SIM.md} puts that
+     * recovery at 120 of 135 rooms - so for a handful of rooms the turn this class computed is wrong.
+     * {@link SimRoomPuzzles#bestAnchor} already catches exactly those: it scores a puzzle's own blocks at all
+     * four rotations against the room as it stands in the world and logs a warning when the winner is not the
+     * recorded one. The blocks are the harder evidence (they are the thing being bound to), and until now only
+     * the PUZZLE followed them - the live map, and therefore every solver, Secret Waypoints, Auto Routes and
+     * the interactive map, carried on using the rotation that had just been shown to be wrong. One room, two
+     * answers.
+     *
+     * <p>Called during {@link SimRoomPuzzles#armFloor}, which runs before the floor is published, so the
+     * correction reaches the map in the same build rather than the next one.
+     *
+     * @return whether a room at that cell was found and updated
+     */
+    public static boolean correct(int gridX, int gridZ, int clayX, int clayZ, int rotation) {
+        for (int i = 0; i < ROOMS.size(); i++) {
+            Placed p = ROOMS.get(i);
+            if (p.gridX() != gridX || p.gridZ() != gridZ) {
+                continue;
+            }
+            ROOMS.set(i, new Placed(p.name(), clayX, clayZ, rotation, p.cells(), p.gridX(), p.gridZ(),
+                    p.pasteRotation()));
+            return true;
+        }
+        return false;
+    }
+
+    private static int tiles(int size) {
+        return Math.max(1, (size - 1) / (RoomLibrary.TILE + 1));
+    }
+
+    /** Every placed room, in the {@code {id, clayX, clayZ, rotation}} shape Secret Waypoints already reads. */
+    public static List<int[]> identifiedRoomsWithRotation() {
+        // One snapshot per call: these are read on the render thread while a rebuild clears and refills ROOMS on
+        // the server thread, and a size check followed by get(i) on the live list can throw between the two.
+        List<Placed> rooms = List.copyOf(ROOMS);
+        List<int[]> out = new ArrayList<>(rooms.size());
+        for (int i = 0; i < rooms.size(); i++) {
+            Placed p = rooms.get(i);
+            out.add(new int[]{i, p.clayX(), p.clayZ(), p.rotation()});
+        }
+        return out;
+    }
+
+    /** The room database entry for a placed room, or null when that room is not in the database. */
+    public static RoomEntry roomEntryAt(int id) {
+        List<Placed> rooms = List.copyOf(ROOMS);
+        if (id < 0 || id >= rooms.size()) {
+            return null;
+        }
+        return RoomDatabase.lookupByName(rooms.get(id).name());
+    }
+
+    /** Whether a placed room covers a grid cell. */
+    public static boolean roomHasCell(int id, int cell) {
+        List<Placed> rooms = List.copyOf(ROOMS);
+        if (id < 0 || id >= rooms.size()) {
+            return false;
+        }
+        for (int c : rooms.get(id).cells()) {
+            if (c == cell) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The name of the room covering a grid cell, or null. */
+    public static String nameAtCell(int cell) {
+        for (Placed p : ROOMS) {
+            for (int c : p.cells()) {
+                if (c == cell) {
+                    return p.name();
+                }
+            }
+        }
+        return null;
+    }
+
+    public static int size() {
+        return ROOMS.size();
+    }
+}

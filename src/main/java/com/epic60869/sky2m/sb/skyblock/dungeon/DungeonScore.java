@@ -293,6 +293,15 @@ public class DungeonScore {
 		return mimicKilled || (floorHasMimics && getSecretsPercentage() >= 100);
 	}
 
+	// Sky2M: the Mimic was seen dying (or a teammate said so), not guessed from the secrets, for the kill titles.
+	public static boolean wasMimicSeenKilled() {
+		return mimicKilled;
+	}
+
+	public static boolean wasBatKilled() {
+		return batKilled;
+	}
+
 	public static boolean floorHasMimics() {
 		return floorHasMimics;
 	}

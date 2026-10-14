@@ -24,7 +24,8 @@
   "mixins": [
     "sky2m.mixins.json",
     "sky2m.commandkeys.mixins.json",
-    "sky2m.sb.mixins.json"
+    "sky2m.sb.mixins.json",
+    "sky2m-sim.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.19.5",

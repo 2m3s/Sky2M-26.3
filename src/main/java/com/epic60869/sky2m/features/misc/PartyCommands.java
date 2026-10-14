@@ -193,6 +193,16 @@ public final class PartyCommands {
         }
     }
 
+    /** The party members Sky2M knows of (not you), for Best Friends. */
+    public static java.util.List<String> members() {
+        return java.util.List.copyOf(members);
+    }
+
+    /** The party leader's name if known (it may be you), else null. */
+    public static String leader() {
+        return leader;
+    }
+
     private static void addMember(String name) {
         if (name == null || name.equalsIgnoreCase(me())) return;
         members.removeIf(n -> n.equalsIgnoreCase(name));

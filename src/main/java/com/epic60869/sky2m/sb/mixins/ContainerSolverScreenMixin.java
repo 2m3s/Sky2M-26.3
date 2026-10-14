@@ -42,6 +42,16 @@ public abstract class ContainerSolverScreenMixin {
 			ci.cancel();
 			return;
 		}
+		// Sky2M: Auction Price Guard stops listing far too cheap or buying far too dear until you click again.
+		if (com.epic60869.sky2m.features.misc.AuctionGuard.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot)) {
+			ci.cancel();
+			return;
+		}
+		// Sky2M: Hunting > Prevent Huntrap Misclick.
+		if (com.epic60869.sky2m.features.hunting.HuntingFeatures.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot)) {
+			ci.cancel();
+			return;
+		}
 		com.epic60869.sky2m.features.misc.PricePaid.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot);
 		// Sky2M: visitor reward warning (blocked offer buttons) and the Supercraft button.
 		if (com.epic60869.sky2m.features.garden.visitor.GardenVisitors.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot, input)) {

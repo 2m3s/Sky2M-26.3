@@ -330,6 +330,17 @@ public final class DungeonFeatures {
         if (splitMessagesEnabled()) Sky2MAlerts.chat(Component.literal(prefix + fixed(seconds) + "s§7! " + suffix));
     }
 
+    /** This run's finished splits as {name without colours, milliseconds}, for Run History. */
+    public static List<Object[]> finishedSplits() {
+        List<Object[]> out = new ArrayList<>();
+        for (int i = 0; i + 1 < SPLITS.size(); i++) {
+            Split split = SPLITS.get(i), next = SPLITS.get(i + 1);
+            if (split.time == 0 || next.time == 0) break;
+            out.add(new Object[]{net.minecraft.ChatFormatting.stripFormatting(split.name), next.time - split.time});
+        }
+        return out;
+    }
+
     private static List<SplitRow> currentRows() {
         List<SplitRow> rows = new ArrayList<>();
         if (SPLITS.isEmpty() || SPLITS.getFirst().time == 0) return rows;

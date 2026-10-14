@@ -119,8 +119,16 @@ public final class ScoreCalculator {
     public static int deaths() { return deathCount; }
     public static double secretPercentage() { return secretPercentage; }
     public static int secondsElapsed() { return secondsElapsed; }
-    public static boolean mimicKilled() { return mimicKilled || DungeonScore.wasMimicKilled(); }
-    public static boolean princeKilled() { return princeKilled || DungeonScore.wasPrinceKilled(); }
+    public static boolean mimicKilled() { return mimicKilled || DungeonScore.wasMimicKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.MIMIC_KILLED); }
+    /** Like {@link #mimicKilled()}, but only when someone saw it die, not guessed from all the secrets being found. */
+    public static boolean mimicSeenKilled() { return mimicKilled || DungeonScore.wasMimicSeenKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.MIMIC_KILLED); }
+    public static boolean princeKilled() { return princeKilled || DungeonScore.wasPrinceKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.PRINCE_KILLED); }
+
+    /** A teammate's Sky2M (or another mod's party socket) said this happened (Party Dungeon Data). */
+    private static boolean teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag flag) {
+        var fact = com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.flagFact(flag);
+        return fact != null && fact.source() != com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Source.SELF;
+    }
 
     public static int floorNumber() {
         String floor = Sky2MLocation.dungeonFloor();

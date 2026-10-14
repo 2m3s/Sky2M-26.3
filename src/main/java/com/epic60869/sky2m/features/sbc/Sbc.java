@@ -66,6 +66,7 @@ public final class Sbc {
                     error(message.isBlank() ? "The Sky2M server refused that (" + str(packet, "code") + ")." : message);
                 }
                 case "museumResult" -> com.epic60869.sky2m.features.misc.MuseumTooltip.handle(packet);
+                case "partyData" -> com.epic60869.sky2m.features.dungeons.party.PartyDungeonData.handle(packet);
                 case "updateAvailable", "announcement", "motd" -> SbcServer.handle(type, packet);
                 case "reactions", "reactionError", "chatBlocked", "muted", "unmuted" -> SbcChat.handle(type, packet);
                 case "cosmetics", "cosmeticsProfile", "cosmeticsError", "badgeEarned" -> SbcCosmetics.handle(type, packet);
@@ -84,10 +85,24 @@ public final class Sbc {
     /** Called by Sky2MGlobalChat on the game thread whenever a new connection is open (after hello). */
     public static void onConnected() {
         SbcSocial.onConnected();
+        SbcCosmetics.onConnected();
     }
 
-    /** Called on the game thread when the connection closes. */
+    /**
+     * Called on the game thread when the connection closes (Sky2MGlobalChat dispatches it with execute). Drops what
+     * was only true while connected, so screens show "offline" instead of old data, and forgets the login.
+     */
     public static void onDisconnected() {
+        // An old socket closing late (onClose and onError fire for it too) mustn't wipe the newer connection's state.
+        if (SbcNet.online()) return;
+        try {
+            com.epic60869.sky2m.Sky2MLogin.onDisconnected();
+            SbcSocial.onDisconnected();
+            SbcCosmetics.onDisconnected();
+            com.epic60869.sky2m.Sky2MPartyFinder.onDisconnected();
+        } catch (Exception e) {
+            SbcCrashReports.report(e, "S2C disconnect");
+        }
     }
 
     // ------------------------------------------------------------------------------------------------ chat helpers

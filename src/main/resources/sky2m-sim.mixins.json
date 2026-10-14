@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "package": "com.epic60869.sky2m.sim.roomsim.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "SimFovMixin",
+    "SimGameModeInvoker",
+    "SimPlayerInfoPacketAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

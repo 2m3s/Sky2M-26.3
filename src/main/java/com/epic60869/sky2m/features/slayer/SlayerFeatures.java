@@ -66,7 +66,7 @@ public final class SlayerFeatures {
     private static void tick(Minecraft mc) {
         FeatureConfigs.Slayer config = config();
         boolean needed = (config != null && config.phaseDisplay) || SlayerTimes.enabled()
-            || EndermanSlayer.needsBoss() || BlazeSlayer.needsBoss();
+            || EndermanSlayer.needsBoss() || BlazeSlayer.needsBoss() || SlayerPhaseTimer.needsBoss() || VoidgloomLasers.needsBoss();
         // Without an explicit target, only scan during your quest; a selected player's boss can be observed separately.
         if (mc.player == null || mc.level == null || !needed || !Sky2MLocation.onSkyblock()
             || (selectedBossOwner == null && !onSlayerQuest())) {
@@ -153,12 +153,16 @@ public final class SlayerFeatures {
         String name = mc.player.getGameProfile().name().toLowerCase(Locale.ROOT);
         List<Entity> owners = ownerTags(mc);
         Entity ownOwner = owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), name)).findFirst().orElse(null);
+        if (ownOwner == null) ownOwner = unclaimedBossLabel(mc, owners);
         boss = ownOwner == null ? null : mobNear(mc, ownOwner);
         List<Component> ownLines = ownOwner == null ? List.of() : bossHealthLines(mc, ownOwner);
-        SlayerTimes.onBoss(ownLines.isEmpty() ? null : Sky2MLocation.strip(ownLines.get(0).getString()));
+        String ownText = ownLines.isEmpty() ? null : Sky2MLocation.strip(ownLines.get(0).getString());
+        SlayerTimes.onBoss(ownText);
+        SlayerPhaseTimer.onBoss(ownText);
 
         String targetOwner = selectedBossOwner == null ? name : selectedBossOwner;
-        Entity owner = owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), targetOwner)).findFirst().orElse(null);
+        Entity owner = targetOwner.equals(name) ? ownOwner
+            : owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), targetOwner)).findFirst().orElse(null);
         List<Component> lines = new ArrayList<>();
         if (owner != null) {
             // Someone else's boss picked with the cycle key: everything that follows "the boss" follows theirs.
@@ -179,6 +183,30 @@ public final class SlayerFeatures {
         FeatureConfigs.Slayer config = config();
         if (config != null && config.showMinibosses) addMinibossLines(mc, lines);
         bossLines = lines;
+    }
+
+    /**
+     * Your boss when Hypixel doesn't put a "Spawned by: you" line on it (it no longer always does): while the
+     * scoreboard says "Slay the boss!", the nearest "SLAYER BOSS" nametag that no one else's "Spawned by" line is next to.
+     */
+    private static Entity unclaimedBossLabel(Minecraft mc, List<Entity> owners) {
+        boolean slaying = false;
+        for (String line : Sky2MLocation.scoreboard()) if (line.contains("Slay the boss")) slaying = true;
+        if (!slaying) return null;
+        List<Entity> labels = mc.level.getEntities((Entity) null, mc.player.getBoundingBox().inflate(SEARCH_RANGE), e -> {
+            Component tag = nametag(e);
+            if (tag == null) return false;
+            for (Component line : splitLines(tag)) {
+                if (Sky2MLocation.strip(line.getString()).trim().equalsIgnoreCase("SLAYER BOSS")) return true;
+            }
+            return false;
+        });
+        labels.sort(Comparator.comparingDouble(mc.player::distanceToSqr));
+        for (Entity label : labels) {
+            if (owners.stream().anyMatch(owner -> owner.distanceToSqr(label) < 4 * 4)) continue;
+            if (!bossHealthLines(mc, label).isEmpty()) return label;
+        }
+        return null;
     }
 
     /** A "SLAYER BOSS" / "SLAYER MINIBOSS" nametag line around {@code anchor}, or null. */
@@ -249,6 +277,19 @@ public final class SlayerFeatures {
         maxHealth = 0;
         phaseBoss = "";
         SlayerTimes.onBoss(null);
+        SlayerPhaseTimer.onBoss(null);
+    }
+
+    /** The lower-case name in a "Spawned by: Name" nametag, or null (for the Carry Tracker). */
+    public static String spawnedBy(Entity entity) {
+        Component tag = nametag(entity);
+        return tag == null ? null : ownerName(tag.getString());
+    }
+
+    /** The slayer boss under a "Spawned by" nametag, or null. */
+    public static LivingEntity bossUnder(Entity tag) {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level == null ? null : mobNear(mc, tag);
     }
 
     /** Your slayer boss (the mob under your "Spawned by" nametag), or null without one. */

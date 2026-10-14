@@ -10,17 +10,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.ItemStack;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,25 +24,45 @@ import java.util.regex.Pattern;
  * Skyblocker uses (hysky.de); NPC prices come from the Hypixel items API.
  */
 public final class Sky2MPriceTooltip {
-    private static final String LOWEST_BINS_URL = "https://hysky.de/api/auctions/lowestbins";
-    private static final String AVERAGE_URL = "https://hysky.de/api/auctions/lowestbins/average?days=3";
-    private static final String NPC_URL = "https://api.hypixel.net/v2/resources/skyblock/items";
-    private static final String BAZAAR_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
     /** "Stored: 1,234/2,240" on items in the Sacks menu. */
     private static final Pattern SACK_STORED = Pattern.compile("^Stored: ([\\d,]+)/");
-    private static final long REFRESH_MS = 60_000;
     private static final Pattern PET_LEVEL = Pattern.compile("\\[Lvl (\\d+)]");
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
-    private static volatile Map<String, Double> lowestBins = Map.of();
-    private static volatile Map<String, Double> threeDayAverage = Map.of();
+    /** NPC sell prices, built from {@link PriceService}'s item list (the same data Skyblocker's NPC price tooltip uses). */
     private static volatile Map<String, Double> npcPrices = Map.of();
-    private static volatile Map<String, Double> bazaarBuy = Map.of();
-    private static volatile Map<String, Double> bazaarSell = Map.of();
-    private static final AtomicBoolean REFRESHING = new AtomicBoolean();
-    private static volatile long lastRefresh;
+
+    static {
+        PriceService.onItems(items -> {
+            Map<String, Double> result = new HashMap<>();
+            for (JsonObject item : items.values()) {
+                try {
+                    if (item.has("id") && item.has("npc_sell_price")) {
+                        result.put(item.get("id").getAsString(), item.get("npc_sell_price").getAsDouble());
+                    }
+                } catch (Exception ignored) {}
+            }
+            npcPrices = result;
+        });
+    }
 
     private Sky2MPriceTooltip() {}
+
+    // Live market snapshots, shared with every other price feature through PriceService.
+    private static Map<String, Double> lowestBins() {
+        return PriceService.lowestBins();
+    }
+
+    private static Map<String, Double> threeDayAverage() {
+        return PriceService.threeDayAverages();
+    }
+
+    private static Map<String, Double> bazaarBuy() {
+        return PriceService.bazaar().buy();
+    }
+
+    private static Map<String, Double> bazaarSell() {
+        return PriceService.bazaar().sell();
+    }
 
     public static void init() {
         ItemTooltipCallback.EVENT.register((stack, context, flag, lines) -> {
@@ -62,9 +75,9 @@ public final class Sky2MPriceTooltip {
     /** What one {@code id} is worth: bazaar insta-sell, else lowest BIN (or last seen), else NPC sell. 0 if unknown. */
     public static double unitPrice(String id) {
         refreshIfStale();
-        Double sell = bazaarSell.get(id);
+        Double sell = bazaarSell().get(id);
         if (sell != null && sell > 0) return sell;
-        Double bin = lowestBins.get(id);
+        Double bin = lowestBins().get(id);
         if (bin != null) return bin;
         PriceHistory.Seen seen = PriceHistory.get(id);
         if (seen != null) return seen.price();
@@ -79,12 +92,12 @@ public final class Sky2MPriceTooltip {
     public static double price(String id, com.epic60869.sky2m.features.FeatureConfigs.ProfitPriceSource source) {
         refreshIfStale();
         Double price = switch (source) {
-            case INSTANT_SELL, BUY_ORDER -> bazaarSell.get(id);
-            case SELL_ORDER -> bazaarBuy.get(id);
+            case INSTANT_SELL, BUY_ORDER -> bazaarSell().get(id);
+            case SELL_ORDER -> bazaarBuy().get(id);
             case NPC_SELL -> npcPrices.get(id);
         };
         if (price != null && price > 0) return price;
-        Double bin = lowestBins.get(id);
+        Double bin = lowestBins().get(id);
         if (bin != null && bin > 0) return bin;
         PriceHistory.Seen seen = PriceHistory.get(id);
         return seen == null ? 0 : seen.price();
@@ -92,9 +105,9 @@ public final class Sky2MPriceTooltip {
 
     /** What it costs to get one {@code id}: bazaar insta-buy, else lowest BIN (or last seen). 0 if unknown. */
     public static double costPrice(String id) {
-        Double buy = bazaarBuy.get(id);
+        Double buy = bazaarBuy().get(id);
         if (buy != null && buy > 0) return buy;
-        Double bin = lowestBins.get(id);
+        Double bin = lowestBins().get(id);
         if (bin != null && bin > 0) return bin;
         PriceHistory.Seen seen = PriceHistory.get(id);
         return seen == null ? 0 : seen.price();
@@ -103,25 +116,52 @@ public final class Sky2MPriceTooltip {
     /** The bazaar insta-buy price, or null (the Item List calculator's bz()). */
     public static Double bazaarBuyPrice(String id) {
         refreshIfStale();
-        return bazaarBuy.get(id);
+        return bazaarBuy().get(id);
     }
 
     /** The bazaar insta-sell price, or null. */
     public static Double bazaarSellPrice(String id) {
         refreshIfStale();
-        return bazaarSell.get(id);
+        return bazaarSell().get(id);
     }
 
     /** The lowest BIN, or null (the Item List calculator's lb()). */
     public static Double lowestBinPrice(String id) {
         refreshIfStale();
-        return lowestBins.get(id);
+        return lowestBins().get(id);
     }
 
     /** The NPC sell price, or null (the Item List calculator's npc()). */
     public static Double npcSellPrice(String id) {
         refreshIfStale();
         return npcPrices.get(id);
+    }
+
+    /**
+     * What an item is worth, with what's applied to it (Estimated Item Value), times its count; 0 when it has no
+     * price. For the Profile Viewer's networth.
+     */
+    public static double itemValue(ItemStack stack) {
+        String id = Compat.neuName(stack);
+        if (id.isEmpty()) return 0;
+        String apiId = apiId(stack, id);
+        double value = EstimatedItemValue.estimate(id, apiId, Compat.customDataView(stack));
+        if (value <= 0) value = costPrice(apiId);
+        return value * Math.max(1, stack.getCount());
+    }
+
+    /** Every bazaar product id with a sell price ("ENCHANTMENT_SHARPNESS_5", "ENCHANTED_DIAMOND", ...). */
+    public static java.util.Set<String> bazaarIds() {
+        refreshIfStale();
+        return bazaarSell().keySet();
+    }
+
+    /** Every item id with a lowest BIN or 3 day average, i.e. sold on the Auction House. */
+    public static java.util.Set<String> auctionIds() {
+        refreshIfStale();
+        java.util.Set<String> ids = new java.util.HashSet<>(lowestBins().keySet());
+        ids.addAll(threeDayAverage().keySet());
+        return ids;
     }
 
     /** Starts loading the prices (if they're old or not loaded yet) without asking for one. */
@@ -131,94 +171,12 @@ public final class Sky2MPriceTooltip {
 
     /** Whether any market prices (bazaar or auction) have loaded yet. */
     public static boolean pricesLoaded() {
-        return !bazaarSell.isEmpty() || !lowestBins.isEmpty();
+        return !bazaarSell().isEmpty() || !lowestBins().isEmpty();
     }
 
+    /** Has {@link PriceService} refresh the market prices in the background when they're over a minute old. */
     private static void refreshIfStale() {
-        if (System.currentTimeMillis() - lastRefresh < REFRESH_MS || !REFRESHING.compareAndSet(false, true)) return;
-        CompletableFuture.runAsync(() -> {
-            try {
-                Map<String, Double> bins = fetch(LOWEST_BINS_URL);
-                if (!bins.isEmpty()) {
-                    lowestBins = bins;
-                    PriceHistory.record(bins);
-                }
-                Map<String, Double> average = fetch(AVERAGE_URL);
-                if (!average.isEmpty()) threeDayAverage = average;
-                fetchBazaar();
-                // NPC prices change rarely, so they are only fetched until they have loaded once.
-                if (npcPrices.isEmpty()) {
-                    Map<String, Double> npc = fetchNpcPrices();
-                    if (!npc.isEmpty()) npcPrices = npc;
-                }
-            } finally {
-                lastRefresh = System.currentTimeMillis();
-                REFRESHING.set(false);
-            }
-        });
-    }
-
-    private static Map<String, Double> fetch(String url) {
-        Map<String, Double> result = new HashMap<>();
-        try {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(15))
-                .header("User-Agent", "Sky2M/1.0").GET().build();
-            HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) return result;
-            JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-            for (var entry : root.entrySet()) {
-                try {
-                    result.put(entry.getKey(), entry.getValue().getAsDouble());
-                } catch (Exception ignored) {}
-            }
-        } catch (Exception e) {
-            System.err.println("[Sky2M] Price download failed for " + url + ": " + e.getMessage());
-        }
-        return result;
-    }
-
-    /** Instant buy / instant sell prices from Hypixel's bazaar API (what Skyblocker's bazaar tooltip shows). */
-    private static void fetchBazaar() {
-        try {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(BAZAAR_URL)).timeout(Duration.ofSeconds(15))
-                .header("User-Agent", "Sky2M/1.0").GET().build();
-            HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) return;
-            JsonObject products = JsonParser.parseString(response.body()).getAsJsonObject().getAsJsonObject("products");
-            Map<String, Double> buy = new HashMap<>(), sell = new HashMap<>();
-            for (var entry : products.entrySet()) {
-                JsonObject status = entry.getValue().getAsJsonObject().getAsJsonObject("quick_status");
-                if (status == null) continue;
-                buy.put(entry.getKey(), status.get("buyPrice").getAsDouble());
-                sell.put(entry.getKey(), status.get("sellPrice").getAsDouble());
-            }
-            if (!buy.isEmpty()) {
-                bazaarBuy = buy;
-                bazaarSell = sell;
-            }
-        } catch (Exception e) {
-            System.err.println("[Sky2M] Bazaar price download failed: " + e.getMessage());
-        }
-    }
-
-    /** NPC sell prices from the Hypixel items API (the same data Skyblocker's NPC price tooltip uses). */
-    private static Map<String, Double> fetchNpcPrices() {
-        Map<String, Double> result = new HashMap<>();
-        try {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(NPC_URL)).timeout(Duration.ofSeconds(15))
-                .header("User-Agent", "Sky2M/1.0").GET().build();
-            HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) return result;
-            for (var element : JsonParser.parseString(response.body()).getAsJsonObject().getAsJsonArray("items")) {
-                JsonObject item = element.getAsJsonObject();
-                if (item.has("id") && item.has("npc_sell_price")) {
-                    result.put(item.get("id").getAsString(), item.get("npc_sell_price").getAsDouble());
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("[Sky2M] NPC price download failed: " + e.getMessage());
-        }
-        return result;
+        PriceService.refreshMarket(false);
     }
 
     private static void addPrices(Sky2MConfig.PriceTooltip config, ItemStack stack, List<Component> lines) {
@@ -234,8 +192,8 @@ public final class Sky2MPriceTooltip {
             Double price = npcPrices.get(id);
             if (price != null) lines.add(line("NPC Sell Price: ", ChatFormatting.YELLOW, price, count));
         }
-        boolean onAuctionHouse = lowestBins.containsKey(apiId) || threeDayAverage.containsKey(apiId) || PriceHistory.get(apiId) != null;
-        if (!onAuctionHouse && bazaarBuy.containsKey(apiId)) {
+        boolean onAuctionHouse = lowestBins().containsKey(apiId) || threeDayAverage().containsKey(apiId) || PriceHistory.get(apiId) != null;
+        if (!onAuctionHouse && bazaarBuy().containsKey(apiId)) {
             if (!config.bazaar && !config.lowestBin && !config.threeDayAverage) return;
             // For a sack in the Sacks menu, price everything stored in it.
             int amount = count;
@@ -246,13 +204,13 @@ public final class Sky2MPriceTooltip {
                     break;
                 }
             }
-            Double buy = bazaarBuy.get(apiId), sell = bazaarSell.get(apiId);
+            Double buy = bazaarBuy().get(apiId), sell = bazaarSell().get(apiId);
             lines.add(buy == null || buy <= 0 ? noData("Bazaar Insta-Buy: ") : line("Bazaar Insta-Buy: ", ChatFormatting.GOLD, buy, amount));
             lines.add(sell == null || sell <= 0 ? noData("Bazaar Insta-Sell: ") : line("Bazaar Insta-Sell: ", ChatFormatting.GOLD, sell, amount));
             return;
         }
         if (config.lowestBin) {
-            Double price = lowestBins.get(apiId);
+            Double price = lowestBins().get(apiId);
             PriceHistory.Seen seen = price == null ? PriceHistory.get(apiId) : null;
             if (price != null) {
                 lines.add(line("Lowest BIN Price: ", ChatFormatting.GOLD, price, count));
@@ -265,7 +223,7 @@ public final class Sky2MPriceTooltip {
             }
         }
         if (config.threeDayAverage) {
-            Double price = threeDayAverage.get(apiId);
+            Double price = threeDayAverage().get(apiId);
             if (price != null) lines.add(line("3 Day Avg. Price: ", ChatFormatting.GOLD, price, count));
         }
         if (config.estimatedValue) {

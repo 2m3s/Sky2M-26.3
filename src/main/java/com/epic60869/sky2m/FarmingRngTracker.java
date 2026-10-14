@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,8 +72,8 @@ public final class FarmingRngTracker {
         long price = legendary ? LEGENDARY_SLUG_PRICE : EPIC_SLUG_PRICE;
         String key = name.toLowerCase(Locale.ROOT);
         long shownUntil = System.currentTimeMillis() + SHOW_MILLIS;
-        activeDrops.merge(key, new Drop(1, name, legendary ? "LEGENDARY" : "EPIC", price, shownUntil),
-            (current, added) -> new Drop(current.amount() + 1, current.name(), current.rarity(), price, shownUntil));
+        activeDrops.merge(key, new Drop(1, name, legendary ? "LEGENDARY" : "EPIC", price, shownUntil, -1),
+            (current, added) -> new Drop(current.amount() + 1, current.name(), current.rarity(), price, shownUntil, current.colour()));
         return true;
     }
 
@@ -91,6 +93,134 @@ public final class FarmingRngTracker {
         return found[0] == null ? "EPIC" : found[0];
     }
 
+    private static final long BIG_DROP_PRICE = 5_000_000L;
+
+    /**
+     * Any other rare drop (slayer, Diana, fishing, dungeons...) from Combat's rare drop detection: shown on the RNG HUD
+     * when one of it is worth 5M or more. Farming drops are already handled above, so they're skipped here.
+     */
+    public void onRareDrop(Component message, String rawItem, int amount, boolean rng) {
+        String item = cleanName(rawItem);
+        if (item.isEmpty() || isFarmingDrop(item) || item.toLowerCase(Locale.ROOT).contains("slug")) return;
+        int colour = itemColour(message, item);
+        ItemPriceResolver.valueByNameAsync(item).thenAccept(ignored -> priceWithRetries(item, colour, amount, rng, 0));
+    }
+
+    /** Waits before each retry, for prices that haven't loaded yet (just joined, or the price APIs were slow). */
+    private static final long[] RETRY_MILLIS = {2000L, 5000L, 10000L};
+
+    private void priceWithRetries(String item, int colour, int amount, boolean rng, int attempt) {
+        long unit = Math.round(bigDropPrice(item, colour));
+        if (unit <= 0 && attempt < RETRY_MILLIS.length) {
+            CompletableFuture.delayedExecutor(RETRY_MILLIS[attempt], TimeUnit.MILLISECONDS)
+                .execute(() -> priceWithRetries(item, colour, amount, rng, attempt + 1));
+            return;
+        }
+        // An RNG drop whose price can't be found is still shown (without a price) rather than missed.
+        boolean show = unit >= BIG_DROP_PRICE || (unit <= 0 && rng);
+        System.out.println("[Sky2M] RNG HUD: " + amount + "x " + item + " worth " + (unit <= 0 ? "unknown" : unit)
+            + (rng ? " (RNG drop)" : "") + (show ? ", shown" : ", under 5M so not shown"));
+        if (!show) return;
+        long shownUntil = System.currentTimeMillis() + SHOW_MILLIS;
+        long price = Math.max(unit, 0L);
+        activeDrops.merge(item.toLowerCase(Locale.ROOT), new Drop(amount, item, "BIG", price, shownUntil, colour),
+            (current, added) -> new Drop(current.amount() + amount, current.name(), current.rarity(), price, shownUntil, colour));
+    }
+
+    /** "Enchanted Book (Chimera I)" → "Chimera I", "[Lvl 1] Baby Yeti" → "Baby Yeti", no colour codes or trailing "!". */
+    private static final Pattern ENCHANTED_BOOK_NAME = Pattern.compile("^Enchanted Book \\((.+)\\)$");
+    private static final Pattern PET_LEVEL_PREFIX = Pattern.compile("^\\[Lvl \\d+] ");
+    private static final Pattern TRAILING_PUNCTUATION = Pattern.compile("[!.]+$");
+
+    private static String cleanName(String item) {
+        String name = net.minecraft.ChatFormatting.stripFormatting(item).trim();
+        Matcher book = ENCHANTED_BOOK_NAME.matcher(name);
+        if (book.matches()) name = book.group(1);
+        return TRAILING_PUNCTUATION.matcher(PET_LEVEL_PREFIX.matcher(name).replaceFirst("")).replaceAll("").trim();
+    }
+
+    private static final String ROMAN = "IVXLC";
+    private static final Pattern ENCHANT = Pattern.compile("^(?<name>.+?) (?<level>[IVXLC]+|\\d+)$");
+
+    /**
+     * One of the item's value, trying every id it could have: by its name in the Hypixel item list and the NEU repo, as
+     * an enchanted book ("Chimera I" is ENCHANTMENT_ULTIMATE_CHIMERA_1 or NEU's ULTIMATE_CHIMERA;1), as a pet in the
+     * rarity its chat colour shows ("BABY_YETI;4"), and its name as an id. 0 if none of them has a price.
+     */
+    private static double bigDropPrice(String item, int colour) {
+        double price = ItemPriceResolver.valueByName(item);
+        if (price > 0) return price;
+        List<String> ids = new ArrayList<>();
+        String repo = com.epic60869.sky2m.custom.RepoItems.idByName(item);
+        if (repo != null) ids.add(repo);
+        String base = item.toUpperCase(Locale.ROOT).replace('-', '_').replaceAll("[^A-Z0-9_ ]", "").trim().replace(' ', '_');
+        Matcher enchant = ENCHANT.matcher(item);
+        if (enchant.matches()) {
+            int level = level(enchant.group("level"));
+            String name = enchant.group("name").toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9 ]", "").trim().replace(' ', '_');
+            for (String n : List.of("ULTIMATE_" + name, name)) {
+                ids.add("ENCHANTMENT_" + n + "_" + level);
+                ids.add(n + ";" + level);
+            }
+        }
+        int tier = petTier(colour);
+        if (tier >= 0) ids.add(base + ";" + tier);
+        ids.add(base);
+        for (String id : ids) {
+            double value = ItemPriceResolver.value(id);
+            if (value <= 0) value = Sky2MPriceTooltip.unitPrice(id);
+            if (value > 0) return value;
+        }
+        return 0;
+    }
+
+    private static int level(String level) {
+        if (level.chars().allMatch(Character::isDigit)) return Integer.parseInt(level);
+        int[] values = {1, 5, 10, 50, 100};
+        int total = 0;
+        for (int i = 0; i < level.length(); i++) {
+            int v = values[ROMAN.indexOf(level.charAt(i))];
+            int next = i + 1 < level.length() ? values[ROMAN.indexOf(level.charAt(i + 1))] : 0;
+            total += v < next ? -v : v;
+        }
+        return total;
+    }
+
+    /** A pet's rarity from its name colour (white common ... pink mythic), as NEU's ";tier" number; -1 if not a rarity colour. */
+    private static int petTier(int colour) {
+        return switch (colour & 0xFFFFFF) {
+            case 0xFFFFFF -> 0;
+            case 0x55FF55 -> 1;
+            case 0x5555FF -> 2;
+            case 0xAA00AA -> 3;
+            case 0xFFAA00 -> 4;
+            case 0xFF55FF -> 5;
+            default -> -1;
+        };
+    }
+
+    private static boolean isFarmingDrop(String item) {
+        String lower = item.toLowerCase(Locale.ROOT);
+        for (String known : DROPS) if (lower.contains(known.toLowerCase(Locale.ROOT))) return true;
+        return false;
+    }
+
+    /** The colour of the item's name in the chat message (its rarity colour), white if it can't be found. */
+    private static int itemColour(Component message, String item) {
+        String first = item.split(" ")[0];
+        Matcher legacy = Pattern.compile("§([0-9a-f])(?:§[k-or])*" + Pattern.quote(first)).matcher(message.getString());
+        if (legacy.find()) {
+            var rgb = net.minecraft.network.chat.TextColor.fromLegacyFormat(net.minecraft.ChatFormatting.getByCode(legacy.group(1).charAt(0)));
+            if (rgb != null) return 0xFF000000 | rgb.getValue();
+        }
+        int[] found = {-1};
+        message.visit((style, text) -> {
+            if (found[0] == -1 && text.contains(first) && style.getColor() != null) found[0] = 0xFF000000 | style.getColor().getValue();
+            return java.util.Optional.empty();
+        }, net.minecraft.network.chat.Style.EMPTY);
+        return found[0] == -1 ? 0xFFFFFFFF : found[0];
+    }
+
     private void handle(Component message) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -105,22 +235,22 @@ public final class FarmingRngTracker {
         int newAmount = (existing == null ? 0 : existing.amount()) + parsed.amount();
 
         if ("Seasoning".equalsIgnoreCase(parsed.name())) {
-            activeDrops.put(key, new Drop(newAmount, parsed.name(), rarity(raw), -1L, shownUntil));
+            activeDrops.put(key, new Drop(newAmount, parsed.name(), rarity(raw), -1L, shownUntil, -1));
             return;
         }
 
         // Keep the entry immediately so the 3-second timer starts on the actual drop.
         // The price is filled asynchronously without losing any drops that arrive meanwhile.
         if (existing == null) {
-            activeDrops.putIfAbsent(key, new Drop(newAmount, parsed.name(), rarity(raw), 0L, shownUntil));
+            activeDrops.putIfAbsent(key, new Drop(newAmount, parsed.name(), rarity(raw), 0L, shownUntil, -1));
         } else {
             activeDrops.computeIfPresent(key, (ignored, current) ->
-                new Drop(current.amount() + parsed.amount(), current.name(), current.rarity(), current.unitPrice(), shownUntil));
+                new Drop(current.amount() + parsed.amount(), current.name(), current.rarity(), current.unitPrice(), shownUntil, current.colour()));
         }
 
         ItemPriceResolver.valueByNameAsync(parsed.name()).thenAccept(price ->
             activeDrops.computeIfPresent(key, (ignored, current) ->
-                new Drop(current.amount(), current.name(), current.rarity(), Math.round(price), current.shownUntil()))
+                new Drop(current.amount(), current.name(), current.rarity(), Math.round(price), current.shownUntil(), current.colour()))
         );
     }
 
@@ -165,6 +295,7 @@ public final class FarmingRngTracker {
         return "RARE DROP";
     }
 
-    public record Drop(int amount, String name, String rarity, long unitPrice, long shownUntil) {}
+    /** {@code colour} is the item's chat colour for big drops, or -1 for farming drops (they use the HUD's colours). */
+    public record Drop(int amount, String name, String rarity, long unitPrice, long shownUntil, int colour) {}
     private record Parsed(int amount, String name) {}
 }

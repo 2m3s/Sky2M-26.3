@@ -17,6 +17,14 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 public final class SbcConfig {
     private SbcConfig() {}
 
+    /** Best Friends (Killer560's): time partied and runs together with each player. */
+    public static final class BestFriendsSettings {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Count how long you're in a party with each player (any party, kept forever, by UUID so name changes don't matter) and how many dungeon runs you finish together on each floor. See them in /s2 friends > Party Time, or /s2 bestfriends. Nothing is sent anywhere.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+    }
+
     public static final class Online {
         @Expose
         @Accordion
@@ -27,6 +35,11 @@ public final class SbcConfig {
         @Accordion
         @ConfigOption(name = "Friends & Who", desc = "/s2 who, /s2 friend, your location sharing and friend notifications.")
         public Social social = new Social();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Best Friends", desc = "How long you've partied with each player and your dungeon runs together, in /s2 friends' Party Time tab (Killer560's).")
+        public BestFriendsSettings bestFriends = new BestFriendsSettings();
 
         @Expose
         @Accordion

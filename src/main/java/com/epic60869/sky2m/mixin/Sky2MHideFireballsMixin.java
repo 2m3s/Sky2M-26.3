@@ -18,5 +18,7 @@ public abstract class Sky2MHideFireballsMixin {
         if (entity instanceof Fireball && BlazeSlayer.hideFireballs()) cir.setReturnValue(false);
         // Fishing > Hook & Bobber: Hypixel's timer stand over the bobber, while the Fishing Hook Display shows it.
         if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand && com.epic60869.sky2m.features.fishing.FishingHookTimer.hideStand(entity)) cir.setReturnValue(false);
+        // Hunting > Safari > Critter Capsules.
+        if (com.epic60869.sky2m.features.hunting.SafariFeatures.hide(entity)) cir.setReturnValue(false);
     }
 }

@@ -6,7 +6,8 @@ import java.util.Set;
 public final class MayorUtils {
 	private MayorUtils() {}
 
+	/** The mayor's and minister's perk names, from Sky2M's election data (Mayors > Mayor & Election). */
 	public static Set<String> getActivePerks() {
-		return Set.of();
+		return com.epic60869.sky2m.features.misc.MayorDisplay.activePerks();
 	}
 }

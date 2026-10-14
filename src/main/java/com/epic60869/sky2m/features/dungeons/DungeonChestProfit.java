@@ -140,7 +140,7 @@ public final class DungeonChestProfit {
 
     // ------------------------------------------------------------------------------------------------ chest value
 
-    private static boolean isChest(String title) {
+    static boolean isChest(String title) {
         for (String name : CHEST_NAMES) {
             if (title.equals(name) || (title.startsWith(name) && title.endsWith("Chest"))) return true;
         }
@@ -172,12 +172,12 @@ public final class DungeonChestProfit {
     }
 
     /** NoFrills' getLootValue: the fish and discs at their NPC price, the rest lowest BIN, else bazaar instant sell. */
-    private static double lootValue(String id) {
+    static double lootValue(String id) {
         if (NPC_SELL_ITEMS.contains(id)) return ItemPriceResolver.npcPrice(id);
         return Sky2MPriceTooltip.unitPrice(id);
     }
 
-    private static int lootQuantity(ItemStack stack, String name) {
+    static int lootQuantity(ItemStack stack, String name) {
         String[] parts = name.split(" ");
         String last = parts[parts.length - 1];
         if (last.startsWith("x")) {
@@ -187,7 +187,7 @@ public final class DungeonChestProfit {
         return stack.getCount();
     }
 
-    private static String lootId(ItemStack stack, String name) {
+    static String lootId(ItemStack stack, String name) {
         if (name.startsWith("Wither Essence")) return "ESSENCE_WITHER";
         if (name.startsWith("Undead Essence")) return "ESSENCE_UNDEAD";
         return Sky2MPriceTooltip.marketId(stack);
@@ -418,7 +418,7 @@ public final class DungeonChestProfit {
 
     // ------------------------------------------------------------------------------------------------ helpers
 
-    private static List<String> lore(ItemStack stack) {
+    static List<String> lore(ItemStack stack) {
         ItemLore lore = stack.get(DataComponents.LORE);
         if (lore == null) return List.of();
         List<String> out = new ArrayList<>();
@@ -426,7 +426,7 @@ public final class DungeonChestProfit {
         return out;
     }
 
-    private static int parseInt(String text) {
+    static int parseInt(String text) {
         try {
             return Integer.parseInt(text.trim());
         } catch (NumberFormatException e) {
@@ -434,7 +434,7 @@ public final class DungeonChestProfit {
         }
     }
 
-    private static int roman(String numeral) {
+    static int roman(String numeral) {
         int total = 0, previous = 0;
         for (int i = numeral.length() - 1; i >= 0; i--) {
             int value = switch (numeral.charAt(i)) {

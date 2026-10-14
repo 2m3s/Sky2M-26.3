@@ -129,6 +129,8 @@ Sky2M's /s2 search (Sky2MStorageSearchScreen and the island chest, museum and hi
 
 Sky2M's /s2 recipe craft helper is a Java port of SkyOcean's craft helper (src/main/kotlin/me/owdding/skyocean/features/recipe/crafthelper/ and commands/CraftHelperCommand.kt): the recipe tree with leftover carry-over, the have/need evaluation, and the tree display. SkyOcean's code is licensed under the MIT License (SkyOcean License v1, section 1); Sky2M reads recipes from the NEU repository instead of SkyOcean's repo library.
 
+Sky2M's Crop Fever Effects (`features/garden/CropFeverEffects.java` and `CropFeverShader.java`) are ported from SkyOcean's features/garden/cropfever/CropFeverEffects.kt and CoinRainOverlay.kt and config/features/garden/CropFeverEffectsConfig.kt, and its hue shift shader is SkyOcean's crop_fever_hue_shift.fsh (shaders are Code under the SkyOcean License v1, so MIT). SkyOcean's sounds and post effect file are not Code (All Rights Reserved) and are not used: Sky2M plays Minecraft's own sounds and a tune of its own, and writes its own post effect files.
+
 Copyright notice for the ported code: Copyright (c) meowdding / SkyOcean contributors. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## Stella
@@ -284,6 +286,26 @@ Sky2M's Room Clear Alert (`features/dungeons/RoomClearAlert.java`), Secret Chime
 - Copyright (c) 2025, odtheking
 - License: BSD 3-Clause License
 
+## SkyHelper-Networth
+
+Sky2M's networth (the profile viewer's Networth page and /s2 networth, in `features/profileviewer/networth/`) is a Java port of SkyHelper-Networth (https://github.com/Altpapier/SkyHelper-Networth, v2.11.1, commit 1a56f2ab2309e39d037708ca906e140e725ff013): its profile, item and pet calculators, every item handler, its constants, and its price list (SkyHelperBot/Prices).
+
+- Copyright (c) Altpapier
+- License: MIT
+
+## Odin Waypoints
+
+Sky2M's Area Waypoints (`features/misc/waypoints/`) are ported from Odin's Waypoints module (https://github.com/odtheking/Odin, commit 6a08fc5f8e6f59972f2d008c9e02c43bd9658395): src/main/kotlin/com/odtheking/odin/features/impl/render/waypoints/Waypoints.kt, WaypointAreas.kt and WaypointScreen.kt. The behaviour (areas, triggers, the waypoint format and import/export) follows Odin; the screens are redrawn for Sky2M.
+
+- Copyright (c) 2025, odtheking
+- License: BSD 3-Clause License
+
+## SkyHanni Ordered Waypoints
+
+Sky2M's Ordered Waypoints (`features/mining/OrderedWaypoints.java`) are ported from SkyHanni (https://github.com/hannibal002/SkyHanni, commit 88c8bf2f566f42150e869fe9cc7b78dff05dc086): src/main/java/at/hannibal2/skyhanni/features/mining/OrderedWaypoints.kt, config/features/mining/orderedwaypoints/OrderedWaypointsConfig.kt and data/model/waypoints/ (the Coleweight and Skytils formats). SkyHanni credits the feature to Coleweight and SoopyV2.
+
+- License: GNU Lesser General Public License v2.1 (LGPL-2.1)
+
 ## Killer560's Mod
 
 Several Sky2M features are ported from Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod, commit 3744aa3). Only the mod's legit behaviour is ported; each ported file names its source in its class comment.
@@ -294,6 +316,17 @@ Several Sky2M features are ported from Killer560's Mod (https://github.com/Kille
 - Custom Crosshair: `features/misc/crosshair/` (crosshair/), including its KXH1 share code layout
 - Pack Disabler: `features/misc/PackDisabler.java`, the Sky2MPackDisablerModelMixin and Sky2MPackDisablerHeadMixin mixins (packdisabler/), its item table `assets/sky2m/skyblock/item_looks.json` (made from Hypixel's item API and the NotEnoughUpdates-REPO, MIT) and its item textures under `assets/sky2m/textures/item/packdisabler/`. Its state-dependent models follow Noamm's PackDisabler (https://github.com/Noamm9/PackDisabler, CC0-1.0).
 - SkyBlock Only: `Sky2MLocation.skyblockOnlyAllows` (util/SkyblockGate)
+- Ability Timers: `features/misc/AbilityTimers.java` (abilitytimers/)
+- Rag Axe: `features/dungeons/RagAxe.java` (ragaxe/; its cast detection is Odin's, BSD-3-Clause, and its M7 call and tune NoammAddons')
+- Custom Mage Beam: `features/dungeons/MageBeam.java` and the Sky2MMageBeamMixin mixin (dungeonextras/MageBeamFeature, itself NoammAddons' MageBeam)
+- Terminal Timers: `features/dungeons/TerminalTimers.java` (splittimers/TerminalTimersFeature, itself Odin's TerminalTimes)
+- Run History: `features/dungeons/RunHistory.java` and `RunHistoryScreen.java`, written for Sky2M after runsummary/
+- Termism: `features/dungeons/TermismScreen.java`, written for Sky2M after termism/
+- Best Friends: `features/sbc/BestFriends.java` and the Party Time tab of `SbcFriendsScreen` (social/BestFriends*)
+- Party Dungeon Data, Team Melody and Mod Conflict Warnings: `features/dungeons/party/` (interop/PartyInteropState, partydata/, melody/, interop/ModConflictWarnings)
+- Cross-Mod Bridge: `features/dungeons/bridge/` (bridge/, with SocketAdapter, the Odin, NoammAddons and Devonian codecs and adapters, and BridgeTables' room and id tables) and the Sky2MProfileKeysAccessor mixin
+- Dungeon Sim and Map Designer: the `sim/` package (roomsim/ and what it needs: livemap/, puzzlesolvers/, witherdoors/, roomdatabase/, doorhelpers/, hud/, util/ and others, the room library in `assets/sky2m/sim/rooms/` and the puzzle tables in `data/sky2m/sim/puzzles/`), with Sky2M's own `Sky2MSim.java`, `SimRaycast`, `SimItemIds`, `SimChunks`, `PlayerNames` and `ModPaths` in place of the parts of Killer560's Mod it isn't taking
+- Profile Viewer pages after Pets (Collections, Mining and Foraging, Bestiary, Crimson Isle, Museum, Rift, Farming and Garden, Networth, Weight, Misc), the wardrobe from `loadout.armor` and the SkyBlockPV backend sign-in: `features/profileviewer/ProfilePages.java`, `ProfileExtras.java`, `ProfileTables.java`, `Networth.java`, `SkyblockWeight.java` and parts of `ProfileApi.java` (profileviewer/), with its table `assets/sky2m/profileviewer/extras.json` (from meowdding/meowdding-repo's repo/pv, MIT, and skyblock-pv's HOTM/HOTF levels). `SkyblockWeight.java` carries Killer560's port of Senither's weight (Senither/hypixel-skyblock-facade) and Antonio32A's LilyWeight (Antonio32A/lilyweight) formulas.
 
 ```
 MIT License
@@ -318,3 +351,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Custom Scoreboard
+
+Sky2M's Custom Scoreboard (`features/misc/CustomScoreboard.java` and `CustomScoreboardEditor.java`) is written for Sky2M to work like j10a1n15's Custom Scoreboard (https://github.com/meowdding/CustomScoreboard), itself grown from SkyHanni's Custom Scoreboard: its element list and order, events, number-change display, background options and click actions. Custom Scoreboard is licensed under the GNU Lesser General Public License v2.1 (LGPL-2.1).
+
+## SkyBlock Item List (design only)
+
+Sky2M's Item List (`features/itemlist/`) copies how OperationPotato's SkyBlock Item List (https://github.com/OperationPotato/ItemList, All Rights Reserved) looks and behaves. No code, textures or other assets are taken from it.

@@ -38,12 +38,10 @@ import java.util.concurrent.Executors;
  */
 public final class DiscordPresence {
     /**
-     * The Discord application the presence is shown for: its name is the "Playing ..." line. Made at
-     * https://discord.com/developers/applications, with a Rich Presence art asset called "sky2m". Until one is built
-     * in here, the Discord Application ID setting (Misc > Discord & Screenshots) gives it; with neither, nothing is
-     * sent (Discord refuses a presence without an application).
+     * Sky2M's Discord application, built in like SkyHanni's: its name is the "Playing Sky2M" line, and its Rich
+     * Presence art asset "sky2m" is the picture.
      */
-    private static final String CLIENT_ID = "";
+    private static final String CLIENT_ID = "1558602301143392329";
     private static final String INVITE = "https://discord.gg/7AAjvjxsby";
     private static final int OP_HANDSHAKE = 0;
     private static final int OP_FRAME = 1;
@@ -87,14 +85,11 @@ public final class DiscordPresence {
 
     private static boolean enabled() {
         Sky2MConfig config = Sky2MConfig.current();
-        return config != null && config.misc.discordPresence && !clientId().isEmpty();
+        return config != null && config.misc.discordPresence;
     }
 
-    /** The Discord application: the setting if it's filled in, else the built-in one. */
     private static String clientId() {
-        Sky2MConfig config = Sky2MConfig.current();
-        String id = config == null ? "" : config.misc.discordAppId.trim();
-        return id.matches("\\d{15,25}") ? id : CLIENT_ID;
+        return CLIENT_ID;
     }
 
     // ------------------------------------------------------------------------------------------------ activity

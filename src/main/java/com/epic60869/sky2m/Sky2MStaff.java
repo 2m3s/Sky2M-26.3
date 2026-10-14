@@ -39,6 +39,10 @@ import java.util.concurrent.TimeUnit;
 public final class Sky2MStaff {
     public static final String RANKS_URL = "https://shadowisabot.com/mod-api/ranks";
     private static final long REFRESH_MINUTES = 5;
+    /** One shared client (created on first refresh) instead of a new one, with its own threads, every 5 minutes. */
+    private static final class Http {
+        static final HttpClient CLIENT = HttpClient.newHttpClient();
+    }
     private static final int MAX_PREFIX_LENGTH = 16;
 
     /** A rank prefix: the text between the brackets, its colour and whether it's bold. */
@@ -81,7 +85,7 @@ public final class Sky2MStaff {
                 .timeout(Duration.ofSeconds(10))
                 .header("User-Agent", "Sky2M")
                 .GET().build();
-            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = Http.CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) return; // keep what we have
             JsonElement root = JsonParser.parseString(response.body());
             Iterable<JsonElement> list = root.isJsonArray() ? root.getAsJsonArray() : root.getAsJsonObject().getAsJsonArray("ranks");

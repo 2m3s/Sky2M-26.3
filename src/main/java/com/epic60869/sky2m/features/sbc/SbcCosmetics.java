@@ -200,6 +200,16 @@ public final class SbcCosmetics {
 
     // ------------------------------------------------------------------------------------------------ /s2 cosmetics
 
+    /** A new connection: ask again for the profile onDisconnected cleared, if its screen is open. */
+    static void onConnected() {
+        if (Minecraft.getInstance().gui.screen() instanceof SbcCosmeticsScreen) SbcNet.sendAuthed(Sbc.packet("cosmeticsGet"));
+    }
+
+    /** The connection closed: your profile is fetched again next time. The table and capes stay, for offline use. */
+    static void onDisconnected() {
+        profile = null;
+    }
+
     public static void openScreen() {
         if (!Flags.check("cosmetics")) return;
         SbcNet.sendAuthed(Sbc.packet("cosmeticsGet"));

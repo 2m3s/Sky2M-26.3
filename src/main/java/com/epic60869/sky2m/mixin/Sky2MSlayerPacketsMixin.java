@@ -21,6 +21,8 @@ public abstract class Sky2MSlayerPacketsMixin {
         // Mayors > Diana > Burrows reads burrow, arrow and spade particles (never hides them).
         com.epic60869.sky2m.features.combat.DianaBurrows.onParticle(packet);
         com.epic60869.sky2m.features.combat.DianaRareMobs.onParticle(packet);
+        // Hunting > Galatea Mob Highlights > Invisibugs are found by their crit particles.
+        com.epic60869.sky2m.features.hunting.HuntingFeatures.onParticle(packet);
         if (BlazeSlayer.hideParticle() || EndermanSlayer.hideParticle(packet)) ci.cancel();
     }
 

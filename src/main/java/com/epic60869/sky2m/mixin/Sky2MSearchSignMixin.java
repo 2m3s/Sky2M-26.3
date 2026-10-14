@@ -16,19 +16,21 @@ import java.util.List;
 
 /**
  * Bazaar and Auction House search: Hypixel's search sign opens Sky2M's search box instead, and the sign is sent
- * with what you picked. Hooked before the sign screen exists, because closing a sign screen sends the sign.
+ * with what you picked (over its first two lines, like Skyblocker). Hooked before the sign screen exists, because
+ * closing a sign screen sends the sign.
  */
 @Mixin(LocalPlayer.class)
 public abstract class Sky2MSearchSignMixin {
     @Inject(method = "openTextEdit", at = @At("HEAD"), cancellable = true)
     private void sky2m$searchOverlay(SignBlockEntity sign, SignTextSlot slot, CallbackInfo ci) {
+        Minecraft mc = Minecraft.getInstance();
         List<Component> messages = sign.getText(slot).getMessages(false);
         String[] lines = messages.stream().map(Component::getString).toArray(String[]::new);
-        boolean opened = SearchOverlay.open(lines, query -> {
-            Minecraft mc = Minecraft.getInstance();
+        // The Bazaar or Auction House menu is still open when Hypixel opens its search sign.
+        boolean opened = SearchOverlay.open(lines, mc.gui.screen(), search -> {
             if (mc.getConnection() != null) {
                 mc.getConnection().send(new ServerboundSignUpdatePacket(sign.getBlockPos(),
-                    List.of(query, lines.length > 1 ? lines[1] : "", lines.length > 2 ? lines[2] : "", lines.length > 3 ? lines[3] : ""), slot));
+                    List.of(search[0], search[1], lines.length > 2 ? lines[2] : "", lines.length > 3 ? lines[3] : ""), slot));
             }
             mc.gui.setScreen(null);
         });

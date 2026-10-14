@@ -134,6 +134,16 @@ public final class Sky2MPartyFinder {
         authed(packet("pfMine"));
     }
 
+    /** The connection closed: the listings and your group were only true while connected (a reconnect asks again). */
+    public static void onDisconnected() {
+        listings = List.of();
+        listingsReceived = false;
+        mine = NONE;
+        mineReceived = false;
+        mineAskedOn = null;
+        version++;
+    }
+
     private static boolean enabled() {
         return Flags.check("partyFinder");
     }

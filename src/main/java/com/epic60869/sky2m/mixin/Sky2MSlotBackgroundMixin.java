@@ -30,6 +30,7 @@ public abstract class Sky2MSlotBackgroundMixin {
         com.epic60869.sky2m.features.portfolio.BazaarNotifications.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.misc.ShardLevelUpHighlight.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.garden.PestFinder.renderSlot(graphics, slot);
+        com.epic60869.sky2m.features.dungeons.DupeClass.renderSlot(graphics, slot);
     }
 
     /** /s2 protect's star and slot labels (chest profit, pet level), drawn with the slot so tooltips cover them. */
@@ -38,6 +39,7 @@ public abstract class Sky2MSlotBackgroundMixin {
         com.epic60869.sky2m.features.misc.SlotLocking.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.dungeons.DungeonChestProfit.renderSlotLabel(graphics, slot);
         com.epic60869.sky2m.features.misc.ActivePetHighlight.renderSlotLabel(graphics, slot);
+        com.epic60869.sky2m.features.misc.ItemQuality.renderSlot(graphics, slot);
     }
 
     @Inject(method = "extractContents", at = @At("RETURN"))

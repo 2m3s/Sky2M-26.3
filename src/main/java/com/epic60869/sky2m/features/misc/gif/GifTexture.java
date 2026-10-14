@@ -65,6 +65,11 @@ public final class GifTexture {
         graphics.blit(RenderPipelines.GUI_TEXTURED, id, x, y, 0, 0, w, h, gif.width(), gif.height(), gif.width(), gif.height());
     }
 
+    /** Draws the current frame stretched to {@code w} x {@code h}, tinted (and faded) by {@code argbTint}. */
+    public void draw(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int argbTint) {
+        graphics.blit(RenderPipelines.GUI_TEXTURED, id, x, y, 0, 0, w, h, gif.width(), gif.height(), gif.width(), gif.height(), argbTint);
+    }
+
     public void close() {
         Minecraft.getInstance().getTextureManager().release(id);
     }

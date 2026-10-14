@@ -8,34 +8,42 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.ping.ServerboundPingRequestPacket;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * FPS, TPS, ping and time HUD, ported from Skysoft's ServerInfoDisplay, ServerPingTracker, ServerTpsEstimator
  * and RealTimeDisplay (https://github.com/Akinsoft/Skysoft, LGPL-3.0), with the time as a fourth value. Ping is the round trip of a ping packet sent
  * once a second; TPS is how fast the server's clock moves between its time packets (or, where the clock stands still
  * as on Hypixel, how often the once-every-20-ticks time packets arrive), averaged over the last 5. Both
- * are also used by the !ping and !tps party commands.
+ * are also used by the !ping and !tps party commands. Each value can have a small pixel icon in front of it, drawn as a
+ * glyph of the sky2m:perf_icons font so the HUD stays plain text; lines are rebuilt at most 4 times a second.
  */
 public final class ServerInfo {
     public enum Metric {
-        FPS("FPS", "⚡"), TPS("TPS", "⇄"), PING("Ping", "▂▄▆"), TIME("Time", "⌚");
+        FPS("FPS", "⚡", ""), TPS("TPS", "⇄", ""), PING("Ping", "▂▄▆", ""), TIME("Time", "⌚", "");
 
         private final String label;
         private final String symbol;
+        /** Glyph in the sky2m:perf_icons font (textures/font/perf_icons.png). */
+        private final String icon;
 
-        Metric(String label, String symbol) {
+        Metric(String label, String symbol, String icon) {
             this.label = label;
             this.symbol = symbol;
+            this.icon = icon;
         }
 
         @Override
@@ -140,6 +148,19 @@ public final class ServerInfo {
     private static long lastTimeAt;
     private static double lastTarget;
 
+    // ---------------------------------------------------------------- HUD lines
+
+    /** Pixel-art icons drawn as glyphs, so the HUD stays plain text (assets/sky2m/font/perf_icons.json). */
+    private static final FontDescription ICON_FONT = new FontDescription.Resource(Identifier.fromNamespaceAndPath("sky2m", "perf_icons"));
+    /** A 2 pixel gap in the icon font, between an icon and its value. */
+    private static final String ICON_GAP = "";
+    /** How long built lines are reused, so the HUD isn't rebuilt every frame. */
+    private static final long LINES_TTL_MS = 250;
+    private static List<Component> cachedSimple;
+    private static long cachedSimpleAt;
+    private static final Map<Metric, Component> cachedMetric = new EnumMap<>(Metric.class);
+    private static final Map<Metric, Long> cachedMetricAt = new EnumMap<>(Metric.class);
+
     private ServerInfo() {}
 
     private static Sky2MConfig config() {
@@ -153,7 +174,7 @@ public final class ServerInfo {
 
         Sky2MHuds.register("server_info", "Server Info Display",
             () -> showing() && serverInfo().style != Style.SPLIT,
-            ServerInfo::simpleLines,
+            ServerInfo::cachedSimpleLines,
             List.of(Component.literal("FPS: 144"), Component.literal("TPS: 20.0"), Component.literal("Ping: 42 ms"), Component.literal("Time: 14:32")),
             8, 30);
         int y = 30;
@@ -161,7 +182,7 @@ public final class ServerInfo {
             String id = "server_info_" + metric.name().toLowerCase(Locale.ROOT);
             Sky2MHuds.register(id, "Server Info: " + metric,
                 () -> showing() && serverInfo().style == Style.SPLIT && metrics(serverInfo()).contains(metric),
-                () -> List.of(metricLine(metric)),
+                () -> List.of(cachedMetricLine(metric)),
                 List.of(Component.literal(metric + ": " + switch (metric) {
                     case FPS -> "144";
                     case TPS -> "20.0";
@@ -349,7 +370,46 @@ public final class ServerInfo {
             case PING -> c.pingColour;
             case TIME -> c.timeColour;
         };
-        return Component.literal(style.prefix(metric.toString(), metric.symbol) + value + suffix).withColor(colour(colour));
+        int rgb = colour(colour);
+        if (c == null || !c.showIcons) return Component.literal(style.prefix(metric.toString(), metric.symbol) + value + suffix).withColor(rgb);
+        // The icon takes the symbol's place; with text labels it goes before the label.
+        String prefix = style == LabelStyle.SYMBOLS ? "" : style.prefix(metric.toString(), metric.symbol);
+        return Component.empty()
+            .append(Component.literal(metric.icon + ICON_GAP).withStyle(s -> s.withFont(ICON_FONT)).withColor(rgb))
+            .append(Component.literal(prefix + value + suffix).withColor(rgb));
+    }
+
+    private static List<Component> cachedSimpleLines() {
+        long now = Util.getMillis();
+        if (cachedSimple == null || now - cachedSimpleAt >= LINES_TTL_MS || chroma()) {
+            cachedSimple = simpleLines();
+            cachedSimpleAt = now;
+        }
+        return cachedSimple;
+    }
+
+    private static Component cachedMetricLine(Metric metric) {
+        long now = Util.getMillis();
+        Long at = cachedMetricAt.get(metric);
+        Component line = cachedMetric.get(metric);
+        if (line == null || at == null || now - at >= LINES_TTL_MS || chroma()) {
+            line = metricLine(metric);
+            cachedMetric.put(metric, line);
+            cachedMetricAt.put(metric, now);
+        }
+        return line;
+    }
+
+    /** Whether a colour is chroma (animated), in which case lines are rebuilt every frame so it stays smooth. */
+    private static boolean chroma() {
+        FeatureConfigs.ServerInfoDisplay c = serverInfo();
+        return c != null && (isChroma(c.fpsColour) || isChroma(c.tpsColour) || isChroma(c.pingColour) || isChroma(c.timeColour));
+    }
+
+    private static boolean isChroma(String value) {
+        if (value == null) return false;
+        String[] parts = value.split(":");
+        return parts.length >= 5 && !parts[parts.length - 5].trim().equals("0");
     }
 
 

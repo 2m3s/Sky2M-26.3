@@ -15,6 +15,7 @@ import java.util.Map;
  * functions and suffixes are SkyBlock Item List's.
  */
 public final class ItemListCalculator {
+    private static final java.util.regex.Pattern PURSE_NUMBER = java.util.regex.Pattern.compile("[\\d,]+(?:\\.\\d+)?");
     private static final Map<String, Double> SUFFIXES = Map.of("k", 1e3, "m", 1e6, "b", 1e9, "t", 1e12, "st", 64.0);
     private static final DecimalFormat FORMAT = new DecimalFormat("#,##0.##", DecimalFormatSymbols.getInstance(Locale.US));
 
@@ -184,7 +185,7 @@ public final class ItemListCalculator {
         if (value == null || value.isEmpty()) value = Sky2MLocation.scoreboardValue("Piggy:");
         if (value == null || value.isEmpty()) return 0;
         // "1,234,567.8 (+5)": the first number.
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("[\\d,]+(?:\\.\\d+)?").matcher(value);
+        java.util.regex.Matcher m = PURSE_NUMBER.matcher(value);
         return m.find() ? Double.parseDouble(m.group().replace(",", "")) : 0;
     }
 }

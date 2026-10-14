@@ -5,10 +5,10 @@ import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.misc.PartyCommands;
+import com.epic60869.sky2m.features.profileviewer.ProfileApi;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
@@ -25,11 +25,6 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 
 import java.io.ByteArrayInputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashSet;
@@ -46,17 +41,13 @@ import java.util.regex.Pattern;
  * Party Finder stats, like Odin's Better Party Finder (https://github.com/odtheking/Odin, BSD-3-Clause): when someone
  * joins your dungeon group, their Catacombs level, class levels, secrets, floor times, magical power, armour and missing
  * key items are shown in chat (only you see it), with a [KICK] button. Optionally kicks players under your requirements.
- * /s2 cata <name> shows the same for anyone. Profiles come from a Hypixel API proxy (Odin's by default), since
- * Sky2M has no API key of its own.
+ * /s2 cata <name> shows the same for anyone. Profiles come from {@link ProfileApi}.
  */
 public final class PartyFinderStats {
     // Party Finder > [MVP+] Name joined the dungeon group! (Mage Level 30)
     private static final Pattern JOINED = Pattern.compile("^Party Finder > (?:\\[[^]]{1,7}] ?)?(?<name>\\w{1,16}) joined the dungeon group! \\(.*\\)$");
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8))
-        .followRedirects(HttpClient.Redirect.NORMAL).build();
-    private static final long CACHE_MS = 5 * 60 * 1000L;
     /** Catacombs XP needed for each level 1 to 50; every level after 50 takes another 200M. */
-    private static final long[] CATA_XP = {50, 75, 110, 160, 230, 330, 470, 670, 950, 1340, 1890, 2665, 3760, 5260, 7380, 10300,
+    static final long[] CATA_XP = {50, 75, 110, 160, 230, 330, 470, 670, 950, 1340, 1890, 2665, 3760, 5260, 7380, 10300,
         14400, 20000, 27600, 38000, 52500, 71500, 97000, 132000, 180000, 243000, 328000, 445000, 600000, 800000, 1065000, 1410000,
         1900000, 2500000, 3300000, 4300000, 5600000, 7200000, 9200000, 12000000, 15000000, 19000000, 24000000, 30000000,
         38000000, 48000000, 60000000, 75000000, 93000000, 116250000};
@@ -67,8 +58,6 @@ public final class PartyFinderStats {
         {"Terminator", "§cTerm", "TERMINATOR"}};
     private static final String[][] KEY_PETS = {{"Golden Dragon", "§6GDrag", "GOLDEN_DRAGON"}, {"Ender Dragon", "§5EDrag", "ENDER_DRAGON"}};
 
-    private record Cached(Stats stats, long at) {}
-    private static final Map<String, Cached> CACHE = new ConcurrentHashMap<>();
     private static final Set<String> KICKED = ConcurrentHashMap.newKeySet();
 
     private PartyFinderStats() {}
@@ -133,48 +122,15 @@ public final class PartyFinderStats {
     }
 
     private static String reason(Throwable error) {
-        if (error == null) return "no SkyBlock profile";
-        Throwable t = error.getCause() != null ? error.getCause() : error;
-        return t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
+        return ProfileApi.reason(error);
     }
 
     private static CompletableFuture<Stats> lookup(String name) {
-        String key = name.toLowerCase(Locale.ROOT);
-        Cached cached = CACHE.get(key);
-        if (cached != null && System.currentTimeMillis() - cached.at() < CACHE_MS) return CompletableFuture.completedFuture(cached.stats());
-        return get("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + name).thenCompose(body -> {
-            JsonObject profile = JsonParser.parseString(body).getAsJsonObject();
-            if (!profile.has("id")) throw new IllegalStateException("no such player");
-            String uuid = profile.get("id").getAsString().replace("-", "");
-            String realName = profile.has("name") ? profile.get("name").getAsString() : name;
-            FeatureConfigs.PartyFinderStats c = config();
-            String base = c == null || c.apiUrl.isBlank() ? "https://api.odtheking.com/hypixel/" : c.apiUrl.trim();
-            if (!base.endsWith("/")) base += "/";
-            return get(base + "get/" + uuid).thenApply(data -> parse(realName, uuid, JsonParser.parseString(data).getAsJsonObject()));
-        }).whenComplete((stats, error) -> {
-            if (stats != null) CACHE.put(key, new Cached(stats, System.currentTimeMillis()));
-        });
+        // ProfileApi keeps its own five-minute cache.
+        return ProfileApi.player(name).thenApply(player -> parse(player.name(), player.profiles().getFirst().member()));
     }
 
-    private static CompletableFuture<String> get(String url) {
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(20)).header("User-Agent", "Sky2M").build();
-        return HTTP.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(r -> {
-            if (r.statusCode() == 404 || r.statusCode() == 204) throw new IllegalStateException("no such player");
-            if (r.statusCode() != 200) throw new IllegalStateException("HTTP " + r.statusCode());
-            return r.body();
-        });
-    }
-
-    private static Stats parse(String name, String uuid, JsonObject root) {
-        JsonObject member = null;
-        JsonArray profiles = root.has("profiles") && root.get("profiles").isJsonArray() ? root.getAsJsonArray("profiles") : new JsonArray();
-        for (JsonElement p : profiles) {
-            JsonObject profile = p.getAsJsonObject();
-            JsonObject m = obj(obj(profile, "members"), uuid);
-            if (m == null) continue;
-            if (member == null || bool(profile, "selected")) member = m;
-        }
-        if (member == null) return null;
+    private static Stats parse(String name, JsonObject member) {
         JsonObject dungeons = obj(member, "dungeons");
         JsonObject types = obj(dungeons, "dungeon_types");
         JsonObject cata = obj(types, "catacombs"), master = obj(types, "master_catacombs");
@@ -291,7 +247,7 @@ public final class PartyFinderStats {
         return o != null && o.has(key) && o.get(key).isJsonPrimitive() && o.get(key).getAsBoolean();
     }
 
-    private static double level(double xp) {
+    static double level(double xp) {
         int level = 0;
         for (long need : CATA_XP) {
             if (xp < need) return level + xp / need;
@@ -346,13 +302,17 @@ public final class PartyFinderStats {
             }
             out.append("\n");
         }
+        out.append(Component.literal("[PROFILE]").withStyle(st -> st.withColor(ChatFormatting.AQUA).withBold(true)
+            .withClickEvent(new ClickEvent.RunCommand("/s2 pv " + s.name()))
+            .withHoverEvent(new HoverEvent.ShowText(Component.literal("Open " + s.name() + "'s profile")))));
+        out.append(" ");
         if (kickButton) {
             out.append(Component.literal("[KICK]").withStyle(st -> st.withColor(ChatFormatting.RED).withBold(true)
                 .withClickEvent(new ClickEvent.RunCommand("/party kick " + s.name()))
                 .withHoverEvent(new HoverEvent.ShowText(Component.literal("Kick " + s.name() + " from the party")))));
             out.append(" ");
         }
-        out.append("§8§m" + " ".repeat(kickButton ? 22 : 30));
+        out.append("§8§m" + " ".repeat(kickButton ? 12 : 20));
         say(out);
     }
 

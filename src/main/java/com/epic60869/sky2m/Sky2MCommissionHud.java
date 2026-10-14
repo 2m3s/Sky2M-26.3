@@ -32,6 +32,21 @@ public final class Sky2MCommissionHud {
     public static void register(Sky2MConfig cfg) {
         config = cfg;
         HudElementRegistry.addLast(ID, Sky2MCommissionHud::extract);
+        // Scanning the TAB list is expensive (copy + sort + regex ~80 entries), so do it
+        // every 10 ticks instead of every frame; extract only draws the stored result.
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (++tickCounter % 10 != 0) return;
+            if (!visible(mc)) return;
+            updateFromTab();
+        });
+    }
+
+    private static int tickCounter;
+
+    private static boolean visible(Minecraft mc) {
+        if (config == null || !config.mining.commissions.enabled || mc.player == null) return false;
+        return !config.mining.features.commissionsAreaOnly
+            || com.epic60869.sky2m.features.core.Sky2MLocation.inMiningIsland();
     }
 
     public static int x() { return config == null ? 8 : config.mining.commissions.x; }
@@ -66,10 +81,7 @@ public final class Sky2MCommissionHud {
 
     private static void extract(GuiGraphicsExtractor g, net.minecraft.client.DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
-        if (config == null || !config.mining.commissions.enabled || mc.player == null) return;
-        if (config.mining.features.commissionsAreaOnly
-            && !com.epic60869.sky2m.features.core.Sky2MLocation.inMiningIsland()) return;
-        updateFromTab();
+        if (!visible(mc)) return;
         if (!commissions.isEmpty()) render(g, commissions, com.epic60869.sky2m.features.core.Sky2MHuds.mapX(x(), width()), com.epic60869.sky2m.features.core.Sky2MHuds.mapY(y(), height()));
     }
 

@@ -157,13 +157,16 @@ public final class Compat {
 		return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
 	}
 
+	/** Shared empty tag for {@link #customDataView}; read-only by contract, so never written into. */
+	private static final CompoundTag EMPTY_VIEW = new CompoundTag();
+
 	/**
 	 * The item's custom data without copying it, for reading only (don't change it). {@link #getCustomData} copies the
 	 * whole tag, which per-tick scans over every slot did many times a second.
 	 */
 	public static CompoundTag customDataView(ItemStack stack) {
 		CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-		return data == null ? new CompoundTag() : ((com.epic60869.sky2m.mixin.Sky2MCustomDataAccessor) (Object) data).sky2m$getTag();
+		return data == null ? EMPTY_VIEW : ((com.epic60869.sky2m.mixin.Sky2MCustomDataAccessor) (Object) data).sky2m$getTag();
 	}
 
 	public static List<ItemStack> getArmor(LivingEntity entity) {

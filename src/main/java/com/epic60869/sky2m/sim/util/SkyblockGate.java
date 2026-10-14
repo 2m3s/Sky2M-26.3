@@ -1,0 +1,163 @@
+/*
+ * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
+ * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ */
+package com.epic60869.sky2m.sim.util;
+
+import com.epic60869.sky2m.sim.util.FeatureGuard;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.Objective;
+import org.slf4j.Logger;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
+import com.epic60869.sky2m.sim.compat.McCompat;
+
+/**
+ * "Skyblock Only" (2026-09-15, killer560: a toggle so "none of the mods work outside of sky block or P3 Sim ... it
+ * wouldn't actually turn the mods off ... I would be able to rejoin sky block, and all of the mods would immediately
+ * be right back on").
+ * <p>
+ * Features AND their master "enabled" getters with {@link #allows()}; their saved settings are never touched. While
+ * the toggle is on, {@link #allows()} is false anywhere that isn't Hypixel Skyblock (sidebar title contains
+ * "SKYBLOCK") or p3sim.net. The sidebar briefly disappears on every world switch, so the last verdict is held for
+ * up to {@link #NO_SIDEBAR_HOLD_MS} while no sidebar is shown. The mod's own screens always see the real values
+ * so the settings menu keeps showing what is actually turned on.
+ */
+public final class SkyblockGate {
+
+    private static final Logger LOGGER = ModLog.get("sky2m-skyblockgate");
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Path CONFIG_PATH = ModPaths.config("sky2m-skyblockonly.json");
+    private static final long NO_SIDEBAR_HOLD_MS = 10_000L;
+
+    // volatile: allows()/isEnabled() are also read off the client thread (integrated-server block-shape mixins).
+    private static volatile boolean enabled = false;
+    private static volatile boolean loaded = false;
+    private static volatile boolean onSkyblock = false;
+    private static long noSidebarSinceMs = 0L;
+    private static int tickCounter = 0;
+
+    private SkyblockGate() {
+    }
+
+    public static void register() {
+        load();
+        ClientTickEvents.END_CLIENT_TICK.register(FeatureGuard.end("SkyblockGate", client -> {
+            if (++tickCounter < 5) {
+                return;
+            }
+            tickCounter = 0;
+            try {
+                update(client);
+            } catch (RuntimeException e) {
+                LOGGER.warn("[SkyblockGate] Detection failed: {}", e.toString());
+            }
+        }));
+    }
+
+    /** @return false only when "Skyblock Only" is on and you're somewhere other than Skyblock / p3sim. */
+    public static boolean allows() {
+        if (!isEnabled() || onSkyblock) {
+            return true;
+        }
+        Minecraft client = Minecraft.getInstance();
+        // The mod's own screens (settings menu, HUD editor, pickers) show the real saved values.
+        // Read once: some gated getters run off the render thread (e.g. block-shape mixins on the integrated
+        // server thread), where McCompat.screen(client) can go null between two reads.
+        net.minecraft.client.gui.screens.Screen screen = client == null ? null : McCompat.screen(client);
+        return screen != null && screen.getClass().getName().startsWith("com.epic60869.sky2m.sim.");
+    }
+
+    public static boolean isOnSkyblock() {
+        return onSkyblock;
+    }
+
+    private static void update(Minecraft client) {
+        if (client.level == null || client.player == null) {
+            holdOrExpire();
+        } else if (isP3Sim(client)) {
+            onSkyblock = true;
+            noSidebarSinceMs = 0L;
+        } else {
+            Objective sidebar = client.level.getScoreboard().getDisplayObjective(DisplaySlot.SIDEBAR);
+            if (sidebar == null) {
+                holdOrExpire();
+            } else {
+                String title = ChatFormatting.stripFormatting(sidebar.getDisplayName().getString());
+                onSkyblock = title != null && title.toUpperCase(Locale.ROOT).replace(" ", "").contains("SKYBLOCK");
+                noSidebarSinceMs = 0L;
+            }
+        }
+    }
+
+    private static void holdOrExpire() {
+        long now = System.currentTimeMillis();
+        if (noSidebarSinceMs == 0L) {
+            noSidebarSinceMs = now;
+        } else if (now - noSidebarSinceMs > NO_SIDEBAR_HOLD_MS) {
+            onSkyblock = false;
+        }
+    }
+
+    private static boolean isP3Sim(Minecraft client) {
+        ServerData server = client.getCurrentServer();
+        return server != null && server.ip != null && server.ip.toLowerCase(Locale.ROOT).contains("p3sim");
+    }
+
+    public static boolean isEnabled() {
+        if (!loaded) {
+            load();
+        }
+        return enabled;
+    }
+
+    public static void setEnabled(boolean value) {
+        enabled = value;
+        save();
+    }
+
+    private static synchronized void load() {
+        if (loaded) {
+            return;
+        }
+        // "loaded" is only published after "enabled" holds the file's value, so an unsynchronized isEnabled()
+        // on another thread either blocks here (loaded still false) or sees the finished value.
+        try {
+            if (Files.exists(CONFIG_PATH)) {
+                JsonObject obj = JsonParser.parseString(Files.readString(CONFIG_PATH, StandardCharsets.UTF_8)).getAsJsonObject();
+                enabled = obj.has("enabled") && obj.get("enabled").getAsBoolean();
+            }
+        } catch (Exception e) {
+            LOGGER.warn("[SkyblockGate] Couldn't read {}: {}", CONFIG_PATH.getFileName(), e.toString());
+        } finally {
+            loaded = true;
+        }
+    }
+
+    /** Re-reads the file (used after a settings profile is applied). */
+    public static synchronized void reload() {
+        loaded = false;
+        load();
+    }
+
+    private static void save() {
+        try {
+            Files.createDirectories(CONFIG_PATH.getParent());
+            JsonObject obj = new JsonObject();
+            obj.addProperty("enabled", enabled);
+            Files.writeString(CONFIG_PATH, GSON.toJson(obj), StandardCharsets.UTF_8);
+        } catch (Exception ignored) {
+        }
+    }
+}

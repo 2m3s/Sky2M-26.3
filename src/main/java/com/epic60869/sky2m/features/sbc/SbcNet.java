@@ -45,7 +45,8 @@ public final class SbcNet {
             boolean wasLoggedIn = Sky2MLogin.loggedIn();
             Sky2MLogin.whenLoggedIn(() -> Sky2MGlobalChat.send(packet));
             if (wasLoggedIn) return;
-            CompletableFuture.delayedExecutor(8, TimeUnit.SECONDS).execute(() -> mc.execute(() -> {
+            // After Sky2MLogin's 10s confirm timeout, so a login the server never answered is reported too.
+            CompletableFuture.delayedExecutor(11, TimeUnit.SECONDS).execute(() -> mc.execute(() -> {
                 if (!Sky2MLogin.loggedIn() && !Sky2MLogin.problem().isEmpty()) {
                     Sbc.error("Couldn't log in to the Sky2M server: " + Sky2MLogin.problem());
                 }

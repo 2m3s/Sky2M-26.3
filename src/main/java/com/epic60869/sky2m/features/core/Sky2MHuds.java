@@ -140,6 +140,22 @@ public final class Sky2MHuds {
         return new ArrayList<>(ELEMENTS.values());
     }
 
+    /** A HUD that replaces others gets the first of their positions that was saved, the first time. */
+    public static void inheritPlacement(String id, List<String> oldIds) {
+        if (PLACEMENTS.containsKey(id)) return;
+        for (String old : oldIds) {
+            Placement from = PLACEMENTS.get(old);
+            if (from == null) continue;
+            Placement p = new Placement();
+            p.x = from.x;
+            p.y = from.y;
+            p.scale = from.scale;
+            p.background = from.background;
+            PLACEMENTS.put(id, p);
+            return;
+        }
+    }
+
     public static Placement placement(String id) {
         return PLACEMENTS.computeIfAbsent(id, k -> new Placement());
     }

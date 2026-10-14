@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  * closest miniboss when there's no boss. Minibosses are yours when Hypixel said "SLAYER MINI-BOSS ... has spawned!".
  */
 public final class SlayerTargetHighlight {
-    private static final Pattern MINIBOSS_SPAWNED = Pattern.compile("^\\s*SLAYER MINI-BOSS (?<name>.+?) has spawned!\\s*$");
+    private static final Pattern MINIBOSS_SPAWNED = Pattern.compile("^\\s*SLAYER MINI-?BOSS!? (?:The )?(?<name>.+?) (?:has )?spawned!\\s*(?:\\(x\\d+\\))?\\s*$");
     private static final int SCAN_INTERVAL_TICKS = 4;
     private static final double SCAN_RANGE = 48;
 

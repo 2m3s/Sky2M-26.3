@@ -1,0 +1,424 @@
+/*
+ * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
+ * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ */
+package com.epic60869.sky2m.sim.roomsim;
+
+import com.epic60869.sky2m.sim.gui.SettingsButtonWidget;
+import com.epic60869.sky2m.sim.gui.profit.ProfitPanels;
+
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import com.epic60869.sky2m.sim.compat.McCompat;
+
+/**
+ * What the Dungeon Sim button opens: pick a previous run, generate a map, or load a single room.
+ *
+ * <p>killer560 (2026-09-28): "have it open a new menu that says load previous run create new map or load a
+ * room [...] For generate new have an option for how many puzzles how many rooms to blood and if I want
+ * specific rooms. For the room generator let me choose which room I want. Let there be a search bar to search
+ * for rooms and filters for things like puzzles I choose and amount and 2x2 and 1x1 or whatnot."
+ *
+ * <p>Three modes because they answer three different practice questions: run this map again, run something new,
+ * or drill one room. The single-room mode is the one that gets used most while learning a room, so it is not
+ * buried behind the map generator.
+ */
+public class SimMenuScreen extends Screen {
+
+    private enum Mode {
+        HOME("Dungeon Sim"),
+        PREVIOUS("Load a Previous Run"),
+        ROOM("Load a Room"),
+        CYCLE("All Rooms (route practice)");
+
+        final String title;
+
+        Mode(String title) {
+            this.title = title;
+        }
+    }
+
+    private final Screen parent;
+    private Mode mode = Mode.HOME;
+
+    private EditBox search;
+    /** Kept across a visit to the Filters panel, which rebuilds this screen. */
+    private String searchText = "";
+    private int scroll;
+
+    private List<String> listed = List.of();
+
+    /**
+     * Whether the room database had finished loading when {@link #listed} was last built.
+     *
+     * <p>The type filter reads the database, which loads on a background thread and answers NORMAL for every
+     * room until it is done. A list filtered before that point would show no puzzles and never change, so the
+     * render loop rebuilds it the moment the database arrives.
+     */
+    private boolean listedWithDatabase;
+
+    private int panelX;
+    private int panelY;
+    private int panelW;
+    private int panelH;
+
+    public SimMenuScreen(Screen parent) {
+        super(Component.literal("Dungeon Sim"));
+        this.parent = parent;
+    }
+
+    @Override
+    protected void init() {
+        panelW = Math.min(this.width - 20, Math.max(340, Math.min((int) (this.width * 0.7), 560)));
+        panelH = Math.min(this.height - 20, Math.max(220, Math.min((int) (this.height * 0.8), 440)));
+        panelX = (this.width - panelW) / 2;
+        panelY = (this.height - panelH) / 2;
+        RoomLibrary.loadAsync();
+        // See SimMapEditorScreen.init - the sim runs from the main menu, where nothing else starts this.
+        com.epic60869.sky2m.sim.roomdatabase.RoomDatabase.ensureLoading();
+
+        switch (mode) {
+            case HOME -> buildHome();
+            case PREVIOUS -> buildPrevious();
+            case ROOM -> buildRoomPicker();
+            case CYCLE -> buildCycle();
+        }
+    }
+
+    private void buildHome() {
+        int w = panelW - 40;
+        int x = panelX + 20;
+        int y = panelY + 60;
+        addRenderableWidget(SettingsButtonWidget.builder(Component.literal("Load a Previous Run"), b -> {
+            mode = Mode.PREVIOUS;
+            scroll = 0;
+            rebuildWidgets();
+        }).bounds(x, y, w, 22).build());
+        // killer560 (2026-09-29): "this screen needs to be the design the map screen. That should be the only
+        // one once you click create a new map." It goes straight there; the settings page it used to open in
+        // between is gone, and its Floor / Rooms to blood / Puzzles controls and its Generate moved onto the
+        // designer, so nothing it could do was lost.
+        addRenderableWidget(SettingsButtonWidget.builder(Component.literal("Create a New Map"), b ->
+                McCompat.setScreen(this.minecraft, new SimMapEditorScreen(this)))
+                .bounds(x, y + 30, w, 22).build());
+        addRenderableWidget(SettingsButtonWidget.builder(Component.literal("Load a Room"), b -> {
+            mode = Mode.ROOM;
+            scroll = 0;
+            rebuildWidgets();
+        }).bounds(x, y + 60, w, 22).build());
+        // Route practice: one room at a time out of a chosen set, stepped with /next and /back (SimRoomCycle).
+        // Until 2026-10-06 this pasted every captured room in one line across the grid.
+        addRenderableWidget(SettingsButtonWidget.builder(Component.literal("All Rooms (route practice)"), b -> {
+            mode = Mode.CYCLE;
+            capturing = 0;
+            rebuildWidgets();
+        }).bounds(x, y + 90, w, 22).build());
+    }
+
+    /** Which route-practice key is waiting for a press: 0 none, 1 Next Room, 2 Previous Room. */
+    private int capturing;
+
+    /** Whether the database had loaded when the route-practice buttons were built - their counts need it. */
+    private boolean cycleBuiltWithDatabase;
+
+    /**
+     * killer560 (2026-10-06): "when I select it then it goes to a new menu that says rooms without routes or all
+     * rooms or rooms with auto routes", plus a keybinds section for Next Room / Previous Room.
+     */
+    private void buildCycle() {
+        int w = panelW - 40;
+        int x = panelX + 20;
+        int y = panelY + 56;
+        boolean ready = com.epic60869.sky2m.sim.roomdatabase.RoomDatabase.isReady();
+        cycleBuiltWithDatabase = ready;
+        // All Rooms' own filters (killer560, 2026-10-07): the same Filters panel as the designer and Load a Room, on
+        // SimRoomFilters.CYCLE. The counts below are after them.
+        filtersButton(SimRoomFilters.CYCLE, "Narrows the rooms /next and /back step through.");
+        for (SimRoomCycle.Choice c : SimRoomCycle.Choice.values()) {
+            String count = ready ? " (" + SimRoomCycle.roomsFor(c).size() + ")" : " §7(loading...)";
+            var button = SettingsButtonWidget.builder(Component.literal(c.label + count), b -> {
+                if (SimRoomCycle.start(this.minecraft, c)) {
+                    McCompat.setScreen(this.minecraft, null);
+                }
+            }).bounds(x, y, w, 20).build();
+            button.active = ready;
+            addRenderableWidget(button);
+            y += 24;
+        }
+        // Keybinds: Next Room and Previous Room, the same as /next and /back, only inside the sim. Unbound by
+        // default. Esc clears a bind; a mouse button can be one.
+        // Room under the buttons for the exclusion note (+2) and the KEYBINDS heading (+16), both drawn in render.
+        y += 30;
+        int half = (w - 6) / 2;
+        addRenderableWidget(SettingsButtonWidget.builder(keyLabel("Next Room", 1, SimRoomCycle.getNextKey()), b -> {
+            capturing = 1;
+            b.setMessage(Component.literal("Next Room: §ePress any key..."));
+        }).bounds(x, y, half, 20).build());
+        addRenderableWidget(SettingsButtonWidget.builder(keyLabel("Previous Room", 2, SimRoomCycle.getBackKey()),
+                b -> {
+                    capturing = 2;
+                    b.setMessage(Component.literal("Previous Room: §ePress any key..."));
+                }).bounds(x + half + 6, y, w - half - 6, 20).build());
+        backButton();
+    }
+
+    private Component keyLabel(String label, int which, int code) {
+        if (capturing == which) {
+            return Component.literal(label + ": §ePress any key...");
+        }
+        String name = code == com.epic60869.sky2m.sim.util.KeyUtil.NONE
+                ? "§7Not Set" : "§e" + com.epic60869.sky2m.sim.util.KeyUtil.bindDisplayName(code);
+        return Component.literal(label + ": " + name);
+    }
+
+    /** Stores a captured bind (a key code, or a mouse code) for whichever key row is listening. */
+    private void applyCapture(int code) {
+        if (capturing == 1) {
+            SimRoomCycle.setNextKey(code);
+        } else if (capturing == 2) {
+            SimRoomCycle.setBackKey(code);
+        }
+        capturing = 0;
+        rebuildWidgets();
+    }
+
+    @Override
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        if (mode == Mode.CYCLE && capturing != 0) {
+            applyCapture(event.key() == com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE
+                    ? com.epic60869.sky2m.sim.util.KeyUtil.NONE : event.key());
+            return true;
+        }
+        return super.keyPressed(event);
+    }
+
+    private void buildPrevious() {
+        listed = SimRunHistory.savedRuns();
+        backButton();
+    }
+
+    private void buildRoomPicker() {
+        int x = panelX + 20;
+        int y = panelY + 56;
+        int right = panelX + panelW - 20;
+        // killer560 (2026-10-07): "the single room should have the same filter option." The Routes, shape and
+        // Puzzles buttons that sat here (2026-09-30, 2026-10-05) are rows of the shared Filters panel now, on
+        // Load a Room's own SimRoomFilters.PICKER; the button sits beside the search box.
+        int fw = filtersWidth();
+        search = new EditBox(this.font, x, y, right - x - fw - 4, 18, Component.literal("Search"));
+        search.setHint(Component.literal("Search rooms..."));
+        search.setValue(searchText);
+        search.setResponder(v -> {
+            searchText = v;
+            scroll = 0;
+            refreshRoomList();
+        });
+        addRenderableWidget(search);
+        int active = SimRoomFilters.PICKER.activeCount();
+        addRenderableWidget(SettingsButtonWidget.builder(Component.literal(
+                active == 0 ? "Filters" : "§6Filters (" + active + ")"), b -> McCompat.setScreen(this.minecraft,
+                        new SimRoomFilterScreen(this, SimRoomFilters.PICKER, "Narrows the Load a Room list.")))
+                .bounds(right - fw, y, fw, 18).build());
+        refreshRoomList();
+        backButton();
+    }
+
+    private int filtersWidth() {
+        return this.font.width("Filters (99)") + 12;
+    }
+
+    /** A "Filters" button at the right of the title bar, opening the shared panel on {@code filter}. */
+    private void filtersButton(SimRoomFilter filter, String note) {
+        int fw = filtersWidth();
+        int active = filter.activeCount();
+        addRenderableWidget(SettingsButtonWidget.builder(Component.literal(
+                active == 0 ? "Filters" : "§6Filters (" + active + ")"), b -> McCompat.setScreen(this.minecraft,
+                        new SimRoomFilterScreen(this, filter, note)))
+                .bounds(panelX + panelW - 8 - fw, panelY + 6, fw, 18).build());
+    }
+
+    private void backButton() {
+        addRenderableWidget(SettingsButtonWidget.builder(Component.literal("Back"), b -> {
+            mode = Mode.HOME;
+            scroll = 0;
+            rebuildWidgets();
+        }).bounds(panelX + 6, panelY + panelH - 26, 70, 20).build());
+    }
+
+    /**
+     * Applies the search box and the filters.
+     *
+     * <p>Filtered from the captured library rather than from a hardcoded room list: the sim can only load a room
+     * it has, so offering one it does not would be offering a button that cannot work.
+     */
+    private void refreshRoomList() {
+        String query = search == null ? "" : search.getValue().toLowerCase(Locale.ROOT).trim();
+        List<String> out = new ArrayList<>();
+        for (String name : RoomLibrary.names()) {
+            if (!query.isEmpty() && !name.toLowerCase(Locale.ROOT).contains(query)) {
+                continue;
+            }
+            // The shared filter (SimRoomFilter): types come from the room database, never from the name.
+            if (!SimRoomFilters.PICKER.matches(name)) {
+                continue;
+            }
+            out.add(name);
+        }
+        listed = out;
+        listedWithDatabase = com.epic60869.sky2m.sim.roomdatabase.RoomDatabase.isReady();
+    }
+
+    /** The text at the right of a room's row, or null for a room the routes view leaves out and has no route. */
+    static String routeMarker(String name) {
+        int nodes = SimRoomRoutes.routeNodes(name);
+        if (nodes > 0) {
+            return nodes + (nodes == 1 ? " node" : " nodes");
+        }
+        return SimRoomRoutes.isEligible(name) ? "no routes" : null;
+    }
+
+    /** What the room list shows right now, in order. For the testkit; the screen itself reads the field. */
+    public List<String> listedRooms() {
+        return List.copyOf(listed);
+    }
+
+    /** Opens straight on "Load a Room", for the testkit. */
+    public static SimMenuScreen roomPicker(Screen parent) {
+        SimMenuScreen screen = new SimMenuScreen(parent);
+        screen.mode = Mode.ROOM;
+        return screen;
+    }
+
+    private int listTop() {
+        return mode == Mode.ROOM ? panelY + 80 : panelY + 56;
+    }
+
+    private int listHeight() {
+        return panelY + panelH - 32 - listTop();
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        int max = Math.max(0, listed.size() * 14 - listHeight());
+        scroll = Math.max(0, Math.min(max, scroll - (int) Math.round(scrollY * 28)));
+        return true;
+    }
+
+    @Override
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        // A key row waiting for a bind takes the next mouse press as the bind, as the settings tabs do.
+        if (mode == Mode.CYCLE && capturing != 0) {
+            applyCapture(com.epic60869.sky2m.sim.util.KeyUtil.codeForMouseButton(event.button()));
+            return true;
+        }
+        if ((mode == Mode.ROOM || mode == Mode.PREVIOUS) && !listed.isEmpty()) {
+            double my = event.y();
+            int row = (int) ((my - listTop() + scroll) / 14);
+            if (my >= listTop() && my <= listTop() + listHeight() && row >= 0 && row < listed.size()) {
+                String picked = listed.get(row);
+                if (mode == Mode.ROOM) {
+                    SimBuilder.buildSingleRoom(this.minecraft, picked);
+                } else {
+                    SimRunHistory.load(this.minecraft, picked);
+                }
+                McCompat.setScreen(this.minecraft, null);
+                return true;
+            }
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        g.fill(0, 0, this.width, this.height, 0xCC000000);
+        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, ProfitPanels.PANEL_BG);
+        g.outline(panelX, panelY, panelW, panelH, ProfitPanels.BORDER);
+        g.fill(panelX, panelY, panelX + panelW, panelY + 30, 0xFF000000);
+        g.fill(panelX, panelY + 29, panelX + panelW, panelY + 30, ProfitPanels.ACCENT);
+        g.text(this.font, mode.title.toUpperCase(Locale.ROOT), panelX + 10, panelY + 11,
+                ProfitPanels.ACCENT, false);
+        if (mode == Mode.HOME) {
+            String hint = RoomLibrary.roomCount() == 0
+                    ? "No rooms loaded - the shipped room library did not load"
+                    : "Pick what to practise";
+            g.text(this.font, hint, panelX + 20, panelY + 42, ProfitPanels.DIM, false);
+        } else if (mode == Mode.CYCLE) {
+            if (com.epic60869.sky2m.sim.roomdatabase.RoomDatabase.isReady() != cycleBuiltWithDatabase) {
+                rebuildWidgets();
+            }
+            g.text(this.font, this.font.plainSubstrByWidth(
+                    "One room at a time - /next and /back step through the set", panelW - 40),
+                    panelX + 20, panelY + 42, ProfitPanels.DIM, false);
+            int filters = SimRoomFilters.CYCLE.activeCount();
+            g.text(this.font, this.font.plainSubstrByWidth(filters == 0
+                    ? "No puzzles, Blood, Entrance, Fairy or 0-secret rooms"
+                    : filters + (filters == 1 ? " filter" : " filters") + " on - counts are after them", panelW - 40),
+                    panelX + 20, panelY + 56 + 3 * 24 + 2, ProfitPanels.DIM, false);
+            g.text(this.font, "KEYBINDS (sim only)", panelX + 20, panelY + 56 + 3 * 24 + 16,
+                    ProfitPanels.ACCENT, false);
+        } else if (mode == Mode.ROOM || mode == Mode.PREVIOUS) {
+            boolean needsDatabase = !SimRoomFilters.PICKER.isDefault();
+            if (mode == Mode.ROOM && needsDatabase
+                    && com.epic60869.sky2m.sim.roomdatabase.RoomDatabase.isReady() != listedWithDatabase) {
+                refreshRoomList();
+            }
+            int top = listTop();
+            int h = listHeight();
+            g.fill(panelX + 6, top, panelX + panelW - 6, top + h, ProfitPanels.INNER_BG);
+            g.outline(panelX + 5, top - 1, panelW - 10, h + 2, ProfitPanels.BORDER);
+            g.enableScissor(panelX + 6, top, panelX + panelW - 6, top + h);
+            try {
+                if (listed.isEmpty()) {
+                    String none = mode != Mode.ROOM ? "No saved runs yet"
+                            : needsDatabase && !listedWithDatabase ? "Loading the room database..."
+                            : "No rooms match";
+                    g.text(this.font, none, panelX + 14, top + 6, ProfitPanels.DIM, false);
+                }
+                for (int i = 0; i < listed.size(); i++) {
+                    int rowY = top + i * 14 - scroll + 3;
+                    if (rowY > top + h) {
+                        break;
+                    }
+                    if (rowY + 14 < top) {
+                        continue;
+                    }
+                    String name = listed.get(i);
+                    int nameRoom = panelW - 28;
+                    if (mode == Mode.ROOM) {
+                        // Each room's Auto Routes at a glance: green node count when it has a route, a dim
+                        // "no routes" when it is one worth routing that has none, nothing for the rooms the
+                        // routes view leaves out (puzzles, Blood, Entrance, Fairy, 0 secrets).
+                        String marker = routeMarker(name);
+                        if (marker != null) {
+                            int mw = this.font.width(marker);
+                            int colour = SimRoomRoutes.routeNodes(name) > 0 ? 0xFF55FF55 : ProfitPanels.DIM;
+                            g.text(this.font, marker, panelX + panelW - 14 - mw, rowY, colour, false);
+                            nameRoom -= mw + 8;
+                        }
+                    }
+                    g.text(this.font, this.font.plainSubstrByWidth(name, nameRoom),
+                            panelX + 14, rowY, ProfitPanels.TEXT, false);
+                }
+            } finally {
+                g.disableScissor();
+            }
+        }
+        super.extractRenderState(g, mouseX, mouseY, partialTick);
+    }
+
+    @Override
+    public void onClose() {
+        McCompat.setScreen(this.minecraft, parent);
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+}

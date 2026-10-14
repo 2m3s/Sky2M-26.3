@@ -45,8 +45,8 @@ final class ProfitTrackerHud {
     private static final int BACKGROUND = 0xB0101010;
     private static final int OUTLINE = 0x80505050;
     private static final int CONTROL_HOVER = 0x20FFFFFF;
-    private static final String KERNEL_ITEM = "ENCHANTMENT_FEAST_1";
-    private static final int KERNELS_PER_ITEM = 25;
+    static final String KERNEL_ITEM = "ENCHANTMENT_FEAST_1";
+    static final int KERNELS_PER_ITEM = 25;
     private static final ThreadLocal<DecimalFormat> SHORT = ThreadLocal.withInitial(() -> new DecimalFormat("#,##0.#", DecimalFormatSymbols.getInstance(Locale.US)));
 
     enum Control { PERIOD, PRICE_SOURCE, RESET, CANCEL, CONFIRM }
@@ -90,31 +90,50 @@ final class ProfitTrackerHud {
     private ProfitTrackerHud() {}
 
     static void init() {
-        for (ProfitTracker.Preset preset : ProfitTracker.Preset.values()) {
-            Sky2MHuds.registerCustom(ProfitTracker.hudId(preset), preset.displayName + " Profit Tracker", () -> ProfitTracker.enabled(preset),
-                new Sky2MHuds.CustomHud() {
-                    @Override
-                    public int width() {
-                        return layoutWidth(preset, rows(preset, false));
-                    }
+        // Where the shared HUD starts: a turned-on tracker's old position, else any tracker's.
+        List<String> old = new ArrayList<>();
+        for (ProfitTracker.Preset preset : ProfitTracker.Preset.values()) if (ProfitTracker.enabled(preset)) old.add(ProfitTracker.oldHudId(preset));
+        for (ProfitTracker.Preset preset : ProfitTracker.Preset.values()) old.add(ProfitTracker.oldHudId(preset));
+        Sky2MHuds.inheritPlacement(ProfitTracker.HUD_ID, old);
+        Sky2MHuds.registerCustom(ProfitTracker.HUD_ID, "Profit Tracker", ProfitTrackerHud::anyEnabled,
+            new Sky2MHuds.CustomHud() {
+                @Override
+                public int width() {
+                    ProfitTracker.Preset preset = hudPreset();
+                    return preset == null ? 1 : layoutWidth(preset, rows(preset, false));
+                }
 
-                    @Override
-                    public int height() {
-                        return layoutHeight(preset, rows(preset, false));
-                    }
+                @Override
+                public int height() {
+                    ProfitTracker.Preset preset = hudPreset();
+                    return preset == null ? 1 : layoutHeight(preset, rows(preset, false));
+                }
 
-                    @Override
-                    public boolean visible() {
-                        return ProfitTracker.shownPreset() == preset && !ProfitTracker.containerOpen();
-                    }
+                @Override
+                public boolean visible() {
+                    return ProfitTracker.shownPreset() != null && !ProfitTracker.containerOpen();
+                }
 
-                    @Override
-                    public void render(GuiGraphicsExtractor graphics, boolean preview) {
-                        draw(graphics, preset, rows(preset, false), null, null);
-                    }
-                }, 8, 150);
-        }
+                @Override
+                public void render(GuiGraphicsExtractor graphics, boolean preview) {
+                    ProfitTracker.Preset preset = hudPreset();
+                    if (preset != null) draw(graphics, preset, rows(preset, false), null, null);
+                }
+            }, 8, 150);
         ProfitTracker.registerScreenHooks();
+    }
+
+    private static boolean anyEnabled() {
+        for (ProfitTracker.Preset preset : ProfitTracker.Preset.values()) if (ProfitTracker.enabled(preset)) return true;
+        return false;
+    }
+
+    /** The tracker the shared HUD shows: what you're doing, else (in /s2 gui) the first one turned on. */
+    private static ProfitTracker.Preset hudPreset() {
+        ProfitTracker.Preset shown = ProfitTracker.shownPreset();
+        if (shown != null) return shown;
+        for (ProfitTracker.Preset preset : ProfitTracker.Preset.values()) if (ProfitTracker.enabled(preset)) return preset;
+        return null;
     }
 
     // ------------------------------------------------------------------------------------------------ rows
@@ -250,12 +269,16 @@ final class ProfitTrackerHud {
         return new Row(text, null, null, null, ROW_HEIGHT, 0, control, null, false, null, 0, textWidth(text));
     }
 
-    /** The item's name in its rarity colour, without "Enchanted" spelled out in full when it's long. */
-    private static String name(String id) {
+    /**
+     * The item's name as Skysoft shows it: the repo's own coloured name (gemstones in their gem's colour), "Enchanted"
+     * shortened to "Ench", without the resource pack glyphs some names start with. Its rarity colour if it has none.
+     */
+    static String name(String id) {
         String name = RepoItems.displayName(id);
-        String plain = name == null ? id.replace('_', ' ') : ChatFormatting.stripFormatting(name);
-        ChatFormatting colour = RepoItems.tierColour(RepoItems.tier(id));
-        return colour + plain;
+        if (name == null) return RepoItems.tierColour(RepoItems.tier(id)) + id.replace('_', ' ');
+        name = name.replaceAll("[\\x{E000}-\\x{F8FF}]", "").replaceAll("^((?:§.)*)\\s+", "$1").trim().replace("Enchanted ", "Ench ");
+        if (!name.startsWith("§")) name = RepoItems.tierColour(RepoItems.tier(id)) + name;
+        return name;
     }
 
     private static String truncate(String legacy) {

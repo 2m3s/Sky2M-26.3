@@ -57,11 +57,62 @@ sourceSets {
     }
 }
 
+// Nopo emojis are drawn as fixed-size chat glyphs (and 9x9 suggestion previews), and
+// almost all of them are 18x18. A few upstream PNGs are huge (up to 1284x1167, or
+// 128x5800 animation strips whose .mcmeta we don't ship), which bloated the jar and
+// the GUI atlas. Shrink anything bigger than 18x18 to exactly 18x18: animation strips
+// keep their first frame, the image keeps its aspect ratio and is centred on a
+// transparent 18x18 canvas. Already-18x18 (or smaller) files are left untouched.
+def nopoEmojiSize = 18
+def shrinkNopoEmoji = { File file ->
+    def src = javax.imageio.ImageIO.read(file)
+    if (src == null) return
+    int w = src.width, h = src.height
+    if (w <= nopoEmojiSize && h <= nopoEmojiSize) return
+    // Vertical animation strip (frames stacked w x w): keep only the first frame.
+    if (h > w && h % w == 0) h = w
+    def toPre = { java.awt.image.BufferedImage img, int sx, int sy, int sw, int sh, int dw, int dh ->
+        def out = new java.awt.image.BufferedImage(dw, dh, java.awt.image.BufferedImage.TYPE_INT_ARGB_PRE)
+        def g = out.createGraphics()
+        g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+        g.setRenderingHint(java.awt.RenderingHints.KEY_RENDERING, java.awt.RenderingHints.VALUE_RENDER_QUALITY)
+        g.setRenderingHint(java.awt.RenderingHints.KEY_ALPHA_INTERPOLATION, java.awt.RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY)
+        g.drawImage(img, 0, 0, dw, dh, sx, sy, sx + sw, sy + sh, null)
+        g.dispose()
+        out
+    }
+    double scale = Math.min(nopoEmojiSize / (double) w, nopoEmojiSize / (double) h)
+    int tw = Math.max(1, (int) Math.round(w * scale))
+    int th = Math.max(1, (int) Math.round(h * scale))
+    // Premultiplied copy of the (first-frame) source, then progressive halving so a
+    // big downscale averages every source pixel instead of sampling a few.
+    def cur = toPre(src, 0, 0, w, h, w, h)
+    int cw = w, ch = h
+    while (cw / 2 >= tw && ch / 2 >= th) {
+        int nw = cw.intdiv(2), nh = ch.intdiv(2)
+        cur = toPre(cur, 0, 0, cw, ch, nw, nh)
+        cw = nw; ch = nh
+    }
+    def out = new java.awt.image.BufferedImage(nopoEmojiSize, nopoEmojiSize, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+    def g = out.createGraphics()
+    g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+    g.setRenderingHint(java.awt.RenderingHints.KEY_RENDERING, java.awt.RenderingHints.VALUE_RENDER_QUALITY)
+    int ox = (nopoEmojiSize - tw).intdiv(2), oy = (nopoEmojiSize - th).intdiv(2)
+    g.drawImage(cur, ox, oy, ox + tw, oy + th, 0, 0, cw, ch, null)
+    g.dispose()
+    javax.imageio.ImageIO.write(out, 'png', file)
+}
+
 tasks.register('downloadNopoEmojiAssets') {
     outputs.dir nopoEmojiGeneratedDir
     doLast {
         def marker = new File(nopoEmojiGeneratedDir, '.complete')
-        if (marker.exists()) return
+        def spritesDir = new File(nopoEmojiGeneratedDir, 'assets/sky2m/textures/gui/sprites')
+        if (marker.exists()) {
+            // Earlier builds fetched the full-size PNGs; shrink them in place too.
+            spritesDir.listFiles()?.findAll { it.name.endsWith('.png') }?.each { shrinkNopoEmoji(it) }
+            return
+        }
 
         delete nopoEmojiGeneratedDir
         mkdir nopoEmojiGeneratedDir
@@ -85,10 +136,12 @@ tasks.register('downloadNopoEmojiAssets') {
             } else if (path.startsWith(spritesPrefix) && path.endsWith('.png')) {
                 copy {
                     from details.file
-                    into new File(nopoEmojiGeneratedDir, 'assets/sky2m/textures/gui/sprites')
+                    into spritesDir
                 }
             }
         }
+
+        spritesDir.listFiles()?.findAll { it.name.endsWith('.png') }?.each { shrinkNopoEmoji(it) }
 
         marker.text = 'Nopo emoji assets fetched from pinned upstream commit.'
     }

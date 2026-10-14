@@ -137,9 +137,10 @@ public final class Sky2MDungeons {
 
         // Dungeon terminals remain display-only; experiment misclick blocking is user-configurable above.
         sb.dungeons.terminals.blockIncorrectClicks = false;
-        sb.dungeons.mimicMessage.sendMimicMessage = false;
-        sb.dungeons.princeMessage.sendPrinceMessage = false;
-        sb.dungeons.batMessage.sendBatMessage = false;
+        // Skyblocker's kill messages: only once a run, and not when a teammate already said it.
+        sb.dungeons.mimicMessage.sendMimicMessage = d.score.mimicMessage;
+        sb.dungeons.princeMessage.sendPrinceMessage = d.score.princeMessage;
+        sb.dungeons.batMessage.sendBatMessage = d.score.batMessage;
         // Score alerts come from Sky2M's ScoreCalculator (NoammAddons' calculation) instead.
         sb.dungeons.dungeonScore.enableDungeonScore270Title = false;
         sb.dungeons.dungeonScore.enableDungeonScore270Sound = false;
@@ -147,6 +148,8 @@ public final class Sky2MDungeons {
         sb.dungeons.dungeonScore.enableDungeonScore300Title = false;
         sb.dungeons.dungeonScore.enableDungeonScore300Sound = false;
         sb.dungeons.dungeonScore.enableDungeonScore300Message = false;
-        sb.dungeons.dungeonScore.enableDungeonCryptsMessage = false;
+        sb.dungeons.dungeonScore.enableDungeonCryptsMessage = d.score.cryptsMessage;
+        sb.dungeons.dungeonScore.dungeonCryptsMessageThreshold = d.score.cryptsThreshold;
+        sb.dungeons.dungeonScore.dungeonCryptsMessage = d.score.cryptsText;
     }
 }

@@ -1,0 +1,14 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "sky2m:font/perf_icons.png",
+      "height": 8,
+      "ascent": 7,
+      "chars": [
+        ""
+      ]
+    },
+    { "type": "space", "advances": { "": 2 } }
+  ]
+}

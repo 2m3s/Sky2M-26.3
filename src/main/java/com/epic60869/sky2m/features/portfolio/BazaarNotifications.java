@@ -307,13 +307,16 @@ public final class BazaarNotifications {
         for (int i = 0; i < count; i++) SOUND_BURSTS.add(i);
     }
 
+    private static final Pattern INTEGER = Pattern.compile("[\\d,]+");
+    private static final Pattern DECIMAL = Pattern.compile("[\\d,]+(?:\\.\\d+)?");
+
     private static int firstInteger(String text) {
-        Matcher matcher = Pattern.compile("[\\d,]+").matcher(text);
+        Matcher matcher = INTEGER.matcher(text);
         return matcher.find() ? (int) parseNumber(matcher.group()) : -1;
     }
 
     private static double firstDouble(String text) {
-        Matcher matcher = Pattern.compile("[\\d,]+(?:\\.\\d+)?").matcher(text);
+        Matcher matcher = DECIMAL.matcher(text);
         return matcher.find() ? parseNumber(matcher.group()) : -1;
     }
 

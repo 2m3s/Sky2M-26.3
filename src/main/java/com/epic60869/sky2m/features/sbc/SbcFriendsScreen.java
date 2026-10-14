@@ -16,7 +16,7 @@ import java.util.List;
  * requests with Accept / Deny, and who may see your location, friend requests and online notifications.
  */
 public final class SbcFriendsScreen extends Screen {
-    private enum Tab { FRIENDS, REQUESTS, SETTINGS }
+    private enum Tab { FRIENDS, REQUESTS, PARTY_TIME, SETTINGS }
 
     private record RowButton(String label, int x, int width, Runnable action) {}
 
@@ -35,6 +35,12 @@ public final class SbcFriendsScreen extends Screen {
 
     public SbcFriendsScreen() {
         super(Component.literal("Sky2M Friends"));
+    }
+
+    /** The screen on its Party Time (Best Friends) tab. */
+    public static SbcFriendsScreen partyTime() {
+        tab = Tab.PARTY_TIME;
+        return new SbcFriendsScreen();
     }
 
     private int panelW() {
@@ -57,7 +63,7 @@ public final class SbcFriendsScreen extends Screen {
     protected void init() {
         tabButtons.clear();
         settingButtons.clear();
-        int x = width / 2 - 153;
+        int x = width / 2 - 205;
         for (Tab t : Tab.values()) {
             Button b = addRenderableWidget(Button.builder(Component.literal(tabName(t)), btn -> {
                 tab = t;
@@ -100,6 +106,7 @@ public final class SbcFriendsScreen extends Screen {
         return switch (t) {
             case FRIENDS -> "Friends";
             case REQUESTS -> "Requests" + (SbcSocial.incoming.isEmpty() ? "" : " (" + SbcSocial.incoming.size() + ")");
+            case PARTY_TIME -> "Party Time";
             case SETTINGS -> "Settings";
         };
     }
@@ -144,11 +151,11 @@ public final class SbcFriendsScreen extends Screen {
         int bottom = bottom();
         g.fill(left, top, right, bottom, 0xC0121722);
         g.outline(left, top, panelW(), bottom - top, 0xFF3B465B);
-        if (!SbcNet.online()) {
+        if (tab != Tab.PARTY_TIME && !SbcNet.online()) {
             g.centeredText(font, "S2C offline: can't reach the Sky2M server.", width / 2, top + 20, 0xFFFF5555);
             return;
         }
-        if (!SbcSocial.friendsLoaded) {
+        if (tab != Tab.PARTY_TIME && !SbcSocial.friendsLoaded) {
             g.centeredText(font, "Logging in...", width / 2, top + 20, 0xFFAAAAAA);
             return;
         }
@@ -186,7 +193,9 @@ public final class SbcFriendsScreen extends Screen {
         }
         g.disableScissor();
         if (rows.isEmpty()) {
-            g.centeredText(font, tab == Tab.FRIENDS ? "No friends yet. Add someone below!" : "No friend requests.", width / 2, top + 20, 0xFFAAAAAA);
+            g.centeredText(font, tab == Tab.FRIENDS ? "No friends yet. Add someone below!" : tab == Tab.PARTY_TIME
+                ? (BestFriends.enabled() ? "Nobody yet: party with someone!" : "Turn on Best Friends (Sky2M Online > Best Friends) to count party time.")
+                : "No friend requests.", width / 2, top + 20, 0xFFAAAAAA);
         }
     }
 
@@ -194,7 +203,35 @@ public final class SbcFriendsScreen extends Screen {
 
     private List<Row> rows() {
         List<Row> rows = new ArrayList<>();
-        if (tab == Tab.FRIENDS) {
+        if (tab == Tab.PARTY_TIME) {
+            int rank = 0;
+            for (BestFriends.Record r : BestFriends.sorted()) {
+                rank++;
+                boolean now = BestFriends.partiedNow(r);
+                StringBuilder detail = new StringBuilder(BestFriends.duration(BestFriends.liveMs(r)) + " partied");
+                if (r.totalRuns() > 0) {
+                    detail.append(" \u00b7 ").append(r.totalRuns()).append(r.totalRuns() == 1 ? " run" : " runs").append(" together (");
+                    java.util.List<java.util.Map.Entry<String, Integer>> floors = new ArrayList<>(r.runs.entrySet());
+                    floors.sort((a, b) -> b.getValue() - a.getValue());
+                    for (int i = 0; i < floors.size() && i < 4; i++) detail.append(i > 0 ? ", " : "").append(floors.get(i).getKey()).append(" ").append(floors.get(i).getValue());
+                    detail.append(")");
+                }
+                detail.append(now ? " \u00b7 In your party now" : r.lastPartied > 0 ? " \u00b7 Last partied " + Sbc.ago(r.lastPartied) : "");
+                boolean confirming = confirmRemove.equals(r.uuid) && System.currentTimeMillis() - confirmRemoveAt < 4000;
+                List<RowButton> buttons = new ArrayList<>();
+                buttons.add(new RowButton(confirming ? "Sure?" : "Forget", 0, 46, () -> {
+                    if (confirmRemove.equals(r.uuid) && System.currentTimeMillis() - confirmRemoveAt < 4000) {
+                        confirmRemove = "";
+                        BestFriends.forget(r);
+                    } else {
+                        confirmRemove = r.uuid;
+                        confirmRemoveAt = System.currentTimeMillis();
+                    }
+                }));
+                Component name = Component.literal("#" + rank + " ").withStyle(s -> s.withColor(0xFFD35A)).append(Component.literal(r.name == null ? "?" : r.name));
+                rows.add(new Row(false, "", name, detail.toString(), now ? 0xFF55FF55 : 0xFF9AA5B8, buttons, false));
+            }
+        } else if (tab == Tab.FRIENDS) {
             for (SbcSocial.Friend f : SbcSocial.friends) {
                 String where = SbcSocial.where(f.area(), f.server());
                 String detail = f.online() ? "Online" + (where.isEmpty() ? "" : " · " + where) + (f.afk() ? " · AFK" : "")

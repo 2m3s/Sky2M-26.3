@@ -45,6 +45,12 @@ public final class HeldItemSwing {
         return Math.max(MIN_VISIBLE_DURATION, Math.round(duration / speed));
     }
 
+    /** Swing In Place: the swing's slide across the screen (vanilla's translate before the swing turn) is skipped. */
+    public static boolean skipSwingSlide() {
+        HeldItemConfig config = HeldItemTransforms.config();
+        return config != null && config.settings.swingInPlace;
+    }
+
     /** Draws one first-person arm, remembering whether its item should use the Item Only swing. */
     public static void renderWithSwing(ItemStack stack, float attack, HumanoidArm arm, Runnable render) {
         ItemOnlySwing previous = itemOnlySwing;

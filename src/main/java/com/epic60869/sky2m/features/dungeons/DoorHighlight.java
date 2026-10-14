@@ -120,7 +120,8 @@ public final class DoorHighlight {
         if (++ticks % 10 != 0) return;
 
         // Doors sit between rooms on the 32-block grid that starts at -200; each is 3 wide and 4 tall from y 69.
-        if (config.doorHighlight) {
+        // Always scanned (cheap): the Cross-Mod Bridge sends them too, highlight on or not.
+        {
             DOORS.clear();
             MapItemSavedData map = mc.player == null ? null
                 : MapItem.getSavedData(DungeonMap.getMapIdComponent(mc.player.getInventory().getNonEquipmentItems().get(8)), mc.level);
@@ -148,6 +149,19 @@ public final class DoorHighlight {
                 break;
             }
         }
+    }
+
+    /** A wither or blood door on Hypixel's dungeon map, in NoammAddons' 11x11 grid: {@code x, z} is its centre. */
+    public record MapDoor(int x, int z, int col, int row, boolean blood) {}
+
+    /** The wither and blood doors the dungeon map shows right now. */
+    public static List<MapDoor> mapDoors() {
+        List<MapDoor> out = new ArrayList<>();
+        for (Door door : DOORS) {
+            BlockPos c = door.centre();
+            out.add(new MapDoor(c.getX(), c.getZ(), (c.getX() + 200) / 16, (c.getZ() + 200) / 16, door.blood()));
+        }
+        return out;
     }
 
     private static void checkDoor(Minecraft mc, MapItemSavedData map, BlockPos pos, boolean east) {

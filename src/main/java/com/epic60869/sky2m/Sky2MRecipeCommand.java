@@ -1,9 +1,6 @@
 package com.epic60869.sky2m;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -12,10 +9,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -34,8 +27,6 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
  * crashes and allowing the requested amount to be shown.
  */
 public final class Sky2MRecipeCommand {
-    private static final HttpClient HTTP = HttpClient.newBuilder()
-        .connectTimeout(java.time.Duration.ofSeconds(5)).build();
     private static final List<ItemEntry> ITEMS = new ArrayList<>();
 
     private record ItemEntry(String id, String name) {}
@@ -43,27 +34,14 @@ public final class Sky2MRecipeCommand {
     private Sky2MRecipeCommand() {}
 
     public static void init() {
-        CompletableFuture.runAsync(Sky2MRecipeCommand::loadItems);
+        // The item list is downloaded once, by PriceService, and shared.
+        PriceService.onItems(Sky2MRecipeCommand::loadItems);
     }
 
-    private static void loadItems() {
+    private static void loadItems(java.util.Map<String, JsonObject> items) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.hypixel.net/v2/resources/skyblock/items"))
-                .timeout(java.time.Duration.ofSeconds(10))
-                .header("User-Agent", "Sky2M/1.0")
-                .GET().build();
-            HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) return;
-
-            JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-            JsonArray items = root.getAsJsonArray("items");
-            if (items == null) return;
-
             List<ItemEntry> next = new ArrayList<>();
-            for (JsonElement element : items) {
-                if (!element.isJsonObject()) continue;
-                JsonObject item = element.getAsJsonObject();
+            for (JsonObject item : items.values()) {
                 if (!item.has("id") || !item.has("name")) continue;
                 String id = item.get("id").getAsString().trim();
                 String name = item.get("name").getAsString().trim();

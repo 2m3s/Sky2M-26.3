@@ -51,6 +51,11 @@ public final class HeldItemConfig {
         @ConfigOption(name = "Held Item Update Fix", desc = "Keep the held item steady when Hypixel updates it (ability cooldowns, lore changes) instead of playing the re-equip animation, and keep mining the same block through those updates.")
         @ConfigEditorBoolean
         public boolean updateFix = true;
+
+        @Expose
+        @ConfigOption(name = "Swing In Place", desc = "Your first-person item still swings, but doesn't slide across half the screen while it does, like other mods with every swing setting at 0. Only how it looks. Works even with Held Item off.")
+        @ConfigEditorBoolean
+        public boolean swingInPlace = false;
     }
 
     public HeldItemTransform transformFor(String itemId) {

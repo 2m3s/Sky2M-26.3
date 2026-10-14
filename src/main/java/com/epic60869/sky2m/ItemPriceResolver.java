@@ -15,23 +15,35 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Centralized live pricing for the Sky2M RNG overlay. */
+/**
+ * Centralized live pricing for the Sky2M RNG overlay. NPC prices, item names and bazaar prices come from
+ * {@link PriceService}; lowest BINs come from lb.tricked.dev, a different source from the tooltip's hysky.de, so that
+ * one download stays here.
+ */
 public final class ItemPriceResolver {
-    private static final String ITEMS_URL = "https://api.hypixel.net/v2/resources/skyblock/items";
-    private static final String BAZAAR_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
     private static final String LOWEST_BINS_URL = "https://lb.tricked.dev/lowestbins.json";
     private static final long CACHE_TIME_MILLIS = 5 * 60 * 1000L;
 
     private static final HttpClient CLIENT = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(10)).build();
-    private static final Map<String, Double> NPC_PRICES = new HashMap<>();
-    private static final Map<String, Double> BAZAAR_PRICES = new HashMap<>();
+    /** Built from PriceService's item list (only prices above 0). */
+    private static volatile Map<String, Double> npcPrices = Map.of();
     private static final Map<String, Double> LOWEST_BIN_PRICES = new HashMap<>();
-    private static final Map<String, String> NAME_TO_ID = new HashMap<>();
+    private static volatile Map<String, String> nameToId = Map.of();
+    /** Completes once {@link #npcPrices} and {@link #nameToId} have been built. */
+    private static final CompletableFuture<Void> ITEMS_READY = new CompletableFuture<>();
     private static final Map<String, String> ALIASES = new HashMap<>();
     private static final AtomicBoolean REFRESHING = new AtomicBoolean(false);
     private static volatile long lastRefresh = 0L;
-    private static volatile CompletableFuture<Void> refreshFuture = CompletableFuture.completedFuture(null);
+    private static volatile CompletableFuture<Void> binsFuture = CompletableFuture.completedFuture(null);
+
+    static {
+        PriceService.onItems(items -> {
+            npcPrices = parseNpcPrices(items);
+            nameToId = parseNames(items);
+            ITEMS_READY.complete(null);
+        });
+    }
 
     static {
         alias("dedication iv", "ENCHANTMENT_DEDICATION_4");
@@ -82,18 +94,19 @@ public final class ItemPriceResolver {
     /** NPC sell price for an item id, or -1 if it cannot be sold to an NPC (or prices have not loaded yet). */
     public static double npcPrice(String itemId) {
         ensureRefresh();
-        Double price = itemId == null ? null : NPC_PRICES.get(itemId);
+        Double price = itemId == null ? null : npcPrices.get(itemId);
         return price == null ? -1 : price;
     }
 
     /** Returns the best currently cached sell value without blocking the render thread. */
     public static double value(String itemId) {
         if (itemId == null || itemId.isBlank()) return 0.0;
-        Double bazaar = BAZAAR_PRICES.get(itemId);
+        Double bazaar = PriceService.bazaar().sell().get(itemId);
         if (bazaar != null && bazaar > 0) return bazaar;
-        Double bin = LOWEST_BIN_PRICES.get(itemId);
+        Double bin;
+        synchronized (LOWEST_BIN_PRICES) { bin = LOWEST_BIN_PRICES.get(itemId); }
         if (bin != null && bin > 0) return bin;
-        Double npc = NPC_PRICES.get(itemId);
+        Double npc = npcPrices.get(itemId);
         return npc == null ? 0.0 : npc;
     }
 
@@ -102,7 +115,7 @@ public final class ItemPriceResolver {
         ensureRefresh();
         String normalized = normalize(name);
         String id = ALIASES.get(normalized);
-        if (id == null) id = NAME_TO_ID.get(normalized);
+        if (id == null) id = nameToId.get(normalized);
         if (id == null) id = generatedId(normalized);
         return id == null ? 0.0 : value(id);
     }
@@ -111,7 +124,7 @@ public final class ItemPriceResolver {
     public static CompletableFuture<Double> valueByNameAsync(String name) {
         if (name == null || name.isBlank()) return CompletableFuture.completedFuture(0.0);
         ensureRefresh();
-        return refreshFuture.handle((ignored, error) -> valueByName(name));
+        return currentRefresh().handle((ignored, error) -> valueByName(name));
     }
 
     private static String normalize(String name) {
@@ -137,23 +150,16 @@ public final class ItemPriceResolver {
         };
     }
 
+    /** Starts refreshing whatever is stale: PriceService's market and item list, and the lowest BINs here. */
     private static void ensureRefresh() {
+        PriceService.refreshMarket(false);
         long now = System.currentTimeMillis();
         if (now - lastRefresh < CACHE_TIME_MILLIS || !REFRESHING.compareAndSet(false, true)) return;
 
-        CompletableFuture<HttpResponse<String>> items = get(ITEMS_URL);
-        CompletableFuture<HttpResponse<String>> bazaar = get(BAZAAR_URL);
-        CompletableFuture<HttpResponse<String>> bins = get(LOWEST_BINS_URL);
-        refreshFuture = CompletableFuture.allOf(items, bazaar, bins).thenRun(() -> {
+        binsFuture = get(LOWEST_BINS_URL).thenAccept(bins -> {
             try {
-                Map<String, Double> npc = parseNpcPrices(items.join());
-                Map<String, Double> market = parseBazaarPrices(bazaar.join());
-                Map<String, Double> binsMap = parseLowestBins(bins.join());
-                Map<String, String> names = parseNames(items.join());
-                synchronized (NPC_PRICES) { NPC_PRICES.clear(); NPC_PRICES.putAll(npc); }
-                synchronized (BAZAAR_PRICES) { BAZAAR_PRICES.clear(); BAZAAR_PRICES.putAll(market); }
+                Map<String, Double> binsMap = parseLowestBins(bins);
                 synchronized (LOWEST_BIN_PRICES) { LOWEST_BIN_PRICES.clear(); LOWEST_BIN_PRICES.putAll(binsMap); }
-                synchronized (NAME_TO_ID) { NAME_TO_ID.clear(); NAME_TO_ID.putAll(names); }
                 lastRefresh = System.currentTimeMillis();
             } catch (Throwable error) {
                 System.err.println("[Sky2M] Failed to parse item prices: " + rootMessage(error));
@@ -162,6 +168,16 @@ public final class ItemPriceResolver {
             System.err.println("[Sky2M] Failed to refresh item prices: " + rootMessage(error));
             return null;
         }).whenComplete((ignored, error) -> REFRESHING.set(false));
+    }
+
+    /** Completes when the current refreshes (market, item list, lowest BINs) are done, successfully or not. */
+    private static CompletableFuture<Void> currentRefresh() {
+        CompletableFuture<Void> market = PriceService.refreshMarket(false).exceptionally(error -> null);
+        // Once the item list has downloaded, wait for the names and NPC prices built from it; if it failed, don't.
+        CompletableFuture<Void> items = PriceService.requestItems()
+            .handle((loaded, error) -> error == null ? ITEMS_READY : CompletableFuture.<Void>completedFuture(null))
+            .thenCompose(future -> future);
+        return CompletableFuture.allOf(market, items, binsFuture);
     }
 
     private static CompletableFuture<HttpResponse<String>> get(String url) {
@@ -174,13 +190,9 @@ public final class ItemPriceResolver {
         });
     }
 
-    private static Map<String, Double> parseNpcPrices(HttpResponse<String> response) {
+    private static Map<String, Double> parseNpcPrices(Map<String, JsonObject> items) {
         Map<String, Double> result = new HashMap<>();
-        JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-        if (!root.has("items") || !root.get("items").isJsonArray()) return result;
-        for (JsonElement element : root.getAsJsonArray("items")) {
-            if (!element.isJsonObject()) continue;
-            JsonObject item = element.getAsJsonObject();
+        for (JsonObject item : items.values()) {
             if (!item.has("id") || !item.has("npc_sell_price")) continue;
             try {
                 double price = item.get("npc_sell_price").getAsDouble();
@@ -190,32 +202,12 @@ public final class ItemPriceResolver {
         return result;
     }
 
-    private static Map<String, String> parseNames(HttpResponse<String> response) {
+    private static Map<String, String> parseNames(Map<String, JsonObject> items) {
         Map<String, String> result = new HashMap<>();
-        JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-        if (!root.has("items") || !root.get("items").isJsonArray()) return result;
-        for (JsonElement element : root.getAsJsonArray("items")) {
-            if (!element.isJsonObject()) continue;
-            JsonObject item = element.getAsJsonObject();
-            if (item.has("id") && item.has("name"))
-                result.put(normalize(item.get("name").getAsString()), item.get("id").getAsString());
-        }
-        return result;
-    }
-
-    private static Map<String, Double> parseBazaarPrices(HttpResponse<String> response) {
-        Map<String, Double> result = new HashMap<>();
-        JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
-        if (!root.has("products") || !root.get("products").isJsonObject()) return result;
-        for (Map.Entry<String, JsonElement> entry : root.getAsJsonObject("products").entrySet()) {
-            if (!entry.getValue().isJsonObject()) continue;
-            JsonObject product = entry.getValue().getAsJsonObject();
-            JsonObject status = product.has("quick_status") && product.get("quick_status").isJsonObject()
-                ? product.getAsJsonObject("quick_status") : null;
-            if (status == null || !status.has("sellPrice")) continue;
+        for (JsonObject item : items.values()) {
             try {
-                double price = status.get("sellPrice").getAsDouble();
-                if (price > 0) result.put(entry.getKey(), price);
+                if (item.has("id") && item.has("name"))
+                    result.put(normalize(item.get("name").getAsString()), item.get("id").getAsString());
             } catch (Exception ignored) {}
         }
         return result;

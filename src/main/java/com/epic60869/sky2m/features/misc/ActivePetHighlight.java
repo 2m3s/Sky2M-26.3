@@ -17,6 +17,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemLore;
 
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +33,34 @@ public final class ActivePetHighlight {
     private static final Pattern LEVEL = Pattern.compile("\\[Lvl (\\d+)]");
     private static final float LABEL_SCALE = 0.75f;
 
+    /** Per-stack results, so the pet data isn't re-read and re-parsed for every slot every frame. */
+    private static final Map<ItemStack, PetData> CACHE = new WeakHashMap<>();
+    /** The last screen title checked against {@link #INVENTORY}, by identity, and whether it matched. */
+    private static Component lastTitle;
+    private static boolean lastTitleMatches;
+
+    private record PetData(boolean active, int level, int overflow) {}
+
     private ActivePetHighlight() {}
+
+    private static boolean inPetsMenu(net.minecraft.client.gui.screens.Screen screen) {
+        Component title = screen.getTitle();
+        if (title != lastTitle) {
+            lastTitle = title;
+            lastTitleMatches = INVENTORY.matcher(Sky2MLocation.strip(title.getString())).find();
+        }
+        return lastTitleMatches;
+    }
+
+    private static PetData data(ItemStack stack) {
+        return CACHE.computeIfAbsent(stack, s -> {
+            Matcher m = LEVEL.matcher(Sky2MLocation.strip(s.getHoverName().getString()));
+            int level = m.find() ? Integer.parseInt(m.group(1)) : -1;
+            // Golden Dragons and other level 200 pets max at 200, the rest at 100.
+            int overflow = level == 100 || level == 200 ? overflowLevel(s) : -1;
+            return new PetData(isActivePet(s), level, overflow);
+        });
+    }
 
     /** Drawn behind the slot's item, from Sky2MSlotBackgroundMixin. */
     public static void renderSlot(GuiGraphicsExtractor graphics, Slot slot) {
@@ -40,8 +69,9 @@ public final class ActivePetHighlight {
         if (!Compat.isOnSkyblock() || slot.container instanceof Inventory) return;
         var screen = Minecraft.getInstance().gui.screen();
         if (!(screen instanceof AbstractContainerScreen<?>)) return;
-        if (!INVENTORY.matcher(Sky2MLocation.strip(screen.getTitle().getString())).find()) return;
-        if (!isActivePet(slot.getItem())) return;
+        if (!inPetsMenu(screen)) return;
+        ItemStack stack = slot.getItem();
+        if (stack == null || stack.isEmpty() || !data(stack).active()) return;
         graphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, colour(config.misc.pets.activeColor));
     }
 
@@ -52,13 +82,13 @@ public final class ActivePetHighlight {
         if (!Compat.isOnSkyblock() || slot.container instanceof Inventory) return;
         var screen = Minecraft.getInstance().gui.screen();
         if (!(screen instanceof AbstractContainerScreen<?>)) return;
-        if (!INVENTORY.matcher(Sky2MLocation.strip(screen.getTitle().getString())).find()) return;
-        Matcher m = LEVEL.matcher(Sky2MLocation.strip(slot.getItem().getHoverName().getString()));
-        if (!m.find()) return;
-        int level = Integer.parseInt(m.group(1));
+        if (!inPetsMenu(screen)) return;
+        PetData pet = data(slot.getItem());
+        if (pet.level() < 0) return;
+        int level = pet.level();
         // Golden Dragons and other level 200 pets max at 200, the rest at 100.
         boolean maxed = level == 100 || level == 200;
-        if (maxed && config.misc.pets.showOverflowLevel) level = Math.max(level, overflowLevel(slot.getItem()));
+        if (maxed && config.misc.pets.showOverflowLevel) level = Math.max(level, pet.overflow());
         String text = String.valueOf(level);
         var font = Minecraft.getInstance().font;
         graphics.pose().pushMatrix();
@@ -73,7 +103,7 @@ public final class ActivePetHighlight {
         CustomData custom = stack.get(DataComponents.CUSTOM_DATA);
         if (custom == null) return -1;
         try {
-            String petInfo = custom.copyTag().getStringOr("petInfo", "");
+            String petInfo = Compat.customDataView(stack).getStringOr("petInfo", "");
             if (petInfo.isBlank()) return -1;
             JsonObject json = JsonParser.parseString(petInfo).getAsJsonObject();
             if (!json.has("exp")) return -1;
@@ -88,7 +118,7 @@ public final class ActivePetHighlight {
         if (stack == null || stack.isEmpty()) return false;
         CustomData custom = stack.get(DataComponents.CUSTOM_DATA);
         if (custom != null) {
-            String petInfo = custom.copyTag().getStringOr("petInfo", "");
+            String petInfo = Compat.customDataView(stack).getStringOr("petInfo", "");
             if (!petInfo.isBlank()) return ACTIVE_INFO.matcher(petInfo).find();
         }
         ItemLore lore = stack.get(DataComponents.LORE);

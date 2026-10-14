@@ -439,6 +439,36 @@ public final class WitherDragons {
         }
     }
 
+    /** Each dragon that's spawning now, by name, with the server ticks until it spawns (for the Rag Axe prompts). */
+    public static java.util.Map<String, Integer> spawningTicks() {
+        java.util.Map<String, Integer> out = new java.util.LinkedHashMap<>();
+        for (Dragon dragon : DRAGONS) if (dragon.isSpawning()) out.put(dragon.name, dragon.spawnTicks);
+        return out;
+    }
+
+    /** A dragon that's spawning: where it will appear and the server ticks until it does (for the spawn arrows). */
+    public record Spawning(String name, int colour, Vec3 pos, int ticks) {}
+
+    public static List<Spawning> spawningDragons() {
+        List<Spawning> out = new java.util.ArrayList<>();
+        for (Dragon dragon : DRAGONS) if (dragon.isSpawning()) out.add(new Spawning(dragon.name, dragon.colour, dragon.pos.getCenter(), dragon.spawnTicks));
+        return out;
+    }
+
+    /** A dragon's spawn or death this run, for the Cross-Mod Bridge: {@code count} is which one (1 for the first). */
+    public record DragonEvent(String colour, boolean alive, int count) {}
+
+    /** Every dragon spawn and death seen this run, lower-case colours. */
+    public static List<DragonEvent> dragonEvents() {
+        List<DragonEvent> out = new java.util.ArrayList<>();
+        for (Dragon dragon : DRAGONS) {
+            String colour = dragon.name.toLowerCase(java.util.Locale.ROOT);
+            for (int i = 1; i <= dragon.spawns; i++) out.add(new DragonEvent(colour, true, i));
+            for (int i = 1; i <= dragon.deaths; i++) out.add(new DragonEvent(colour, false, i));
+        }
+        return out;
+    }
+
     private static final class Dragon {
         final String name;
         final String relicId;
@@ -452,6 +482,8 @@ public final class WitherDragons {
         int spawnTicks;
         int spawnedAt;
         boolean iceSprayed;
+        /** Times this dragon has spawned and died this run, for the Cross-Mod Bridge's events. */
+        int spawns, deaths;
 
         Dragon(String name, String relicId, int colour, AABB pos, List<AABB> parts, AABB area) {
             this.name = name;
@@ -474,12 +506,19 @@ public final class WitherDragons {
             entity = dragon;
             health = dragon.getHealth();
             maxHealth = dragon.getAttributeBaseValue(Attributes.MAX_HEALTH);
-            if (spawnedAt == 0) spawnedAt = tickCounter;
+            if (spawnedAt == 0) {
+                spawnedAt = tickCounter;
+                spawns++;
+            }
         }
 
         void tick() {
             if (spawnTicks > 0) spawnTicks--;
             if (!hasEntity()) {
+                if (entity != null) {
+                    deaths++;
+                    if (spawnedAt > 0) DragonSplits.onDragonDeath(name, colour, tickCounter - spawnedAt);
+                }
                 entity = null;
                 iceSprayed = false;
                 spawnedAt = 0;
@@ -493,6 +532,8 @@ public final class WitherDragons {
             maxHealth = 200;
             spawnTicks = 0;
             spawnedAt = 0;
+            spawns = 0;
+            deaths = 0;
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.epic60869.sky2m.features.portfolio;
 
+import com.epic60869.sky2m.PriceService;
 import com.epic60869.sky2m.Sky2MPriceTooltip;
 import com.epic60869.sky2m.Sky2MStorageSearch;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -7,7 +8,6 @@ import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
@@ -57,11 +57,6 @@ import java.util.regex.Pattern;
 public final class Portfolio {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
-    private static final String ITEMS_URL = "https://api.hypixel.net/v2/resources/skyblock/items";
-    private static final String BAZAAR_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
-    private static final String LOWEST_BINS_URL = "https://hysky.de/api/auctions/lowestbins";
-    private static final String AVERAGE_URL = "https://hysky.de/api/auctions/lowestbins/average?days=3";
-    private static final long PRICE_REFRESH_MS = 60_000;
     private static final long SNAPSHOT_MS = 30 * 60_000;
     private static final long COUNT_REFRESH_MS = 3_000;
 
@@ -150,24 +145,16 @@ public final class Portfolio {
     private static List<Snapshot> history = new ArrayList<>();
     private static Path dir;
 
-    private static volatile Map<String, Double> lowestBins = Map.of();
-    private static volatile Map<String, Double> averages = Map.of();
-    private static volatile Map<String, Double> bazaarSell = Map.of();
-    private static volatile Map<String, Double> bazaarBuy = Map.of();
-    private static volatile Map<String, Double> bestSellOffers = Map.of();
-    private static volatile Map<String, Double> bestBuyOrders = Map.of();
-    /** How many orders share the top price, for {@link #bazaarOrderBookCount}. */
-    private static volatile Map<String, Integer> bestSellOfferCounts = Map.of();
-    private static volatile Map<String, Integer> bestBuyOrderCounts = Map.of();
+    /** Item ids to plain names, built from PriceService's item list. */
     private static volatile Map<String, String> names = Map.of();
     /** Rune price keys (e.g. AXE_SHATTER_RUNE_3) to names ("Barkshatter Rune III") and head textures, from the NEU repo. */
     private static volatile Map<String, String> runeNames = Map.of();
     private static volatile Map<String, String> runeTextures = Map.of();
     private static final AtomicBoolean RUNES_LOADING = new AtomicBoolean();
+    /** Set once anything asks the Portfolio for prices, so rune names are only fetched for people who use it. */
+    private static volatile boolean pricesWanted;
     /** One copy of each tracked item seen in your inventory or storage, for the icons. */
     private static final Map<String, ItemStack> SAMPLES = new HashMap<>();
-    private static volatile long lastPriceRefresh;
-    private static final AtomicBoolean REFRESHING = new AtomicBoolean();
 
     private static Map<String, Integer> inventoryCounts = Map.of();
     private static Map<String, Integer> storageCounts = Map.of();
@@ -176,9 +163,39 @@ public final class Portfolio {
 
     private Portfolio() {}
 
+    // Live prices (bazaar, lowest BIN, 3 day average) are shared with the price tooltip through PriceService.
+    private static Map<String, Double> lowestBins() {
+        return PriceService.lowestBins();
+    }
+
+    private static Map<String, Double> averages() {
+        return PriceService.threeDayAverages();
+    }
+
+    private static Map<String, Double> bazaarSell() {
+        return PriceService.bazaar().sell();
+    }
+
+    private static Map<String, Double> bazaarBuy() {
+        return PriceService.bazaar().buy();
+    }
+
     public static void init(Path configDir) {
         dir = configDir.resolve("sky2m").resolve("portfolio");
         load();
+        PriceService.onItems(items -> {
+            Map<String, String> n = new HashMap<>();
+            for (JsonObject item : items.values()) {
+                try {
+                    if (item.has("id") && item.has("name")) n.put(item.get("id").getAsString(), strip(item.get("name").getAsString()));
+                } catch (Exception ignored) {}
+            }
+            names = n;
+        });
+        // Rune names come from the NEU repo once the rune price keys are known (only once the Portfolio is used).
+        PriceService.onMarketRefreshed(() -> {
+            if (pricesWanted) loadRuneNames();
+        });
         ClientTickEvents.END_CLIENT_TICK.register(Portfolio::tick);
         Sky2MChat.onChat(message -> onChat(message.text()));
         registerCommands();
@@ -231,33 +248,33 @@ public final class Portfolio {
     }
 
     public static boolean pricesLoaded() {
-        return !lowestBins.isEmpty() || !bazaarSell.isEmpty();
+        return !lowestBins().isEmpty() || !bazaarSell().isEmpty();
     }
 
     public static long lastPriceRefresh() {
-        return lastPriceRefresh;
+        return PriceService.lastMarketRefresh();
     }
 
     // ----- Prices -----
 
     /** Current price of one item with the selected price mode, or 0 when unknown. */
     public static double price(String id) {
-        Double sell = bazaarSell.get(id);
+        Double sell = bazaarSell().get(id);
         if (sell != null) {
             if (data.bzMode == BzMode.BUY) {
-                Double buy = bazaarBuy.get(id);
+                Double buy = bazaarBuy().get(id);
                 if (buy != null) return buy;
             }
             return sell;
         }
         if (data.ahMode == AhMode.AVERAGE) {
-            Double avg = averages.get(id);
+            Double avg = averages().get(id);
             if (avg != null) return avg;
         }
-        Double bin = lowestBins.get(id);
+        Double bin = lowestBins().get(id);
         if (bin != null) return bin;
         // Nobody is selling one right now (common for runes): the 3 day average, else the last price seen.
-        Double avg = averages.get(id);
+        Double avg = averages().get(id);
         if (avg != null) return avg;
         com.epic60869.sky2m.PriceHistory.Seen seen = com.epic60869.sky2m.PriceHistory.get(id);
         return seen == null ? 0 : seen.price();
@@ -270,87 +287,32 @@ public final class Portfolio {
 
     /** Best current order-book price for an item: top buy order when {@code buyOrder}, top sell offer otherwise. */
     public static double bazaarOrderBookPrice(String id, boolean buyOrder) {
-        Double price = (buyOrder ? bestBuyOrders : bestSellOffers).get(id);
+        PriceService.Bazaar bazaar = PriceService.bazaar();
+        Double price = (buyOrder ? bazaar.bestBuyOrders() : bazaar.bestSellOffers()).get(id);
         return price == null ? 0 : price;
     }
 
     /** How many orders are at the best price ({@link #bazaarOrderBookPrice}); 0 when unknown. */
     public static int bazaarOrderBookCount(String id, boolean buyOrder) {
-        Integer count = (buyOrder ? bestBuyOrderCounts : bestSellOfferCounts).get(id);
+        PriceService.Bazaar bazaar = PriceService.bazaar();
+        Integer count = (buyOrder ? bazaar.bestBuyOrderCounts() : bazaar.bestSellOfferCounts()).get(id);
         return count == null ? 0 : count;
     }
 
     /** What you'd pay right now: the lowest BIN, or the bazaar buy price. 0 when unknown. */
     private static double currentBuyPrice(String id) {
-        Double bin = lowestBins.get(id);
+        Double bin = lowestBins().get(id);
         if (bin != null && bin > 0) return bin;
-        Double buy = bazaarBuy.get(id);
+        Double buy = bazaarBuy().get(id);
         if (buy != null) return buy;
         com.epic60869.sky2m.PriceHistory.Seen seen = com.epic60869.sky2m.PriceHistory.get(id);
         return seen == null ? 0 : seen.price();
     }
 
+    /** Refreshes the shared prices in the background when over a minute old (or always, with {@code force}). */
     public static void refreshPrices(boolean force) {
-        if (!force && System.currentTimeMillis() - lastPriceRefresh < PRICE_REFRESH_MS) return;
-        if (!REFRESHING.compareAndSet(false, true)) return;
-        CompletableFuture.runAsync(() -> {
-            try {
-                JsonObject bazaar = fetch(BAZAAR_URL);
-                if (bazaar != null && bazaar.has("products")) {
-                    Map<String, Double> sell = new HashMap<>(), buy = new HashMap<>();
-                    Map<String, Double> bestSells = new HashMap<>(), bestBuys = new HashMap<>();
-                    Map<String, Integer> sellCounts = new HashMap<>(), buyCounts = new HashMap<>();
-                    for (var e : bazaar.getAsJsonObject("products").entrySet()) {
-                        JsonObject product = e.getValue().getAsJsonObject();
-                        JsonObject status = product.getAsJsonObject("quick_status");
-                        if (status != null) {
-                            sell.put(e.getKey(), status.get("sellPrice").getAsDouble());
-                            buy.put(e.getKey(), status.get("buyPrice").getAsDouble());
-                        }
-                        // The API names them by what you'd do: sell_summary is the buy orders you'd sell into (top
-                        // one first), buy_summary the sell offers you'd buy from (lowest first).
-                        if (product.has("buy_summary") && product.getAsJsonArray("buy_summary").size() > 0) {
-                            JsonObject top = product.getAsJsonArray("buy_summary").get(0).getAsJsonObject();
-                            bestSells.put(e.getKey(), top.get("pricePerUnit").getAsDouble());
-                            if (top.has("orders")) sellCounts.put(e.getKey(), top.get("orders").getAsInt());
-                        }
-                        if (product.has("sell_summary") && product.getAsJsonArray("sell_summary").size() > 0) {
-                            JsonObject top = product.getAsJsonArray("sell_summary").get(0).getAsJsonObject();
-                            bestBuys.put(e.getKey(), top.get("pricePerUnit").getAsDouble());
-                            if (top.has("orders")) buyCounts.put(e.getKey(), top.get("orders").getAsInt());
-                        }
-                    }
-                    bazaarSell = sell;
-                    bazaarBuy = buy;
-                    bestSellOffers = bestSells;
-                    bestBuyOrders = bestBuys;
-                    bestSellOfferCounts = sellCounts;
-                    bestBuyOrderCounts = buyCounts;
-                }
-                Map<String, Double> bins = numbers(fetch(LOWEST_BINS_URL));
-                if (!bins.isEmpty()) {
-                    lowestBins = bins;
-                    com.epic60869.sky2m.PriceHistory.record(bins);
-                }
-                Map<String, Double> avg = numbers(fetch(AVERAGE_URL));
-                if (!avg.isEmpty()) averages = avg;
-                loadRuneNames();
-                if (names.isEmpty()) {
-                    JsonObject items = fetch(ITEMS_URL);
-                    if (items != null && items.has("items")) {
-                        Map<String, String> n = new HashMap<>();
-                        for (JsonElement el : items.getAsJsonArray("items")) {
-                            JsonObject item = el.getAsJsonObject();
-                            if (item.has("id") && item.has("name")) n.put(item.get("id").getAsString(), strip(item.get("name").getAsString()));
-                        }
-                        names = n;
-                    }
-                }
-            } finally {
-                lastPriceRefresh = System.currentTimeMillis();
-                REFRESHING.set(false);
-            }
-        });
+        pricesWanted = true;
+        PriceService.refreshMarket(force);
     }
 
     private static final Pattern RUNE_KEY = Pattern.compile("^(.+)_RUNE_(\\d)$");
@@ -363,8 +325,8 @@ public final class Portfolio {
     /** Every rune with a known price: listed now, in the 3 day average, or seen before. */
     private static java.util.Set<String> runeKeys() {
         java.util.Set<String> keys = new java.util.HashSet<>();
-        for (String key : lowestBins.keySet()) if (RUNE_KEY.matcher(key).matches()) keys.add(key);
-        for (String key : averages.keySet()) if (RUNE_KEY.matcher(key).matches()) keys.add(key);
+        for (String key : lowestBins().keySet()) if (RUNE_KEY.matcher(key).matches()) keys.add(key);
+        for (String key : averages().keySet()) if (RUNE_KEY.matcher(key).matches()) keys.add(key);
         return keys;
     }
 
@@ -417,30 +379,6 @@ public final class Portfolio {
         } finally {
             RUNES_LOADING.set(false);
         }
-    }
-
-    private static JsonObject fetch(String url) {
-        try {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(20))
-                .header("User-Agent", "Sky2M/1.0").GET().build();
-            HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) return null;
-            return JsonParser.parseString(response.body()).getAsJsonObject();
-        } catch (Exception e) {
-            System.err.println("[Sky2M] Portfolio price download failed for " + url + ": " + e.getMessage());
-            return null;
-        }
-    }
-
-    private static Map<String, Double> numbers(JsonObject object) {
-        Map<String, Double> result = new HashMap<>();
-        if (object == null) return result;
-        for (var e : object.entrySet()) {
-            try {
-                result.put(e.getKey(), e.getValue().getAsDouble());
-            } catch (Exception ignored) {}
-        }
-        return result;
     }
 
     // ----- Quantities -----
@@ -546,7 +484,7 @@ public final class Portfolio {
         }
         if (filled) save();
         if (System.currentTimeMillis() - lastCount > COUNT_REFRESH_MS) recount();
-        if (pricesLoaded() && System.currentTimeMillis() - lastSnapshot > SNAPSHOT_MS && lastPriceRefresh > 0) snapshot();
+        if (pricesLoaded() && System.currentTimeMillis() - lastSnapshot > SNAPSHOT_MS && lastPriceRefresh() > 0) snapshot();
     }
 
     // ----- Editing -----
@@ -604,7 +542,7 @@ public final class Portfolio {
         String q = query.trim();
         if (q.isEmpty()) return null;
         String asId = q.toUpperCase(Locale.ROOT).replace(' ', '_');
-        if (names.containsKey(asId) || lowestBins.containsKey(asId) || bazaarSell.containsKey(asId)) return asId;
+        if (names.containsKey(asId) || lowestBins().containsKey(asId) || bazaarSell().containsKey(asId)) return asId;
         String wanted = normalize(q);
         String partial = null;
         for (var e : runeNames.entrySet()) {

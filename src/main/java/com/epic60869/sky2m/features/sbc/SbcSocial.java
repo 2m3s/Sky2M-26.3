@@ -349,6 +349,23 @@ public final class SbcSocial {
         presenceAt = 0;
         presenceWasOn = true;
         syncedSettings = null;
+        // Lists emptied by onDisconnected: ask again for an open screen (sendAuthed waits for the login).
+        var screen = Minecraft.getInstance().gui.screen();
+        if (screen instanceof SbcWhoScreen) requestWho(false);
+        if (screen instanceof SbcFriendsScreen) SbcNet.sendAuthed(Sbc.packet("friendList"));
+    }
+
+    /** The connection closed: who's online and the friends list were only true while connected. */
+    static void onDisconnected() {
+        online = List.of();
+        onlineAt = 0;
+        haveOffline = false;
+        whoAskedAt = 0;
+        showWhenArrives = false;
+        friends = List.of();
+        incoming = List.of();
+        outgoing = List.of();
+        friendsLoaded = false;
     }
 
     // ------------------------------------------------------------------------------------------------ ignore list

@@ -67,6 +67,13 @@ public final class Sky2MCurrentChat {
         graphics.text(Minecraft.getInstance().font, display(), 2, screenHeight - 26, 0xFFFFFFFF, true);
     }
 
+    /** How wide the current chat label is, for the chat tabs beside it (0 when it's off). */
+    public static int displayWidth() {
+        Sky2MConfig config = Sky2MConfig.current();
+        if (config == null || !config.chat.currentChatDisplay) return 0;
+        return Minecraft.getInstance().font.width(display()) + 6;
+    }
+
     private static void set(String newChannel, String player) {
         channel = newChannel;
         privatePlayer = player;

@@ -58,7 +58,29 @@ public final class Sky2MImagePreview {
 
     private record Loaded(Identifier id, int width, int height) {}
 
-    private static final Map<String, Loaded> TEXTURES = new ConcurrentHashMap<>();
+    private static final Pattern FIND_URL = Pattern.compile("https?://[^\\s<>'\"\\)]+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRAILING_CONTROL = Pattern.compile("[\\u0000-\\u001F\\u007F]+$");
+    private static final Pattern DISCORD_MEDIA = Pattern.compile("(?i)^https?://media\\.discordapp\\.net/.*");
+    private static final Pattern FORMAT_PARAM = Pattern.compile("([?&])format=[^&]*&?");
+    private static final Pattern TRAILING_SEPARATOR = Pattern.compile("[?&]$");
+    /**
+     * Images are stored at most this many times the preview box, so they stay sharp at GUI scale 2 without
+     * keeping huge screenshots in GPU memory.
+     */
+    private static final int STORE_SCALE = 2;
+    private static final int MAX_TEXTURES = 16;
+
+    /** Uploaded previews, least recently hovered first; only touched on the render thread. */
+    private static final Map<String, Loaded> TEXTURES = new java.util.LinkedHashMap<>(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Loaded> eldest) {
+            if (size() <= MAX_TEXTURES) return false;
+            Minecraft.getInstance().getTextureManager().release(eldest.getValue().id());
+            // Let it be loaded again (from the disk cache) if it's hovered later.
+            Sky2MImagePreview.REQUESTED.remove(eldest.getKey());
+            return true;
+        }
+    };
     /** PNG bytes downloaded off-thread, waiting to be uploaded as a texture on the render thread. */
     private static final Map<String, byte[]> READY = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> REQUESTED = new ConcurrentHashMap<>();
@@ -133,7 +155,7 @@ public final class Sky2MImagePreview {
 
     private static String findUrl(String text) {
         if (text == null) return null;
-        var matcher = java.util.regex.Pattern.compile("https?://[^\\s<>'\"\\)]+", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(text);
+        var matcher = FIND_URL.matcher(text);
         if (matcher.find()) return normalizeUrl(matcher.group());
         return null;
     }
@@ -141,7 +163,7 @@ public final class Sky2MImagePreview {
     private static String normalizeUrl(String value) {
         if (value == null) return null;
         String normalized = value.trim().replace("&amp;", "&");
-        normalized = normalized.replaceAll("[\\u0000-\\u001F\\u007F]+$", "");
+        normalized = TRAILING_CONTROL.matcher(normalized).replaceAll("");
         if (normalized.endsWith(".")) normalized = normalized.substring(0, normalized.length() - 1);
         return normalized.isEmpty() ? null : normalized;
     }
@@ -223,20 +245,53 @@ public final class Sky2MImagePreview {
                     return;
                 }
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
-                ImageIO.write(image, "png", out);
+                ImageIO.write(fit(image), "png", out);
                 Files.write(file, out.toByteArray());
+                READY.put(url, out.toByteArray());
+                return;
             }
-            READY.put(url, Files.readAllBytes(file));
+            byte[] cached = Files.readAllBytes(file);
+            // Older cache entries were saved at full resolution: shrink them (and the cache file) once.
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(cached));
+            if (image != null) {
+                BufferedImage fitted = fit(image);
+                if (fitted != image) {
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    ImageIO.write(fitted, "png", out);
+                    cached = out.toByteArray();
+                    Files.write(file, cached);
+                }
+            }
+            READY.put(url, cached);
         } catch (Exception e) {
             // Allow a retry the next time the link is hovered.
             REQUESTED.remove(url);
         }
     }
 
+    /** Scales the image down (keeping its aspect) to what the preview can show; returns it unchanged if small enough. */
+    private static BufferedImage fit(BufferedImage image) {
+        int maxW = MAX_WIDTH * STORE_SCALE, maxH = MAX_HEIGHT * STORE_SCALE;
+        int w = image.getWidth(), h = image.getHeight();
+        if (w <= maxW && h <= maxH) return image;
+        double scale = Math.min((double) maxW / w, (double) maxH / h);
+        int nw = Math.max(1, (int) Math.round(w * scale)), nh = Math.max(1, (int) Math.round(h * scale));
+        BufferedImage out = new BufferedImage(nw, nh, BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g = out.createGraphics();
+        try {
+            g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.setRenderingHint(java.awt.RenderingHints.KEY_RENDERING, java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+            g.drawImage(image, 0, 0, nw, nh, null);
+        } finally {
+            g.dispose();
+        }
+        return out;
+    }
+
     /** Asks image hosts for a format Java can read: Discord media as PNG, Imgur page links as the image itself. */
     private static String fetchUrl(String url) {
-        if (url.matches("(?i)^https?://media\\.discordapp\\.net/.*")) {
-            String cleaned = url.replaceAll("([?&])format=[^&]*&?", "$1").replaceAll("[?&]$", "");
+        if (DISCORD_MEDIA.matcher(url).matches()) {
+            String cleaned = TRAILING_SEPARATOR.matcher(FORMAT_PARAM.matcher(url).replaceAll("$1")).replaceAll("");
             return cleaned + (cleaned.contains("?") ? "&" : "?") + "format=png";
         }
         return url;

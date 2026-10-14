@@ -157,6 +157,10 @@ public final class ProfitTracker {
     private static int ticks;
     private static long lastTick;
     private static Map<String, Integer> lastInventory;
+    /** The inventory before the open menu, to see what it used up. */
+    private static Map<String, Integer> beforeScreen;
+    /** When a crafting menu ("Craft Item" or an item's recipe, where you supercraft) was last open. */
+    private static long lastCraftingAt;
     private static double lastPurse = -1;
     private static long lastFarmed;
     private static Preset shownPreset;
@@ -194,8 +198,13 @@ public final class ProfitTracker {
         return c != null && c.enabled;
     }
 
+    /** Counting this preset: its tracker is on, or the Session Tracker wants it (Diana, Mining and Farming). */
+    static boolean counting(Preset preset) {
+        return enabled(preset) || SessionTracker.tracks(preset);
+    }
+
     private static boolean anyEnabled() {
-        for (Preset preset : Preset.values()) if (enabled(preset)) return true;
+        for (Preset preset : Preset.values()) if (counting(preset)) return true;
         return false;
     }
 
@@ -295,13 +304,13 @@ public final class ProfitTracker {
         if (mc.player == null || !Sky2MLocation.onSkyblock()) return null;
         String island = Sky2MLocation.area(), area = Sky2MLocation.location();
         Preset preferred = null;
-        if (enabled(Preset.MYTHOLOGICAL_RITUAL) && island.equals("Hub") && spadeInHotbar(mc)) preferred = Preset.MYTHOLOGICAL_RITUAL;
+        if (counting(Preset.MYTHOLOGICAL_RITUAL) && island.equals("Hub") && spadeInHotbar(mc)) preferred = Preset.MYTHOLOGICAL_RITUAL;
         if (preferred == null) preferred = slayerQuest();
         if (preferred == null && enabled(Preset.FISHING) && (mc.player.fishing != null || !paused(Preset.FISHING, System.currentTimeMillis()) && lastActivity.containsKey(Preset.FISHING))) {
             preferred = Preset.FISHING;
         }
         Preset preset = forLocation(island, area, preferred);
-        return preset != null && enabled(preset) ? preset : null;
+        return preset != null && counting(preset) ? preset : null;
     }
 
     /** Where this preset's tracker is shown (and counts), as Skysoft's isInPresetArea. */
@@ -340,20 +349,35 @@ public final class ProfitTracker {
 
     // ------------------------------------------------------------------------------------------------ stats
 
-    private static List<Stats> targets(Preset preset) {
+    private static Stats today(Preset preset) {
         Saved saved = SAVED.get(preset);
         long day = LocalDate.now().toEpochDay();
         if (saved.day != day) {
             saved.day = day;
             saved.today = new Stats();
         }
-        return List.of(SESSION.get(preset), saved.today, saved.total);
+        return saved.today;
+    }
+
+    /** The profit tracker's own periods, if it's turned on. */
+    private static List<Stats> profitTargets(Preset preset) {
+        if (!enabled(preset)) return List.of();
+        return List.of(SESSION.get(preset), today(preset), SAVED.get(preset).total);
+    }
+
+    /** Everything a drop, coin or action counts towards: the profit tracker's periods and the Session Tracker's. */
+    private static List<Stats> targets(Preset preset) {
+        Stats session = SessionTracker.stats(preset);
+        if (session == null) return profitTargets(preset);
+        List<Stats> out = new ArrayList<>(profitTargets(preset));
+        out.add(session);
+        return out;
     }
 
     static Stats stats(Preset preset, Period period) {
         return switch (period) {
             case SESSION -> SESSION.get(preset);
-            case TODAY -> targets(preset).get(1);
+            case TODAY -> today(preset);
             case TOTAL -> SAVED.get(preset).total;
         };
     }
@@ -369,6 +393,7 @@ public final class ProfitTracker {
 
     private static void activity(Preset preset) {
         lastActivity.put(preset, System.currentTimeMillis());
+        SessionTracker.active(preset);
     }
 
     static boolean paused(Preset preset, long now) {
@@ -390,10 +415,69 @@ public final class ProfitTracker {
         dirty = true;
     }
 
+    /**
+     * Crafting: {@code consumed} of {@code input} became {@code produced} of {@code output}. Only inputs the tracker
+     * counted turn into the output (per period), so crafting with items from before adds nothing.
+     */
+    private static void convert(Preset preset, String input, long consumed, String output, long produced) {
+        if (consumed <= 0 || produced <= 0) return;
+        for (Stats stats : targets(preset)) {
+            long had = stats.items.getOrDefault(input, 0L);
+            long used = Math.min(had, consumed);
+            if (used <= 0) continue;
+            if (used == had) stats.items.remove(input);
+            else stats.items.put(input, had - used);
+            long made = produced * used / consumed;
+            if (made > 0) stats.items.merge(output, made, Long::sum);
+        }
+        HIGHLIGHTS.put(preset.name() + ":" + output, System.currentTimeMillis());
+        activity(preset);
+        dirty = true;
+    }
+
+    /**
+     * How much of {@code amount} {@code output} crafting explains: its recipe's input taken out of your sacks in the
+     * same message ({@code taken}), gone from your inventory lately (a compactor, or supercrafting), or crafted from
+     * its own input the same way (supercrafting goes down the chain). Converts what it finds and returns how much of
+     * the output that made.
+     */
+    private static long crafted(Preset preset, String output, long amount, Map<String, Long> taken, int depth) {
+        Conversion conversion = conversions.get(output);
+        if (conversion == null || depth > 4 || amount <= 0) return 0;
+        String input = conversion.input();
+        long required = (long) conversion.inputCount() * amount / conversion.outputCount();
+        if (required <= 0) return 0;
+        long found = Math.min(taken.getOrDefault(input, 0L), required);
+        if (found > 0) taken.merge(input, -found, Long::sum);
+        long[] r = removals.get(input);
+        if (r != null && found < required) {
+            long used = Math.min(r[0], required - found);
+            r[0] -= used;
+            if (r[0] <= 0) removals.remove(input);
+            found += used;
+        }
+        if (found < required) found += crafted(preset, input, required - found, taken, depth + 1);
+        long made = amount * found / required;
+        convert(preset, input, found, output, made);
+        return made;
+    }
+
+    /** Maybe a crafted item's input: remember it for a minute (Skysoft's ProfitCraftingReconciliation). */
+    private static void removed(String id, long amount, long now) {
+        long[] r = removals.computeIfAbsent(id, k -> new long[2]);
+        r[0] += amount;
+        r[1] = now + COMPACTION_WINDOW_MS;
+    }
+
+    /** Whether you were in a crafting menu lately: crafted items that come in then aren't new. */
+    private static boolean craftedLately(long now) {
+        return now - lastCraftingAt < COMPACTION_WINDOW_MS;
+    }
+
     // ------------------------------------------------------------------------------------------------ events
 
     private static void onBreak(Block block, long gameTime) {
-        if (!inPresetArea(Preset.FARMING) || !isCrop(block)) return;
+        if (currentPreset() != Preset.FARMING || !isCrop(block)) return;
         long now = System.currentTimeMillis();
         activity(Preset.FARMING);
         lastFarmed = now;
@@ -466,12 +550,21 @@ public final class ProfitTracker {
         }
         if (text.startsWith("[Sacks]")) {
             Preset target = current != null ? current
-                : previousPreset != null && System.currentTimeMillis() - previousPresetLeftAt < SACK_WINDOW_MS && enabled(previousPreset) ? previousPreset : null;
+                : previousPreset != null && System.currentTimeMillis() - previousPresetLeftAt < SACK_WINDOW_MS && counting(previousPreset) ? previousPreset : null;
             if (target == null) return;
+            Map<String, Long> gains = new LinkedHashMap<>();
+            Map<String, Long> taken = new HashMap<>();
             for (Map.Entry<String, Long> e : SlayerBossProfit.sackGains(component).entrySet()) {
-                if (e.getValue() <= 0) continue;
-                String id = normalise(RepoItems.idByName(e.getKey()));
-                if (tracked(target, id)) addItem(target, id, e.getValue());
+                String id = normalise(RepoItems.idByLooseName(e.getKey()));
+                if (!tracked(target, id)) continue;
+                if (e.getValue() > 0) gains.merge(id, e.getValue(), Long::sum);
+                else if (e.getValue() < 0) taken.merge(id, -e.getValue(), Long::sum);
+            }
+            // Supercrafting takes the inputs out of your sacks and puts what it made in: that's the same profit.
+            boolean crafting = craftedLately(System.currentTimeMillis());
+            for (Map.Entry<String, Long> e : gains.entrySet()) {
+                long rest = e.getValue() - crafted(target, e.getKey(), e.getValue(), taken, 0);
+                if (rest > 0 && !(crafting && conversions.containsKey(e.getKey()))) addItem(target, e.getKey(), rest);
             }
         }
     }
@@ -507,15 +600,29 @@ public final class ProfitTracker {
             lastCounting = current;
         }
         if (current != null && mc.isWindowActive() && !paused(current, now)) {
-            for (Stats stats : targets(current)) stats.activeMs += delta;
+            for (Stats stats : profitTargets(current)) stats.activeMs += delta;
         }
         removals.values().removeIf(r -> r[1] < now);
         trackPurse(mc, current, now);
         trackQuestCost(now);
+        if (mc.gui.screen() != null) {
+            String title = mc.gui.screen().getTitle().getString();
+            if (title.equals("Craft Item") || title.endsWith(" Recipe")) lastCraftingAt = now;
+        }
         if (mc.gui.screen() != null || current == null) {
+            if (current == null) beforeScreen = null;
+            else if (lastInventory != null) beforeScreen = lastInventory;
             lastInventory = null;
         } else {
             Map<String, Integer> inventory = inventory(mc);
+            if (beforeScreen != null) {
+                // What a menu used up (supercrafting from your inventory) can be a crafted item's input.
+                for (Map.Entry<String, Integer> e : beforeScreen.entrySet()) {
+                    long change = inventory.getOrDefault(e.getKey(), 0) - e.getValue();
+                    if (change < 0 && tracked(current, e.getKey())) removed(e.getKey(), -change, now);
+                }
+                beforeScreen = null;
+            }
             if (lastInventory != null) countInventory(current, inventory, now);
             lastInventory = inventory;
         }
@@ -532,25 +639,16 @@ public final class ProfitTracker {
             if (!tracked(preset, id)) continue;
             long change = current.getOrDefault(id, 0) - lastInventory.getOrDefault(id, 0);
             if (change > 0) changes.put(id, change);
-            else if (change < 0) {
-                // Maybe a compactor's input: remember it for a minute (Skysoft's ProfitCraftingReconciliation).
-                long[] r = removals.computeIfAbsent(id, k -> new long[2]);
-                r[0] += -change;
-                r[1] = now + COMPACTION_WINDOW_MS;
-            }
+            else if (change < 0) removed(id, -change, now);
         }
         if (changes.isEmpty()) return;
         Map<String, Long> counted = new HashMap<>(changes);
+        boolean crafting = craftedLately(now);
         for (Map.Entry<String, Long> e : changes.entrySet()) {
             Conversion conversion = conversions.get(e.getKey());
             if (conversion == null || e.getValue() % conversion.outputCount() != 0) continue;
-            long[] r = removals.get(conversion.input());
-            if (r == null) continue;
-            long required = (long) conversion.inputCount() * e.getValue() / conversion.outputCount();
-            long consumed = Math.min(r[0], required);
-            r[0] -= consumed;
-            if (r[0] <= 0) removals.remove(conversion.input());
-            counted.merge(conversion.input(), -consumed, Long::sum);
+            long rest = e.getValue() - crafted(preset, e.getKey(), e.getValue(), new HashMap<>(), 0);
+            counted.put(e.getKey(), crafting ? 0 : rest);
         }
         if (preset == Preset.FARMING) {
             // Replenish took some of those crops back to replant (Skysoft's ProfitReplenishCosts).
@@ -619,10 +717,12 @@ public final class ProfitTracker {
         dirty = true;
     }
 
+    private static final Pattern SLAYER_TIER = Pattern.compile("(?:Horror|Broodfather|Brood|Packmaster|Seraph|Demonlord) (I{1,3}|IV|V)\\b");
+
     private static long standardCost(Preset preset) {
         String tier = "";
         for (String line : Sky2MLocation.scoreboard()) {
-            Matcher m = Pattern.compile("(?:Horror|Broodfather|Brood|Packmaster|Seraph|Demonlord) (I{1,3}|IV|V)\\b").matcher(line);
+            Matcher m = SLAYER_TIER.matcher(line);
             if (m.find()) tier = m.group(1);
             if (line.contains("Atoned Horror")) tier = "V";
         }
@@ -778,8 +878,16 @@ public final class ProfitTracker {
         });
     }
 
-    /** Placement key of a preset's HUD in /s2 gui. */
+    /** Placement key of the profit tracker HUD in /s2 gui. */
     static String hudId(Preset preset) {
+        return HUD_ID;
+    }
+
+    /** All the profit trackers share one HUD (one position in /s2 gui); it shows the one for what you're doing. */
+    static final String HUD_ID = "profit_tracker";
+
+    /** Each tracker's own HUD before they were shared, for the shared one's first position. */
+    static String oldHudId(Preset preset) {
         return "profit_tracker_" + preset.name().toLowerCase();
     }
 

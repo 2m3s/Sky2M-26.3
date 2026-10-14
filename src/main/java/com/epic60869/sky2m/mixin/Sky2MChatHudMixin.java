@@ -45,7 +45,7 @@ public abstract class Sky2MChatHudMixin {
         ordinal = 0
     )
     private Component sky2m$replaceFullChat(Component message) {
-        return com.epic60869.sky2m.features.misc.ItemEmojis.replace(Sky2MNopoFeatures.replaceChatEmojis(Sky2MNick.replaceOtherNamesInChat(Sky2MNick.replaceOwnNameInChat(com.epic60869.sky2m.features.misc.ScreenshotShare.decorate(com.epic60869.sky2m.features.sbc.SbcItems.decoratePublicItems(message))))));
+        return com.epic60869.sky2m.features.misc.ChatTabs.timestamp(com.epic60869.sky2m.features.misc.ItemEmojis.replace(Sky2MNopoFeatures.replaceChatEmojis(Sky2MNick.replaceOtherNamesInChat(Sky2MNick.replaceOwnNameInChat(com.epic60869.sky2m.features.misc.ScreenshotShare.decorate(com.epic60869.sky2m.features.sbc.SbcItems.decoratePublicItems(message)))))));
     }
 
     /** The follow-up parts of an inventory shared with [inv] are remembered, not shown (the first part is the link). */

@@ -82,8 +82,27 @@ public final class SlotLocking {
 
     public static boolean isProtected(ItemStack stack) {
         Sky2MConfig.SlotLocking c = config();
+        // Called per slot per frame: skip building the key when nothing is protected.
+        if (c == null || c.protectedItems == null || c.protectedItems.isEmpty()) return false;
         String key = protectionKey(stack);
-        return c != null && !key.isEmpty() && c.protectedItems.contains(key);
+        if (key.isEmpty()) return false;
+        java.util.List<String> list = c.protectedItems;
+        if (list.size() <= 8) return list.contains(key);
+        return protectedSet(list).contains(key);
+    }
+
+    /** A HashSet view of a large protected list, rebuilt when the list is replaced or an item is added or removed. */
+    private static java.util.List<String> setSource;
+    private static int setSize = -1;
+    private static java.util.Set<String> setView = java.util.Set.of();
+
+    private static java.util.Set<String> protectedSet(java.util.List<String> list) {
+        if (list != setSource || list.size() != setSize) {
+            setView = new java.util.HashSet<>(list);
+            setSource = list;
+            setSize = list.size();
+        }
+        return setView;
     }
 
     private static int toggleProtection() {
@@ -164,10 +183,13 @@ public final class SlotLocking {
         return false;
     }
 
-    /** Q in the world: nothing drops while the selected item is protected. */
+    /**
+     * Q in the world: nothing drops while the selected item is protected. In dungeons Q casts your class ultimate
+     * (Hypixel never drops the item there), so it goes through.
+     */
     public static boolean blockDrop() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return false;
+        if (mc.player == null || com.epic60869.sky2m.features.core.Sky2MLocation.inDungeon()) return false;
         boolean blocked = isProtected(mc.player.getMainHandItem());
         if (blocked) say(Component.literal("★ ").withStyle(ChatFormatting.GOLD)
             .append(Component.literal("That item is protected. Use /s2 protect to unprotect it.").withStyle(ChatFormatting.RED)));

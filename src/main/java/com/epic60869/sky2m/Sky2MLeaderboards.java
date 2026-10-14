@@ -40,6 +40,7 @@ import java.util.regex.PatternSyntaxException;
  * </pre>
  */
 public final class Sky2MLeaderboards {
+    private static final Pattern TRAILING_LEVEL = Pattern.compile("^(.+?)\\s+(\\d+)$");
     /** Hypixel's drop messages: "RARE DROP! Summoning Eye (+312% ✯ Magic Find)", "PET DROP! Ender Dragon". */
     private static final Pattern DROP = Pattern.compile(
         "^(?:(?:VERY |CRAZY |INSANE |PRAY TO RNGESUS )?RARE DROP!|PET DROP!|INSANE DROP!)\\s+\\(?(?<item>.+?)\\)?(?:\\s+x(?<amount>[\\d,]+))?(?:\\s+\\(\\+[\\d,.]+%? ?.*Magic Find\\))?\\s*$");
@@ -514,7 +515,7 @@ public final class Sky2MLeaderboards {
     private static int debugBook(String input, boolean send) {
         String text = input.trim();
         int level = 1;
-        Matcher m = Pattern.compile("^(.+?)\\s+(\\d+)$").matcher(text);
+        Matcher m = TRAILING_LEVEL.matcher(text);
         if (m.matches()) {
             text = m.group(1).trim();
             level = Math.max(1, Integer.parseInt(m.group(2)));

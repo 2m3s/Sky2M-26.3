@@ -721,8 +721,10 @@ public final class Sky2MStorageSearch {
         return null;
     }
 
+    private static final Pattern DIGITS = Pattern.compile("\\d+");
+
     private static int firstNumber(String text) {
-        Matcher m = Pattern.compile("\\d+").matcher(text);
+        Matcher m = DIGITS.matcher(text);
         return m.find() ? parseNumber(m.group()) : 0;
     }
 

@@ -14,7 +14,6 @@ import java.util.concurrent.CompletableFuture;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -39,10 +38,11 @@ public final class RepoItems {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final String NEU_REPO = "https://raw.githubusercontent.com/NotEnoughUpdates/NotEnoughUpdates-REPO/master/";
 	private static final String SKYHANNI_REPO = "https://raw.githubusercontent.com/hannibal002/SkyHanni-REPO/main/";
-	private static final String HYPIXEL_ITEMS = "https://api.hypixel.net/v2/resources/skyblock/items";
 	private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
 	private static final Map<String, RepoItem> ITEMS = new LinkedHashMap<>();
+	/** Items that take essence to star (dungeon items), from Hypixel's {@code upgrade_costs}. */
+	private static volatile java.util.Set<String> starable = java.util.Set.of();
 	private static final List<Runnable> AFTER_ITEMS_LOADED = new ArrayList<>();
 	private static volatile boolean itemsLoaded;
 
@@ -54,7 +54,8 @@ public final class RepoItems {
 	private RepoItems() {}
 
 	public static void init() {
-		runAsync(RepoItems::loadItems);
+		// The item list is downloaded once, by PriceService, and shared with the price features.
+		com.epic60869.sky2m.PriceService.onItems(RepoItems::loadItems);
 	}
 
 	public static void runAsync(Runnable runnable) {
@@ -134,6 +135,28 @@ public final class RepoItems {
 		return null;
 	}
 
+	/**
+	 * Like {@link #idByName}, ignoring symbols: the repo's gemstone names start with a resource pack glyph
+	 * (" Rough Ruby Gemstone") that Hypixel's sack messages don't have.
+	 */
+	public static @Nullable String idByLooseName(String name) {
+		String exact = idByName(name);
+		if (exact != null) return exact;
+		String wanted = loose(name);
+		if (wanted.isEmpty()) return null;
+		synchronized (ITEMS) {
+			for (RepoItem item : ITEMS.values()) {
+				if (item.name() != null && loose(item.name()).equals(wanted)) return item.id();
+			}
+		}
+		return null;
+	}
+
+	private static String loose(String name) {
+		String plain = net.minecraft.ChatFormatting.stripFormatting(name);
+		return plain == null ? "" : plain.replaceAll("[^\\p{L}\\p{N}' -]", "").replaceAll("\\s+", " ").trim().toLowerCase(java.util.Locale.ROOT);
+	}
+
 	/** Every item id with this plain name (some share one: "Saddle", or a pet item's five rarities). */
 	public static List<String> idsByName(String name) {
 		String wanted = net.minecraft.ChatFormatting.stripFormatting(name).trim();
@@ -162,6 +185,11 @@ public final class RepoItems {
 			RepoItem item = ITEMS.get(id);
 			return item == null ? null : item.name();
 		}
+	}
+
+	/** Whether the item can be starred with essence (a dungeon item). */
+	public static boolean isStarable(String id) {
+		return starable.contains(id);
 	}
 
 	/** The item's rarity as Hypixel's item list gives it ("LEGENDARY", "EPIC", ...), or null if unknown. */
@@ -208,12 +236,11 @@ public final class RepoItems {
 		return stack;
 	}
 
-	private static void loadItems() {
+	private static void loadItems(Map<String, JsonObject> items) {
 		try {
-			JsonObject root = JsonParser.parseString(fetch(HYPIXEL_ITEMS)).getAsJsonObject();
 			Map<String, RepoItem> loaded = new LinkedHashMap<>();
-			for (JsonElement element : root.getAsJsonArray("items")) {
-				JsonObject item = element.getAsJsonObject();
+			java.util.Set<String> loadedStarable = new java.util.HashSet<>();
+			for (JsonObject item : items.values()) {
 				if (!item.has("id")) continue;
 				String id = item.get("id").getAsString();
 				String name = item.has("name") ? item.get("name").getAsString() : id;
@@ -223,7 +250,9 @@ public final class RepoItems {
 				String itemModel = item.has("item_model") ? item.get("item_model").getAsString() : null;
 				String tier = item.has("tier") ? item.get("tier").getAsString() : null;
 				loaded.put(id, new RepoItem(id, name, material(material, durability), texture, itemModel, tier));
+				if (item.has("upgrade_costs")) loadedStarable.add(id);
 			}
+			starable = loadedStarable;
 			synchronized (ITEMS) {
 				ITEMS.clear();
 				ITEMS.putAll(loaded);

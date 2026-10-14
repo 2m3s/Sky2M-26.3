@@ -41,6 +41,7 @@ public abstract class ClientPacketListenerMixin {
 			TeleportMaze.INSTANCE.onTeleport(minecraft, beforeTeleport.get(), minecraft.player.blockPosition().immutable());
 		}
 		com.epic60869.sky2m.features.dungeons.OdinPuzzleSolvers.onTeleport(packet, beforeTeleport.get());
+		com.epic60869.sky2m.features.misc.CustomSounds.onTeleportPacket();
 	}
 
 	@Inject(method = "handleTakeItemEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/item/ItemEntity;getItem()Lnet/minecraft/world/item/ItemStack;"))
@@ -54,6 +55,8 @@ public abstract class ClientPacketListenerMixin {
 		if (packet.getEventId() == EntityEvent.DEATH) {
 			DungeonScore.handleEntityDeath(entity);
 			com.epic60869.sky2m.features.combat.ZealotCounter.onEntityDeath(entity);
+			com.epic60869.sky2m.features.misc.CustomSounds.onEntityDeath(entity);
+			com.epic60869.sky2m.features.misc.CarryTracker.onEntityDeath(entity);
 		}
 		return entity;
 	}
@@ -64,9 +67,12 @@ public abstract class ClientPacketListenerMixin {
 		com.epic60869.sky2m.sb.skyblock.dungeon.DungeonMapTexture.onMapItemDataUpdate(packet.mapId(), packet.colorPatch().isPresent());
 	}
 
-	@Inject(method = "handleSoundEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V", shift = At.Shift.AFTER))
+	@Inject(method = "handleSoundEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V", shift = At.Shift.AFTER), cancellable = true)
 	private void sky2m$onSound(ClientboundSoundPacket packet, CallbackInfo ci) {
 		com.epic60869.sky2m.features.dungeons.DungeonRoutes.onSound(packet.getSound().value(), packet.getX(), packet.getY(), packet.getZ());
 		com.epic60869.sky2m.features.dungeons.SecretChime.onSound(packet.getSound().value(), packet.getX(), packet.getY(), packet.getZ(), packet.getVolume());
+		com.epic60869.sky2m.features.dungeons.RagAxe.onSound(packet.getSound().value(), packet.getPitch());
+		// Custom Sounds: your teleport and leap sounds swapped for your own.
+		if (com.epic60869.sky2m.features.misc.CustomSounds.onSound(packet.getSound().value(), packet.getX(), packet.getY(), packet.getZ(), packet.getVolume(), packet.getPitch())) ci.cancel();
 	}
 }

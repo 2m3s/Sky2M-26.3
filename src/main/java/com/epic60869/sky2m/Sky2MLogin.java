@@ -22,13 +22,16 @@ public final class Sky2MLogin {
     private static final String CHALLENGE_URL = "https://shadowisabot.com/mod-api/auth/challenge";
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
 
-    /** How long to wait for the server to confirm a login it doesn't acknowledge (its Mojang check is done by then). */
-    private static final long CONFIRM_TIMEOUT_MS = 3_000L;
+    /** How long to wait for the server's authResult before counting the login as failed. */
+    private static final long CONFIRM_TIMEOUT_MS = 10_000L;
 
+    // All state below is only touched on the game thread (callbacks hop over with Minecraft.execute).
     private static Object loggedInConnection;
     /** casinoAuth sent on this connection; waiting for the server to confirm it. */
     private static Object pendingConnection;
     private static boolean loggingIn;
+    /** Bumped by every login attempt and every disconnect, so callbacks of an older attempt do nothing. */
+    private static int attempt;
     private static String problem = "";
     private static final List<Runnable> WAITING = new ArrayList<>();
 
@@ -47,6 +50,17 @@ public final class Sky2MLogin {
     /** The server forgot the login (it restarted, or answered "notLoggedIn"): log in again next time. */
     public static void forget() {
         loggedInConnection = null;
+    }
+
+    /**
+     * The connection dropped: forget its login and any login still in progress on it (quietly; the reconnect logs in
+     * again). Packets waiting for the login stay queued and go out after the next connection's login.
+     */
+    public static void onDisconnected() {
+        attempt++;
+        loggedInConnection = null;
+        pendingConnection = null;
+        loggingIn = false;
     }
 
     /**
@@ -86,6 +100,7 @@ public final class Sky2MLogin {
         if (loggingIn) return;
         loggingIn = true;
         problem = "";
+        int thisAttempt = ++attempt;
         Minecraft mc = Minecraft.getInstance();
         HttpRequest request = HttpRequest.newBuilder(URI.create(CHALLENGE_URL)).timeout(Duration.ofSeconds(15)).GET().build();
         HTTP.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response -> {
@@ -98,7 +113,13 @@ public final class Sky2MLogin {
             }
             return serverId;
         }).whenComplete((serverId, e) -> mc.execute(() -> {
+            if (thisAttempt != attempt) return; // disconnected meanwhile; the reconnect's login takes over
             loggingIn = false;
+            if (connection != Sky2MGlobalChat.currentConnection()) {
+                // Reconnected while getting the challenge: log in on the new connection instead (keeps WAITING).
+                whenLoggedIn(null);
+                return;
+            }
             if (e != null) {
                 Throwable cause = e;
                 while (cause.getCause() != null) cause = cause.getCause();
@@ -114,12 +135,14 @@ public final class Sky2MLogin {
                 WAITING.clear();
                 return;
             }
-            // Logged in once the server says so; a server that doesn't answer has finished checking after a few seconds.
+            // Logged in only once the server says so; no answer in time counts as a failed login.
             loggingIn = true;
             pendingConnection = connection;
             java.util.concurrent.CompletableFuture.delayedExecutor(CONFIRM_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
                 .execute(() -> mc.execute(() -> {
-                    if (pendingConnection == connection) confirmed(true, "");
+                    if (thisAttempt == attempt && pendingConnection == connection) {
+                        confirmed(false, "The Sky2M server didn't answer the login.");
+                    }
                 }));
         }));
     }

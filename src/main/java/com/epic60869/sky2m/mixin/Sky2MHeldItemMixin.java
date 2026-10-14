@@ -55,6 +55,18 @@ public abstract class Sky2MHeldItemMixin {
             () -> original.call(player, hands, frameInterp, xRot, hand, attack, stack, inverseArmHeight, pose, collector, light));
     }
 
+    /** Swing In Place: the swing still turns the item, without its slide across the screen. */
+    @WrapOperation(method = "swingArm", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(FFF)V"))
+    private void sky2m$swingInPlace(PoseStack pose, float x, float y, float z, Operation<Void> original) {
+        boolean skip;
+        try {
+            skip = HeldItemSwing.skipSwingSlide();
+        } catch (Throwable e) {
+            skip = false;
+        }
+        if (!skip) original.call(pose, x, y, z);
+    }
+
     /** Swing style Item Only: the arm doesn't swing (the item does, when it's submitted). */
     @Inject(method = "swingArm", at = @At("HEAD"), cancellable = true)
     private void sky2m$replaceHeldItemSwing(float attack, PoseStack pose, int invert, HumanoidArm arm, CallbackInfo ci) {

@@ -68,6 +68,16 @@ public final class FeatureConfigs {
         @Accordion
         @ConfigOption(name = "Bestiary Overlay", desc = "SkyHanni's Bestiary Data overlay in the Bestiary menu.")
         public Bestiary bestiary = new Bestiary();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Damage Numbers", desc = "Short damage numbers (1.2M), and a HUD adding up the damage around you.")
+        public DamageNumbers damageNumbers = new DamageNumbers();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Low Health & Mana", desc = "A warning when your health or mana drops below a percentage.")
+        public LowStats lowStats = new LowStats();
     }
 
     /** SkyHanni's BestiaryConfig (LGPL-2.1). The overlay is moved and resized in /s2 gui. */
@@ -140,6 +150,10 @@ public final class FeatureConfigs {
         @Expose
         @Category(name = "Diana", desc = "Share rare Diana mobs with your party and see when you've done enough damage to lootshare them, like Skysoft.")
         public Diana diana = new Diana();
+
+        @Expose
+        @Category(name = "Mayor & Election", desc = "The mayor and minister with their perks, and who's winning the election.")
+        public MayorDisplay mayor = new MayorDisplay();
     }
 
     /** Diana burrow detection and guesses, ported from SkyBlock Overhaul. */
@@ -584,6 +598,56 @@ public final class FeatureConfigs {
      */
     public static final class Dungeons {
 
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Dungeon Sim", desc = "Practise dungeon rooms and whole floors in a singleplayer world (Killer560's Dungeon Sim and Map Designer).")
+        public DungeonSim dungeonSim = new DungeonSim();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Cross-Mod Bridge", desc = "Share party dungeon data with Odin, NoammAddons and Devonian users through their own sockets (Killer560's).")
+        public CrossModBridge crossModBridge = new CrossModBridge();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Team Melody", desc = "Teammates' Melody progress in P3, and sending yours (Killer560's).")
+        public TeamMelody teamMelody = new TeamMelody();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Party Dungeon Data", desc = "Share what you know about the run with teammates running Sky2M, and use what they know (Killer560's).")
+        public PartyData partyData = new PartyData();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Custom Mage Beam", desc = "One clean beam in place of the Mage's firework particles (Killer560's, from NoammAddons).")
+        public MageBeam mageBeam = new MageBeam();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Death Tracker", desc = "Who died this run, how, and what it cost the score, in a HUD and chat.")
+        public DeathTracker deathTracker = new DeathTracker();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Archer & Tank Counters", desc = "Arrows you've shot and damage you've taken this run.")
+        public ClassCounters classCounters = new ClassCounters();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Key & Door Alerts", desc = "Alerts when a Wither or Blood key is picked up, and who opened each door.")
+        public KeyAlerts keyAlerts = new KeyAlerts();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Duplicate Class Warning", desc = "Warn about parties that already have your class, in the Party Finder and when someone joins.")
+        public DupeClass dupeClass = new DupeClass();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Catacombs Calculator", desc = "/s2 catacalc: how many runs until a Catacombs level.")
+        public CataCalculator cataCalculator = new CataCalculator();
+
         @ConfigOption(name = "Floors 4-6", desc = "Spirit Bear, Livid and Terracotta features.")
         @ConfigEditorAccordion(id = 1301)
         public boolean floors46Group = false;
@@ -793,6 +857,21 @@ public final class FeatureConfigs {
         @ConfigEditorColour
         @ConfigAccordionId(id = 2002)
         public String openedKeyColor = "0:160:85:85:85";
+
+        @ConfigOption(name = "Spending History", desc = "Keep a history of the reward chests you open: cost, contents and profit. /s2 chesthistory shows it.")
+        @ConfigEditorAccordion(id = 2003)
+        public boolean historyGroup = false;
+
+        @Expose
+        @ConfigOption(name = "Chest Spending History", desc = "Record every dungeon reward chest you open (at the end of a run or at Croesus): its floor, cost (coins, Dungeon Chest Key, Kismet Feather), what was inside and the profit. /s2 chesthistory shows the totals.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2003)
+        public boolean history = true;
+
+        @ConfigOption(name = "Reset History", desc = "Delete the chest spending history of the current profile.")
+        @ConfigEditorButton(buttonText = "Reset")
+        @ConfigAccordionId(id = 2003)
+        public Runnable resetHistory = com.epic60869.sky2m.features.dungeons.ChestHistory::reset;
     }
 
     public static final class Floor7 {
@@ -800,6 +879,16 @@ public final class FeatureConfigs {
         @Accordion
         @ConfigOption(name = "M7 Dragons and Relics", desc = "Master Mode floor 7 dragon phase (P5): spawn alerts with split priority, timers, kill areas and relic spots, like NoFrills' Wither Dragons and Relic Highlight.")
         public WitherDragons witherDragons = new WitherDragons();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "M7 Dragon Arrows and Splits", desc = "Arrows on your screen pointing at spawning dragons, and how long each dragon took to kill.")
+        public DragonSplits dragonSplits = new DragonSplits();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Terminal Progress", desc = "Who did each terminal, lever and device in P3, like \"Name 3/7\", in a HUD and as a title.")
+        public TerminalProgress terminalProgress = new TerminalProgress();
 
         @Expose
         @Accordion
@@ -955,6 +1044,18 @@ public final class FeatureConfigs {
         @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 1)
         @ConfigAccordionId(id = 703)
         public int bossLineWidth = 3;
+
+        @Expose
+        @ConfigOption(name = "Laser Warning", desc = "Like SkyHanni: a \"LASERS!\" title when your Voidgloom Seraph starts its laser phase (it sits on an armour stand and spins its beams around).")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 703)
+        public boolean laserWarning = false;
+
+        @Expose
+        @ConfigOption(name = "Laser Timer", desc = "How long the laser phase has left (about 8.2s), in a HUD you can move in /s2 gui.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 703)
+        public boolean laserTimer = false;
     }
 
     /** Inferno Demonlord helpers, ported from SkyHanni's Blaze slayer features. */
@@ -1625,6 +1726,48 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Pristine Record", desc = "Keep your highest pristine proc, overall and per gemstone, and alert on a new PB. /s2 pristine to see them.")
         @ConfigEditorBoolean
         public boolean pristineRecord = false;
+
+        @Expose
+        @ConfigOption(name = "Drill Fuel HUD", desc = "Show your drill's remaining fuel (from SkyblockAddons). Only shown when the drill has its fuel data. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean drillFuelHud = false;
+
+        @Expose
+        @ConfigOption(name = "Only When Holding", desc = "Only show the drill fuel while you hold the drill. Off: also use a drill in your hotbar.")
+        @ConfigEditorBoolean
+        public boolean drillFuelOnlyWhenHolding = true;
+
+        @Expose
+        @ConfigOption(name = "Display", desc = "Show the drill fuel as an amount, a percentage or both.")
+        @ConfigEditorDropdown
+        public DrillFuelDisplay drillFuelDisplay = DrillFuelDisplay.AMOUNT;
+
+        @Expose
+        @ConfigOption(name = "Low Fuel Warning", desc = "Show a title once when your drill fuel drops below the warning threshold.")
+        @ConfigEditorBoolean
+        public boolean drillFuelWarning = false;
+
+        @Expose
+        @ConfigOption(name = "Warning Threshold", desc = "Warn when the drill fuel is below this percentage.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 50, minStep = 1)
+        public int drillFuelWarningThreshold = 10;
+
+        public enum DrillFuelDisplay {
+            AMOUNT("Amount"),
+            PERCENTAGE("Percentage"),
+            BOTH("Both");
+
+            private final String displayName;
+
+            DrillFuelDisplay(String displayName) {
+                this.displayName = displayName;
+            }
+
+            @Override
+            public String toString() {
+                return displayName;
+            }
+        }
     }
 
     /** SkyHanni's SkillProgressConfig and its sub-configs (LGPL-2.1). Move the displays in /s2 gui. */
@@ -2446,6 +2589,21 @@ public final class FeatureConfigs {
 
     public static final class Timers {
 
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Run History", desc = "Save every dungeon run and see them with /s2 runs, with personal bests per floor (Killer560's).")
+        public RunHistory runHistory = new RunHistory();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Terminal Timers", desc = "F7/M7 P3 terminal, device, section and phase times in chat and a HUD (Killer560's, from Odin).")
+        public TerminalTimers terminalTimers = new TerminalTimers();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Rag Axe", desc = "Ragnarock Axe cast, buff and cooldown timers, and \"rag now\" prompts in boss fights (Killer560's).")
+        public RagAxe ragAxe = new RagAxe();
+
         @ConfigOption(name = "Splits", desc = "Run splits and their messages.")
         @ConfigEditorAccordion(id = 1701)
         public boolean splitsGroup = false;
@@ -2633,6 +2791,52 @@ public final class FeatureConfigs {
         @ConfigEditorText
         @ConfigAccordionId(id = 1803)
         public String message300 = "300 Score Reached!";
+
+        @ConfigOption(name = "Bonus Score Messages", desc = "Mimic, Prince and bat kills, and the crypts reminder.")
+        @ConfigEditorAccordion(id = 1804)
+        public boolean bonusMessagesGroup = false;
+
+        @Expose
+        @ConfigOption(name = "Mimic Message", desc = "Skyblocker's: say \"Mimic dead!\" in party chat when the Mimic dies near you, so everyone's score counts it. Only once a run, and not if a teammate already said it.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1804)
+        public boolean mimicMessage = false;
+
+        @Expose
+        @ConfigOption(name = "Prince Message", desc = "Skyblocker's: say \"Prince dead!\" in party chat when you kill a Prince (Hypixel's \"A Prince falls. +1 Bonus Score\"). Only the first one, and not if a teammate already said it.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1804)
+        public boolean princeMessage = false;
+
+        @Expose
+        @ConfigOption(name = "Bat Message", desc = "Skyblocker's: say \"Bat dead!\" in party chat on the first bonus score bat of the run (\"A Bat has been slain. +1 Bonus Score\"), unless a teammate already said it.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1804)
+        public boolean batMessage = false;
+
+        @Expose
+        @ConfigOption(name = "Kill Titles", desc = "A title on your screen the first time the Mimic, a Prince or a bonus bat dies in a run, whoever killed it.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1804)
+        public boolean killTitles = false;
+
+        @Expose
+        @ConfigOption(name = "Crypts Message", desc = "Skyblocker's: once the score reaches the threshold below with fewer than 5 crypts, tell your party how many crypts there are, once a run.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1804)
+        public boolean cryptsMessage = false;
+
+        @Expose
+        @ConfigOption(name = "Crypts Threshold", desc = "The score that sends the crypts message.")
+        @ConfigEditorSlider(minValue = 100, maxValue = 300, minStep = 5)
+        @ConfigAccordionId(id = 1804)
+        public int cryptsThreshold = 250;
+
+        @Expose
+        @ConfigOption(name = "Crypts Text", desc = "The crypts message. [crypts] is replaced with the number of crypts. It starts with [S2M].")
+        @ConfigEditorText
+        @ConfigAccordionId(id = 1804)
+        public String cryptsText = "Crypts: [crypts]/5";
     }
 
     public enum ClassOverride {
@@ -3735,11 +3939,24 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Remember Kicks", desc = "Kick straight away anyone auto kicked before who joins again (until restart, or /s2 cata clearkicks).")
         @ConfigEditorBoolean
         public boolean kickCache = true;
+    }
+
+    /** The Profile Viewer (/s2 pv), in NEU's layout. */
+    public static final class ProfileViewer {
+        @Expose
+        @ConfigOption(name = "Use /pv", desc = "/pv opens Sky2M's Profile Viewer too, not just /s2 pv. Off by default because NEU and SBPV use /pv. Takes effect when you next join a server.")
+        @ConfigEditorBoolean
+        public boolean pvCommand = false;
 
         @Expose
-        @ConfigOption(name = "Profile API", desc = "Where profiles are loaded from (a Hypixel API proxy; Sky2M has no API key). Default: Odin's, https://api.odtheking.com/hypixel/")
+        @ConfigOption(name = "Profile API", desc = "Where profiles are loaded from, for the Profile Viewer and Party Finder Stats: a public proxy of Hypixel's API, since Sky2M has no API key. Default: Odin's, https://api.odtheking.com/hypixel/")
         @ConfigEditorText
-        public String apiUrl = "https://api.odtheking.com/hypixel/";
+        public String apiUrl = com.epic60869.sky2m.features.profileviewer.ProfileApi.DEFAULT_URL;
+
+        @Expose
+        @ConfigOption(name = "Overflow Levels", desc = "Show levels past Hypixel's maximum, like SkyHanni: skills (the normal levels up to 60, then 7.6M XP for 61 and more for each after), Catacombs and classes past 50 (200M XP each), the garden level past its max (10,000 garden XP each) and crop milestones past their max (each needing as many crops as the last). Off: everything stops at Hypixel's max. Skill Average always uses the capped levels.")
+        @ConfigEditorBoolean
+        public boolean overflowLevels = true;
     }
 
     /** Skysoft's Keep Terrain Loaded. */
@@ -3758,6 +3975,10 @@ public final class FeatureConfigs {
     /** Skysoft's Farming Profit Tracker. */
     /** Profit Trackers, ported from Skysoft (LGPL-3.0): see features/misc/profit/ProfitTracker. */
     public static final class ProfitTrackers {
+        @Expose
+        @Category(name = "Session Tracker", desc = "/s2 session: your Diana, Mining and Farming this game session, with a Total of all three, until you restart the game.")
+        public SessionTrackerSettings session = new SessionTrackerSettings();
+
         @Expose
         @Category(name = "Farming", desc = "Track Farming profit in the Garden.")
         public ProfitTrackerSettings farming = new ProfitTrackerSettings(ProfitSummaryLine.farmingDefaults());
@@ -3801,6 +4022,42 @@ public final class FeatureConfigs {
         @Expose
         @Category(name = "Vampire Slayer", desc = "Track Vampire Slayer profit.")
         public ProfitTrackerSettings vampire = new ProfitTrackerSettings(ProfitSummaryLine.slayerDefaults());
+    }
+
+    public static final class SessionTrackerSettings {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Track your Diana, Mining and Farming this game session: playtime, drops and profit. Open it with /s2 session. When you restart the game the session ends and its breakdown shows in chat; past sessions stay in /s2 session.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Pause After", desc = "Seconds without mining, farming or digging burrows before an activity's playtime pauses.")
+        @ConfigEditorSlider(minValue = 5, maxValue = 60, minStep = 1)
+        public int pauseSeconds = 10;
+
+        @Expose
+        @ConfigOption(name = "Price Refresh", desc = "How often, in seconds, /s2 session works out its profit again with the latest prices.")
+        @ConfigEditorSlider(minValue = 5, maxValue = 300, minStep = 5)
+        public int priceRefreshSeconds = 30;
+
+        @Expose
+        @ConfigOption(name = "Price Source", desc = "Which price the session's drops are worth.")
+        @ConfigEditorDropdown
+        public ProfitPriceSource priceSource = ProfitPriceSource.INSTANT_SELL;
+
+        @Expose
+        @ConfigOption(name = "Breakdown on Launch", desc = "When you join after restarting the game, show your last session's breakdown in chat.")
+        @ConfigEditorBoolean
+        public boolean summaryOnLaunch = true;
+
+        @Expose
+        @ConfigOption(name = "Sessions Kept", desc = "How many past sessions /s2 session keeps.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 100, minStep = 1)
+        public int keep = 50;
+
+        @ConfigOption(name = "Open", desc = "Open the Session Tracker (/s2 session).")
+        @ConfigEditorButton(buttonText = "OPEN")
+        public Runnable open = () -> com.epic60869.sky2m.features.misc.profit.SessionTrackerScreen.open(-1);
     }
 
     public static final class ProfitTrackerSettings {
@@ -3986,6 +4243,11 @@ public final class FeatureConfigs {
         @ConfigEditorDropdown
         public com.epic60869.sky2m.features.misc.ServerInfo.LabelStyle labelStyle = com.epic60869.sky2m.features.misc.ServerInfo.LabelStyle.TEXT;
 
+        @Expose
+        @ConfigOption(name = "Show Icons", desc = "Draw a small pixel icon before each value: signal bars for ping, arrows for TPS, a clock for the time and a bolt for FPS. With Labels on Symbols, the icons replace the symbols.")
+        @ConfigEditorBoolean
+        public boolean showIcons = true;
+
         @Expose @ConfigOption(name = "FPS Colour", desc = "Colour of the FPS text.") @ConfigEditorColour public String fpsColour = "0:255:255:255:255";
         @Expose @ConfigOption(name = "TPS Colour", desc = "Colour of the TPS text.") @ConfigEditorColour public String tpsColour = "0:255:255:255:255";
         @Expose @ConfigOption(name = "Ping Colour", desc = "Colour of the ping text.") @ConfigEditorColour public String pingColour = "0:255:255:255:255";
@@ -4017,6 +4279,33 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Diana Commands", desc = "SBO's Diana party commands, answered from this season's Diana trackers: !chim, !chimls, !inq, !king, !manti, !sphinx, !relic, !stick, !core, !wool, !food, !stinger, !feathers, !mobs, !burrows, !profit, !playtime, !mf, !stats <you>, !help and !since <chim|inq|relic|stick|king|manti|core|wool|food|...>.")
         @ConfigEditorBoolean
         public boolean diana = true;
+    }
+
+    public static final class SacksValue {
+        @Expose
+        @ConfigOption(name = "Sacks Value", desc = "Show what everything in your sacks is worth and how many items are in them on a HUD (SkyHanni's Sack Display value). Open your sacks once to fill it; after that it follows the [Sacks] messages and your bazaar insta-sells, so you don't have to reopen them. /s2 resetsacks forgets it. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Price", desc = "Bazaar insta-sell price, sell offer price, or both as a range (insta-sell to sell offer). Items not on the bazaar use their NPC sell price.")
+        @ConfigEditorDropdown
+        public SacksPriceMode priceMode = SacksPriceMode.RANGE;
+    }
+
+    public enum SacksPriceMode {
+        INSTANT_SELL("Instant Sell"), SELL_OFFER("Sell Offer"), RANGE("Range");
+
+        private final String label;
+
+        SacksPriceMode(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
     public static final class ItemNotification {
@@ -4062,5 +4351,1833 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Sound", desc = "Play a sound when an item on the list comes in.")
         @ConfigEditorBoolean
         public boolean sound = true;
+    }
+
+    /** The Item List (Item Browser): SkyBlock Item List's panel beside inventories, written for Sky2M. */
+    public static final class ItemList {
+        public enum Side {
+            RIGHT("Right"), LEFT("Left");
+
+            private final String label;
+
+            Side(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        public enum ClickAction {
+            RECIPE("Show Recipes"), USAGE("Show Usages"), WIKI("Open Wiki"), NOTHING("Nothing");
+
+            private final String label;
+
+            ClickAction(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        public enum HideWhen {
+            SEARCH("No Search"), FILTER("No Search or Filter"), NEVER("Never");
+
+            private final String label;
+
+            HideWhen(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "A panel of every SkyBlock item, attribute, enchantment, mob, NPC, pet, potion and rune beside your inventory and SkyBlock menus, like SkyBlock Item List. Click an item for its recipes (crafting, Forge, Kat, NPC shops, mob drops), search, and type sums in the search bar. Items come from the NotEnoughUpdates repo (about 22 MB, downloaded once).")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Show Outside SkyBlock", desc = "Also show it in your inventory outside SkyBlock.")
+        @ConfigEditorBoolean
+        public boolean outsideSkyblock = false;
+
+        @Expose
+        @ConfigOption(name = "Side", desc = "Which side of the screen the list is on. Favourites go on the other side.")
+        @ConfigEditorDropdown
+        public Side side = Side.RIGHT;
+
+        @Expose
+        @ConfigOption(name = "Max Width", desc = "How much of the space beside the menu the list may use.")
+        @ConfigEditorSlider(minValue = 0.25f, maxValue = 1f, minStep = 0.05f)
+        public float maxWidth = 1f;
+
+        @Expose
+        @ConfigOption(name = "Item Size", desc = "How big the items are. Hold Ctrl and scroll on the list to change it there.")
+        @ConfigEditorSlider(minValue = 8, maxValue = 48, minStep = 1)
+        public int itemSize = 18;
+
+        @Expose
+        @ConfigOption(name = "Hide List When", desc = "Hide the items until you search (or pick a filter), which keeps the list out of the way. Never: always show every item.")
+        @ConfigEditorDropdown
+        public HideWhen hideWhen = HideWhen.SEARCH;
+
+        @Expose
+        @ConfigOption(name = "Left Click", desc = "What clicking an item in the list or a recipe does.")
+        @ConfigEditorDropdown
+        public ClickAction leftClick = ClickAction.RECIPE;
+
+        @Expose
+        @ConfigOption(name = "Right Click", desc = "What right-clicking an item does.")
+        @ConfigEditorDropdown
+        public ClickAction rightClick = ClickAction.WIKI;
+
+        @Expose
+        @ConfigOption(name = "Middle Click", desc = "What middle-clicking an item does.")
+        @ConfigEditorDropdown
+        public ClickAction middleClick = ClickAction.NOTHING;
+
+        @Expose
+        @ConfigOption(name = "Hide Vanilla Items", desc = "Leave out plain Minecraft items.")
+        @ConfigEditorBoolean
+        public boolean hideVanilla = false;
+
+        @Expose
+        @ConfigOption(name = "Prefix Matches First", desc = "Items whose name starts with your search come first.")
+        @ConfigEditorBoolean
+        public boolean prefixFirst = true;
+
+        @Expose
+        @ConfigOption(name = "Fuzzy Search", desc = "Also find items when the search has small typos.")
+        @ConfigEditorBoolean
+        public boolean fuzzy = false;
+
+        @Expose
+        @ConfigOption(name = "Clear Search on Restart", desc = "Start with an empty search bar after restarting the game.")
+        @ConfigEditorBoolean
+        public boolean clearOnRestart = false;
+
+        @Expose
+        @ConfigOption(name = "Favourites", desc = "A Favourites panel on the other side: press the Favourite key over an item or recipe to add it. Ctrl and click a favourite recipe to pin it at the top.")
+        @ConfigEditorBoolean
+        public boolean favourites = true;
+
+        @Expose
+        @ConfigOption(name = "Favourites Item Size", desc = "How big the favourites are. Hold Ctrl and scroll on them to change it there.")
+        @ConfigEditorSlider(minValue = 8, maxValue = 48, minStep = 1)
+        public int favouritesItemSize = 18;
+
+        @Expose
+        @ConfigOption(name = "Calculator Needs =", desc = "Only work out sums when the search starts with =. Off: anything that looks like a sum is worked out (2.5m*3, bz(ENCHANTED_DIAMOND)*64).")
+        @ConfigEditorBoolean
+        public boolean calculatorNeedsEquals = false;
+
+        @Expose
+        @ConfigOption(name = "Enter Replaces Sum", desc = "Pressing Enter replaces the sum with its result.")
+        @ConfigEditorBoolean
+        public boolean enterReplaces = true;
+
+        @Expose
+        @ConfigOption(name = "Hide Key", desc = "Hold Ctrl and press this to hide or show the list and favourites.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_O)
+        public int hideKey = com.mojang.blaze3d.platform.InputConstants.KEY_O;
+
+        @Expose
+        @ConfigOption(name = "Recipe Key", desc = "Over an item (in the list, a recipe or any menu): show its recipes.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_R)
+        public int recipeKey = com.mojang.blaze3d.platform.InputConstants.KEY_R;
+
+        @Expose
+        @ConfigOption(name = "Usage Key", desc = "Over an item: show the recipes that use it.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_U)
+        public int usageKey = com.mojang.blaze3d.platform.InputConstants.KEY_U;
+
+        @Expose
+        @ConfigOption(name = "Back Key", desc = "In a recipe: go back to the one before.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_BACKSPACE)
+        public int backKey = com.mojang.blaze3d.platform.InputConstants.KEY_BACKSPACE;
+
+        @Expose
+        @ConfigOption(name = "Favourite Key", desc = "Over an item or a recipe: add it to (or remove it from) your favourites.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_F)
+        public int favouriteKey = com.mojang.blaze3d.platform.InputConstants.KEY_F;
+
+        @Expose
+        @ConfigOption(name = "Search Key", desc = "Jump to the search bar while the list is open.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        public int searchKey = -1;
+
+        /** Remembered between sessions. */
+        @Expose
+        public String lastSearch = "";
+
+        @Expose
+        public String lastFilter = "ALL";
+
+        @Expose
+        public boolean hidden = false;
+    }
+
+    /** Ability Timers (Killer560's): countdowns you start with a key when you use an ability. */
+    public static final class AbilityTimers {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Countdowns you start with a key the moment you use an ability (a mask, a Ragnarock Axe, Wither Cloak...), shown in a HUD you can move in /s2 gui. Set each timer's name, length, key and colour below. Keys only count while no menu or chat is open.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Ready Sound", desc = "Play a sound when a timer runs out.")
+        @ConfigEditorBoolean
+        public boolean readySound = false;
+
+        @Expose
+        @ConfigOption(name = "Show Ready Timers", desc = "Keep showing a timer as READY after it runs out, until you start it again.")
+        @ConfigEditorBoolean
+        public boolean showReady = false;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Timer 1", desc = "")
+        public AbilityTimer timer1 = new AbilityTimer("Mask", 60);
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Timer 2", desc = "")
+        public AbilityTimer timer2 = new AbilityTimer("Timer 2", 30);
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Timer 3", desc = "")
+        public AbilityTimer timer3 = new AbilityTimer("Timer 3", 30);
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Timer 4", desc = "")
+        public AbilityTimer timer4 = new AbilityTimer("Timer 4", 30);
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Timer 5", desc = "")
+        public AbilityTimer timer5 = new AbilityTimer("Timer 5", 30);
+
+        public java.util.List<AbilityTimer> timers() {
+            return java.util.List.of(timer1, timer2, timer3, timer4, timer5);
+        }
+    }
+
+    public static final class AbilityTimer {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Use this timer.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Name", desc = "Shown in the HUD.")
+        @ConfigEditorText
+        public String name;
+
+        @Expose
+        @ConfigOption(name = "Seconds", desc = "How long it counts down.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 300, minStep = 1)
+        public int seconds;
+
+        @Expose
+        @ConfigOption(name = "Key", desc = "Starts (or restarts) the countdown.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        public int key = -1;
+
+        @Expose
+        @ConfigOption(name = "Colour", desc = "The square beside its name.")
+        @ConfigEditorColour
+        public String colour = "0:255:255:170:0";
+
+        public AbilityTimer() {
+            this("Timer", 30);
+        }
+
+        public AbilityTimer(String name, int seconds) {
+            this.name = name;
+            this.seconds = seconds;
+        }
+    }
+
+    /** Rag Axe timer (Killer560's): Ragnarock Axe cast, buff and cooldown timers and "rag now" prompts. */
+    public static final class RagAxe {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Spots your Ragnarock Axe casts (by the ability's sound while you hold the axe, like Odin) and times the 3s channel, the 10s Strength buff and the cooldown, in a HUD you can move in /s2 gui. Also \"rag now\" prompts in boss fights, below.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Channel Timer", desc = "Show the 3s channel before the buff.")
+        @ConfigEditorBoolean
+        public boolean channelTimer = false;
+
+        @Expose
+        @ConfigOption(name = "Buff Timer", desc = "Show how long the Strength buff has left.")
+        @ConfigEditorBoolean
+        public boolean buffTimer = true;
+
+        @Expose
+        @ConfigOption(name = "Cooldown Timer", desc = "Show the time until you can cast it again.")
+        @ConfigEditorBoolean
+        public boolean cooldownTimer = false;
+
+        @Expose
+        @ConfigOption(name = "Cooldown", desc = "The axe's cooldown in seconds. Hypixel doesn't tell the client your cooldown reductions, so set yours here (20 is the base).")
+        @ConfigEditorSlider(minValue = 5, maxValue = 30, minStep = 0.5f)
+        public float cooldownSeconds = 20f;
+
+        @Expose
+        @ConfigOption(name = "Mage Cooldown Reduction", desc = "Take this much off the cooldown while you're playing Mage in a dungeon (its perk shortens ability cooldowns; it grows with class level). 0 turns it off.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 50, minStep = 1)
+        public int mageReduction = 25;
+
+        @Expose
+        @ConfigOption(name = "Sound Is Buff Start", desc = "Off: the cast sound starts the 3s channel and the buff follows. On: the buff starts at the sound. Only change this if the timers are 3s off.")
+        @ConfigEditorBoolean
+        public boolean soundIsBuffStart = false;
+
+        @Expose
+        @ConfigOption(name = "Cast Alert", desc = "\"Casted Rag\" on your screen when you cast it.")
+        @ConfigEditorBoolean
+        public boolean castAlert = true;
+
+        @Expose
+        @ConfigOption(name = "Cancel Alert", desc = "\"Ragnarock Cancelled!\" when taking damage cancels the channel.")
+        @ConfigEditorBoolean
+        public boolean cancelAlert = true;
+
+        @Expose
+        @ConfigOption(name = "End Alert", desc = "\"Ragnarock Ended\" when the buff runs out.")
+        @ConfigEditorBoolean
+        public boolean endAlert = true;
+
+        @Expose
+        @ConfigOption(name = "Ready Alert", desc = "\"Ragnarock Ready\" when the cooldown is over.")
+        @ConfigEditorBoolean
+        public boolean readyAlert = false;
+
+        @Expose
+        @ConfigOption(name = "Strength Message", desc = "When the buff starts, how much Strength it gave (1.5x the axe's own) in chat, only to you.")
+        @ConfigEditorBoolean
+        public boolean strengthMessage = true;
+
+        @Expose
+        @ConfigOption(name = "Announce Strength", desc = "Also say it in party chat.")
+        @ConfigEditorBoolean
+        public boolean announceStrength = false;
+
+        @Expose
+        @ConfigOption(name = "Prompt Text", desc = "What the \"rag now\" prompts show.")
+        @ConfigEditorText
+        public String promptText = "rag";
+
+        @Expose
+        @ConfigOption(name = "Prompt As Title", desc = "Also show prompts as a big title (they always show in their HUD).")
+        @ConfigEditorBoolean
+        public boolean promptTitle = false;
+
+        @Expose
+        @ConfigOption(name = "Skip Tank and Healer", desc = "No dragon prompts while you're Tank or Healer (they don't rag for dragons).")
+        @ConfigEditorBoolean
+        public boolean skipTankHealer = true;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "M7 Wither King Line", desc = "When the Wither King says \"I no longer wish to fight...\" (NoammAddons' M7 rag call).")
+        public RagPrompt m7Dragons = new RagPrompt();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "M7 Dragon Spawns", desc = "Before each dragon spawns, from Wither Dragons' spawn timers (turn Wither Dragons on for this).")
+        public RagPrompt m7DragonSpawn = new RagPrompt();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "F7/M7 Necron", desc = "After Necron's \"You went further than any human before...\" line, when he's down and hittable (about 8s; an estimate, tune the lead).")
+        public RagPrompt necron = new RagPrompt();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "F7/M7 Storm", desc = "After Storm's \"Pathetic Maxor...\" line (about 5s; an estimate, tune the lead).")
+        public RagPrompt storm = new RagPrompt();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "F5/M5 Livid", desc = "Before Livid can first be hit, 19.5s after her entry line.")
+        public RagPrompt livid = new RagPrompt();
+    }
+
+    public static final class RagPrompt {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Show this prompt.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Lead", desc = "How many milliseconds early to prompt. 3000 (the channel) means the buff lands right on the moment.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 10000, minStep = 100)
+        public int leadMs = 3000;
+
+        @Expose
+        @ConfigOption(name = "Sound", desc = "Play NoammAddons' rising rag tune with the prompt.")
+        @ConfigEditorBoolean
+        public boolean sound = false;
+    }
+
+    /** Custom Mage Beam (Killer560's, from NoammAddons): one clean beam in place of the Mage's firework particles. */
+    public static final class MageBeam {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "In dungeons, draw each Mage beam as one clean beam from start to end, in your colour and width, instead of the trail of firework particles (NoammAddons' Mage Beam).")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Hide Particles", desc = "Hide the firework particles the beam is made of, so only the custom beam shows.")
+        @ConfigEditorBoolean
+        public boolean hideParticles = true;
+
+        @Expose
+        @ConfigOption(name = "Colour", desc = "The beam's colour.")
+        @ConfigEditorColour
+        public String colour = "0:255:204:102:0";
+
+        @Expose
+        @ConfigOption(name = "Width", desc = "How thick the beam is.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 20, minStep = 0.5f)
+        public float width = 2f;
+
+        @Expose
+        @ConfigOption(name = "Duration", desc = "How long a beam stays, in ticks (20 a second).")
+        @ConfigEditorSlider(minValue = 5, maxValue = 100, minStep = 1)
+        public int durationTicks = 40;
+
+        @Expose
+        @ConfigOption(name = "Fade", desc = "Fade the beam out over its duration.")
+        @ConfigEditorBoolean
+        public boolean fade = false;
+    }
+
+    /** Terminal Timers (Killer560's, from Odin's Terminal Times): P3 terminal, device and section times. */
+    public static final class TerminalTimers {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Time F7/M7 P3 (Goldor): each terminal, device and lever, each section and the whole phase, in chat and a HUD you can move in /s2 gui (Odin's Terminal Times).")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Splits in Chat", desc = "Add (section | phase) times to every \"... completed a terminal! (3/7)\" line, and the section times and total when the core opens.")
+        @ConfigEditorBoolean
+        public boolean splits = true;
+
+        @Expose
+        @ConfigOption(name = "Solve Times", desc = "\"Correct all the panes! solved in 4.21s!\" in chat after each terminal you complete (from opening it to closing it).")
+        @ConfigEditorBoolean
+        public boolean solveTimes = true;
+
+        @Expose
+        @ConfigOption(name = "HUD", desc = "During P3, a HUD with the section you're on, its time, the phase time and the finished sections.")
+        @ConfigEditorBoolean
+        public boolean hud = true;
+    }
+
+    /** Dungeon Run Summary and History (Killer560's): every finished run saved, with /s2 runs. */
+    public static final class RunHistory {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Save every dungeon run (floor, time, splits, P3 terminal times, score, secrets, crypts, deaths, class and party) and see them with /s2 runs, with your personal bests per floor.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Chat Summary", desc = "After each run, a line in chat with its time, score, secrets and deaths, and a button to the history.")
+        @ConfigEditorBoolean
+        public boolean chatSummary = true;
+
+        @Expose
+        @ConfigOption(name = "Announce Personal Bests", desc = "Say so in chat when a run beats your best time or score on that floor.")
+        @ConfigEditorBoolean
+        public boolean announceBests = true;
+
+        @Expose
+        @ConfigOption(name = "Runs Kept", desc = "How many runs to keep; the oldest go first.")
+        @ConfigEditorSlider(minValue = 50, maxValue = 2000, minStep = 50)
+        public int maxRuns = 500;
+    }
+
+    /** Custom Scoreboard, like j10a1n15's Custom Scoreboard mod (LGPL), written for Sky2M. */
+    public static final class CustomScoreboard {
+        public enum Element {
+            TITLE("§e§lSkyBlock §7(Title)"), LOBBY("§8Lobby (date and server)"), DATE("SkyBlock Date"), TIME("SkyBlock Time"),
+            IRL_TIME("Real Time"), ISLAND("§a㋖ Island"), AREA("§7⏣ Area"), PROFILE("Profile"), SKYBLOCK_LEVEL("SkyBlock Level"),
+            PLAYER_COUNT("Player Count"), SEPARATOR("------- Separator -------"), PURSE("§6Purse"), BANK("§6Bank"), MOTES("§dMotes"),
+            BITS("§bBits"), COPPER("§cCopper"), SOWDUST("§6Sowdust"), GEMS("§aGems"), HEAT("§cHeat"), COLD("§bCold"),
+            NORTH_STARS("§dNorth Stars"), SOULFLOW("§3Soulflow"), SEPARATOR_2("------- Separator -------"),
+            COOKIE_BUFF("§dBooster Cookie"), POWDER("§9Powder"), PET("Pet"), PARTY("§9Party"), OBJECTIVE("Objective"),
+            SLAYER("§cSlayer Quest"), EVENTS("§eEvents §7(see Events below)"), SEPARATOR_3("------- Separator -------"),
+            SEPARATOR_4("------- Separator -------"), FOOTER("§ewww.hypixel.net §7(Footer)");
+
+            private final String label;
+
+            Element(String label) {
+                this.label = label;
+            }
+
+            public boolean isSeparator() {
+                return name().startsWith("SEPARATOR");
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        /** The Events line's parts, like the Custom Scoreboard mod's events list: shown in this order. */
+        public enum Event {
+            SERVER_RESTART("Server Restart"), DUNGEONS("Dungeons"), KUUDRA("Kuudra"), DOJO("Dojo"), DARK_AUCTION("Dark Auction"),
+            JACOBS_CONTEST("Jacob's Contest"), JACOB_MEDALS("Jacob's Medals"), TRAPPER("Trapper"), GARDEN("Garden"),
+            FLIGHT_DURATION("Flight Duration"), WINTER("Jerry's Workshop"), NEW_YEAR("New Year"), ANNIVERSARY("Anniversary"),
+            SPOOKY("Spooky Festival"), CARNIVAL("Carnival"), BROODMOTHER("Broodmother"), MINING("Mining"), FORAGING("Foraging"),
+            DAMAGE("Dragon / Protector Damage"), MAGMA_BOSS("Magma Boss"), RIFT("Rift"), ESSENCE("Essence"), QUEUE("Queue"),
+            REDSTONE("Redstone"), VOTING("Election"), ACTIVE_TABLIST("Tab List Event"), OTHER("Other Lines §7(anything unknown)");
+
+            private final String label;
+
+            Event(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        public enum Align {
+            LEFT("Left"), CENTER("Centre"), RIGHT("Right");
+
+            private final String label;
+
+            Align(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        public enum HorizontalPosition {
+            LEFT("Left"), CENTER("Centre"), RIGHT("Right"), FREE("Free (move in /s2 gui)");
+
+            private final String label;
+
+            HorizontalPosition(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        public enum VerticalPosition {
+            TOP("Top"), CENTER("Centre"), BOTTOM("Bottom"), FREE("Free (move in /s2 gui)");
+
+            private final String label;
+
+            VerticalPosition(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        public enum NumberFormat {
+            LONG("1,234,567"), SHORT("1.23M");
+
+            private final String label;
+
+            NumberFormat(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        public enum NumberDisplay {
+            TEXT_NUMBER("§fPurse: §6123"), COLOR_TEXT_NUMBER("§6Purse: 123"), COLOR_NUMBER_TEXT("§6123 Purse"),
+            NUMBER_TEXT("§6123 §fPurse"), NUMBER_ONLY("§6123");
+
+            private final String label;
+
+            NumberDisplay(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        @ConfigOption(name = "Open Editor", desc = "Set it up in its own screen, like the Custom Scoreboard mod's: drag the lines and events into order, change the title, background and options, and see it change as you go. Also /s2 scoreboard.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "Open")
+        public Runnable openEditor = com.epic60869.sky2m.features.misc.CustomScoreboard::openEditor;
+
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Replace the sidebar with your own: pick which lines show and in what order, with a background (rounded, bordered, or your own picture or GIF), title and footer, number changes like \"(+12k)\", and lines you can click with chat open. Like j10a1n15's Custom Scoreboard.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Hide Hypixel's Sidebar", desc = "Hide the normal sidebar while the custom one is on.")
+        @ConfigEditorBoolean
+        public boolean hideHypixel = true;
+
+        @Expose
+        @ConfigOption(name = "Custom Lines", desc = "Build the lines from your list. Off: show Hypixel's own lines in the custom box.")
+        @ConfigEditorBoolean
+        public boolean customLines = true;
+
+        @Expose
+        @ConfigOption(name = "Outside SkyBlock", desc = "Also replace the sidebar outside SkyBlock (it shows Hypixel's own lines there).")
+        @ConfigEditorBoolean
+        public boolean outsideSkyblock = false;
+
+        @Expose
+        @ConfigOption(name = "Hide While Tab Is Held", desc = "Hide it while you hold the player list key.")
+        @ConfigEditorBoolean
+        public boolean hideWhenTab = false;
+
+        @Expose
+        @ConfigOption(name = "Hide While Chat Is Open", desc = "Hide it while chat is open (its click actions need chat open, so they're off then).")
+        @ConfigEditorBoolean
+        public boolean hideWhenChat = false;
+
+        @Expose
+        @ConfigOption(name = "Hide With F3", desc = "Hide it while the debug screen is open.")
+        @ConfigEditorBoolean
+        public boolean hideWhenF3 = false;
+
+        @Expose
+        @ConfigOption(name = "Text Shadow", desc = "Draw the lines with a shadow.")
+        @ConfigEditorBoolean
+        public boolean textShadow = true;
+
+        @Expose
+        @ConfigOption(name = "Click and Hover Actions", desc = "With chat open, hover lines for a tip and click them to run their command (Bits opens the SkyBlock menu, Objective your quests, Island /warp...).")
+        @ConfigEditorBoolean
+        public boolean actions = true;
+
+        @Expose
+        @ConfigOption(name = "Lines", desc = "Which lines show, in order. Drag to reorder; separators are blank lines. Keep Events in: it's where dungeon, Kuudra, Garden and other changing lines go.")
+        @ConfigEditorDraggableList
+        public java.util.List<Element> lines = new java.util.ArrayList<>(java.util.List.of(Element.TITLE, Element.LOBBY, Element.SEPARATOR,
+            Element.DATE, Element.TIME, Element.ISLAND, Element.AREA, Element.PROFILE, Element.SEPARATOR_2, Element.PURSE, Element.MOTES,
+            Element.BANK, Element.BITS, Element.COPPER, Element.SOWDUST, Element.GEMS, Element.HEAT, Element.COLD, Element.NORTH_STARS,
+            Element.SOULFLOW, Element.SEPARATOR_3, Element.OBJECTIVE, Element.SLAYER, Element.EVENTS, Element.POWDER, Element.PARTY,
+            Element.PET, Element.FOOTER));
+
+        @Expose
+        @ConfigOption(name = "Events", desc = "What the Events line shows, in order: each one shows Hypixel's lines for it while it's going on.")
+        @ConfigEditorDraggableList
+        public java.util.List<Event> events = new java.util.ArrayList<>(java.util.List.of(Event.values()));
+
+        /** Which default layout this config has been moved to (1: the Custom Scoreboard mod's order). */
+        @Expose
+        public int layoutVersion = 0;
+
+        @Expose
+        @ConfigOption(name = "Horizontal Position", desc = "Where on the screen it sits, side to side. Free: drag it anywhere in /s2 gui.")
+        @ConfigEditorDropdown
+        public HorizontalPosition horizontal = HorizontalPosition.RIGHT;
+
+        @Expose
+        @ConfigOption(name = "Vertical Position", desc = "Where on the screen it sits, up and down; it grows from there as lines come and go. Free: drag it anywhere in /s2 gui.")
+        @ConfigEditorDropdown
+        public VerticalPosition vertical = VerticalPosition.CENTER;
+
+        @Expose
+        @ConfigOption(name = "Scale", desc = "How big it is (with a Free position, scroll on it in /s2 gui instead).")
+        @ConfigEditorSlider(minValue = 0.5f, maxValue = 2f, minStep = 0.05f)
+        public float scale = 1f;
+
+        @Expose
+        @ConfigOption(name = "Text Alignment", desc = "Where lines sit in the box (the title and footer have their own).")
+        @ConfigEditorDropdown
+        public Align lineAlignment = Align.LEFT;
+
+        @Expose
+        @ConfigOption(name = "Line Spacing", desc = "Extra pixels between lines.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 6, minStep = 1)
+        public int lineSpacing = 0;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Title and Footer", desc = "")
+        public ScoreboardTitle title = new ScoreboardTitle();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Background", desc = "")
+        public ScoreboardBackground background = new ScoreboardBackground();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Line Options", desc = "")
+        public ScoreboardLines lineOptions = new ScoreboardLines();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Colours and Labels", desc = "The colour and name of each number line (Purse, Bank, Bits...).")
+        public ScoreboardColours colours = new ScoreboardColours();
+    }
+
+    public static final class ScoreboardTitle {
+        @Expose
+        @ConfigOption(name = "Hypixel's Title", desc = "Show Hypixel's own title (SKYBLOCK, or the event's) instead of your text.")
+        @ConfigEditorBoolean
+        public boolean hypixelTitle = true;
+
+        @Expose
+        @ConfigOption(name = "Title Text", desc = "Your title; & colour codes work (&6&lSKYBLOCK), and \\n starts a new line.")
+        @ConfigEditorText
+        public String titleText = "&e&lSkyBlock";
+
+        @Expose
+        @ConfigOption(name = "Title Alignment", desc = "")
+        @ConfigEditorDropdown
+        public CustomScoreboard.Align titleAlignment = CustomScoreboard.Align.CENTER;
+
+        @Expose
+        @ConfigOption(name = "Hypixel's Footer", desc = "Show www.hypixel.net instead of your text.")
+        @ConfigEditorBoolean
+        public boolean hypixelFooter = true;
+
+        @Expose
+        @ConfigOption(name = "Footer Text", desc = "Your footer; & colour codes work, and \\n starts a new line.")
+        @ConfigEditorText
+        public String footerText = "&ewww.hypixel.net";
+
+        @Expose
+        @ConfigOption(name = "Footer Alignment", desc = "")
+        @ConfigEditorDropdown
+        public CustomScoreboard.Align footerAlignment = CustomScoreboard.Align.CENTER;
+    }
+
+    public static final class ScoreboardBackground {
+        @Expose
+        @ConfigOption(name = "Background", desc = "Draw a background behind the lines.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Colour", desc = "The background's colour (and how see-through it is).")
+        @ConfigEditorColour
+        public String colour = "0:85:0:0:0";
+
+        @Expose
+        @ConfigOption(name = "Padding", desc = "Space between the lines and the edge of the box.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 15, minStep = 1)
+        public int padding = 5;
+
+        @Expose
+        @ConfigOption(name = "Margin", desc = "Space between the box and the edge of the screen.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1)
+        public int margin = 0;
+
+        @Expose
+        @ConfigOption(name = "Rounded Corners", desc = "How round the corners are (0: square).")
+        @ConfigEditorSlider(minValue = 0, maxValue = 12, minStep = 1)
+        public int radius = 5;
+
+        @Expose
+        @ConfigOption(name = "Min Width", desc = "The box is at least this wide (the lines stay in the middle).")
+        @ConfigEditorSlider(minValue = 0, maxValue = 250, minStep = 5)
+        public int minWidth = 0;
+
+        @Expose
+        @ConfigOption(name = "Min Height", desc = "The box is at least this tall (the lines stay in the middle).")
+        @ConfigEditorSlider(minValue = 0, maxValue = 250, minStep = 5)
+        public int minHeight = 0;
+
+        @Expose
+        @ConfigOption(name = "Border", desc = "A border around the box, fading between its four corner colours.")
+        @ConfigEditorBoolean
+        public boolean outline = false;
+
+        @Expose
+        @ConfigOption(name = "Border Size", desc = "")
+        @ConfigEditorSlider(minValue = 1, maxValue = 6, minStep = 1)
+        public int outlineWidth = 3;
+
+        @Expose
+        @ConfigOption(name = "Border Top Left", desc = "")
+        @ConfigEditorColour
+        public String outlineTop = "0:255:50:161:219";
+
+        @Expose
+        @ConfigOption(name = "Border Top Right", desc = "")
+        @ConfigEditorColour
+        public String outlineTopRight = "0:255:50:219:194";
+
+        @Expose
+        @ConfigOption(name = "Border Bottom Left", desc = "")
+        @ConfigEditorColour
+        public String outlineBottom = "0:255:41:196:174";
+
+        @Expose
+        @ConfigOption(name = "Border Bottom Right", desc = "")
+        @ConfigEditorColour
+        public String outlineBottomRight = "0:255:43:207:122";
+
+        @Expose
+        @ConfigOption(name = "Picture", desc = "A PNG or GIF from config/sky2m/scoreboard to use as the background (its file name, e.g. stars.gif). Empty: none.")
+        @ConfigEditorText
+        public String image = "";
+
+        @Expose
+        @ConfigOption(name = "Picture Opacity", desc = "How see-through the picture is.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 100, minStep = 5)
+        public int imageOpacity = 90;
+
+        @ConfigOption(name = "Open Picture Folder", desc = "Opens config/sky2m/scoreboard, where pictures for the background go.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "Open")
+        public Runnable openFolder = com.epic60869.sky2m.features.misc.CustomScoreboard::openFolder;
+    }
+
+    /** Custom Scoreboard: each number line's colour and name, like the Custom Scoreboard mod's custom prefixes. */
+    public static final class ScoreboardColours {
+        @Expose
+        @ConfigOption(name = "Name Colour", desc = "The colour of the name on number lines (\"Purse:\"), in the Number Displays that colour it on its own.")
+        @ConfigEditorColour
+        public String label = "0:255:255:255:255";
+
+        @Expose
+        @ConfigOption(name = "Purse Colour", desc = "")
+        @ConfigEditorColour
+        public String purse = "0:255:255:170:0";
+
+        @Expose
+        @ConfigOption(name = "Purse Name", desc = "What the line calls it; & colour codes work. Empty: Purse.")
+        @ConfigEditorText
+        public String purseLabel = "Purse";
+
+        @Expose
+        @ConfigOption(name = "Piggy Colour", desc = "")
+        @ConfigEditorColour
+        public String piggy = "0:255:255:170:0";
+
+        @Expose
+        @ConfigOption(name = "Piggy Name", desc = "What the line calls it; & colour codes work. Empty: Piggy.")
+        @ConfigEditorText
+        public String piggyLabel = "Piggy";
+
+        @Expose
+        @ConfigOption(name = "Bank Colour", desc = "")
+        @ConfigEditorColour
+        public String bank = "0:255:255:170:0";
+
+        @Expose
+        @ConfigOption(name = "Bank Name", desc = "What the line calls it; & colour codes work. Empty: Bank.")
+        @ConfigEditorText
+        public String bankLabel = "Bank";
+
+        @Expose
+        @ConfigOption(name = "Motes Colour", desc = "")
+        @ConfigEditorColour
+        public String motes = "0:255:255:85:255";
+
+        @Expose
+        @ConfigOption(name = "Motes Name", desc = "What the line calls it; & colour codes work. Empty: Motes.")
+        @ConfigEditorText
+        public String motesLabel = "Motes";
+
+        @Expose
+        @ConfigOption(name = "Bits Colour", desc = "")
+        @ConfigEditorColour
+        public String bits = "0:255:85:255:255";
+
+        @Expose
+        @ConfigOption(name = "Bits Name", desc = "What the line calls it; & colour codes work. Empty: Bits.")
+        @ConfigEditorText
+        public String bitsLabel = "Bits";
+
+        @Expose
+        @ConfigOption(name = "Copper Colour", desc = "")
+        @ConfigEditorColour
+        public String copper = "0:255:255:85:85";
+
+        @Expose
+        @ConfigOption(name = "Copper Name", desc = "What the line calls it; & colour codes work. Empty: Copper.")
+        @ConfigEditorText
+        public String copperLabel = "Copper";
+
+        @Expose
+        @ConfigOption(name = "Sowdust Colour", desc = "")
+        @ConfigEditorColour
+        public String sowdust = "0:255:255:170:0";
+
+        @Expose
+        @ConfigOption(name = "Sowdust Name", desc = "What the line calls it; & colour codes work. Empty: Sowdust.")
+        @ConfigEditorText
+        public String sowdustLabel = "Sowdust";
+
+        @Expose
+        @ConfigOption(name = "Gems Colour", desc = "")
+        @ConfigEditorColour
+        public String gems = "0:255:85:255:85";
+
+        @Expose
+        @ConfigOption(name = "Gems Name", desc = "What the line calls it; & colour codes work. Empty: Gems.")
+        @ConfigEditorText
+        public String gemsLabel = "Gems";
+
+        @Expose
+        @ConfigOption(name = "Heat Colour", desc = "")
+        @ConfigEditorColour
+        public String heat = "0:255:255:85:85";
+
+        @Expose
+        @ConfigOption(name = "Heat Name", desc = "What the line calls it; & colour codes work. Empty: Heat.")
+        @ConfigEditorText
+        public String heatLabel = "Heat";
+
+        @Expose
+        @ConfigOption(name = "Cold Colour", desc = "")
+        @ConfigEditorColour
+        public String cold = "0:255:85:255:255";
+
+        @Expose
+        @ConfigOption(name = "Cold Name", desc = "What the line calls it; & colour codes work. Empty: Cold.")
+        @ConfigEditorText
+        public String coldLabel = "Cold";
+
+        @Expose
+        @ConfigOption(name = "North Stars Colour", desc = "")
+        @ConfigEditorColour
+        public String northStars = "0:255:255:85:255";
+
+        @Expose
+        @ConfigOption(name = "North Stars Name", desc = "What the line calls it; & colour codes work. Empty: North Stars.")
+        @ConfigEditorText
+        public String northStarsLabel = "North Stars";
+
+        @Expose
+        @ConfigOption(name = "Soulflow Colour", desc = "")
+        @ConfigEditorColour
+        public String soulflow = "0:255:0:170:170";
+
+        @Expose
+        @ConfigOption(name = "Soulflow Name", desc = "What the line calls it; & colour codes work. Empty: Soulflow.")
+        @ConfigEditorText
+        public String soulflowLabel = "Soulflow";
+
+        @Expose
+        @ConfigOption(name = "Players Colour", desc = "")
+        @ConfigEditorColour
+        public String players = "0:255:85:255:85";
+
+        @Expose
+        @ConfigOption(name = "Players Name", desc = "What the line calls it; & colour codes work. Empty: Players.")
+        @ConfigEditorText
+        public String playersLabel = "Players";
+    }
+
+    public static final class ScoreboardLines {
+        @Expose
+        @ConfigOption(name = "Number Format", desc = "How numbers like your purse are written.")
+        @ConfigEditorDropdown
+        public CustomScoreboard.NumberFormat numberFormat = CustomScoreboard.NumberFormat.LONG;
+
+        @Expose
+        @ConfigOption(name = "Number Display", desc = "How number lines are laid out and coloured.")
+        @ConfigEditorDropdown
+        public CustomScoreboard.NumberDisplay numberDisplay = CustomScoreboard.NumberDisplay.TEXT_NUMBER;
+
+        @Expose
+        @ConfigOption(name = "Show Changes", desc = "Show how much your purse, bits, motes, copper... just changed, like \"(+12,000)\", until 5 seconds after the last change.")
+        @ConfigEditorBoolean
+        public boolean showChanges = true;
+
+        @Expose
+        @ConfigOption(name = "Show Active Only", desc = "Hide number lines that are 0 (no copper, no motes...).")
+        @ConfigEditorBoolean
+        public boolean hideEmpty = false;
+
+        @Expose
+        @ConfigOption(name = "Show Piggy", desc = "Call your purse Piggy when Hypixel does (with a Piggy Bank).")
+        @ConfigEditorBoolean
+        public boolean showPiggy = false;
+
+        @Expose
+        @ConfigOption(name = "Hide Purse in Dungeons", desc = "")
+        @ConfigEditorBoolean
+        public boolean hidePurseInDungeons = false;
+
+        @Expose
+        @ConfigOption(name = "24-Hour Time", desc = "SkyBlock Time and Real Time as 21:40 instead of 9:40pm.")
+        @ConfigEditorBoolean
+        public boolean time24h = false;
+
+        @Expose
+        @ConfigOption(name = "Indent Location and Time", desc = "Indent the Date, Time, Island and Area lines by a space, like Hypixel.")
+        @ConfigEditorBoolean
+        public boolean indentLocationTime = false;
+
+        @Expose
+        @ConfigOption(name = "Condense Separators", desc = "Show one blank line where several meet.")
+        @ConfigEditorBoolean
+        public boolean condenseSeparators = true;
+
+        @Expose
+        @ConfigOption(name = "Hide Separators at Top and Bottom", desc = "No blank line at the very top or bottom.")
+        @ConfigEditorBoolean
+        public boolean hideSeparatorsAtEnds = true;
+
+        @Expose
+        @ConfigOption(name = "Show All Active Events", desc = "Show every event that's going on. Off: only the first one in your Events order.")
+        @ConfigEditorBoolean
+        public boolean showAllEvents = true;
+
+        @Expose
+        @ConfigOption(name = "Separator Between Events", desc = "A blank line between events.")
+        @ConfigEditorBoolean
+        public boolean separatorBetweenEvents = false;
+
+        @Expose
+        @ConfigOption(name = "Hide Tab List Events in Dungeons", desc = "Don't show the tab list's event (Spooky Festival, Mining Fiesta...) in dungeons and Kuudra.")
+        @ConfigEditorBoolean
+        public boolean tabEventsInDungeon = true;
+
+        @Expose
+        @ConfigOption(name = "Max Party Members", desc = "How many party members the Party line lists.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 25, minStep = 1)
+        public int maxParty = 5;
+
+        @Expose
+        @ConfigOption(name = "Party in Dungeons", desc = "Also show the Party line in dungeons (Hypixel's sidebar already lists your team there).")
+        @ConfigEditorBoolean
+        public boolean partyInDungeons = false;
+
+        @Expose
+        @ConfigOption(name = "Powder Only While Mining", desc = "Only show Powder in the Dwarven Mines, Crystal Hollows and Mineshafts.")
+        @ConfigEditorBoolean
+        public boolean powderOnlyMining = true;
+    }
+
+    /** Party Dungeon Data (Killer560's): teammates running Sky2M share what they know about the run. */
+    public static final class PartyData {
+        @Expose
+        @ConfigOption(name = "Share With Teammates", desc = "Send what this client knows about the run (Mimic and Prince dead, blood opened, secrets, crypts, deaths, P3 terminals, each room's secrets, M7 dragon spawns, your Melody) to teammates running Sky2M, through the Sky2M server. Only those facts are sent, only when they change; nothing about you.")
+        @ConfigEditorBoolean
+        public boolean share = false;
+
+        @Expose
+        @ConfigOption(name = "Use Teammates' Data", desc = "Believe what teammates' Sky2M sends: the score calculator counts a Mimic or Prince killed out of your sight, and their rooms' secrets are known.")
+        @ConfigEditorBoolean
+        public boolean receive = true;
+
+        @Expose
+        @ConfigOption(name = "HUD", desc = "In dungeons, a HUD of what the party knows (Mimic, Prince, blood, secrets, crypts, deaths) and who's sharing. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "Mod Conflict Warnings", desc = "Once a session, say in chat when another mod does the same job as a Sky2M feature you have on (Skyblocker's terminal solver, the Custom Scoreboard and SkyBlock Item List mods...).")
+        @ConfigEditorBoolean
+        public boolean conflictWarnings = true;
+    }
+
+    /** Team Melody HUD (Killer560's): teammates' Melody terminal progress in P3. */
+    public static final class TeamMelody {
+        @Expose
+        @ConfigOption(name = "HUD", desc = "During F7/M7 P3, each teammate's Melody progress, from their Sky2M (Party Dungeon Data), the Cross-Mod Bridge, or the \"Melody 2/4\" lines Odin and NoammAddons users send in party chat. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "Show Yourself", desc = "Include your own Melody in the HUD.")
+        @ConfigEditorBoolean
+        public boolean showSelf = false;
+
+        @Expose
+        @ConfigOption(name = "Send Progress in Party Chat", desc = "Like Odin: when a row of your Melody is done, say \"Melody 2/4 - 50%\" in party chat, which Odin, NoammAddons and Sky2M users all read.")
+        @ConfigEditorBoolean
+        public boolean sendProgress = false;
+    }
+
+    /** Cross-Mod Bridge (Killer560's): share party dungeon data with Odin, NoammAddons and Devonian users. */
+    public static final class CrossModBridge {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Talk to the party sockets of Odin (Melody progress), NoammAddons (map rooms, Mimic, Prince, dragons, room secrets) and Devonian (room secrets), so data flows both ways between Sky2M users and users of those mods in your party. Only on Hypixel, only while the grouping applies, never to a mod you have installed yourself (it already holds that connection), and only ever as your own signed-in account. Needs \"Use Teammates' Data\" (Party Dungeon Data) for what comes in.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Odin", desc = "Odin's socket (wss://ws.odtheking.com): during F7/M7 P3 until the core opens, Melody progress both ways. No sign-in.")
+        @ConfigEditorBoolean
+        public boolean odin = true;
+
+        @Expose
+        @ConfigOption(name = "NoammAddons", desc = "NoammAddons' socket (wss://ws.noamm.org): during dungeon runs with others, rooms, doors, Mimic, Prince, bat, dragons and room secrets both ways. Signs in with your chat-signing key (api.noamm.org).")
+        @ConfigEditorBoolean
+        public boolean noamm = true;
+
+        @Expose
+        @ConfigOption(name = "Devonian", desc = "Devonian's socket (ws://wss.docilelm.top): room secrets both ways, and teammates' secret counts in. Signs in through Mojang like a server login, once everyone in your party is known.")
+        @ConfigEditorBoolean
+        public boolean devonian = true;
+
+        @ConfigOption(name = "Show Status", desc = "Say in chat how each connection is doing: connected, signed in, waiting, skipped (the mod is installed here), or gave up after failed sign-ins. Also /s2 bridge.")
+        @ConfigEditorButton(buttonText = "Show")
+        public Runnable showStatus = com.epic60869.sky2m.features.dungeons.bridge.BridgeFeature::printStatus;
+
+        @ConfigOption(name = "Retry Now", desc = "Forget a failed sign-in or a wait between retries and try again now.")
+        @ConfigEditorButton(buttonText = "Retry")
+        public Runnable retry = com.epic60869.sky2m.features.dungeons.bridge.BridgeFeature::onSettingsChanged;
+    }
+
+    /** Dungeon Sim (Killer560's): practise dungeon rooms and whole floors in a singleplayer world of your own. */
+    public static final class DungeonSim {
+        @ConfigOption(name = "Open Dungeon Sim", desc = "Open the Dungeon Sim's menu: load any room or generate a whole floor (F1 to M7 sizes) in a singleplayer world, with secrets, puzzles, mobs, keys, the Mimic, a run timer and score. Also /s2 sim. It needs its own world, so leave the server first; from the title screen use the button below.")
+        @ConfigEditorButton(buttonText = "OPEN")
+        public Runnable open = com.epic60869.sky2m.sim.Sky2MSim::openMenu;
+
+        @Expose
+        @ConfigOption(name = "Title Screen Button", desc = "A \"Dungeon Sim\" button on the title screen, in the top left, that opens the Sim's menu.")
+        @ConfigEditorBoolean
+        public boolean titleButton = false;
+    }
+    // ------------------------------------------------------------------------------------------------ 1.0.5 additions
+
+    public static final class DeathTracker {
+        @Expose
+        @ConfigOption(name = "HUD", desc = "In dungeons, a HUD listing each death this run: who, what killed them and the score it cost (2 each; the first death costs 1 if that player has a Spirit pet). Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "Chat Message", desc = "A line in chat (only you see it) for each death: who, what killed them, the score it cost and how many deaths the run has.")
+        @ConfigEditorBoolean
+        public boolean chat = false;
+
+        @Expose
+        @ConfigOption(name = "Count Across Runs", desc = "Also keep how many times each player has died in your runs, shown next to them in the HUD. /s2 deaths lists the most deaths.")
+        @ConfigEditorBoolean
+        public boolean lifetime = true;
+    }
+
+    public static final class ClassCounters {
+        @Expose
+        @ConfigOption(name = "Arrows Shot", desc = "How many arrows you've shot this run (a Terminator shot is 3), in a HUD you can move in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean arrows = false;
+
+        @Expose
+        @ConfigOption(name = "Arrows Only As Archer", desc = "Only count and show arrows while you're Archer.")
+        @ConfigEditorBoolean
+        public boolean arrowsArcherOnly = true;
+
+        @Expose
+        @ConfigOption(name = "Damage Taken", desc = "How much health you've lost this run, after defence (read from the action bar, so healing doesn't take any off), in a HUD you can move in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean damageTaken = false;
+
+        @Expose
+        @ConfigOption(name = "Damage Only As Tank", desc = "Only count and show damage taken while you're Tank.")
+        @ConfigEditorBoolean
+        public boolean damageTankOnly = true;
+
+        @Expose
+        @ConfigOption(name = "Run Summary", desc = "When the run ends, both counts in chat (only you see it).")
+        @ConfigEditorBoolean
+        public boolean summary = true;
+    }
+
+    public static final class KeyAlerts {
+        @Expose
+        @ConfigOption(name = "Key Pickup Alert", desc = "A title and a ding when a Wither Key or Blood Key is picked up, with who picked it up.")
+        @ConfigEditorBoolean
+        public boolean pickupAlert = false;
+
+        @Expose
+        @ConfigOption(name = "Door Opened Message", desc = "When a door opens, say in chat (only to you) who opened it and how long after the key was picked up. Hypixel doesn't say who opens the Blood Door, so it's whoever had the Blood Key.")
+        @ConfigEditorBoolean
+        public boolean doorMessage = false;
+
+        @Expose
+        @ConfigOption(name = "Key Holder HUD", desc = "A HUD with who has the Wither and Blood keys right now. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean holderHud = false;
+    }
+
+    public static final class DupeClass {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "In the Party Finder, parties that already have your class get a red slot and a line in their tooltip. When someone joins your dungeon group, you're warned if their class is already taken.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Your Class", desc = "Auto: the class you last picked or played (read from the Catacombs menus and your dungeon runs).")
+        @ConfigEditorDropdown
+        public ClassOverride myClass = ClassOverride.AUTO;
+
+        @Expose
+        @ConfigOption(name = "Join Warning Sound", desc = "Also play a sound with the join warning.")
+        @ConfigEditorBoolean
+        public boolean sound = true;
+    }
+
+    public static final class CataCalculator {
+        @ConfigOption(name = "How To Use", desc = "/s2 catacalc [level] [floor or XP per run]: how many runs of that floor to reach the level (50 and your last floor by default). It reads your Catacombs XP from your profile, and uses the XP your last run of that floor gave you (from the run summary), else the floor's base XP with the bonus below. /s2 catacalc 50 m7, /s2 catacalc 45 f7, /s2 catacalc 50 350000.")
+        @ConfigEditorButton(buttonText = "50")
+        public Runnable run = () -> com.epic60869.sky2m.features.dungeons.CataCalculator.calculate(50, "");
+
+        @Expose
+        @ConfigOption(name = "XP Bonus", desc = "Your Catacombs XP bonus in percent (Catacombs Expert Ring, Hecatomb, mayors...), used when a floor's XP isn't known from your own runs yet.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 200, minStep = 1)
+        public int bonusPercent = 0;
+    }
+
+    public static final class DragonSplits {
+        @Expose
+        @ConfigOption(name = "Spawn Arrows", desc = "Arrows around your crosshair pointing at each M7 dragon that's spawning, in its colour, with its countdown.")
+        @ConfigEditorBoolean
+        public boolean arrows = false;
+
+        @Expose
+        @ConfigOption(name = "Arrow Distance", desc = "How far from the crosshair the arrows are drawn.")
+        @ConfigEditorSlider(minValue = 20, maxValue = 150, minStep = 5)
+        public int arrowRadius = 50;
+
+        @Expose
+        @ConfigOption(name = "Splits HUD", desc = "A HUD with each dragon killed this run and how long it was alive, with your best for each colour. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "Chat Message", desc = "When a dragon dies, how long it took in chat (only you see it), and whether it was your best.")
+        @ConfigEditorBoolean
+        public boolean chat = false;
+    }
+
+    public static final class SlayerPhaseTimer {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Times each phase of your slayer boss: hit phases (the \"15 Hits\" shields of a Voidgloom) and damage phases, in a HUD you can move in /s2 gui, from the boss's spawn to its death.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Chat Summary", desc = "When the boss dies, every phase's time in chat (only you see it).")
+        @ConfigEditorBoolean
+        public boolean chat = true;
+    }
+
+    public static final class DamageNumbers {
+        @Expose
+        @ConfigOption(name = "Short Numbers", desc = "Show damage numbers short (1.2M instead of 1,234,567), keeping their colours.")
+        @ConfigEditorBoolean
+        public boolean compact = false;
+
+        @Expose
+        @ConfigOption(name = "Hide Damage Numbers", desc = "Hide floating damage numbers completely.")
+        @ConfigEditorBoolean
+        public boolean hide = false;
+
+        @Expose
+        @ConfigOption(name = "Damage HUD", desc = "A HUD adding up the damage numbers that pop up near you: the total over the window below and per second. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "HUD Window", desc = "How many seconds of damage the HUD adds up.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 60, minStep = 1)
+        public int windowSeconds = 10;
+
+        @Expose
+        @ConfigOption(name = "HUD Range", desc = "Only count damage numbers this close to you (blocks).")
+        @ConfigEditorSlider(minValue = 3, maxValue = 30, minStep = 1)
+        public int range = 12;
+    }
+
+    public static final class LowStats {
+        @Expose
+        @ConfigOption(name = "Low Health Warning", desc = "A title and a sound when your health (from the action bar) drops below the percentage below.")
+        @ConfigEditorBoolean
+        public boolean health = false;
+
+        @Expose
+        @ConfigOption(name = "Health Percent", desc = "Warn below this much of your max health.")
+        @ConfigEditorSlider(minValue = 5, maxValue = 90, minStep = 5)
+        public int healthPercent = 30;
+
+        @Expose
+        @ConfigOption(name = "Low Mana Warning", desc = "A title and a sound when your mana drops below the percentage below.")
+        @ConfigEditorBoolean
+        public boolean mana = false;
+
+        @Expose
+        @ConfigOption(name = "Mana Percent", desc = "Warn below this much of your max mana.")
+        @ConfigEditorSlider(minValue = 5, maxValue = 90, minStep = 5)
+        public int manaPercent = 20;
+
+        @Expose
+        @ConfigOption(name = "Sound", desc = "Play a sound with the warnings.")
+        @ConfigEditorBoolean
+        public boolean sound = true;
+
+        @Expose
+        @ConfigOption(name = "Only In Dungeons", desc = "Only warn in dungeons and Kuudra.")
+        @ConfigEditorBoolean
+        public boolean dungeonsOnly = false;
+    }
+
+    public static final class MayorDisplay {
+        @Expose
+        @ConfigOption(name = "HUD", desc = "The mayor and minister in a HUD you can move in /s2 gui, read from Hypixel's election API every 10 minutes.")
+        @ConfigEditorBoolean
+        public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "Show Perks", desc = "List each perk under the mayor and minister in the HUD.")
+        @ConfigEditorBoolean
+        public boolean perks = true;
+
+        @Expose
+        @ConfigOption(name = "Show Election", desc = "While an election is open, who's leading and each candidate's share of the votes, in the HUD.")
+        @ConfigEditorBoolean
+        public boolean election = true;
+
+        @ConfigOption(name = "Show In Chat", desc = "Everything (mayor, minister, perks, the election and the candidates' perks) in chat. Also /s2 mayor.")
+        @ConfigEditorButton(buttonText = "Show")
+        public Runnable show = com.epic60869.sky2m.features.misc.MayorDisplay::printToChat;
+    }
+
+    public static final class ScathaTracker {
+        @Expose
+        @ConfigOption(name = "HUD", desc = "In the Crystal Hollows, a HUD with your worm and Scatha spawns, worms since your last Scatha, your Scatha rate, Scatha pets and the 30s spawn cooldown. Counts are kept between sessions. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "Spawn Alert", desc = "A title when a worm or Scatha spawns (Scatha in red).")
+        @ConfigEditorBoolean
+        public boolean spawnAlert = false;
+
+        @Expose
+        @ConfigOption(name = "Cooldown Ready Alert", desc = "A ding when the 30s worm spawn cooldown is over.")
+        @ConfigEditorBoolean
+        public boolean cooldownAlert = false;
+
+        @ConfigOption(name = "Reset Counts", desc = "Set every count back to 0.")
+        @ConfigEditorButton(buttonText = "Reset")
+        public Runnable reset = com.epic60869.sky2m.features.mining.ScathaTracker::resetCounts;
+    }
+
+    public static final class GemstoneTracker {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "While mining in the Crystal Hollows, Dwarven Mines and Mineshafts (and for 5 minutes after your last gemstone), a HUD with the gemstones you mined this session per type with their value, Flawed gemstones and coins per hour (paused when you stop mining), pristine procs and Glossy Gemstones (Mining Fiesta). Counts gemstones from the [Sacks] messages and your inventory. /s2 resetgemstones [session]. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Show as Flawed Equivalent", desc = "Show each gemstone type as Flawed gemstones (1 Fine = 80 Flawed, 80 Rough = 1 Flawed). Off: the count of each tier (Rough, Flawed, Fine...).")
+        @ConfigEditorBoolean
+        public boolean flawedEquivalent = true;
+
+        @Expose
+        @ConfigOption(name = "Show Glossy Gemstones", desc = "A line with the Glossy Gemstones from the Mining Fiesta and their value. They always count towards the total value.")
+        @ConfigEditorBoolean
+        public boolean showGlossy = true;
+
+        @Expose
+        @ConfigOption(name = "Show Pristine Procs", desc = "A line with this session's pristine procs and the Flawed gemstones they gave.")
+        @ConfigEditorBoolean
+        public boolean showPristine = true;
+
+        @Expose
+        @ConfigOption(name = "Show All-Time Totals", desc = "Also show every gemstone and Glossy Gemstone you've tracked, kept between sessions.")
+        @ConfigEditorBoolean
+        public boolean showAllTime = false;
+
+        @ConfigOption(name = "Reset", desc = "Reset the session and the all-time totals. /s2 resetgemstones session resets only the session.")
+        @ConfigEditorButton(buttonText = "Reset")
+        public Runnable reset = com.epic60869.sky2m.features.mining.GemstoneTracker::resetAll;
+    }
+
+    /** SkyHanni's OrderedWaypointsConfig (LGPL-2.1), which credits Coleweight and SoopyV2. */
+    public static final class OrderedWaypoints {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "SkyHanni's ordered waypoints: load a route (Coleweight or Skytils format) from your clipboard with /sho load, and the waypoints show one after another as you reach them. /sho load, unload, save, skip, skipto, unskip, add, delete, export, erase, setupmode. Also /s2 sho.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Current Colour", desc = "Colour of the waypoint you're going to.")
+        @ConfigEditorColour
+        public String currentColor = "0:153:85:255:85";
+
+        @Expose
+        @ConfigOption(name = "Previous Colour", desc = "Colour of the waypoint you came from.")
+        @ConfigEditorColour
+        public String previousColor = "0:153:85:85:255";
+
+        @Expose
+        @ConfigOption(name = "Next Colour", desc = "Colour of the waypoints after the current one.")
+        @ConfigEditorColour
+        public String nextColor = "0:153:255:255:85";
+
+        @Expose
+        @ConfigOption(name = "Next Waypoints", desc = "How many waypoints after the current one to show.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 5, minStep = 1)
+        public int nextCount = 2;
+
+        @Expose
+        @ConfigOption(name = "Fill Block", desc = "Fill the waypoints instead of only outlining them.")
+        @ConfigEditorBoolean
+        public boolean fillBlock = false;
+
+        @Expose
+        @ConfigOption(name = "Outline Thickness", desc = "Thickness of the waypoint outline.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 1)
+        public int outlineThickness = 2;
+
+        @Expose
+        @ConfigOption(name = "Waypoint Range", desc = "How close you have to be for it to go to the next waypoint.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 0.1f)
+        public float range = 3f;
+
+        @Expose
+        @ConfigOption(name = "Trace Line", desc = "A line from your crosshair to the next waypoint.")
+        @ConfigEditorBoolean
+        public boolean traceLine = true;
+
+        @Expose
+        @ConfigOption(name = "Trace Line Colour", desc = "")
+        @ConfigEditorColour
+        public String traceLineColor = "0:255:85:255:85";
+
+        @Expose
+        @ConfigOption(name = "Show Distance", desc = "Show how far each waypoint is.")
+        @ConfigEditorBoolean
+        public boolean showDistance = true;
+
+        @Expose
+        @ConfigOption(name = "Show Number", desc = "Show each waypoint's number.")
+        @ConfigEditorBoolean
+        public boolean showName = true;
+
+        @Expose
+        @ConfigOption(name = "Show All Waypoints", desc = "Show the whole route at once.")
+        @ConfigEditorBoolean
+        public boolean showAll = false;
+
+        @Expose
+        @ConfigOption(name = "Setup Mode", desc = "For building routes: also show every waypoint within the range below, and a line of sight from the current waypoint to the next. Also /sho setupmode.")
+        @ConfigEditorBoolean
+        public boolean setupMode = false;
+
+        @Expose
+        @ConfigOption(name = "Setup Mode Range", desc = "How close waypoints have to be to show in setup mode.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 100, minStep = 1)
+        public int setupModeRange = 16;
+
+        @Expose
+        @ConfigOption(name = "Sneaking During Route", desc = "Whether you sneak between waypoints (with an AOTV), for setup mode's line of sight.")
+        @ConfigEditorBoolean
+        public boolean sneaking = true;
+
+        @Expose
+        @ConfigOption(name = "Auto-Skip Forward", desc = "Skip ahead when you reach a waypoint further down the route.")
+        @ConfigEditorBoolean
+        public boolean autoSkipForward = false;
+
+        @Expose
+        @ConfigOption(name = "Auto Unload", desc = "Unload the route when you change islands (Mineshafts too).")
+        @ConfigEditorBoolean
+        public boolean autoUnload = false;
+
+        @Expose
+        @ConfigOption(name = "Auto-Load Shaft Routes", desc = "When you enter a Mineshaft, load the saved route named after its type (from the scoreboard, like JASP_1 or TOPA_C) if there is one.")
+        @ConfigEditorBoolean
+        public boolean autoLoadShaft = false;
+    }
+
+    public static final class ChatFilters {
+        @Expose
+        @ConfigOption(name = "Lobby Joins", desc = "Hide \"[MVP+] Name joined the lobby!\" and the other ranks' join lines.")
+        @ConfigEditorBoolean
+        public boolean lobbyJoins = false;
+
+        @Expose
+        @ConfigOption(name = "Ads", desc = "Hide all-chat messages from players that look like ads: the words below (lowballing, /visit, selling, guild recruiting, Discord invites...). Party, guild and private messages are never hidden.")
+        @ConfigEditorBoolean
+        public boolean ads = false;
+
+        @Expose
+        @ConfigOption(name = "Ad Words", desc = "What counts as an ad, separated by commas (not case sensitive).")
+        @ConfigEditorText
+        public String adWords = "lowball,/visit,visit me,visit my,selling,buying,cheap,discord.gg,dsc.gg,guild recruit,join my guild,lf guild members,carry service,carries,free coins,giveaway";
+
+        @Expose
+        @ConfigOption(name = "Watchdog & Announcements", desc = "Hide the Watchdog ban counts and Hypixel's announcement lines.")
+        @ConfigEditorBoolean
+        public boolean watchdog = false;
+
+        @Expose
+        @ConfigOption(name = "Warping", desc = "Hide \"Sending to server ...\", \"Warping...\", \"Request join for Hub #...\" and similar lines.")
+        @ConfigEditorBoolean
+        public boolean warping = false;
+
+        @Expose
+        @ConfigOption(name = "Mystery Boxes", desc = "Hide other players' Mystery Box finds.")
+        @ConfigEditorBoolean
+        public boolean mysteryBoxes = false;
+
+        @Expose
+        @ConfigOption(name = "Ability Spam", desc = "Hide \"This ability is on cooldown\", \"There are blocks in the way!\" and \"You do not have enough mana\".")
+        @ConfigEditorBoolean
+        public boolean abilitySpam = false;
+
+        @Expose
+        @ConfigOption(name = "Your Own Filters", desc = "Hide lines containing any of these, separated by semicolons (not case sensitive). Put one between slashes for a regular expression: /^Some \\w+ line$/")
+        @ConfigEditorText
+        public String custom = "";
+    }
+
+    public enum TimestampFormat {
+        H24("13:45"), H24_SECONDS("13:45:12"), H12("1:45 PM"), H12_SECONDS("1:45:12 PM");
+
+        private final String label;
+
+        TimestampFormat(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    public static final class ChatTabs {
+        @Expose
+        @ConfigOption(name = "Chat Tabs", desc = "All, Party, Guild and Private tabs above the chat box while chat is open: a tab shows only those messages (also when chat is closed). Click All to see everything again.")
+        @ConfigEditorBoolean
+        public boolean tabs = false;
+
+        @Expose
+        @ConfigOption(name = "Message Search", desc = "A search tab next to them (or Ctrl+F with chat open): what you type in the chat box filters the chat instead of being sent. Click the tab again or close chat to stop searching.")
+        @ConfigEditorBoolean
+        public boolean search = false;
+
+        @Expose
+        @ConfigOption(name = "Timestamps", desc = "The time each message arrived, in grey, in front of it.")
+        @ConfigEditorBoolean
+        public boolean timestamps = false;
+
+        @Expose
+        @ConfigOption(name = "Timestamp Format", desc = "")
+        @ConfigEditorDropdown
+        public TimestampFormat timestampFormat = TimestampFormat.H24;
+    }
+
+    public static final class SoundSetting {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Play this sound.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Sound", desc = "A sound id, like minecraft:entity.experience_orb.pickup or minecraft:block.note_block.pling. Sounds from your resource packs work too (namespace:name).")
+        @ConfigEditorText
+        public String sound;
+
+        @Expose
+        @ConfigOption(name = "Volume", desc = "")
+        @ConfigEditorSlider(minValue = 0, maxValue = 2, minStep = 0.05f)
+        public float volume = 1f;
+
+        @Expose
+        @ConfigOption(name = "Pitch", desc = "")
+        @ConfigEditorSlider(minValue = 0.5f, maxValue = 2f, minStep = 0.05f)
+        public float pitch = 1f;
+
+        @ConfigOption(name = "Test", desc = "Play it now.")
+        @ConfigEditorButton(buttonText = "Play")
+        public Runnable test = () -> com.epic60869.sky2m.features.misc.CustomSounds.play(this);
+
+        public SoundSetting() {
+            this("minecraft:block.note_block.pling", 1f);
+        }
+
+        public SoundSetting(String sound, float pitch) {
+            this.sound = sound;
+            this.pitch = pitch;
+        }
+    }
+
+    public static final class CustomSounds {
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Leap Sound", desc = "Played instead of the teleport sound when you Spirit Leap or Infinileap to a teammate.")
+        public SoundSetting leap = new SoundSetting("minecraft:entity.player.levelup", 2f);
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Teleport Sound", desc = "Played instead of the teleport sound of your Aspect of the End or Void, etherwarp and other teleports.")
+        public SoundSetting teleport = new SoundSetting("minecraft:entity.experience_orb.pickup", 1.2f);
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Death Sound", desc = "Played when you die.")
+        public SoundSetting death = new SoundSetting("minecraft:entity.wither.death", 1f);
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Kill Sound", desc = "Played when a mob you hit in melee in the last few seconds dies.")
+        public SoundSetting kill = new SoundSetting("minecraft:entity.arrow.hit_player", 1f);
+    }
+
+    public static final class CarryTracker {
+        @Expose
+        @ConfigOption(name = "HUD", desc = "Your carries in a HUD you can move in /s2 gui: who, how many are done, and what they owe. /s2 carry add <player> <amount> [type] [price each], /s2 carry paid <player> <coins>, /s2 carry count <player>, /s2 carry remove <player>, /s2 carry list, /s2 carry clear.")
+        @ConfigEditorBoolean
+        public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "Count Dungeon Runs", desc = "Count a carry when a dungeon run ends with that player in it (if the carry's type is a floor like f7 or m5, only runs of that floor).")
+        @ConfigEditorBoolean
+        public boolean countDungeons = true;
+
+        @Expose
+        @ConfigOption(name = "Count Slayer Bosses", desc = "Count a carry when a slayer boss spawned by that player dies near you.")
+        @ConfigEditorBoolean
+        public boolean countSlayers = true;
+
+        @Expose
+        @ConfigOption(name = "Done Message", desc = "When a carry is finished, a line in chat with what they still owe.")
+        @ConfigEditorBoolean
+        public boolean doneMessage = true;
+
+        @Expose
+        @ConfigOption(name = "Party Progress", desc = "After each counted carry, say their progress in party chat (\"Name: 3/5 carries done\").")
+        @ConfigEditorBoolean
+        public boolean partyProgress = false;
+    }
+
+    public static final class NetworthHistory {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Save your networth (worked out like the profile viewer's, museum included) while you play SkyBlock, at most once every few hours as set below, and draw it as a graph with /s2 networth.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Hours Between", desc = "How long to wait between snapshots.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 24, minStep = 1)
+        public int hours = 6;
+
+        @ConfigOption(name = "Open Graph", desc = "Your networth over time. Also /s2 networth.")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable open = com.epic60869.sky2m.features.misc.NetworthHistory::open;
+
+        @ConfigOption(name = "Snapshot Now", desc = "Save your networth now.")
+        @ConfigEditorButton(buttonText = "Save")
+        public Runnable now = () -> com.epic60869.sky2m.features.misc.NetworthHistory.snapshot(true);
+    }
+
+    public static final class AuctionGuard {
+        @Expose
+        @ConfigOption(name = "Too Cheap Warning", desc = "When you create a BIN auction for much less than the item's lowest BIN, the Create/Confirm click is stopped with a warning; click again within 3 seconds to list it anyway.")
+        @ConfigEditorBoolean
+        public boolean underprice = false;
+
+        @Expose
+        @ConfigOption(name = "Too Cheap Below", desc = "Warn when the price is below this percent of the lowest BIN.")
+        @ConfigEditorSlider(minValue = 10, maxValue = 95, minStep = 5)
+        public int underpricePercent = 60;
+
+        @Expose
+        @ConfigOption(name = "Overpay Warning", desc = "When you buy a BIN auction for much more than the item's lowest BIN, the Buy/Confirm click is stopped with a warning; click again within 3 seconds to buy it anyway.")
+        @ConfigEditorBoolean
+        public boolean overpay = false;
+
+        @Expose
+        @ConfigOption(name = "Overpay Above", desc = "Warn when the price is more than this percent above the lowest BIN.")
+        @ConfigEditorSlider(minValue = 10, maxValue = 500, minStep = 10)
+        public int overpayPercent = 50;
+    }
+
+    public static final class ItemQuality {
+        @Expose
+        @ConfigOption(name = "Quality On Slot", desc = "Like SkyblockAddons: the item quality (base stat boost, 0 to 50%) of dungeon items in the corner of their slot, coloured by how good it is.")
+        @ConfigEditorBoolean
+        public boolean slot = false;
+
+        @Expose
+        @ConfigOption(name = "Quality In Tooltip", desc = "The item quality and the floor it dropped on in the tooltip of dungeon items.")
+        @ConfigEditorBoolean
+        public boolean tooltip = false;
+
+        @Expose
+        @ConfigOption(name = "Floor On Slot", desc = "Also the floor the item dropped on (F7, M5...) in the other corner of its slot.")
+        @ConfigEditorBoolean
+        public boolean floor = false;
+    }
+
+    public static final class Achievements {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Sky2M's own achievements, earned as you play with Sky2M: dungeon runs, S+ runs, deaths, slayer bosses, Scathas, carries, dragons, kills, days played and more. See them with /s2 achievements, next to the Diana achievements.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Unlock Popup", desc = "A title and a sound when you unlock one.")
+        @ConfigEditorBoolean
+        public boolean popup = true;
+
+        @Expose
+        @ConfigOption(name = "Unlock Message", desc = "A line in chat when you unlock one.")
+        @ConfigEditorBoolean
+        public boolean chat = true;
+
+        @ConfigOption(name = "Open", desc = "Your achievements and stats, with a tab for each activity. Also /s2 achievements.")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable open = com.epic60869.sky2m.features.misc.Sky2MAchievements::open;
+    }
+    /** Odin's Waypoints settings (BSD-3-Clause). */
+    public static final class AreaWaypoints {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Odin's area waypoints: waypoints that only show in one dungeon boss phase, Kuudra tier or island, drawn as a box or a circle with a label. Proximity ones run a command when you walk in, Click ones when you click a block inside. /s2w (or /s2 wp) opens the manager.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Text Scale", desc = "Size of the waypoints' labels.")
+        @ConfigEditorSlider(minValue = 0.1f, maxValue = 4f, minStep = 0.1f)
+        public float textScale = 1f;
+
+        @Expose
+        @ConfigOption(name = "Show Through Walls", desc = "Draw the waypoints and labels through walls.")
+        @ConfigEditorBoolean
+        public boolean throughWalls = false;
+
+        @ConfigOption(name = "Open Waypoint Manager", desc = "Add, edit, import and export waypoints. Also /s2w.")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable open = com.epic60869.sky2m.features.misc.waypoints.AreaWaypoints::open;
+    }
+    public static final class TerminalProgress {
+        @Expose
+        @ConfigOption(name = "HUD", desc = "During F7/M7 P3, a HUD with the section you're on, how many of its terminals, levers and devices are done, and who did each one (\"Name 3/7\"). Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean hud = true;
+
+        @Expose
+        @ConfigOption(name = "Title", desc = "A small title each time someone finishes one: \"Name 3/7\" (green when the section is done).")
+        @ConfigEditorBoolean
+        public boolean title = false;
+
+        @Expose
+        @ConfigOption(name = "Show Type", desc = "Say whether it was a terminal, lever or device after the name.")
+        @ConfigEditorBoolean
+        public boolean showType = true;
+    }
+    /** SkyOcean's CropFeverEffectsConfig (MIT). */
+    public static final class CropFever {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "When you catch the CROP FEVER in the Garden (\"WOAH! You caught a case of the CROP FEVER...\"), play the effects below until it's cured. Try them with /s2 cropfever start and /s2 cropfever stop.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Starting Sound", desc = "A fanfare when the fever starts.")
+        @ConfigEditorBoolean
+        public boolean startingSound = true;
+
+        @Expose
+        @ConfigOption(name = "Jackpot Sound", desc = "A rising bell jackpot when the fever starts.")
+        @ConfigEditorBoolean
+        public boolean rngSound = true;
+
+        @Expose
+        @ConfigOption(name = "Background Music", desc = "A note block tune, looped while the fever lasts.")
+        @ConfigEditorBoolean
+        public boolean backgroundMusic = true;
+
+        @Expose
+        @ConfigOption(name = "Hue Shift", desc = "The screen cycles through every colour while the fever lasts (SkyOcean's shader).")
+        @ConfigEditorBoolean
+        public boolean hueShift = true;
+
+        @Expose
+        @ConfigOption(name = "Hue Shift Speed", desc = "How fast the colours cycle.")
+        @ConfigEditorDropdown
+        public HueSpeed hueSpeed = HueSpeed.NORMAL;
+
+        @Expose
+        @ConfigOption(name = "Coin Rain", desc = "Coins rain down the screen when the fever starts.")
+        @ConfigEditorBoolean
+        public boolean coinRain = true;
+
+        @Expose
+        @ConfigOption(name = "Coin Rain Seconds", desc = "How long coins keep falling.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 60, minStep = 1)
+        public int coinRainSeconds = 3;
+
+        @Expose
+        @ConfigOption(name = "Coins Per Tick", desc = "How many coins fall each tick. Auto: more on bigger screens.")
+        @ConfigEditorDropdown
+        public CoinMultiplier coinMultiplier = CoinMultiplier.AUTO;
+
+        public enum HueSpeed {
+            SLOWER("Slower", "slower"), SLOW("Slow", "slow"), NORMAL("Normal", "normal"), FAST("Fast", "fast"), FASTER("Faster", "faster"), INSANE("Insane", "insane");
+
+            private final String label;
+            public final String id;
+
+            HueSpeed(String label, String id) {
+                this.label = label;
+                this.id = id;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        public enum CoinMultiplier {
+            AUTO(0), ONE(1), TWO(2), THREE(3), FOUR(4), FIVE(5), TEN(10), FIFTEEN(15), TWENTY(20);
+
+            public final int amount;
+
+            CoinMultiplier(int amount) {
+                this.amount = amount;
+            }
+
+            @Override
+            public String toString() {
+                return amount == 0 ? "Auto" : String.valueOf(amount);
+            }
+        }
     }
 }

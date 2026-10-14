@@ -74,6 +74,7 @@ public final class ItemPickupLog {
     }
 
     public static void init() {
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> clientTicks++);
         ClientTickEvents.END_CLIENT_TICK.register(ItemPickupLog::tick);
         SackTracker.onSackChange((name, delta) -> {
             FeatureConfigs.ItemPickupLog c = config();
@@ -173,11 +174,13 @@ public final class ItemPickupLog {
         stacks.putIfAbsent(key, stack);
     }
 
+    private static final Pattern PURSE_NUMBER = Pattern.compile("[\\d,]+(?:\\.\\d+)?");
+
     private static void trackPurse() {
         String value = Sky2MLocation.scoreboardValue("Purse:");
         if (value == null) value = Sky2MLocation.scoreboardValue("Piggy:");
         if (value == null) return;
-        Matcher m = Pattern.compile("[\\d,]+(?:\\.\\d+)?").matcher(value);
+        Matcher m = PURSE_NUMBER.matcher(value);
         if (!m.find()) return;
         double purse = Double.parseDouble(m.group().replace(",", ""));
         if (lastPurse >= 0 && Math.abs(purse - lastPurse) >= 1) {
@@ -200,7 +203,29 @@ public final class ItemPickupLog {
 
     private record Line(String amount, int amountColour, ItemStack icon, String name) {}
 
+    private static long clientTicks;
+    private static long linesTick = -1;
+    private static List<Line> tickLines, tickPreviewLines;
+
+    /**
+     * {@link #buildLines} once per client tick (separately for the preview): render, width() and contentWidth() each
+     * asked for the lines every frame, and building them copies the entries and looks up prices.
+     */
     private static List<Line> lines(boolean preview) {
+        if (linesTick != clientTicks) {
+            tickLines = null;
+            tickPreviewLines = null;
+            linesTick = clientTicks;
+        }
+        if (preview) {
+            if (tickPreviewLines == null) tickPreviewLines = buildLines(true);
+            return tickPreviewLines;
+        }
+        if (tickLines == null) tickLines = buildLines(false);
+        return tickLines;
+    }
+
+    private static List<Line> buildLines(boolean preview) {
         FeatureConfigs.ItemPickupLog c = config();
         List<Line> lines = new ArrayList<>();
         if (preview) {

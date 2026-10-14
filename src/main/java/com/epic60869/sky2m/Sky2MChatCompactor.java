@@ -36,7 +36,7 @@ public final class Sky2MChatCompactor {
     /** Returns a stable comparison key with our own xN suffix removed. */
     public static String key(Component message) {
         if (message == null) return "";
-        String text = message.getString();
+        String text = com.epic60869.sky2m.features.misc.ChatTabs.stripTimestamp(message.getString());
         Matcher m = COUNT_SUFFIX.matcher(text);
         return m.find() ? text.substring(0, m.start()).stripTrailing() : text;
     }

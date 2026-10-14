@@ -392,19 +392,8 @@ public final class ItemNotification {
 
     // ---------------------------------------------------------------- HUD (laid out like the farming RNG HUD)
 
-    private static String coins(double value) {
-        if (value >= 1_000_000_000) return compact(value / 1_000_000_000, "b");
-        if (value >= 1_000_000) return compact(value / 1_000_000, "m");
-        if (value >= 1_000) return compact(value / 1_000, "k");
-        return String.format(Locale.ROOT, "%.0f", value);
-    }
-
-    private static String compact(double value, String suffix) {
-        return String.format(Locale.ROOT, "%.2f", value).replaceAll("0+$", "").replaceAll("\\.$", "") + suffix;
-    }
-
-    /** One line on the RNG HUD: "5x Enchanted Diamond" (with colour codes), its total price, and the plain name. */
-    public record Row(String item, String price, String plain) {}
+    /** One line on the RNG HUD: how many, the name (with colour codes), the total value (0 if unknown) and the plain name. */
+    public record Row(long amount, String name, double value, String plain) {}
 
     /** What Item Notification is showing right now, for the RNG HUD. */
     public static List<Row> rows() {
@@ -412,7 +401,7 @@ public final class ItemNotification {
         if (!enabled()) return rows;
         for (Shown s : SHOWN.values()) {
             double unit = Sky2MPriceTooltip.unitPrice(s.id);
-            rows.add(new Row(s.amount + "x " + s.name, unit > 0 ? coins(unit * s.amount) : "—",
+            rows.add(new Row(s.amount, s.name, unit > 0 ? unit * s.amount : 0,
                 ChatFormatting.stripFormatting(s.name).trim()));
         }
         return rows;

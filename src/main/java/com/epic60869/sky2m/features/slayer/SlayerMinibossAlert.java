@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  * don't set it off.
  */
 public final class SlayerMinibossAlert {
-    private static final Pattern SPAWNED = Pattern.compile("^\\s*SLAYER MINI-BOSS (?<name>.+?) has spawned!\\s*$");
+    private static final Pattern SPAWNED = Pattern.compile("^\\s*SLAYER MINI-?BOSS!? (?:The )?(?<name>.+?) (?:has )?spawned!\\s*(?:\\(x\\d+\\))?\\s*$");
 
     private SlayerMinibossAlert() {}
 
