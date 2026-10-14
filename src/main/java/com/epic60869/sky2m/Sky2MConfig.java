@@ -143,6 +143,24 @@ public final class Sky2MConfig extends Config {
         public com.epic60869.sky2m.features.FeatureConfigs.ChatFilters filters = new com.epic60869.sky2m.features.FeatureConfigs.ChatFilters();
 
         @Expose
+        @Accordion
+        @ConfigOption(name = "Spam Filters", desc = "SkyHanni's chat filters: hide lobby, warping, profile, Guild EXP, Kill Combo, Bazaar/AH, slayer, fire sale, event and other spam, or move it to the Side Chat.")
+        @ConfigAccordionId(id = 201)
+        public com.epic60869.sky2m.features.misc.SpamFilters.Config spamFilters = new com.epic60869.sky2m.features.misc.SpamFilters.Config();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Side Chat", desc = "A second, movable chat window (/s2 gui) for messages moved out of the main chat: Pristine procs and the spam filters set to Move to Side Chat.")
+        @ConfigAccordionId(id = 201)
+        public com.epic60869.sky2m.features.misc.SideChat.Config sideChat = new com.epic60869.sky2m.features.misc.SideChat.Config();
+
+        @Expose
+        @ConfigOption(name = "Keep Chat Scroll Position", desc = "While you are scrolled up in chat, new messages, compacted repeats and chat tabs don't move what you are reading. Chat goes back to the bottom when you scroll down to it, close chat or send a message.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 201)
+        public boolean keepScrollPosition = true;
+
+        @Expose
         @ConfigOption(name = "Clickable Names", desc = "Click a player's name on their chat message (all, party, guild, co-op and private chat) to open their profile in the Sky2M profile viewer. This replaces Hypixel's own click on the name.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 201)
@@ -169,6 +187,11 @@ public final class Sky2MConfig extends Config {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 202)
         public boolean itemEmojis = false;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Command Autofill", desc = "Suggestions for Hypixel commands the server doesn't suggest: Bazaar products for /bz (enchanted_diamond, enchanted_diamond_block...), items for /ahs and item ids for /viewrecipe. Tab completes, like vanilla command suggestions.")
+        public com.epic60869.sky2m.features.misc.CommandAutofill.Config commandAutofill = new com.epic60869.sky2m.features.misc.CommandAutofill.Config();
     }
 
     public static final class Farming {
@@ -598,6 +621,12 @@ public final class Sky2MConfig extends Config {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2302)
         public boolean searchOverlay = false;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Sign Autofill", desc = "Bazaar and Auction House price/amount signs start filled in with a suggestion (outbid/undercut prices, your last amount, the lowest BIN minus an undercut), selected so you just press Done or type over it. Never sent for you.")
+        @ConfigAccordionId(id = 2302)
+        public com.epic60869.sky2m.features.FeatureConfigs.SignAutofill signAutofill = new com.epic60869.sky2m.features.FeatureConfigs.SignAutofill();
 
         @Expose
         @Accordion
@@ -1035,6 +1064,11 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Toggle Sprint HUD", desc = "Show [Sprinting (Toggled)] while toggle sprint is on. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean hud = true;
+
+        @Expose
+        @ConfigOption(name = "Toggle Sprint HUD Text", desc = "The text the HUD shows while toggle sprint is on, e.g. Hi (Toggled). Use & or § for colours, {key} for the Toggle Sprint key. Empty for the default ([Sprinting (Toggled)]).")
+        @ConfigEditorText
+        public String hudText = "[Sprinting (Toggled)]";
     }
 
     private static final Gson LEGACY_GSON = new Gson();
@@ -1088,10 +1122,6 @@ public final class Sky2MConfig extends Config {
     @Expose
     @Category(name = "Hunting", desc = "SkyHanni's Hunting: Shard Tracker, Hunting Profit Tracker, Lasso and Fusion displays, Fusion Keybinds, Shulker Finder, Galatea mob highlights and the Critter Safari.")
     public com.epic60869.sky2m.features.hunting.HuntingConfig hunting = new com.epic60869.sky2m.features.hunting.HuntingConfig();
-
-    @Expose
-    @Category(name = "Runecrafting", desc = "Valuable rune alerts.")
-    public com.epic60869.sky2m.features.FeatureConfigs.Runecrafting runecrafting = new com.epic60869.sky2m.features.FeatureConfigs.Runecrafting();
 
     @Expose
     @Category(name = "Skill Progress", desc = "SkyHanni's Skill Progress: the progress display and bar, ETA display, all skills display, overflow levels and custom goals.")

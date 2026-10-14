@@ -2,8 +2,6 @@ package com.epic60869.sky2m.features.skills;
 
 import com.epic60869.sky2m.Sky2MConfig;
 import com.epic60869.sky2m.Sky2MTabWidgetManager;
-import com.epic60869.sky2m.features.core.Sky2MAlerts;
-import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -15,20 +13,17 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.component.ItemLore;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Sweep display and valuable rune alert. */
+/** Sweep display. */
 public final class SkillFeatures {
     // Sweep patterns from SkyHanni's repo (MIT).
     private static final Pattern SWEEP = Pattern.compile("^\\s*Sweep: (?<value>[\\d,.]+)");
     private static final Pattern TOUGHNESS = Pattern.compile("^\\s*(?<tree>[\\S ]+) Tree Toughness: (?<toughness>[\\d,.]+) (?<logs>[\\d,.]+) Logs");
-    private static final Pattern RUNE = Pattern.compile("◆\\s*(?<name>[A-Za-z' ]+?) Rune\\b");
 
     /** XP needed for each skill level 1-50 (standard SkyBlock skill table). */
 
@@ -46,7 +41,6 @@ public final class SkillFeatures {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 20 == 0) tick(mc);
         });
-        Sky2MChat.onChat(SkillFeatures::onChat);
         com.epic60869.sky2m.features.core.Sky2MHuds.setting("sweep", () -> config() != null && config().foraging.sweepDisplay);
         Sky2MHuds.register("sweep", "Sweep Display",
             () -> config() != null && config().foraging.sweepDisplay && sweep != null && holdingAxe(),
@@ -89,20 +83,6 @@ public final class SkillFeatures {
             }
         }
 
-    }
-
-    private static void onChat(Sky2MChat.Message message) {
-        Sky2MConfig c = config();
-        if (c == null || !c.runecrafting.valuableRuneAlert) return;
-        Matcher m = RUNE.matcher(message.text());
-        if (!m.find()) return;
-        String rune = m.group("name").trim();
-        boolean wanted = Arrays.stream(c.runecrafting.runes.split(","))
-            .map(s -> s.trim().toLowerCase(Locale.ROOT))
-            .anyMatch(s -> !s.isEmpty() && rune.toLowerCase(Locale.ROOT).equals(s));
-        if (wanted) {
-            Sky2MAlerts.title(Component.literal(rune + " Rune!").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD), Component.empty());
-        }
     }
 
 }

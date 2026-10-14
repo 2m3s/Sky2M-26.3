@@ -721,6 +721,10 @@ public final class FeatureConfigs {
         public Timers timers = new Timers();
 
         @Expose
+        @Category(name = "Boss Phases", desc = "A HUD with each floor boss's phase times, attack timers and phase records, plus phase-change alerts.")
+        public BossPhases bossPhases = new BossPhases();
+
+        @Expose
         @Category(name = "Score", desc = "270/300 score alerts and the score display.")
         public Score score = new Score();
 
@@ -2158,18 +2162,6 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Loadout Slot 12 Key", desc = "Select loadout 12 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_EQUALS) public int loadoutSlot12Key = InputConstants.KEY_EQUALS;
     }
 
-    public static final class Runecrafting {
-        @Expose
-        @ConfigOption(name = "Valuable Rune Alert", desc = "Alert when you get a rune from the list below.")
-        @ConfigEditorBoolean
-        public boolean valuableRuneAlert = false;
-
-        @Expose
-        @ConfigOption(name = "Runes", desc = "Comma-separated rune names to alert for.")
-        @ConfigEditorText
-        public String runes = "Music, Enchant, Grand Searing, Rainbow, Spellbound, Grand Freezing, Primal Fear, Golden Carpet";
-    }
-
     public static final class CaseOpening {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Open Obsidian and Bedrock reward chests like a CS2 case (SkyOcean's Dungeon Gambling): the items spin past and stop on the best one. Esc skips it.")
@@ -2585,6 +2577,56 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Lights On", desc = "Highlight the levers to flip.") @ConfigEditorBoolean public boolean lightsOn = false;
         @Expose @ConfigOption(name = "Arrow Align", desc = "Show how many clicks each frame needs.") @ConfigEditorBoolean public boolean arrowAlign = false;
         @Expose @ConfigOption(name = "Target Practice (i4)", desc = "Highlight the targets to shoot.") @ConfigEditorBoolean public boolean targetPractice = false;
+    }
+
+    public static final class BossPhases {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Show the Boss Phases HUD (move it in /s2 gui) during F1-F7 and M1-M7 boss fights: the boss, its current phase and how long it's been going. Phases change on the bosses' [BOSS] lines.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Show Previous Phases", desc = "List the phases already done this fight with their times.")
+        @ConfigEditorBoolean
+        public boolean showPrevious = true;
+
+        @Expose
+        @ConfigOption(name = "Show Attack Timers", desc = "Countdowns for attacks on a fixed timer: Livid's invulnerability, Storm's pillars and lightning (PY), and Goldor's death tick.")
+        @ConfigEditorBoolean
+        public boolean showCooldowns = true;
+
+        @Expose
+        @ConfigOption(name = "Show Records", desc = "Show your best time next to each phase and the whole fight, green when you're faster. Records are saved in config/sky2m/boss-phases.json; /s2 resetbossrecords clears them.")
+        @ConfigEditorBoolean
+        public boolean showRecords = true;
+
+        @Expose
+        @ConfigOption(name = "Record Messages", desc = "A chat message when you beat a phase or fight record, with the time saved (only you see it).")
+        @ConfigEditorBoolean
+        public boolean recordMessages = true;
+
+        @Expose
+        @ConfigOption(name = "Phase Alert Title", desc = "Show the new phase's name as a title when the phase changes.")
+        @ConfigEditorBoolean
+        public boolean alertTitle = false;
+
+        @Expose
+        @ConfigOption(name = "Phase Alert Sound", desc = "Play a ding when the phase changes.")
+        @ConfigEditorBoolean
+        public boolean alertSound = false;
+
+        @Expose
+        @ConfigOption(name = "Party Message", desc = "Send the finished phase's time to party chat when the phase changes.")
+        @ConfigEditorBoolean
+        public boolean partyMessage = false;
+
+        @Expose @ConfigOption(name = "Bonzo (F1/M1)", desc = "Track Bonzo's fight.") @ConfigEditorBoolean public boolean bonzo = true;
+        @Expose @ConfigOption(name = "Scarf (F2/M2)", desc = "Track Scarf's fight.") @ConfigEditorBoolean public boolean scarf = true;
+        @Expose @ConfigOption(name = "The Professor (F3/M3)", desc = "Track The Professor's fight.") @ConfigEditorBoolean public boolean professor = true;
+        @Expose @ConfigOption(name = "Thorn (F4/M4)", desc = "Track Thorn's fight (one phase).") @ConfigEditorBoolean public boolean thorn = true;
+        @Expose @ConfigOption(name = "Livid (F5/M5)", desc = "Track Livid's fight (one phase).") @ConfigEditorBoolean public boolean livid = true;
+        @Expose @ConfigOption(name = "Sadan (F6/M6)", desc = "Track Sadan's fight.") @ConfigEditorBoolean public boolean sadan = true;
+        @Expose @ConfigOption(name = "Necron (F7/M7)", desc = "Track the F7/M7 fight: Maxor, Storm, terminal sections, Goldor, Necron and (M7) the Wither King.") @ConfigEditorBoolean public boolean necron = true;
     }
 
     public static final class Timers {
@@ -5590,6 +5632,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Chat Summary", desc = "When the boss dies, every phase's time in chat (only you see it).")
         @ConfigEditorBoolean
         public boolean chat = true;
+
+        @Expose
+        @ConfigOption(name = "Phase Alerts", desc = "A title and ding when your boss switches between a hit phase and a damage phase (needs Enabled).")
+        @ConfigEditorBoolean
+        public boolean phaseAlerts = false;
     }
 
     public static final class DamageNumbers {
@@ -6003,6 +6050,48 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Snapshot Now", desc = "Save your networth now.")
         @ConfigEditorButton(buttonText = "Save")
         public Runnable now = () -> com.epic60869.sky2m.features.misc.NetworthHistory.snapshot(true);
+    }
+
+    public static final class SignAutofill {
+        @Expose
+        @ConfigOption(name = "Bazaar Prices", desc = "Custom Price signs in the Bazaar start filled in: a buy order at the top buy order plus the Bazaar Step (outbid), a sell offer at the lowest sell offer minus it (undercut). Press Done to use it, or type over it.")
+        @ConfigEditorBoolean
+        public boolean bazaarPrices = true;
+
+        @Expose
+        @ConfigOption(name = "Bazaar Step", desc = "How much to outbid the top buy order or undercut the lowest sell offer by.")
+        @ConfigEditorSlider(minValue = 0.1f, maxValue = 10, minStep = 0.1f)
+        public float bazaarStep = 0.1f;
+
+        @Expose
+        @ConfigOption(name = "Bazaar Last Amount", desc = "Custom Amount signs in the Bazaar start with the last amount you entered on one.")
+        @ConfigEditorBoolean
+        public boolean bazaarAmount = true;
+
+        @Expose
+        @ConfigOption(name = "AH BIN Price", desc = "The Set Item Price sign in Create BIN Auction starts with the item's lowest BIN (times the stack size) minus the AH Undercut.")
+        @ConfigEditorBoolean
+        public boolean ahBinPrice = true;
+
+        @Expose
+        @ConfigOption(name = "AH Undercut", desc = "How far under the lowest BIN to suggest.")
+        @ConfigEditorDropdown
+        public Undercut ahUndercut = Undercut.ONE_COIN;
+
+        public enum Undercut {
+            ONE_COIN("1 coin"), ONE_PERCENT("1%"), FIVE_PERCENT("5%");
+
+            private final String label;
+
+            Undercut(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
     }
 
     public static final class AuctionGuard {

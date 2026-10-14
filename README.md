@@ -13,7 +13,7 @@ An all-in-one Fabric mod for Hypixel SkyBlock on Minecraft 26.3. Formerly SkyBal
 - **Chat:** Sky2M global chat (`/s2c`), chat compacting, stash messages and click-to-translate (shown only to you).
 - **Dungeons:** map, puzzle solvers, secret waypoints and routes, F7/M7 terminals, devices and dragons, timers, score, Livid and terracotta timers, blessings, Auto Requeue, and Party Finder Stats with a kick button (`/s2 cata <name>`).
 - **Slayers and combat:** slayer HUD with boss and miniboss labels, boss phases, trackers, bestiary overlay, deployable timers and rare drops.
-- **Skills:** farming and Garden visitors, mining commissions and Crystal Hollows, fishing (hotspots, bobber timer), foraging, alchemy, enchanting, runecrafting and hunting.
+- **Skills:** farming and Garden visitors, mining commissions and Crystal Hollows, fishing (hotspots, bobber timer), foraging, alchemy, enchanting and hunting.
 - **Items and inventory:** price tooltips, enchant parsing, Pack Disabler, Revert Master Stars, slot locking and binds, Inventory HUD, Item Pickup Log, and Bazaar & AH search with suggestions.
 - **Visual:** custom crosshair (Valorant and CS2 codes), trail, GIF player and DVD screensaver.
 - **Party:** `!warp`, `!allinvite`, `!pt`, `!f7` and more, `!fps`, `!ping` and `!tps`.

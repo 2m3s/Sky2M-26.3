@@ -103,13 +103,49 @@ public final class ProfileViewerScreen extends Screen {
         ProfileApi.loadTables();
         // NEU's items, for pet heads and every sack item's icon (already on disk when the Item List has been used).
         com.epic60869.sky2m.features.itemlist.ItemListData.ensureLoaded();
+        // The networth's prices and item list, while the profile loads (usually already there from the game's start).
+        com.epic60869.sky2m.features.profileviewer.networth.SkyHelperNetworth.warm();
         ProfileApi.player(name).whenComplete((p, e) -> Minecraft.getInstance().execute(() -> {
             if (p == null) error = ProfileApi.reason(e);
             else {
                 player = p;
+                if (model == null || !model.getUUID().equals(p.uuid())) buildModel();
+                else equipModel();
+                // Their museum (for the networth and Museum pages) while the main page is looked at.
+                museumPrefetch = ProfileApi.aux(ProfileApi.Aux.MUSEUM, p.profiles().getFirst().id());
+            }
+        }));
+        // Their name and skin as soon as the UUID is known (often straight away: cached, or they're in the tab list),
+        // while the profiles load.
+        ProfileApi.lookup(name).thenAccept(n -> Minecraft.getInstance().execute(() -> {
+            if (player == null && early == null) {
+                early = n;
                 buildModel();
             }
         }));
+    }
+
+    /** The player's name and UUID before their profiles have loaded, for the model on the loading screen. */
+    private ProfileApi.Name early;
+
+    /** The selected profile's museum, asked for as soon as the profiles load. */
+    private java.util.concurrent.CompletableFuture<JsonObject> museumPrefetch;
+
+    @Override
+    public void tick() {
+        super.tick();
+        // The networth in the background once the museum is in, so its page is ready when opened. Only after a
+        // successful museum load: asking for a failed one fetches it again, which shouldn't happen every tick.
+        if (player != null && profileIndex == 0 && museumPrefetch != null && museumPrefetch.isDone()
+            && !museumPrefetch.isCompletedExceptionally()) pages.warmNetworth();
+    }
+
+    private java.util.UUID modelUuid() {
+        return player != null ? player.uuid() : early == null ? null : early.uuid();
+    }
+
+    private String modelName() {
+        return player != null ? player.name() : early == null ? requested : early.name();
     }
 
     ProfileApi.Profile profile() {
@@ -152,8 +188,17 @@ public final class ProfileViewerScreen extends Screen {
         }
 
         if (player == null) {
-            String text = error == null ? "Loading " + requested + "'s profile..." : "Couldn't load " + requested + ": " + error;
-            g.centeredText(font, text, left + W / 2, top + H / 2 - 4, error == null ? LABEL : 0xFFFF5555);
+            String text = error == null ? "Loading " + modelName() + "'s profile..." : "Couldn't load " + requested + ": " + error;
+            int textX = left + W / 2;
+            if (error == null && model != null) {
+                // Their model and name already, where the main page puts them.
+                int mx = left + 8, my = top + 18, mw = 100, mh = 150;
+                inset(g, mx, my, mw, mh);
+                drawModel(g, mx, my, mw, mh);
+                g.centeredText(font, modelName(), mx + mw / 2, my + mh + 6, VALUE);
+                textX = left + 118 + (W - 118) / 2;
+            }
+            g.centeredText(font, text, textX, top + H / 2 - 4, error == null ? LABEL : 0xFFFF5555);
         } else {
             switch (page) {
                 case MAIN -> main(g, left, top, mouseX, mouseY);
@@ -301,13 +346,7 @@ public final class ProfileViewerScreen extends Screen {
         // The player, which you can turn by dragging.
         int mx = left + 8, my = top + 18, mw = 100, mh = 150;
         inset(g, mx, my, mw, mh);
-        if (model != null) {
-            EntityRenderState state = Sky2MInventoryScreenInvoker.invokeExtractRenderState(model);
-            Quaternionf rotation = new Quaternionf().rotationXYZ(-modelPitch * Mth.DEG_TO_RAD, -modelYaw * Mth.DEG_TO_RAD, (float) Math.PI);
-            g.entity(state, 62f, new Vector3f(0, model.getBbHeight() / 2f + 0.0625f, 0), rotation, null, mx, my, mx + mw, my + mh);
-        } else {
-            g.item(head(), mx + mw / 2 - 8, my + mh / 2 - 8);
-        }
+        drawModel(g, mx, my, mw, mh);
         g.centeredText(font, player.name(), mx + mw / 2, my + mh + 6, VALUE);
 
         // The profile picker: click to switch between profiles.
@@ -376,10 +415,22 @@ public final class ProfileViewerScreen extends Screen {
         return head;
     }
 
+    /** The player model (turned by dragging), or their head before it's built. */
+    private void drawModel(GuiGraphicsExtractor g, int mx, int my, int mw, int mh) {
+        if (model != null) {
+            EntityRenderState state = Sky2MInventoryScreenInvoker.invokeExtractRenderState(model);
+            Quaternionf rotation = new Quaternionf().rotationXYZ(-modelPitch * Mth.DEG_TO_RAD, -modelYaw * Mth.DEG_TO_RAD, (float) Math.PI);
+            g.entity(state, 62f, new Vector3f(0, model.getBbHeight() / 2f + 0.0625f, 0), rotation, null, mx, my, mx + mw, my + mh);
+        } else {
+            g.item(head(), mx + mw / 2 - 8, my + mh / 2 - 8);
+        }
+    }
+
     private void buildModel() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || player == null) return;
-        GameProfile gameProfile = new GameProfile(player.uuid(), player.name());
+        java.util.UUID uuid = modelUuid();
+        if (mc.level == null || uuid == null) return;
+        GameProfile gameProfile = new GameProfile(uuid, modelName());
         model = new RemotePlayer(mc.level, gameProfile) {
             @Override
             public boolean isInvisibleTo(Player other) {
@@ -396,7 +447,7 @@ public final class ProfileViewerScreen extends Screen {
 
             @Override
             public PlayerSkin getSkin() {
-                return Minecraft.getInstance().playerSkinRenderCache().lookup(ResolvableProfile.createUnresolved(player.uuid()))
+                return Minecraft.getInstance().playerSkinRenderCache().lookup(ResolvableProfile.createUnresolved(uuid))
                     .getNow(java.util.Optional.empty()).map(info -> info.playerSkin()).orElseGet(super::getSkin);
             }
 

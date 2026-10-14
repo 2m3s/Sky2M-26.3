@@ -165,6 +165,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.dungeons.RagAxe.init();
         com.epic60869.sky2m.features.dungeons.MageBeam.init();
         com.epic60869.sky2m.features.dungeons.TerminalTimers.init();
+        com.epic60869.sky2m.features.dungeons.BossPhases.init();
         com.epic60869.sky2m.features.dungeons.RunHistory.init();
         com.epic60869.sky2m.features.dungeons.TermismScreen.registerCommand();
         com.epic60869.sky2m.sim.Sky2MSim.init();
@@ -197,6 +198,8 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.misc.NetworthHistory.init(configDir);
         com.epic60869.sky2m.features.misc.ItemQuality.init();
         com.epic60869.sky2m.features.misc.ChatFilters.init();
+        com.epic60869.sky2m.features.misc.SpamFilters.init();
+        com.epic60869.sky2m.features.misc.SideChat.init();
         com.epic60869.sky2m.features.misc.ChatNameLinks.init();
         com.epic60869.sky2m.features.misc.Sky2MAchievements.init(configDir);
         com.epic60869.sky2m.features.misc.waypoints.AreaWaypoints.init(configDir);

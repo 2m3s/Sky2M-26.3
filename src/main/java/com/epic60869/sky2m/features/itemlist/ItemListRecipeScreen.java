@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The recipes (or usages) of an item, like SkyBlock Item List's recipe screen: cards stacked in the middle over the
- * dimmed menu you came from, as many as fit, with arrows (or the mouse wheel) for the rest. Click an item on a card for
+ * The recipes (or usages) of an item, like SkyBlock Item List's recipe screen: cards stacked in the middle on a clean,
+ * blurred background (the menu you came from isn't drawn), as many as fit, with arrows (or the mouse wheel) for the rest. Click an item on a card for
  * its recipes; the Back key goes to the recipe before, Esc or your inventory key closes them all. Written for Sky2M.
  */
 public final class ItemListRecipeScreen extends Screen {
@@ -60,9 +60,9 @@ public final class ItemListRecipeScreen extends Screen {
 
     @Override
     public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        // The menu stays visible behind, dimmed.
-        if (parent != null) parent.extractRenderState(g, -1, -1, delta);
-        g.fill(0, 0, width, height, 0x80000000);
+        // A clean background (the blurred, dimmed world, like any other menu): the menu you came from, its slots, your
+        // inventory and the vanilla recipe book aren't drawn behind the recipes. Back / Esc still return to it.
+        super.extractBackground(g, mouseX, mouseY, delta);
     }
 
     @Override

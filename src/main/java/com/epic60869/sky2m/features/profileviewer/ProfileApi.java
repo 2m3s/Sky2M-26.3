@@ -56,24 +56,102 @@ public final class ProfileApi {
 
     private ProfileApi() {}
 
+    /** Lookups still running, so opening the same player twice (or the viewer and Party Finder Stats) shares one. */
+    private static final Map<String, CompletableFuture<Player>> IN_FLIGHT = new ConcurrentHashMap<>();
+
     public static CompletableFuture<Player> player(String name) {
         String key = name.toLowerCase(Locale.ROOT);
         Cached cached = CACHE.get(key);
         if (cached != null && System.currentTimeMillis() - cached.at() < CACHE_MS) return CompletableFuture.completedFuture(cached.player());
-        return playerFresh(name);
+        CompletableFuture<Player> running = IN_FLIGHT.get(key);
+        if (running != null && !running.isDone()) return running;
+        CompletableFuture<Player> fresh = playerFresh(name);
+        IN_FLIGHT.put(key, fresh);
+        fresh.whenComplete((p, e) -> IN_FLIGHT.remove(key, fresh));
+        return fresh;
     }
+
+    /** A player's real name and UUID. */
+    public record Name(String name, UUID uuid) {
+        String plainId() {
+            return uuid.toString().replace("-", "");
+        }
+    }
+
+    private record CachedName(Name name, long at) {}
+
+    /** Names to UUIDs, kept an hour (they only change when someone renames). */
+    private static final Map<String, CachedName> NAMES = new ConcurrentHashMap<>();
+    private static final long NAME_MS = 60 * 60 * 1000L;
+
+    /**
+     * A name's UUID: from the last hour's lookups, else the tab list (when they're in your lobby; only on the client
+     * thread), else Mojang.
+     */
+    public static CompletableFuture<Name> lookup(String name) {
+        String key = name.toLowerCase(Locale.ROOT);
+        CachedName cached = NAMES.get(key);
+        if (cached != null && System.currentTimeMillis() - cached.at() < NAME_MS) return CompletableFuture.completedFuture(cached.name());
+        Name online = online(name);
+        if (online != null) {
+            NAMES.put(key, new CachedName(online, System.currentTimeMillis()));
+            return CompletableFuture.completedFuture(online);
+        }
+        CompletableFuture<Name> running = NAME_LOOKUPS.get(key);
+        if (running != null && !running.isDone()) return running;
+        CompletableFuture<Name> fresh = mojang(name, key);
+        NAME_LOOKUPS.put(key, fresh);
+        fresh.whenComplete((n, e) -> NAME_LOOKUPS.remove(key, fresh));
+        return fresh;
+    }
+
+    private static final Map<String, CompletableFuture<Name>> NAME_LOOKUPS = new ConcurrentHashMap<>();
+
+    private static CompletableFuture<Name> mojang(String name, String key) {
+        return get("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + name).thenApply(body -> {
+            JsonObject mojang = JsonParser.parseString(body).getAsJsonObject();
+            if (!mojang.has("id")) throw new IllegalStateException("no such player");
+            String id = mojang.get("id").getAsString().replace("-", "");
+            Name found = new Name(mojang.has("name") ? mojang.get("name").getAsString() : name, toUuid(id));
+            NAMES.put(key, new CachedName(found, System.currentTimeMillis()));
+            return found;
+        });
+    }
+
+    /** A real player (version 4 UUID, not an NPC) of that name in the tab list, or null. */
+    private static Name online(String name) {
+        try {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (!mc.isSameThread() || mc.getConnection() == null) return null;
+            net.minecraft.client.multiplayer.PlayerInfo info = mc.getConnection().getPlayerInfo(name);
+            if (info == null) return null;
+            com.mojang.authlib.GameProfile profile = info.getProfile();
+            if (profile.id() == null || profile.id().version() != 4 || !name.equalsIgnoreCase(profile.name())) return null;
+            return new Name(profile.name(), profile.id());
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    /** How long the SkyBlockPV backend gets before Sky2M's proxy is asked too (still only used if the backend fails). */
+    private static final long PROXY_HEDGE_MS = 5000;
 
     /** {@link #player}, always loaded now rather than from the last five minutes' lookups (the networth history). */
     public static CompletableFuture<Player> playerFresh(String name) {
         String key = name.toLowerCase(Locale.ROOT);
         lastSource = "";
-        return get("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + name).thenCompose(body -> {
-            JsonObject mojang = JsonParser.parseString(body).getAsJsonObject();
-            if (!mojang.has("id")) throw new IllegalStateException("no such player");
-            String id = mojang.get("id").getAsString().replace("-", "");
-            String realName = mojang.has("name") ? mojang.get("name").getAsString() : name;
+        // Sign in to the backend (once a day) while the name is looked up, rather than after.
+        backendToken();
+        return lookup(name).thenCompose(found -> {
+            String id = found.plainId();
+            String realName = found.name();
             // Like SkyBlockPV's /pv: its backend's /profiles is up to date. Sky2M's proxy can be hours behind (it
             // had a few of someone's backpacks and ender chest pages, billions short), so it's only the fallback.
+            // It's requested once the backend fails or is slow, so a failing backend doesn't cost its whole timeout
+            // and then the proxy's request on top.
+            CompletableFuture<Void> needProxy = new CompletableFuture<>();
+            CompletableFuture<String> proxy = needProxy.thenCompose(v -> get(baseUrl() + "get/" + id));
+            CompletableFuture.delayedExecutor(PROXY_HEDGE_MS, java.util.concurrent.TimeUnit.MILLISECONDS).execute(() -> needProxy.complete(null));
             return backendGet("/profiles/" + id, true)
                 .thenApply(data -> data != null && data.has("profiles") ? parse(realName, id, data) : null)
                 .exceptionally(error -> {
@@ -83,10 +161,12 @@ public final class ProfileApi {
                 .thenCompose(fresh -> {
                     if (fresh != null) {
                         lastSource = "SkyBlockPV";
+                        needProxy.cancel(false);
                         return CompletableFuture.completedFuture(fresh);
                     }
                     if (!lastSource.startsWith("Sky2M's proxy")) lastSource = "Sky2M's proxy (SkyBlockPV had no profiles)";
-                    return get(baseUrl() + "get/" + id).thenApply(data -> parse(realName, id, JsonParser.parseString(data).getAsJsonObject()));
+                    needProxy.complete(null);
+                    return proxy.thenApply(data -> parse(realName, id, JsonParser.parseString(data).getAsJsonObject()));
                 });
         }).whenComplete((player, error) -> {
             if (player != null) CACHE.put(key, new Cached(player, System.currentTimeMillis()));

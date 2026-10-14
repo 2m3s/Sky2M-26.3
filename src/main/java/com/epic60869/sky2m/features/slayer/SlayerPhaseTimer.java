@@ -66,6 +66,11 @@ public final class SlayerPhaseTimer {
         }
         if (hits != currentHits) {
             phases.add(new Phase(currentHits, now - phaseStart));
+            FeatureConfigs.SlayerPhaseTimer c = config();
+            if (c != null && c.enabled && c.phaseAlerts) {
+                Sky2MAlerts.title(Component.literal(hits ? "Hit Phase" : "Damage Phase").withStyle(hits ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.RED),
+                    Component.literal((currentHits ? "Hits" : "Damage") + " took " + seconds(now - phaseStart)).withStyle(ChatFormatting.GRAY));
+            }
             phaseStart = now;
             currentHits = hits;
         }

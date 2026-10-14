@@ -23,6 +23,12 @@ public final class ProfileViewer {
             Sky2MConfig c = Sky2MConfig.current();
             if (c != null && c.misc.profileViewer.pvCommand) dispatcher.register(command("pv"));
         });
+        // The networth prices (a few MB), NEU's level tables and the item list, in the background once the game has
+        // started, so the first /pv doesn't wait on them.
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+            com.epic60869.sky2m.features.profileviewer.networth.SkyHelperNetworth.warm();
+            ProfileApi.loadTables();
+        });
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> command(String name) {

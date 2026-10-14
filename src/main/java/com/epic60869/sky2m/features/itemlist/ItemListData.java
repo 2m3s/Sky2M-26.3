@@ -365,7 +365,11 @@ public final class ItemListData {
 
     private static List<Recipe> recipesOf(String id, JsonObject item) {
         List<Recipe> out = new ArrayList<>();
-        if (item.has("recipe") && item.get("recipe").isJsonObject()) {
+        // Vanilla Minecraft items ("vanilla": true in the repo, like STICK or DIAMOND_BLOCK) carry their plain Minecraft
+        // crafting recipes (planks into sticks, diamonds into a block): those are left out, so only SkyBlock recipes show.
+        // Their SkyBlock ones (NPC trades and shops, drops, and recipes that use them) are kept.
+        boolean vanilla = isTrue(item, "vanilla");
+        if (!vanilla && item.has("recipe") && item.get("recipe").isJsonObject()) {
             Recipe crafting = crafting(id, item.getAsJsonObject("recipe"), id);
             if (crafting != null) out.add(crafting);
         }
@@ -377,7 +381,7 @@ public final class ItemListData {
                 if (type == null) type = "crafting";
                 try {
                     Recipe recipe = switch (type) {
-                        case "crafting" -> crafting(id, r, str(r, "overrideOutputId") != null ? str(r, "overrideOutputId") : id);
+                        case "crafting" -> vanilla ? null : crafting(id, r, str(r, "overrideOutputId") != null ? str(r, "overrideOutputId") : id);
                         case "forge" -> new Forge(id, ingredients(r.getAsJsonArray("inputs")),
                             new Ingredient(str(r, "overrideOutputId") != null ? str(r, "overrideOutputId") : id, num(r, "count", 1)),
                             (int) num(r, "duration", 0));
@@ -451,6 +455,10 @@ public final class ItemListData {
 
     private static String str(JsonObject o, String key) {
         return o.has(key) && o.get(key).isJsonPrimitive() ? o.get(key).getAsString() : null;
+    }
+
+    private static boolean isTrue(JsonObject o, String key) {
+        return o.has(key) && o.get(key).isJsonPrimitive() && "true".equals(o.get(key).getAsString());
     }
 
     private static double num(JsonObject o, String key, double fallback) {

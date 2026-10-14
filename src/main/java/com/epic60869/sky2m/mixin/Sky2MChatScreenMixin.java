@@ -81,5 +81,38 @@ public abstract class Sky2MChatScreenMixin {
     @Inject(method = "removed", at = @At("HEAD"))
     private void sky2m$chatTabsClosed(CallbackInfo ci) {
         com.epic60869.sky2m.features.misc.ChatTabs.closed();
+        com.epic60869.sky2m.features.misc.SideChat.closed();
+    }
+
+    @Shadow
+    private boolean handleComponentClicked(net.minecraft.network.chat.Style style, boolean insert) {
+        return false;
+    }
+
+    @Shadow
+    private boolean insertionClickMode() {
+        return false;
+    }
+
+    /** Side Chat: the mouse wheel scrolls it while the mouse is over it. */
+    @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
+    private void sky2m$sideChatScroll(double mouseX, double mouseY, double scrollX, double scrollY, CallbackInfoReturnable<Boolean> cir) {
+        if (com.epic60869.sky2m.features.misc.SideChat.mouseScrolled(mouseX, mouseY, scrollY)) cir.setReturnValue(true);
+    }
+
+    /** Side Chat: clicking a message's clickable part, like in chat. */
+    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
+    private void sky2m$sideChatClick(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
+        if (event.button() != 0) return;
+        net.minecraft.network.chat.Style style = com.epic60869.sky2m.features.misc.SideChat.styleAt(event.x(), event.y());
+        if (style == null) return;
+        boolean insert = insertionClickMode();
+        if (style.getClickEvent() == null && (!insert || style.getInsertion() == null)) return;
+        if (handleComponentClicked(style, insert)) cir.setReturnValue(true);
+    }
+
+    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    private void sky2m$sideChatHover(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        com.epic60869.sky2m.features.misc.SideChat.renderHover(graphics, mouseX, mouseY);
     }
 }

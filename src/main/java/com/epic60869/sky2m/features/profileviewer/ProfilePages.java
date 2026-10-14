@@ -1114,23 +1114,42 @@ final class ProfilePages {
         return Networth.inventories(member(), wardrobe);
     }
 
-    private void networth(GuiGraphicsExtractor g, int mx, int my) {
+    /**
+     * The networth of the open profile, started (off the render thread) once their museum has loaded or failed; null
+     * until then. Started again with the museum if it was worked out without it and the museum has since loaded.
+     */
+    private CompletableFuture<Networth.Result> networthFuture() {
         JsonObject m = member();
         ProfileApi.Profile p = s.profile();
+        if (m == null || p == null) return null;
         CompletableFuture<JsonObject> museumFuture = ProfileApi.aux(ProfileApi.Aux.MUSEUM, p.id());
-        if (!museumFuture.isDone()) {
+        if (!museumFuture.isDone()) return null;
+        JsonObject museumAll = museumFuture.isCompletedExceptionally() ? null : museumFuture.getNow(null);
+        UUID uuid = s.uuid();
+        // Whether their museum is there (what museumView finds), without decoding its items here.
+        boolean museum = museumAll != null && uuid != null && Json.obj(museumAll, uuid.toString().replace("-", "")) != null;
+        CompletableFuture<Networth.Result> nf = networth.get(m);
+        if (nf == null || (museum && !networthWithMuseum.getOrDefault(m, false))) {
+            // SkyHelper's networth (Sky2M's port of SkyHelper-Networth), so it matches the bots and sites that use it.
+            nf = Networth.skyHelper(p.profile(), m, museumAll, uuid).exceptionally(t -> null);
+            networth.put(m, nf);
+            networthWithMuseum.put(m, museum);
+        }
+        return nf;
+    }
+
+    /** Starts the networth in the background as soon as it can be, so the page is ready when it's opened. */
+    void warmNetworth() {
+        networthFuture();
+    }
+
+    private void networth(GuiGraphicsExtractor g, int mx, int my) {
+        CompletableFuture<Networth.Result> nf = networthFuture();
+        if (nf == null) {
             center(g, "Working out their networth...", cx, cw, LABEL);
             return;
         }
-        MuseumView museum = museumView(null);
-        CompletableFuture<Networth.Result> nf = networth.get(m);
-        if (nf == null || (museum != null && !networthWithMuseum.getOrDefault(m, false))) {
-            // SkyHelper's networth (Sky2M's port of SkyHelper-Networth), so it matches the bots and sites that use it.
-            JsonObject museumAll = museumFuture.isCompletedExceptionally() ? null : museumFuture.getNow(null);
-            nf = Networth.skyHelper(p.profile(), m, museumAll, s.uuid()).exceptionally(t -> null);
-            networth.put(m, nf);
-            networthWithMuseum.put(m, museum != null);
-        }
+        JsonObject m = member();
         Networth.Result r = ProfileTables.now(nf);
         if (r == null) {
             center(g, nf.isDone() ? "Couldn't work out their networth." : "Working out their networth...", cx, cw, nf.isDone() ? BAD : LABEL);

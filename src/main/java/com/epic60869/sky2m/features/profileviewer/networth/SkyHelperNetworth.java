@@ -43,21 +43,48 @@ public final class SkyHelperNetworth {
 
     private static volatile CompletableFuture<Map<String, Double>> prices;
     private static volatile long pricesAt;
+    private static CompletableFuture<Map<String, Double>> refreshing;
 
-    /** SkyHelper's price list, at most five minutes old. */
+    /**
+     * SkyHelper's price list. Once loaded it's answered straight away; when it's over five minutes old a fresh copy
+     * downloads in the background and replaces it, so nothing waits on the multi-MB download after the first time.
+     */
     public static synchronized CompletableFuture<Map<String, Double>> prices() {
         CompletableFuture<Map<String, Double>> f = prices;
         boolean stale = System.currentTimeMillis() - pricesAt > PRICES_MS;
-        if (f != null && !(f.isDone() && (f.isCompletedExceptionally() || stale))) return f;
+        if (f != null && !f.isDone()) return f;
+        if (f != null && !f.isCompletedExceptionally()) {
+            if (stale && (refreshing == null || refreshing.isDone())) {
+                pricesAt = System.currentTimeMillis();
+                CompletableFuture<Map<String, Double>> next = downloadPrices();
+                refreshing = next;
+                next.thenAccept(map -> {
+                    synchronized (SkyHelperNetworth.class) {
+                        prices = next;
+                    }
+                });
+            }
+            return f;
+        }
         pricesAt = System.currentTimeMillis();
-        prices = get(PRICES_URL).thenApply(body -> {
+        prices = downloadPrices();
+        return prices;
+    }
+
+    private static CompletableFuture<Map<String, Double>> downloadPrices() {
+        return get(PRICES_URL).thenApply(body -> {
             Map<String, Double> out = new HashMap<>();
             for (Map.Entry<String, JsonElement> e : JsonParser.parseString(body).getAsJsonObject().entrySet()) {
                 if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isNumber()) out.put(e.getKey(), e.getValue().getAsDouble());
             }
             return out;
         });
-        return prices;
+    }
+
+    /** Starts loading the prices and Hypixel's item list in the background, so the first networth doesn't wait on them. */
+    public static void warm() {
+        prices();
+        com.epic60869.sky2m.PriceService.requestItems();
     }
 
     /**
@@ -78,7 +105,9 @@ public final class SkyHelperNetworth {
 
     /** A profile's networth once the prices and items are loaded; {@code museum} is the member's museum or null. */
     public static CompletableFuture<Result> calculate(JsonObject member, JsonObject museum, double bankBalance) {
-        return prices().thenCombine(items(), (p, i) -> calculate(member, museum, bankBalance, p, i));
+        // Async: when both are already loaded, thenCombine would work it out on the caller's thread (the render thread
+        // for the profile viewer), freezing the game while every item is decoded and valued.
+        return prices().thenCombineAsync(items(), (p, i) -> calculate(member, museum, bankBalance, p, i));
     }
 
     // ------------------------------------------------------------------------------------------------ ProfileNetworthCalculator.js
