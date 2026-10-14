@@ -100,7 +100,8 @@ public final class SearchOverlay extends Screen {
         Minecraft mc = Minecraft.getInstance();
         Sky2MConfig c = Sky2MConfig.current();
         if (c == null || !c.misc.searchOverlay) {
-            if (mc.getConnection() != null) mc.getConnection().sendCommand(item.isEmpty() ? root : root + " " + item);
+            // Straight to the server: sendCommand would run this client command again, forever.
+            if (mc.getConnection() != null) mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundChatCommandPacket(item.isEmpty() ? root : root + " " + item));
             return 1;
         }
         mc.execute(() -> mc.gui.setScreen(new SearchOverlay(mode, item, query -> {
