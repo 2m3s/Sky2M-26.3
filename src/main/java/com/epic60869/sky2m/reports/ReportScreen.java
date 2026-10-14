@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 /**
  * /s2 bugreport, /s2 suggest and /s2 feedback: a title, a description, and a submit button. The same window for all
@@ -37,7 +38,7 @@ public final class ReportScreen extends Screen {
         int y = 50;
 
         title = new EditBox(font, x, y + 12, w, 20, Component.literal("Title"));
-        title.setMaxLength(100);
+        title.setMaxLength(Reports.TITLE_MAX);
         title.setHint(Component.literal(type == Reports.Type.BUG ? "What's broken?" : "In a few words").withStyle(ChatFormatting.DARK_GRAY));
         title.setValue(keptTitle);
         addRenderableWidget(title);
@@ -75,17 +76,23 @@ public final class ReportScreen extends Screen {
         submit.active = false;
         status = "Sending...";
         statusColour = 0xFFAAAAAA;
-        Reports.submit(type, t, d).thenAccept(ok -> minecraft.execute(() -> {
+        Reports.submit(type, t, d).thenAccept(result -> minecraft.execute(() -> {
             sending = false;
-            if (ok) {
-                Reports.say(Component.literal("[S2M] ").withStyle(ChatFormatting.LIGHT_PURPLE)
-                    .append(Component.literal("Thanks! Your " + type.label.toLowerCase() + " was sent.").withStyle(ChatFormatting.GREEN)));
+            if (result.ok()) {
+                MutableComponent thanks = Component.literal("[S2M] ").withStyle(ChatFormatting.LIGHT_PURPLE)
+                    .append(Component.literal("Thanks! Your " + type.label.toLowerCase() + " was sent. ").withStyle(ChatFormatting.GREEN));
+                if (!result.threadId().isEmpty()) {
+                    // A thread: the team can answer it, and the player gets a line in chat when they do.
+                    thanks.append(Component.literal("You'll get a message here when someone replies. ").withStyle(ChatFormatting.GRAY))
+                        .append(Reports.viewButton("/s2 reports", "View your reports"));
+                }
+                Reports.say(thanks);
                 keptTitle = "";
                 keptDescription = "";
                 minecraft.gui.setScreen(null);
             } else {
                 submit.active = true;
-                status = "Couldn't send it; try again in a moment.";
+                status = result.message().isBlank() ? "Couldn't send it; try again in a moment." : result.message();
                 statusColour = 0xFFFF5555;
             }
         }));

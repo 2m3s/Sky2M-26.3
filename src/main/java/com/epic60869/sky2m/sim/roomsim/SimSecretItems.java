@@ -5,7 +5,6 @@
 package com.epic60869.sky2m.sim.roomsim;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -235,7 +234,6 @@ public final class SimSecretItems {
                 purgeOwed = true;
             } else {
                 pin(entity, entry.getValue());
-                reportWhyNotCollected(level, entity, entry.getValue());
             }
         }
     }
@@ -266,74 +264,6 @@ public final class SimSecretItems {
         if (!drop.getDeltaMovement().equals(net.minecraft.world.phys.Vec3.ZERO)) {
             drop.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         }
-    }
-
-    /** How often the uncollected report is written, in ticks. Once a second is plenty to read. */
-    private static final int REPORT_EVERY_TICKS = 20;
-
-    private static int reportTicks;
-
-    /**
-     * Says why a drop that is sitting there has not been picked up.
-     *
-     * <p>killer560 authorised this logger on 2026-09-30 after scenario 81 reported "the item secret appeared
-     * but standing on it did not collect it" three times across five runs and two attempts to fix it from
-     * reasoning alone - one of which was based on the drop having fallen, which it cannot, because it is
-     * spawned with no gravity. Both attempts were guesses at a mechanism, and a guess had already been wrong
-     * once.
-     *
-     * <p>So this prints the things that actually decide a vanilla pickup: where the drop is, where the player
-     * is, the distance between them, the pickup delay still to run, and whether the player is in a state that
-     * can pick anything up at all. One of those is the answer, and none of them was visible before.
-     *
-     * <p>Only while a drop is outstanding, only once a second, and only in a dev build - this is an
-     * investigation aid, and {@link com.epic60869.sky2m.sim.util.ModLog} drops it in a release anyway.
-     */
-    private static void reportWhyNotCollected(ServerLevel level, net.minecraft.world.entity.Entity drop,
-                                              BlockPos anchor) {
-        if (!false || ++reportTicks % REPORT_EVERY_TICKS != 0) {
-            return;
-        }
-        var players = level.players();
-        if (players.isEmpty()) {
-            LOGGER.info("[SimSecretItems] drop at {} is waiting - no player on the server",
-                    drop.blockPosition().toShortString());
-            return;
-        }
-        var player = players.get(0);
-        int delay = drop instanceof net.minecraft.world.entity.item.ItemEntity item
-                ? item.getAge() : -1;
-        // WHY IT MOVES, as well as where it is. The first run of this logger showed the drop climbing away
-        // from the player - 277, 280, 285, 289, 295 - which no-gravity and a zero initial velocity cannot
-        // explain on their own. So the thing that would explain it is printed too: what it is standing in,
-        // whether it is in a fluid, and what its velocity actually is.
-        var at = drop.blockPosition();
-        var state = level.getBlockState(at);
-        LOGGER.info("[SimSecretItems] drop at {} ({}), player at {} ({}), {} blocks apart; "
-                        + "player alive={} spectator={} gamemode={}; drop removed={} age={}; "
-                        + "motion={} noGravity={} in={} fluid={} inWater={} inLava={}; "
-                        + "anchor={} drift={}",
-                at.toShortString(),
-                String.format(java.util.Locale.US, "%.2f/%.2f/%.2f", drop.getX(), drop.getY(), drop.getZ()),
-                player.blockPosition().toShortString(),
-                String.format(java.util.Locale.US, "%.2f/%.2f/%.2f",
-                        player.getX(), player.getY(), player.getZ()),
-                String.format(java.util.Locale.US, "%.2f", drop.distanceTo(player)),
-                player.isAlive(), player.isSpectator(), player.gameMode.getGameModeForPlayer(),
-                drop.isRemoved(), delay,
-                String.format(java.util.Locale.US, "%.4f/%.4f/%.4f",
-                        drop.getDeltaMovement().x, drop.getDeltaMovement().y, drop.getDeltaMovement().z),
-                drop.isNoGravity(),
-                net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath(),
-                net.minecraft.core.registries.BuiltInRegistries.FLUID.getKey(
-                        level.getFluidState(at).getType()).getPath(),
-                drop.isInWater(), drop.isInLava(),
-                // Drift is what the pin exists to keep at zero, so it is printed whether or not it is zero.
-                // A report that only showed a problem would leave a working pin indistinguishable from a
-                // drop that simply never moved.
-                anchor.toShortString(),
-                String.format(java.util.Locale.US, "%.3f", Math.sqrt(drop.distanceToSqr(
-                        anchor.getX() + 0.5, anchor.getY() + 0.5, anchor.getZ() + 0.5))));
     }
 
     private static void spawn(ServerLevel level, BlockPos at) {

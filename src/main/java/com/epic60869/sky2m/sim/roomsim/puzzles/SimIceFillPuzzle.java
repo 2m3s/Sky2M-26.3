@@ -219,10 +219,7 @@ public final class SimIceFillPuzzle {
     private static volatile boolean complete = false;
     private static volatile int brokenSection = -1;
     private static volatile int regenCountdown = 0;
-    private static volatile BlockPos storedOrigin = null;
 
-    /** Non-null while this puzzle is bound to a real captured room rather than a standalone arena. */
-    private static volatile SimRoomPuzzles.Anchor boundAnchor = null;
 
     private static boolean registered = false;
 
@@ -257,7 +254,6 @@ public final class SimIceFillPuzzle {
         }
         clearPlaced(client);
         forget();
-        storedOrigin = origin;
         BlockPos anchorBlock = origin.below(); // the player's feet sit at origin, the ice tile sits below
 
         List<int[]> rel = relativePath();
@@ -385,8 +381,6 @@ public final class SimIceFillPuzzle {
         sections = List.copyOf(found);
         exitTiles = List.copyOf(exits);
         entryTiles = List.copyOf(entries);
-        storedOrigin = null;
-        boundAnchor = anchor;
         activeSection = 0;
 
         // THE WATER GOES. killer560 (2026-10-01): "there is a bunch of water still in it."
@@ -576,8 +570,6 @@ public final class SimIceFillPuzzle {
         complete = false;
         brokenSection = -1;
         regenCountdown = 0;
-        storedOrigin = null;
-        boundAnchor = null;
     }
 
     /** Puts the fill back the way arming left it - all plain ice - and clears progress. */
@@ -597,7 +589,6 @@ public final class SimIceFillPuzzle {
         complete = false;
         brokenSection = -1;
         regenCountdown = 0;
-        boundAnchor = null;
     }
 
     /** Takes away the blocks a STANDALONE arena placed. A bound room's ice is the room's, and is left alone. */

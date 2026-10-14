@@ -4,7 +4,6 @@
  */
 package com.epic60869.sky2m.sim.util;
 
-import com.epic60869.sky2m.sim.util.FeatureGuard;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;

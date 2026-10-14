@@ -10,13 +10,11 @@ import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,13 +33,6 @@ import com.epic60869.sky2m.sim.compat.McRender;
 final class WitherDoorsRenderer {
 
     private WitherDoorsRenderer() {
-    }
-
-    /** Called from {@link WitherDoorsFeature#register()}, cheat build only, so the pipeline exists before
-     *  the renderer precompiles its pipeline list - same reason every other ESP-style feature in this
-     *  repo touches its holder at init instead of on first draw. */
-    static void init() {
-        RenderType unused = ThroughWalls.LINES;
     }
 
     private static final class ThroughWalls {

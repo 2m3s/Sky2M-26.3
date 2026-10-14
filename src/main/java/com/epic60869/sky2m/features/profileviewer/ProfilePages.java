@@ -1,6 +1,5 @@
 package com.epic60869.sky2m.features.profileviewer;
 
-import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.profileviewer.ProfileItems.PvItem;
 import com.epic60869.sky2m.features.profileviewer.ProfileStats.Level;
@@ -69,14 +68,7 @@ final class ProfilePages {
     /** Content area, set each frame. */
     private int cx, cy, cw, ch;
 
-    private record MuseumView(double value, boolean appraised, Map<String, List<PvItem>> items, Set<String> borrowing, List<PvItem> special) {
-        List<PvItem> owned() {
-            List<PvItem> out = new ArrayList<>();
-            for (Map.Entry<String, List<PvItem>> e : items.entrySet()) if (!borrowing.contains(e.getKey())) out.addAll(e.getValue());
-            out.addAll(special);
-            return out;
-        }
-    }
+    private record MuseumView(double value, boolean appraised, Map<String, List<PvItem>> items, Set<String> borrowing, List<PvItem> special) {}
 
     ProfilePages(ProfileViewerScreen screen) {
         this.s = screen;
@@ -1106,13 +1098,6 @@ final class ProfilePages {
     }
 
     // ------------------------------------------------------------------------------------------------ networth
-
-    /** Every inventory by networth category. */
-    private Map<String, List<PvItem>> inventories() {
-        List<PvItem> wardrobe = new ArrayList<>();
-        for (List<PvItem> page : s.wardrobe()) wardrobe.addAll(page);
-        return Networth.inventories(member(), wardrobe);
-    }
 
     /**
      * The networth of the open profile, started (off the render thread) once their museum has loaded or failed; null

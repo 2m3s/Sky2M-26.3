@@ -7,7 +7,6 @@ import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -75,12 +74,12 @@ public final class ItemListData {
 
         default String kind() {
             return switch (this) {
-                case Crafting c -> "Crafting";
-                case Forge f -> "Forge";
-                case Kat k -> "Kat Upgrade";
-                case Shop s -> "NPC Shop";
-                case Drops d -> "Mob Drops";
-                case Trade t -> "Trade";
+                case Crafting _ -> "Crafting";
+                case Forge _ -> "Forge";
+                case Kat _ -> "Kat Upgrade";
+                case Shop _ -> "NPC Shop";
+                case Drops _ -> "Mob Drops";
+                case Trade _ -> "Trade";
             };
         }
     }

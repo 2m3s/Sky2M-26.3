@@ -7,7 +7,6 @@ package com.epic60869.sky2m.sim.roomsim;
 import com.epic60869.sky2m.sim.livemap.DungeonLayout;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Rotation;
@@ -278,7 +277,6 @@ public final class RoomPlacer {
      */
     public static final class PasteJob implements SimBuildQueue.Job {
 
-        private final ServerLevel level;
         private final RoomLibrary.Room room;
         private final Rotation vanillaRotation;
         private final int rotation;
@@ -305,7 +303,6 @@ public final class RoomPlacer {
             if (room == null) {
                 throw new IllegalArgumentException("room is null");
             }
-            this.level = level;
             this.room = room;
             this.rotation = rotation;
             this.vanillaRotation = toVanillaRotation(rotation);

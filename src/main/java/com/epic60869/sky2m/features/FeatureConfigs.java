@@ -24,6 +24,8 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
  * accordions from {@link com.epic60869.sky2m.Sky2MConfig}. HUD positions and scales are
  * set in /s2 gui and stored in sky2m-huds.json.
  */
+// Uses the deprecated old-style accordions on purpose, like Sky2MConfig (moving would reset saved settings).
+@SuppressWarnings("deprecation")
 public final class FeatureConfigs {
     public static final class Combat {
 

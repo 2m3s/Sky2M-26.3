@@ -79,6 +79,8 @@ public final class Sky2MLogin {
             ready.forEach(Runnable::run);
             // Your slayer personal bests, so ones set offline or before sharing existed still count.
             com.epic60869.sky2m.features.slayer.SlayerLeaderboard.onLoggedIn();
+            // Replies to your reports (or, for admins, reports waiting) since you were last on.
+            com.epic60869.sky2m.reports.Reports.onLoggedIn();
         } else {
             problem = message == null || message.isEmpty() ? "The server couldn't verify your Minecraft login." : message;
             WAITING.clear();

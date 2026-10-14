@@ -244,7 +244,7 @@ public final class WitherDoorsConfig {
 
     /** Cheat-gated: the legit jar can never show every door, whatever the saved value says. */
     public boolean isShowAllDoors() {
-        return false && showAllDoors;
+        return false;
     }
 
     public boolean isShowAllDoorsRaw() {
@@ -257,7 +257,7 @@ public final class WitherDoorsConfig {
 
     /** Cheat-gated: the legit jar can never draw through walls, whatever the saved value says. */
     public boolean isThroughWalls() {
-        return false && throughWalls;
+        return false;
     }
 
     public boolean isThroughWallsRaw() {
@@ -270,7 +270,7 @@ public final class WitherDoorsConfig {
 
     /** Cheat-gated, like Show All Doors: the path to Blood is not something the legit build shows. */
     public boolean isFairyDoor() {
-        return false && fairyDoor;
+        return false;
     }
 
     public boolean isFairyDoorRaw() {

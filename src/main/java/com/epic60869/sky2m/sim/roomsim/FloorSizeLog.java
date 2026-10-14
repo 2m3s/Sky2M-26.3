@@ -201,14 +201,8 @@ public final class FloorSizeLog {
      *
      * <p>So this walks cells, stepping between adjacent room cells only where the cell between them is a door.
      * Cells of the same room connect freely - crossing a 2x2 is real distance, but it needs no door.
-     */
-    private static int distanceBetween(DungeonLayout layout, Map<Integer, Integer> cellToRoom,
-                                       int fromRoom, int toRoom) {
-        return distanceBetween(layout, cellToRoom, fromRoom, toRoom, Set.of());
-    }
-
-    /**
-     * Cells between the entrance and blood, not counting the given rooms.
+     *
+     * <p>Cells between the entrance and blood, not counting the given rooms.
      *
      * <p>killer560 (2026-09-28): "the max is 8 if you do not count blood green room or fairy. It cannot be
      * more." My first version counted every cell the path crossed, including the entrance's own and blood's

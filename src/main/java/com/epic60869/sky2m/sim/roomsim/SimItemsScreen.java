@@ -6,7 +6,6 @@ package com.epic60869.sky2m.sim.roomsim;
 
 import com.epic60869.sky2m.sim.gui.profit.ProfitPanels;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;

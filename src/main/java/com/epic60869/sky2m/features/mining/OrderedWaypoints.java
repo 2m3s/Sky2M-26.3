@@ -66,6 +66,7 @@ public final class OrderedWaypoints {
         Map<String, String> options = new LinkedHashMap<>();
 
         /** For Gson. */
+        @SuppressWarnings("unused") // Gson creates these, so options starts as an empty map
         Wp() {}
 
         Wp(int x, int y, int z, int number) {

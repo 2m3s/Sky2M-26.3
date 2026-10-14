@@ -338,12 +338,9 @@ public final class LiveMapConfig {
         return Math.max(min, Math.min(max, v));
     }
 
-    private static boolean gate() {
-        return com.epic60869.sky2m.sim.util.SkyblockGate.allows();
-    }
-
+    /** Interactive Map, Keep Chunks Loaded, the etherwarp path and Blood Rush are cheat-build only: always off here. */
     private static boolean cheatGate() {
-        return false && com.epic60869.sky2m.sim.util.SkyblockGate.allows();
+        return false;
     }
 
     // ---------------------------------------------------------------- HUD live map

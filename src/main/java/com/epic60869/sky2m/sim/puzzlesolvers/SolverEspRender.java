@@ -10,7 +10,6 @@ import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -46,6 +45,7 @@ public final class SolverEspRender {
      *  {@code RenderPipelines}' static list before the renderer precompiles it - same reason
      *  {@code EspRenderer.init()} exists. Safe to call any number of times. */
     public static void init() {
+        @SuppressWarnings("unused") // read only to load ThroughWalls before the renderer starts
         RenderType unused = ThroughWalls.LINES;
     }
 

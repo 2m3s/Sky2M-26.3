@@ -140,8 +140,6 @@ public final class SimQuizPuzzle {
     private static final Map<UUID, Integer> NPC_STANDS = new ConcurrentHashMap<>();
 
 
-    /** When the question was announced. Kept for the chat line and for tests; nothing gates on it. */
-    private static volatile long askedAtMs = 0L;
 
 
     private SimQuizPuzzle() {
@@ -645,7 +643,6 @@ public final class SimQuizPuzzle {
         announced = true;
         settledTicks = 0;
         unmappedTicks = 0;
-        askedAtMs = System.currentTimeMillis();
         if (weirdosRoom) {
             // No clearForNewRound here any more: newQuestion does it when a round starts, and the weirdos only
             // speak when talked to, so clearing at walk-in could only throw away a line he had already heard.
@@ -876,7 +873,6 @@ public final class SimQuizPuzzle {
         announced = false;
         settledTicks = 0;
         unmappedTicks = 0;
-        askedAtMs = 0L;
         quizButtons = null;
         boundPositions = null;
         boundRoom = null;
@@ -960,7 +956,6 @@ public final class SimQuizPuzzle {
                 // them, and in Three Weirdos those chests are the ROOM'S OWN - deleting them leaves a puzzle
                 // room with nothing in it and no way to build it again on a generated floor.
                 ModChat.send("Sim", ModChat.bad("Wrong answer - new question."));
-                askedAtMs = 0L;
                 announced = false;
                 BlockPos[] positions = boundPositions;
                 server.execute(() -> newQuestion(server.overworld(), positions, true, true));

@@ -591,7 +591,6 @@ public final class LiveMapFeature {
             rootEntry[idx] = isTile[idx] ? roomEntryGrid[idx] : null;
         }
 
-        int refused = 0;
         for (int idx = 0; idx < n; idx++) {
             int gx = idx % GRID;
             int gz = idx / GRID;
@@ -625,10 +624,10 @@ public final class LiveMapFeature {
             if (!anchored || nearEntrance) {
                 continue;
             }
-            if (gx > 0 && roomish[idx - 1] && !union(parent, tileCount, rootEntry, idx, idx - 1)) refused++;
-            if (gx < GRID - 1 && roomish[idx + 1] && !union(parent, tileCount, rootEntry, idx, idx + 1)) refused++;
-            if (gz > 0 && roomish[idx - GRID] && !union(parent, tileCount, rootEntry, idx, idx - GRID)) refused++;
-            if (gz < GRID - 1 && roomish[idx + GRID] && !union(parent, tileCount, rootEntry, idx, idx + GRID)) refused++;
+            if (gx > 0 && roomish[idx - 1]) union(parent, tileCount, rootEntry, idx, idx - 1);
+            if (gx < GRID - 1 && roomish[idx + 1]) union(parent, tileCount, rootEntry, idx, idx + 1);
+            if (gz > 0 && roomish[idx - GRID]) union(parent, tileCount, rootEntry, idx, idx - GRID);
+            if (gz < GRID - 1 && roomish[idx + GRID]) union(parent, tileCount, rootEntry, idx, idx + GRID);
         }
         Map<String, Integer> firstByName = new HashMap<>();
         for (int idx = 0; idx < n; idx++) {
@@ -636,8 +635,8 @@ public final class LiveMapFeature {
                 continue;
             }
             Integer first = firstByName.putIfAbsent(roomEntryGrid[idx].name, idx);
-            if (first != null && !union(parent, tileCount, rootEntry, first, idx)) {
-                refused++;
+            if (first != null) {
+                union(parent, tileCount, rootEntry, first, idx);
             }
         }
 

@@ -70,15 +70,6 @@ public final class SimBlazePuzzle {
      */
     private static final int[] SPACINGS = {3, 2};
 
-    /** The chain for one spacing: straight up, {@code spacing} blocks apart, from the origin. */
-    private static BlockPos[] offsetsFor(int spacing) {
-        BlockPos[] out = new BlockPos[HEALTHS.length];
-        for (int i = 0; i < out.length; i++) {
-            out[i] = new BlockPos(0, i * spacing, 0);
-        }
-        return out;
-    }
-
     /** The four sides of the middle bar, two blocks out from it. */
     private static final BlockPos[] SIDES = {
             new BlockPos(2, 0, 0), new BlockPos(-2, 0, 0), new BlockPos(0, 0, 2), new BlockPos(0, 0, -2),
@@ -138,8 +129,6 @@ public final class SimBlazePuzzle {
         return (HEALTHS.length - 1) * spacing + 2;
     }
 
-    /** The spacing the current arena was built with. */
-    private static volatile int spacing = SPACINGS[0];
 
     /**
      * The name the solver reads.
@@ -299,7 +288,6 @@ public final class SimBlazePuzzle {
     public static void build(Minecraft client, BlockPos origin) {
         // A standalone arena, not a bind to a captured room, and always the Lower Blaze half of the rule -
         // which is what this method has always drilled.
-        boundOrigin = null;
         lowestFirst = false;
         rebuild(client, origin);
     }
@@ -447,11 +435,9 @@ public final class SimBlazePuzzle {
                             + "chain at 1 block apart rather than skipping the room", p.room().name, headroom);
         }
         found = floorTop;
-        spacing = chosenSpacing;
         final BlockPos[] placed = layoutAround(level, floorTop, headroomAbove(level, floorTop, 60));
         despawnCurrent(Minecraft.getInstance());
         storedOrigin = found;
-        boundOrigin = found;
         lowestFirst = higher;
         boundRoom = p.room().name;
         final BlockPos origin = found;
@@ -495,8 +481,6 @@ public final class SimBlazePuzzle {
         return true;
     }
 
-    /** Non-null while this puzzle is bound inside a real captured room rather than a standalone arena. */
-    private static volatile BlockPos boundOrigin = null;
     /** Whether the CURRENT arena drills the Higher Blaze half of the rule (lowest HP first). */
     private static volatile boolean lowestFirst = false;
     /** The bound room's own name - "Higher Blaze" or "Lower Blaze". Held rather than derived from
@@ -556,7 +540,6 @@ public final class SimBlazePuzzle {
         nextRequired = 0;
         complete = false;
         storedOrigin = null;
-        boundOrigin = null;
         boundRoom = null;
     }
 
@@ -566,7 +549,6 @@ public final class SimBlazePuzzle {
             return;
         }
         despawnCurrent(client);
-        boundOrigin = null;
     }
 
     private static void despawnCurrent(Minecraft client) {

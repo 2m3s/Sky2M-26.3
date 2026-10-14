@@ -95,12 +95,6 @@ public final class WitherDoorsFeature {
     }
 
     public static void register() {
-        if (false) {
-            WitherDoorsRenderer.init();
-            // The Fill style's through-walls pass is WorldRenderUtils' shared no-depth FILLED pipeline; like every
-            // pipeline it must exist before the level renderer precompiles the list, so touch its holder now.
-            com.epic60869.sky2m.sim.util.WorldRenderUtils.initThroughWalls();
-        }
         ClientTickEvents.END_CLIENT_TICK.register(FeatureGuard.end("WitherDoorsFeature.tick", WitherDoorsFeature::tick));
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             if (!overlay) {
@@ -193,8 +187,6 @@ public final class WitherDoorsFeature {
         if (gate != null) {
             CACHED.clear();
             cacheStampMs = 0L;
-            if (-1 >= 0) {
-            }
             return;
         }
         WitherDoorScanner.tick(client);

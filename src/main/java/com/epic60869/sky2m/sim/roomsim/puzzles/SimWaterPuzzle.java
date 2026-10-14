@@ -208,8 +208,6 @@ public final class SimWaterPuzzle {
     private static volatile SimRoomPuzzles.Anchor anchor = null;
     /** Non-null while standing in a {@code /simpuzzle water} arena instead. */
     private static volatile BlockPos standaloneOrigin = null;
-    /** The bound room's name, for the chat label and the red square on the map. */
-    private static volatile String boundRoom = null;
 
     private static final Map<LeverBlock, BlockPos> POSITIONS = new EnumMap<>(LeverBlock.class);
     private static final Map<BlockPos, LeverBlock> BLOCK_INDEX = new ConcurrentHashMap<>();
@@ -500,7 +498,6 @@ public final class SimWaterPuzzle {
         }
         forget();
         anchor = found;
-        boundRoom = p.room().name;
         return arm(level, true);
     }
 
@@ -1126,7 +1123,6 @@ public final class SimWaterPuzzle {
     public static void forget() {
         anchor = null;
         standaloneOrigin = null;
-        boundRoom = null;
         hasWater = false;
         flowing = false;
         WATER_GATE.clear();

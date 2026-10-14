@@ -46,7 +46,6 @@ public final class SimPrince {
 
     /** The plinth's two blocks: a gold crown with a smooth stone slab beside it. */
     private static final net.minecraft.world.level.block.Block CROWN = Blocks.GOLD_BLOCK;
-    private static final net.minecraft.world.level.block.Block PLINTH = Blocks.SMOOTH_STONE_SLAB;
 
     /**
      * The SECOND prince, and the second signature: a sea lantern walled in by polished andesite.

@@ -9,7 +9,6 @@ import com.mojang.blaze3d.platform.Window;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.epic60869.sky2m.sim.compat.McCompat;
 
 public final class HudElementRegistry {
 

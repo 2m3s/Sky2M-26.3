@@ -16,21 +16,16 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
 import com.epic60869.sky2m.sim.compat.McCompat;
 
 /**
@@ -57,10 +52,6 @@ public final class SimItems {
      *  block interaction range elsewhere in the mod closely enough for a sim; there is no server to enforce
      *  Hypixel's own measured 4.5-block limit here, so this is just "close enough to be aiming at it". */
     private static final double LOOK_RANGE = 5.0;
-
-    /** How many blocks out from the targeted block Superboom TNT also clears - a real Superboom breaks a
-     *  small area of crypt wall, not just the one block it lands on. */
-    private static final int SUPERBOOM_RADIUS = 1;
 
     private SimItems() {
     }
@@ -216,13 +207,6 @@ public final class SimItems {
 
     private static String literalName(GiveItem item) {
         return item.name().toLowerCase(java.util.Locale.ROOT);
-    }
-
-    private static int help() {
-        ModChat.send("Sim", ModChat.text("Usage: /simitem or /item <"
-                + "aspect_of_the_void|hyperion|spirit_sceptre|superboom_tnt|ender_pearl|tactical_insertion|"
-                + "dungeon_breaker|all>"));
-        return 1;
     }
 
     /**

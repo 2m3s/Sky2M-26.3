@@ -243,10 +243,6 @@ public final class PartyFinderStats {
         return o != null && o.has(key) && o.get(key).isJsonPrimitive() ? o.get(key).getAsString() : "";
     }
 
-    private static boolean bool(JsonObject o, String key) {
-        return o != null && o.has(key) && o.get(key).isJsonPrimitive() && o.get(key).getAsBoolean();
-    }
-
     static double level(double xp) {
         int level = 0;
         for (long need : CATA_XP) {

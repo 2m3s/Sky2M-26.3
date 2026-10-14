@@ -62,6 +62,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Side Chat (Chat > Side Chat): a second chat window for messages you move out of the main chat, Pristine procs by default. It fades like chat, scrolls with the mouse wheel while chat is open, and its messages can be hovered and clicked. Move it in /s2 gui.
 - Keep Chat Scroll Position (Chat, on by default): scrolled up in chat, new messages, the compactor, tabs and search no longer move what you're reading; it goes back down when you scroll down, send a message or close chat.
 - Toggle Sprint HUD Text (Misc > Toggle Sprint): write your own text for the toggle sprint HUD, with & colours and {key}.
+- Report Threads: bug reports, suggestions and feedback are now conversations. /s2 reports shows yours (and, for admins, everyone's, with filters); open one to read and reply. Admins can mark a report read, answered or closed, or delete it. When someone replies you get "<name> Has Responded To Your Bug Report: ..." in chat straight away, or the next time you join if you were offline; click it to open the thread. Admins are the owner and any staff ticked as a reports admin in the website's Staff section. Needs the updated Sky2M server; until then reports are sent the old way.
 
 ### Changed
 - The profile viewer has a new look: a rounded dark panel with a blue accent, tab tiles, the main page's stats as cards, roomier skill bars (overflow levels in purple), and real icons for pets and every sack item (from NEU's items).
@@ -73,6 +74,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - /pv opens much faster: the name lookup and the login run at the same time, names are remembered (players in your lobby need no lookup), the backup server is tried after 5 seconds instead of 20, your skin and name show while the rest loads, and networth is worked out in the background. Opening the Networth page no longer freezes the game.
 - Item List recipes (R and U) show on their own background instead of over the inventory, and only SkyBlock recipes: plain Minecraft crafting recipes are gone, while drops, Forge, Kat, NPC shops and uses in SkyBlock recipes stay.
 - The Runecrafting tab and its Valuable Rune Alert are removed.
+- Code clean-up: unused code and imports removed and the dead cheat-build switches in the Dungeon Sim taken out, with nothing changing in game.
 
 ### Fixed
 - Bazaar & AH Search (Misc > Inventory & Storage) never opened: it looked for the wrong line on Hypixel's search sign. It's now Skyblocker's search overlay: searches longer than 15 letters work, your last search is filled in, enchantments and pets are suggested, the Auction House has Max Pet Level and dungeon star buttons, last searches can be removed, and /ahs and /bzs open it too.

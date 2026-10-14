@@ -78,9 +78,8 @@ public final class SimCreeperPuzzle {
 
     private static final List<Pair> PAIRS = loadPairs();
 
-    private static volatile List<Pair> arenaPairs = List.of();
     /**
-     * The current arena's lantern pairs in ABSOLUTE world positions, one entry per {@link #arenaPairs} entry.
+     * The current arena's lantern pairs in ABSOLUTE world positions, one entry per {@link #PAIRS} entry.
      *
      * <p>Everything used to be {@code storedOrigin.offset(pair.a())}, which cannot express a bind to a real
      * captured room: there the lanterns are the room's own blocks and their positions come from the room's
@@ -443,7 +442,6 @@ public final class SimCreeperPuzzle {
         }
         List<Pair> pairs = PAIRS;
         storedOrigin = origin;
-        arenaPairs = pairs;
         List<Pair> world = new ArrayList<>(pairs.size());
         for (Pair pair : pairs) {
             world.add(new Pair(origin.offset(pair.a()).immutable(), origin.offset(pair.b()).immutable()));
@@ -506,7 +504,6 @@ public final class SimCreeperPuzzle {
             world.add(new Pair(anchor.world(pair.a().getX(), pair.a().getY(), pair.a().getZ()),
                     anchor.world(pair.b().getX(), pair.b().getY(), pair.b().getZ())));
         }
-        arenaPairs = pairs;
         worldPairs = List.copyOf(world);
         storedOrigin = world.get(0).a();   // only used as a "something is built" marker now
         connected = new boolean[pairs.size()];
@@ -574,7 +571,6 @@ public final class SimCreeperPuzzle {
      * unrelated block on the new floor count as a move in a puzzle that is not on it.
      */
     public static void forget() {
-        arenaPairs = List.of();
         worldPairs = List.of();
         lanternToPairIndex = Map.of();
         connected = new boolean[0];

@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * after hello and on every change. A flag the server hasn't mentioned is on, so the mod keeps working when the server
  * is down. Flag names used by the mod: chat.replies, chat.reactions, chat.items,
  * friends, cosmetics, cosmetics.capes, calendar, pestHighlight, itemCooldowns, settingsSync,
- * crashReports.
+ * crashReports, reportThreads.
  */
 public final class Flags {
     private record Flag(boolean enabled, String message) {}

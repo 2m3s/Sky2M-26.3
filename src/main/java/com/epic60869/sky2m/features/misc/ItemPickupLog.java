@@ -9,7 +9,6 @@ import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -48,16 +47,11 @@ public final class ItemPickupLog {
 
     /** One line of the log: what it is, how many came and went, and when it last changed. */
     private static final class Entry {
-        final String key;
         String name;
         ItemStack icon;
         String priceId;
         long added, removed;
         long changedAt;
-
-        Entry(String key) {
-            this.key = key;
-        }
     }
 
     private static final Map<String, Entry> ENTRIES = new LinkedHashMap<>();
@@ -190,7 +184,7 @@ public final class ItemPickupLog {
     }
 
     private static void add(String key, String name, ItemStack icon, String priceId, long delta) {
-        Entry e = ENTRIES.computeIfAbsent(key, Entry::new);
+        Entry e = ENTRIES.computeIfAbsent(key, k -> new Entry());
         e.name = name;
         e.icon = icon;
         e.priceId = priceId;

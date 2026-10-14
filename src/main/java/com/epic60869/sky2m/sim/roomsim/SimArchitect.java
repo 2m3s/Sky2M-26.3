@@ -72,14 +72,6 @@ public final class SimArchitect {
             if (client.player == null) {
                 return;
             }
-            // Auto Get wins over Click Message when both are on, matching the chat path's ordering: the point of
-            // auto-get is not having to click, so offering a click as well would be noise.
-            if (false) {
-                SimItems.give(client, SimItems.ARCHITECT_DRAFT_ID);
-                ModChat.send("Architect", ModChat.text(label + " failed - here is an "),
-                        ModChat.value("Architect's First Draft"));
-                return;
-            }
             MutableComponent link = Component.literal("[Click to get an Architect's First Draft]")
                     .withStyle(s -> s.withColor(ChatFormatting.GOLD).withUnderlined(true)
                             // The sim's own give command, not /gfs: there is no sack here, and a click that ran

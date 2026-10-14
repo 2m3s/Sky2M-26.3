@@ -100,6 +100,7 @@ public final class Sbc {
             SbcSocial.onDisconnected();
             SbcCosmetics.onDisconnected();
             com.epic60869.sky2m.Sky2MPartyFinder.onDisconnected();
+            com.epic60869.sky2m.reports.Reports.onDisconnected();
         } catch (Exception e) {
             SbcCrashReports.report(e, "S2C disconnect");
         }

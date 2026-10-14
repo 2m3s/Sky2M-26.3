@@ -858,9 +858,6 @@ public final class SimFloorLayout {
             return carveOnce(true);
         }
 
-        /** How many doors were carved without a walkable floor behind them (the unchecked last resort). */
-        int carvedBlind;
-
         boolean carveOnce(boolean checked) {
             for (int cell = 0; cell < GRID * GRID; cell++) {
                 if (occupied[cell] >= 0) {
@@ -887,7 +884,6 @@ public final class SimFloorLayout {
                                 commitFill(c, r, cx, cz, side);
                                 carvedNotes.add(c.name() + " at " + cx + "," + cz + " through " + nb.name()
                                         + (checked ? "" : " (NOT a walkable cut - nothing else fitted)"));
-                                carvedBlind += checked ? 0 : 1;
                                 return true;
                             }
                         }

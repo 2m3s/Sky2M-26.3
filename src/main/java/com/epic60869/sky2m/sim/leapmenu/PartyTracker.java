@@ -10,7 +10,6 @@ import com.epic60869.sky2m.sim.dungeonclass.DungeonClass;
 import com.epic60869.sky2m.sim.secrets.DungeonState;
 import com.epic60869.sky2m.sim.util.ChatObserver;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;

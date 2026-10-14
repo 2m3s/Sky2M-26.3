@@ -41,10 +41,9 @@ public final class ModLog {
     private ModLog() {
     }
 
-    /** The mod's logger for {@code name}: the real one in dev and cheat builds, an error-only one in a release. */
+    /** The mod's logger for {@code name}: always the error-only one, since Sky2M only ships release builds. */
     public static Logger get(String name) {
-        Logger real = LoggerFactory.getLogger(name);
-        return false ? real : new ReleaseLogger(real);
+        return new ReleaseLogger(LoggerFactory.getLogger(name));
     }
 
     /**

@@ -35,7 +35,6 @@ public final class SimLoadingScreen extends Screen {
 
     private String what;
     private String detail = "";
-    private int ticks;
 
     public SimLoadingScreen(String what) {
         super(Component.literal("Dungeon Sim"));
@@ -60,11 +59,6 @@ public final class SimLoadingScreen extends Screen {
     public boolean isPauseScreen() {
         // Pausing would stop the integrated server, which is the thread doing the building.
         return false;
-    }
-
-    @Override
-    public void tick() {
-        ticks++;
     }
 
     @Override

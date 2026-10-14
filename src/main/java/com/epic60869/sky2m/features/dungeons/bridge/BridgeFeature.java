@@ -3,7 +3,6 @@ package com.epic60869.sky2m.features.dungeons.bridge;
 import com.epic60869.sky2m.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
-import com.epic60869.sky2m.features.dungeons.party.PartyDungeonData;
 import com.epic60869.sky2m.features.dungeons.party.PartyDungeonState;
 import com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Source;
 import com.epic60869.sky2m.features.misc.PartyCommands;
@@ -18,7 +17,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.scores.PlayerTeam;
 import org.slf4j.Logger;
 

@@ -4,17 +4,11 @@
  */
 package com.epic60869.sky2m.sim.livemap;
 
-import com.epic60869.sky2m.sim.util.FeatureGuard;
 import com.epic60869.sky2m.sim.dungeonclass.DungeonClass;
 import com.epic60869.sky2m.sim.leapmenu.PartyTracker;
 import com.epic60869.sky2m.sim.secrets.DungeonState;
-import com.epic60869.sky2m.sim.util.ModChat;
-import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
@@ -25,7 +19,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import com.epic60869.sky2m.sim.compat.McCompat;
 
 /**
  * Interactive Map - port of QUOI's {@code InteractiveMap} module (plus NoammAddons/Odin map UX): keybinds, the HUD peek,

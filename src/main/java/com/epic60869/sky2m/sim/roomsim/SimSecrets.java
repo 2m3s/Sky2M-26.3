@@ -11,7 +11,6 @@ import com.epic60869.sky2m.sim.util.ModChat;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Blocks;
 
 import org.slf4j.Logger;

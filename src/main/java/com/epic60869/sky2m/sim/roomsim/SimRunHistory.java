@@ -4,16 +4,11 @@
  */
 package com.epic60869.sky2m.sim.roomsim;
 
-import com.epic60869.sky2m.sim.livemap.DungeonLayout;
 import com.epic60869.sky2m.sim.util.ModChat;
 
 import net.minecraft.client.Minecraft;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 /**
  * "Load a Previous Run", read out of the run history this mod already keeps.

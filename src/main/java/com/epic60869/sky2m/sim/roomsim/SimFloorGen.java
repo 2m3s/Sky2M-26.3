@@ -6,15 +6,11 @@ package com.epic60869.sky2m.sim.roomsim;
 
 import com.epic60869.sky2m.sim.livemap.DungeonLayout;
 import com.epic60869.sky2m.sim.roomdatabase.RoomDatabase;
-import com.epic60869.sky2m.sim.roomdatabase.RoomEntry;
 import com.epic60869.sky2m.sim.util.ModChat;
 
 import net.minecraft.client.Minecraft;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -814,26 +810,6 @@ public final class SimFloorGen {
         return Math.max(1, (size - 1) / (RoomLibrary.TILE + 1));
     }
 
-    /**
-     * The cells a room of this footprint would occupy starting here, or null if it does not fit.
-     *
-     * <p>It must fit entirely inside the shape that was grown and touch nothing already placed. Anchored at the
-     * top-left, which is the corner the capture measured from.
-     */
-    private static List<int[]> footprintCells(int[] at, int[] size, Set<Long> inShape, Set<Long> filled) {
-        List<int[]> cells = new ArrayList<>();
-        for (int dx = 0; dx < size[0]; dx++) {
-            for (int dz = 0; dz < size[1]; dz++) {
-                int[] c = {at[0] + dx, at[1] + dz};
-                long k = key(c);
-                if (!inShape.contains(k) || filled.contains(k)) {
-                    return null;
-                }
-                cells.add(c);
-            }
-        }
-        return cells;
-    }
 
 
 

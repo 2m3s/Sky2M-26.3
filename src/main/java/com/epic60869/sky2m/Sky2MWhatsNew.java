@@ -163,6 +163,8 @@ public final class Sky2MWhatsNew {
         return out;
     }
 
+    // Reads Sky2MConfig's old-style accordion annotations, which MoulConfig deprecates (see Sky2MConfig for why they stay).
+    @SuppressWarnings("deprecation")
     private static void collect(Object owner, String path, List<Option> out, int depth) {
         if (owner == null || depth > 8) return;
         // Dropdown groups (a header field, then the options that name its id): part of the path, not options.

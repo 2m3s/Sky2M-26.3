@@ -7,18 +7,13 @@ package com.epic60869.sky2m.sim.livemap;
 import com.epic60869.sky2m.sim.dungeonclass.DungeonClass;
 import com.epic60869.sky2m.sim.roomdatabase.RoomDatabase;
 import com.epic60869.sky2m.sim.roomdatabase.RoomEntry;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 /**
  * The one dungeon-map painter, shared by the {@link InteractiveMapScreen} and the
@@ -354,15 +349,6 @@ public final class MapPainter {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
-    /** QUOI {@code base.mix(roomInCol.withAlpha(255), roomInCol.alpha)}. */
-    static int mix(int base, int overlay) {
-        float t = ((overlay >>> 24) & 0xFF) / 255f;
-        int r = Math.round(((base >> 16) & 0xFF) * (1 - t) + ((overlay >> 16) & 0xFF) * t);
-        int g = Math.round(((base >> 8) & 0xFF) * (1 - t) + ((overlay >> 8) & 0xFF) * t);
-        int b = Math.round((base & 0xFF) * (1 - t) + (overlay & 0xFF) * t);
-        return 0xFF000000 | (r << 16) | (g << 8) | b;
-    }
-
     /** Database type where the room is identified, else the dungeon map item's own room byte
      *  (NoammAddons {@code RoomType.fromMapColor}). */
     static String roomType(LiveMapFeature.RoomGroup group) {
@@ -438,105 +424,7 @@ public final class MapPainter {
         // should become red." The room keeps its own type colour and the NAME goes red, which it already does
         // - every label's colour is stateColor(visibleState(group)), and STATE_FAILED's is 0xFFFF5555. So the
         // only thing the sim had to add was a way to reach that state without a map item (SimRoomState).
-        // killer560, 2026-09-27: "if you have cheater map then it should highlight the room tha thas mimic
-        // as a faint red instead of the normal brown" - cheat build only, same live "is this known secret
-        // chest position actually a trapped_chest right now" check SecretWaypointsFeature already uses for
-        // its own per-chest tint (see isMimic() there), just evaluated for every identified+rotated room
-        // instead of only the one the player is standing in - this map shows the whole run at once, not
-        // just the current room. A faint blend (mix(), same helper reportedRoomColor's dimming above uses),
-        // not a flat overwrite, so it reads as "this brown room" plus a warning, not a different room type.
-        if (false && hasLiveMimic(group)) {
-            color = mix(color, MIMIC_TINT);
-        } else if (false && hasSimMimic(group)) {
-            // Same tint as the live mimic. It was the Blood colour (2026-10-01), which killer560 later rejected
-            // (2026-10-05: "I just don't like it and blood looking the exact same").
-            color = mix(color, MIMIC_TINT);
-        }
         return color;
-    }
-
-    /** 20% red over the room's own colour - NoammAddons' mimic room highlight exactly: its MapRenderer draws
-     *  {@code ColorUtils.lerp(roomColour, colorMimic, 0.2)} with colorMimic defaulting to (255, 0, 0) (javap of
-     *  NoammAddons 1.2.7, 2026-10-05; his own Noamm config has the same #FF0000). 0x33 = 51/255 = 0.2. */
-    private static final int MIMIC_TINT = 0x33FF0000;
-
-    /**
-     * Whether the SIM's mimic is in this room.
-     *
-     * <p>Separate from {@link #hasLiveMimic} because the two know different things. On Hypixel the mimic is a
-     * {@code trapped_chest} standing where the database says a secret chest is, and that is what the live
-     * check looks for. The sim's mimic is an ordinary chest that {@code SimMimic} happened to pick, so there
-     * is nothing in the world to find - it has to be asked. Cheap: one cell comparison, no block reads, so it
-     * needs none of the once-a-second caching the live scan does.
-     */
-    private static boolean hasSimMimic(LiveMapFeature.RoomGroup group) {
-        if (!com.epic60869.sky2m.sim.roomsim.SimState.isActive()) {
-            return false;
-        }
-        int cell = com.epic60869.sky2m.sim.roomsim.SimMimic.mimicCell();
-        if (cell < 0) {
-            return false;
-        }
-        for (int c : group.cells) {
-            if (c == cell) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** Once-a-second snapshot of which rooms (by {@code mainIdx}) currently have a live mimic - see
-     *  {@link #hasLiveMimic}. Rebuilt lazily, never more often than {@link #MIMIC_SCAN_TTL_MS}: a live block
-     *  check per room per frame is exactly the per-frame cost the 2026-09-20 fps pass removed elsewhere on
-     *  this same map. */
-    private static Set<Integer> mimicMainIdx = Set.of();
-    private static long mimicScanStampMs = 0L;
-    private static final long MIMIC_SCAN_TTL_MS = 1000L;
-
-    private static boolean hasLiveMimic(LiveMapFeature.RoomGroup group) {
-        RoomEntry entry = group.entry;
-        if (entry == null || entry.secretCoords == null || entry.secretCoords.chest == null
-                || entry.secretCoords.chest.isEmpty()) {
-            return false;
-        }
-        refreshMimicScanIfStale();
-        return mimicMainIdx.contains(group.mainIdx);
-    }
-
-    private static void refreshMimicScanIfStale() {
-        long now = System.currentTimeMillis();
-        if (now - mimicScanStampMs < MIMIC_SCAN_TTL_MS) {
-            return;
-        }
-        mimicScanStampMs = now;
-        var level = Minecraft.getInstance().level;
-        if (level == null) {
-            mimicMainIdx = Set.of();
-            return;
-        }
-        Set<Integer> found = new HashSet<>();
-        for (LiveMapFeature.RoomGroup group : LiveMapFeature.groupsView()) {
-            RoomEntry entry = group.entry;
-            if (entry == null || entry.secretCoords == null || entry.secretCoords.chest == null
-                    || entry.secretCoords.chest.isEmpty()) {
-                continue;
-            }
-            int[] clayRot = LiveMapFeature.clayAndRotation(group);
-            if (clayRot == null) {
-                continue;
-            }
-            for (RoomEntry.Pos relative : entry.secretCoords.chest) {
-                // Shifted with the floor, like Secret Waypoints' copy of the same transform. Without it the
-                // mimic tint reads air in the sim and the room is never marked, even with a mimic in it.
-                BlockPos real = RoomDatabase.toRealCoord(relative, clayRot[0], clayRot[1], clayRot[2])
-                        .above(DungeonLayout.simYOffset());
-                if (level.isLoaded(real) && level.getBlockState(real).getBlock() == Blocks.TRAPPED_CHEST) {
-                    found.add(group.mainIdx);
-                    break;
-                }
-            }
-        }
-        mimicMainIdx = found;
     }
 
     /** A teammate-reported room's fill colour: its real type colour once {@link RoomDatabase#lookupByName}

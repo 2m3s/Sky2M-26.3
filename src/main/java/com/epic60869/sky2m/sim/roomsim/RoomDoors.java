@@ -393,7 +393,6 @@ public final class RoomDoors {
     /** The lowest y at which this edge's doorway matches, or {@code Integer.MAX_VALUE} if it never does. */
     private static int lowestMatch(RoomLibrary.Room room, int side, int index) {
         int margin = room.margin;
-        int tilesX = Math.max(1, (room.sizeX - 1) / (RoomLibrary.TILE + 1));
         int centre = margin + index * (RoomLibrary.TILE + 1) + RoomLibrary.TILE / 2;
         for (int base = SEARCH_MIN_Y; base <= SEARCH_MAX_Y - DOOR_HEIGHT; base++) {
             int hits = 0;

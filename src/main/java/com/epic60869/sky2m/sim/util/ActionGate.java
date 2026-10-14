@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
-import java.util.concurrent.ThreadLocalRandom;
 import com.epic60869.sky2m.sim.compat.McCompat;
 
 /**
@@ -311,26 +310,9 @@ public final class ActionGate {
         return minSpacingTicks;
     }
 
-    /**
-     * The spacing floor, plus its own 0-1 tick of jitter.
-     * <p>
-     * killer560's rule: "don't make it a metronome". A flat floor is harmless while a feature's own randomised
-     * delay is the thing actually pacing it, but the moment something saturates the gate - a Melody lookahead
-     * burst draining, two auras alternating - a fixed floor would emit interactions at exactly N x 50 ms
-     * forever, which is a cleaner signature than the bursts this class was written to remove. Re-rolled after
-     * every accepted action so no two consecutive gaps are the same. This never shortens anything: a feature's
-     * own delay still applies on top, and the gate only ever delays.
-     */
+    /** The spacing this gap has to clear. Always none: wall-clock spacing is off (see {@link #minSpacingTicks}). */
     private static long rollSpacing() {
-        if (minSpacingTicks <= 0) {
-            return 0L;
-        }
-        // Jitter is 0-20ms, not 0-50ms. A full tick of jitter on top of a one-tick floor averages 75ms,
-        // which silently caps every automation at ~13 clicks/second - and killer560 had just asked Arrow
-        // Align for 15-17 cps (59-67ms), a rate the gate would then have made unreachable while looking
-        // like the feature's own settings were being honoured. 0-20ms still breaks up the metronome (no two
-        // gaps alike) while leaving his configured rates achievable. The gate only ever delays.
-        return (minSpacingTicks * 50L + ThreadLocalRandom.current().nextLong(0L, 21L)) * 1_000_000L;
+        return 0L;
     }
 
     // ---- per-tick observation ----

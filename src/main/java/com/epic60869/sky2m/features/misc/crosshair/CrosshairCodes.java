@@ -22,7 +22,7 @@ public final class CrosshairCodes {
     private static final int F_DOT = 1, F_TOP = 1 << 1, F_BOTTOM = 1 << 2, F_LEFT = 1 << 3, F_RIGHT = 1 << 4,
         F_SEP_DOT = 1 << 5, F_CHROMA = 1 << 6, F_INVERT = 1 << 7, F_OUTLINE = 1 << 8, F_MOVE = 1 << 9,
         F_SPRINT = 1 << 10, F_JUMP = 1 << 11, F_RECOIL = 1 << 12, F_ENTITY = 1 << 13, F_BLOCK = 1 << 14,
-        F_ATTACK = 1 << 15, F_HIDE_MENUS = 1 << 16, F_THIRD = 1 << 17;
+        F_ATTACK = 1 << 15, F_THIRD = 1 << 17; // 1 << 16 is Killer560's hide in menus, which Sky2M doesn't have
 
     private CrosshairCodes() {}
 

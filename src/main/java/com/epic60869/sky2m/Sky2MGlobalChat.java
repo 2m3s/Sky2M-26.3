@@ -278,6 +278,7 @@ public final class Sky2MGlobalChat {
                 features.add("chatBlocked");
                 features.add("announcements");
                 features.add("partyFinder");
+                features.add("reportThreads");
                 hello.add("features", features);
                 hello.addProperty("minecraftUuid", Minecraft.getInstance().getUser().getProfileId().toString());
                 hello.addProperty("modVersion", com.epic60869.sky2m.features.sbc.SbcInfo.modVersion());
@@ -470,6 +471,20 @@ public final class Sky2MGlobalChat {
 
                 if ("accountStatus".equals(type) || "nickResult".equals(type)) {
                     Minecraft.getInstance().execute(() -> Sky2MNickCommand.handle(type, packet));
+                    return;
+                }
+
+                // Report threads. A plain error right after a report packet is the server answering it (an older
+                // server that doesn't know them yet: the reports go to the site instead).
+                if ("error".equals(type) && com.epic60869.sky2m.reports.Reports.awaitingReply()) {
+                    String code = packetString(packet, "code");
+                    String message = packetString(packet, "message");
+                    Minecraft.getInstance().execute(() -> com.epic60869.sky2m.reports.Reports.plainError(code, message));
+                    return;
+                }
+
+                if (type.startsWith("report")) {
+                    Minecraft.getInstance().execute(() -> com.epic60869.sky2m.reports.Reports.handle(type, packet));
                     return;
                 }
 

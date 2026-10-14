@@ -30,11 +30,14 @@ import java.util.concurrent.TimeUnit;
  * Ranks are managed on shadowisabot.com and downloaded from {@value #RANKS_URL} every few minutes:
  * <pre>
  * {"ranks": [
- *   {"uuid": "9761ccfb-2ccb-45cf-b6b4-fac991b7a019", "name": "2m3s", "prefix": "OWNER", "color": "#FF5555", "bold": true},
+ *   {"uuid": "9761ccfb-2ccb-45cf-b6b4-fac991b7a019", "name": "2m3s", "prefix": "OWNER", "color": "#FF5555", "bold": true,
+ *    "reportsAdmin": true},
  *   {"uuid": "...", "name": "Someone", "prefix": "", "color": ""}   // empty prefix removes a built-in rank
  * ]}
  * </pre>
- * The built-in ranks below apply until the site answers, and for accounts the site doesn't list.
+ * The built-in ranks below apply until the site answers, and for accounts the site doesn't list. {@code reportsAdmin}
+ * (ticked per staff member in the website's Staff section) makes them a reports admin: they see and answer everyone's
+ * bug reports and suggestions. The owner always is.
  */
 public final class Sky2MStaff {
     public static final String RANKS_URL = "https://shadowisabot.com/mod-api/ranks";
@@ -48,15 +51,15 @@ public final class Sky2MStaff {
     /** A rank prefix: the text between the brackets, its colour and whether it's bold. */
     public record Rank(String label, int colour, boolean bold) {}
 
-    private record Entry(Rank rank, String name) {}
+    private record Entry(Rank rank, String name, boolean reportsAdmin) {}
 
     private static final Rank OWNER = new Rank("OWNER", 0xFF5555, true);
     private static final Rank TESTER = new Rank("TESTER", 0x5555FF, true);
 
     private static final Map<UUID, Entry> BUILT_IN = Map.of(
-        UUID.fromString("9761ccfb-2ccb-45cf-b6b4-fac991b7a019"), new Entry(OWNER, "2m3s"),
-        UUID.fromString("6ed85701-fe2e-4aa4-8428-5a3eb5ac16bc"), new Entry(TESTER, "svinkus"),
-        UUID.fromString("458c87ae-6cbc-423d-9f4e-93263ae49220"), new Entry(TESTER, "nixjussid"));
+        UUID.fromString("9761ccfb-2ccb-45cf-b6b4-fac991b7a019"), new Entry(OWNER, "2m3s", true),
+        UUID.fromString("6ed85701-fe2e-4aa4-8428-5a3eb5ac16bc"), new Entry(TESTER, "svinkus", false),
+        UUID.fromString("458c87ae-6cbc-423d-9f4e-93263ae49220"), new Entry(TESTER, "nixjussid", false));
 
     /** Ranks from the website; an entry with a null rank removes a built-in one. */
     private static volatile Map<UUID, Entry> remote = Map.of();
@@ -96,7 +99,8 @@ public final class Sky2MStaff {
                 if (uuid == null) continue;
                 String label = cleanLabel(str(o, "prefix"));
                 Rank rank = label.isEmpty() ? null : new Rank(label, parseColour(str(o, "color")), !o.has("bold") || o.get("bold").getAsBoolean());
-                parsed.put(uuid, new Entry(rank, str(o, "name").toLowerCase(Locale.ROOT)));
+                boolean reportsAdmin = o.has("reportsAdmin") && o.get("reportsAdmin").isJsonPrimitive() && o.get("reportsAdmin").getAsBoolean();
+                parsed.put(uuid, new Entry(rank, str(o, "name").toLowerCase(Locale.ROOT), reportsAdmin));
             }
             remote = Map.copyOf(parsed);
         } catch (Exception e) {
@@ -115,6 +119,17 @@ public final class Sky2MStaff {
         if (uuid == null) return null;
         Entry entry = remote.containsKey(uuid) ? remote.get(uuid) : BUILT_IN.get(uuid);
         return entry == null ? null : entry.rank();
+    }
+
+    /**
+     * Whether the website's Staff section makes this account a reports admin (the owner always is). The server decides
+     * admin rights for the reports itself; this is for before it answers and for showing who's staff.
+     */
+    public static boolean isReportsAdmin(UUID uuid) {
+        if (uuid == null) return false;
+        if (uuid.equals(UUID.fromString("9761ccfb-2ccb-45cf-b6b4-fac991b7a019"))) return true;
+        Entry entry = remote.containsKey(uuid) ? remote.get(uuid) : BUILT_IN.get(uuid);
+        return entry != null && entry.reportsAdmin();
     }
 
     /** "[OWNER] " in the rank's colour, or null for players without a rank. */

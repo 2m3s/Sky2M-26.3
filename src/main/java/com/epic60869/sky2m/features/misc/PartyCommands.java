@@ -64,7 +64,6 @@ public final class PartyCommands {
     private static final Set<String> members = new LinkedHashSet<>();
     /** A leader command that came while the leader was unknown, run if /p list shows you lead. */
     private static Pending afterLeaderKnown;
-    private static long askedLeaderAt;
     private static long lastCommand;
     private static long lastSent;
     /** Commands waiting to be sent, one at a time so Hypixel doesn't say "Woah slow down". */

@@ -109,12 +109,9 @@ public final class SimBoulderPuzzle {
 
     /** Per cell, row-major over {@link #Z_VALUES} x {@link #X_VALUES}: the box's block, or null when empty. */
     private static volatile BlockState[] cells = new BlockState[0];
-    /** The arrangement this board was generated with, so a reset puts back the same one. */
-    private static volatile String pattern = null;
     /** The material each starting box had, so a reset does not reshuffle jungle and birch. */
     private static volatile BlockState[] startCells = new BlockState[0];
     private static volatile Grid grid = null;
-    private static volatile boolean bound = false;
 
     /** World button position -> {cell index, direction index}: the box it is on and the side it is on. */
     private static final Map<BlockPos, int[]> BUTTONS = new ConcurrentHashMap<>();
@@ -200,7 +197,6 @@ public final class SimBoulderPuzzle {
             return false;
         }
         forget();
-        bound = true;
         grid = anchor::world;
         // The capture's own plank, for the boxes - it mixes jungle and birch, so both are offered.
         generate(level, PATTERNS.get(ThreadLocalRandom.current().nextInt(PATTERNS.size())));
@@ -264,7 +260,6 @@ public final class SimBoulderPuzzle {
         server.execute(() -> {
             ServerLevel level = server.overworld();
             forget();
-            bound = false;
             grid = (x, y, z) -> base.offset(x - 15, y - BOX_BOTTOM_Y, z - 7);
             for (int x = 4; x <= 26; x++) {
                 for (int z = 7; z <= 26; z++) {
@@ -284,7 +279,6 @@ public final class SimBoulderPuzzle {
                         ? Blocks.JUNGLE_PLANKS.defaultBlockState() : Blocks.BIRCH_PLANKS.defaultBlockState();
             }
         }
-        pattern = key;
         startCells = start;
         lay(level, start.clone());
         LOGGER.info("Sim boulder: laid bundled arrangement {} - {} box(es), {} button(s)", key,
@@ -495,9 +489,7 @@ public final class SimBoulderPuzzle {
         PLACED_BUTTONS.clear();
         cells = new BlockState[0];
         startCells = new BlockState[0];
-        pattern = null;
         grid = null;
-        bound = false;
         complete = false;
     }
 

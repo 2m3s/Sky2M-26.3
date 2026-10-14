@@ -34,7 +34,8 @@ public final class SbcCommands {
             new Help("/s2 keys", "Command keys"),
             new Help("/s2 custom", "Item and armor customization"),
             new Help("/s2 discord", "The Sky2M Discord"),
-            new Help("/s2 bugreport | suggest | feedback", "Send a report to the Sky2M team"))),
+            new Help("/s2 bugreport | suggest | feedback", "Send a report to the Sky2M team"),
+            new Help("/s2 reports", "Your reports and the team's replies"))),
         new Section("Sky2M Chat", List.of(
             new Help("/s2c [message]", "Send to Sky2M chat (no message: switch to the Sky2M channel)"),
             new Help("/s2 chat leave", "Leave the Sky2M channel"),
