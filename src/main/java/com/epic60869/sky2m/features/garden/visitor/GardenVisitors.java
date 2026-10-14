@@ -373,21 +373,36 @@ public final class GardenVisitors {
         Map<String, GardenVisitorData> out = new HashMap<>();
         if (!json.has("visitors")) return;
         for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("visitors").entrySet()) {
+            if (!entry.getValue().isJsonObject()) continue;
             JsonObject v = entry.getValue().getAsJsonObject();
             List<String> needs = new ArrayList<>();
-            if (v.has("need_items")) v.getAsJsonArray("need_items").forEach(e -> needs.add(e.getAsString()));
+            if (v.has("need_items") && v.get("need_items").isJsonArray()) {
+                v.getAsJsonArray("need_items").forEach(e -> { if (!e.isJsonNull()) needs.add(e.getAsString()); });
+            }
             double[] position = null;
-            if (v.has("position")) {
-                String[] parts = v.get("position").getAsString().split(":");
+            // SkyHanni's file has null for some visitors' fields (e.g. no fixed position); a null used to abort the
+            // whole read, leaving no visitor data at all.
+            String pos = repoString(v, "position");
+            if (pos != null) {
+                String[] parts = pos.split(":");
                 if (parts.length == 3) position = new double[]{Double.parseDouble(parts[0]), Double.parseDouble(parts[1]), Double.parseDouble(parts[2])};
             }
-            String skin = v.has("skinOrType") ? v.get("skinOrType").getAsString().replace("\\n", "").replace("\n", "") : null;
-            out.put(entry.getKey(), new GardenVisitorData(v.has("rarity") ? v.get("rarity").getAsString() : null, needs,
-                v.has("mode") ? v.get("mode").getAsString() : null, position, skin,
-                v.has("showChatMessage") && v.get("showChatMessage").getAsBoolean(),
-                v.has("unknownRewards") && v.get("unknownRewards").getAsBoolean()));
+            String skin = repoString(v, "skinOrType");
+            if (skin != null) skin = skin.replace("\\n", "").replace("\n", "");
+            out.put(entry.getKey(), new GardenVisitorData(repoString(v, "rarity"), needs, repoString(v, "mode"), position, skin,
+                repoBool(v, "showChatMessage"), repoBool(v, "unknownRewards")));
         }
         repoVisitors = out;
+    }
+
+    private static String repoString(JsonObject o, String key) {
+        JsonElement e = o.get(key);
+        return e == null || e.isJsonNull() ? null : e.getAsString();
+    }
+
+    private static boolean repoBool(JsonObject o, String key) {
+        JsonElement e = o.get(key);
+        return e != null && !e.isJsonNull() && e.getAsBoolean();
     }
 
     /** SkyHanni's GardenVisitorColorNames: the name in its rarity colour from the repo. */
