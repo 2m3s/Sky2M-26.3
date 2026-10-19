@@ -1234,41 +1234,112 @@ final class ProfilePages {
         if (seaCreatures <= 0) seaCreatures = Json.num(Json.obj(m, "player_stats"), "sea_creature_kills");
         y = stat(g, x, y, w, "Sea Creatures Killed", commas(seaCreatures));
 
-        // Trophy fish on the right: hunter rank, total, and each fish's best tier.
-        JsonObject trophy = Json.obj(m, "trophy_fish");
+        // Trophy fish and trophy frogs on the right.
         int px = x + w + 12, pw = rx + rw - 6 - px, py = cy + 6;
+        py = trophyFish(g, m, px, pw, py, mx, my);
+        trophyFrogs(g, m, px, pw, py + 6, mx, my);
+    }
+
+    /** Trophy fish: hunter rank, total, and each fish's best tier with Hypixel's own item. Returns the y below it. */
+    private int trophyFish(GuiGraphicsExtractor g, JsonObject m, int px, int pw, int py, int mx, int my) {
+        JsonObject trophy = Json.obj(m, "trophy_fish");
         title(g, "Trophy Fish", px, py);
         py += 11;
         if (trophy == null) {
             text(g, "No trophy fish yet", px, py, DIM);
-            return;
+            return py + 10;
         }
         int rank = Math.clamp(Json.arr(trophy, "rewards").size(), 0, TROPHY_RANKS.length - 1);
         py = stat(g, px, py, pw, "Rank", TROPHY_RANKS[rank]);
         py = stat(g, px, py, pw, "Caught", commas(Json.num(trophy, "total_caught")));
-        py += 4;
-        int perRow = Math.max(1, Math.min(6, pw / 20));
+        py += 2;
+        String[] names = new String[TROPHY_FISH.length];
+        long[][] counts = new long[TROPHY_FISH.length][TROPHY_TIERS.length];
+        long[] totals = new long[TROPHY_FISH.length];
         for (int i = 0; i < TROPHY_FISH.length; i++) {
-            String fish = TROPHY_FISH[i];
+            names[i] = TROPHY_FISH[i];
+            totals[i] = (long) Json.num(trophy, TROPHY_FISH[i]);
+            for (int t = 0; t < TROPHY_TIERS.length; t++) counts[i][t] = (long) Json.num(trophy, TROPHY_FISH[i] + "_" + TROPHY_TIERS[t]);
+        }
+        return trophyGrid(g, names, counts, totals, true, Items.TROPICAL_FISH, px, pw, py, mx, my);
+    }
+
+    /** The trophy frogs (Backwater Bayou), their profile keys as in "common_frog_bronze". */
+    private static final String[] TROPHY_FROGS = {"common_frog", "leap_frog", "exploding_frog", "reality_hopper", "wetlands_frog", "sea_frog",
+        "bullfrog", "blessed_frog", "tree_frog", "cave_frog", "highlands_frog", "puddle_jumper"};
+
+    /**
+     * Trophy frogs: from the profile's trophy_frog object (counts per tier) when Hypixel sends one, else which tiers the
+     * SkyBlock level tasks say were caught (TROPHY_COMMON_FROG_BRONZE...), shown as caught or not.
+     */
+    private void trophyFrogs(GuiGraphicsExtractor g, JsonObject m, int px, int pw, int py, int mx, int my) {
+        title(g, "Trophy Frogs", px, py);
+        py += 11;
+        JsonObject root = Json.obj(m, "trophy_frog");
+        if (root == null) root = Json.obj(m, "trophy_frogs");
+        Set<String> tasks = new java.util.HashSet<>();
+        for (JsonElement task : Json.arr(Json.obj(m, "leveling"), "completed_tasks")) {
+            if (task.isJsonPrimitive()) tasks.add(task.getAsString().toUpperCase(Locale.ROOT));
+        }
+        long[][] counts = new long[TROPHY_FROGS.length][TROPHY_TIERS.length];
+        long[] totals = new long[TROPHY_FROGS.length];
+        boolean any = false;
+        for (int i = 0; i < TROPHY_FROGS.length; i++) {
+            for (int t = 0; t < TROPHY_TIERS.length; t++) {
+                counts[i][t] = root != null ? (long) Json.num(root, TROPHY_FROGS[i] + "_" + TROPHY_TIERS[t])
+                    : tasks.contains("TROPHY_" + TROPHY_FROGS[i].toUpperCase(Locale.ROOT) + "_" + TROPHY_TIERS[t].toUpperCase(Locale.ROOT)) ? 1 : 0;
+                totals[i] += counts[i][t];
+                any |= counts[i][t] > 0;
+            }
+        }
+        if (!any) {
+            text(g, "No trophy frogs yet", px, py, DIM);
+            return;
+        }
+        double caught = Json.num(Json.path(m, "player_stats.items_fished"), "trophy_frog");
+        if (caught > 0) py = stat(g, px, py, pw, "Caught", commas(caught));
+        trophyGrid(g, TROPHY_FROGS, counts, totals, root != null, Items.SLIME_BALL, px, pw, py + 2, mx, my);
+    }
+
+    /**
+     * A grid of trophies: each shows Hypixel's item for its best tier (gray when none caught), outlined in that tier's
+     * colour, and the counts per tier on hover ({@code exact} false: only whether each tier was caught is known).
+     */
+    private int trophyGrid(GuiGraphicsExtractor g, String[] ids, long[][] counts, long[] totals, boolean exact, Item fallback,
+                           int px, int pw, int py, int mx, int my) {
+        int perRow = Math.max(1, Math.min(6, pw / 20));
+        ChatFormatting[] tierColours = {ChatFormatting.RED, ChatFormatting.GRAY, ChatFormatting.GOLD, ChatFormatting.AQUA};
+        for (int i = 0; i < ids.length; i++) {
             int ix = px + (i % perRow) * 20, iy = py + (i / perRow) * 20;
             int best = -1;
-            for (int t = TROPHY_TIERS.length - 1; t >= 0 && best < 0; t--) if (Json.num(trophy, fish + "_" + TROPHY_TIERS[t]) > 0) best = t;
-            ItemStack icon = icon(fish.toUpperCase(Locale.ROOT) + "_" + TROPHY_TIERS[Math.max(0, best)].toUpperCase(Locale.ROOT));
-            if (icon.is(Items.PAPER)) icon = new ItemStack(Items.TROPICAL_FISH);
+            for (int t = TROPHY_TIERS.length - 1; t >= 0 && best < 0; t--) if (counts[i][t] > 0) best = t;
+            ItemStack icon = best < 0 ? new ItemStack(Items.DYE.gray())
+                : trophyIcon(ids[i].toUpperCase(Locale.ROOT) + "_" + TROPHY_TIERS[best].toUpperCase(Locale.ROOT), fallback);
             g.fill(ix, iy, ix + 18, iy + 18, SLOT_BG);
             g.outline(ix, iy, 18, 18, best < 0 ? INSET_EDGE : TROPHY_COLOURS[best]);
-            g.item(best < 0 ? new ItemStack(Items.DYE.gray()) : icon, ix + 1, iy + 1);
+            g.item(icon, ix + 1, iy + 1);
             if (in(mx, my, ix, iy, 18, 18)) {
                 List<Component> t = new ArrayList<>();
-                t.add(line(titleCase(fish), ChatFormatting.GOLD));
-                t.add(line("Caught: " + commas(Json.num(trophy, fish)), ChatFormatting.GRAY));
-                ChatFormatting[] tierColours = {ChatFormatting.RED, ChatFormatting.GRAY, ChatFormatting.GOLD, ChatFormatting.AQUA};
+                t.add(line(titleCase(ids[i]), ChatFormatting.GOLD));
+                if (exact && totals[i] > 0) t.add(line("Caught: " + commas(totals[i]), ChatFormatting.GRAY));
                 for (int tier = 0; tier < TROPHY_TIERS.length; tier++) {
-                    t.add(line(titleCase(TROPHY_TIERS[tier]) + ": " + commas(Json.num(trophy, fish + "_" + TROPHY_TIERS[tier])), tierColours[tier]));
+                    String value = exact ? commas(counts[i][tier]) : counts[i][tier] > 0 ? "caught" : "not yet";
+                    t.add(line(titleCase(TROPHY_TIERS[tier]) + ": " + value, tierColours[tier]));
                 }
                 tip(t);
             }
         }
+        return py + (ids.length + perRow - 1) / perRow * 20;
+    }
+
+    /**
+     * A trophy's own SkyBlock item ("BLOBFISH_GOLD", "COMMON_FROG_SILVER"): paper with Hypixel's model, so it shows its
+     * real texture where Hypixel's resource pack is loaded. Only an id the item list doesn't know gets {@code fallback}.
+     */
+    private static ItemStack trophyIcon(String id, Item fallback) {
+        // Not cached here: the item list caches it, and rebuilds it once Hypixel's resource pack (its model) is loaded.
+        ItemStack stack = ProfileItems.icon(id);
+        return stack.is(Items.BARRIER) ? new ItemStack(fallback) : stack;
     }
 
     private void fishingGear(GuiGraphicsExtractor g, int rx, int rw, int mx, int my) {

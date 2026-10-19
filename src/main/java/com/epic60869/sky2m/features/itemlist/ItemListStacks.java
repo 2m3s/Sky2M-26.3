@@ -38,6 +38,13 @@ public final class ItemListStacks {
             CACHE.clear();
             cachedFor = current;
         }
+        // Hypixel's item models (trophy fish, ...) only exist while its resource pack is loaded: a stack built before the
+        // pack arrived stays plain (paper) until rebuilt, and one built with a model loses it when the pack goes.
+        ItemStack cached = CACHE.get(entry.id());
+        if (cached != null && entry.itemModel() != null) {
+            Identifier model = Identifier.tryParse(entry.itemModel());
+            if (model != null && cached.has(DataComponents.ITEM_MODEL) != RepoItems.hasItemModel(model)) CACHE.remove(entry.id());
+        }
         return CACHE.computeIfAbsent(entry.id(), id -> build(entry));
     }
 
