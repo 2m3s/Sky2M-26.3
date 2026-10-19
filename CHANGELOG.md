@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## Unreleased
 
 ### Added
+- Staff tools in game (for Sky2M staff): get a code on shadowisabot.com (Staff > Mod login) and type `/s2 stafflogin <code>`; you stay logged in on that computer for 30 days (`/s2 stafflogout` ends it). `/s2 staff` opens the tools: mute (for some minutes or permanently), ban (permanent, and they stop seeing Sky2M chat) and unmute players in Sky2M chat, with the list of who's muted and banned; admins and owners can also switch mod features off or on for everyone, with a message players see. The Sky2M server checks your staff role on every action.
 - Sky2M emblems can be pictures: emblems staff upload on the website are downloaded once (kept in `config/sky2m/emblems`) and drawn at text height wherever emblems show (chat, tab list, name tags, `/s2 cosmetics`), and the new Fish emblem (🐟) shows like the other symbols.
 - Mining Commissions > Highlight Event (off by default): in the Dwarven Mines, outlines the goblins and golems of a Goblin Raid, and outlines and boxes the Raffle Tickets on the ground during a Raffle, only while that event is running. Both colours can be changed.
 - Crystal Hollows Waypoints: Auto-Find From Nametags (off by default) marks King Yolkar, Odawa, Xalx, Corleone, the Key Guardian and the Jungle Temple as soon as their nametags load, and Share Finds In Party Chat (off by default) posts each place you find yourself once per lobby in party chat, where Sky2M and Skyblocker turn it into a waypoint.

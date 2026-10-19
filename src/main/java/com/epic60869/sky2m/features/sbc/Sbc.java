@@ -31,6 +31,7 @@ public final class Sbc {
         SbcChat.init();
         SbcChatOverlay.init();
         SbcSocial.init();
+        SbcStaff.init();
         SbcLobby.init();
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>)) return;
@@ -74,6 +75,7 @@ public final class Sbc {
                 case "nameTagTable", "nameTagUpdate" -> SbcNameTags.handle(type, packet);
                 case "online", "whoResult", "friends", "friendEvent", "socialSettings", "ignoreResult", "ignoreList", "socialError" -> SbcSocial.handle(type, packet);
                 case "settingsSaved", "settings", "settingsSlots", "settingsDeleted", "settingsError" -> SbcSettingsSync.handle(type, packet);
+                case "staffLoginResult", "staffLoggedOut", "staffMutes", "staffFlags", "staffResult", "staffError" -> SbcStaff.handle(type, packet);
                 default -> {
                     return false;
                 }
@@ -100,6 +102,7 @@ public final class Sbc {
         if (SbcNet.online()) return;
         try {
             com.epic60869.sky2m.Sky2MLogin.onDisconnected();
+            SbcStaff.onDisconnected();
             SbcSocial.onDisconnected();
             SbcCosmetics.onDisconnected();
             com.epic60869.sky2m.Sky2MPartyFinder.onDisconnected();

@@ -54,6 +54,7 @@ public class Sky2MScreensGameTest implements FabricClientGameTest {
             termism(ctx);
 
             try {
+                staffScreen(ctx);
                 profileViewerFishing(ctx);
             } catch (ReflectiveOperationException e) {
                 throw new AssertionError(e);
@@ -141,6 +142,34 @@ public class Sky2MScreensGameTest implements FabricClientGameTest {
         }));
         ctx.setScreen(() -> null);
         ctx.waitTicks(5);
+    }
+
+    /** /s2 staff with sample data: logged in as admin, a timed mute and a ban, one feature switched off. */
+    private static void staffScreen(ClientGameTestContext ctx) throws ReflectiveOperationException {
+        Class<?> staff = Class.forName("com.epic60869.sky2m.features.sbc.SbcStaff");
+        java.lang.reflect.Method handle = staff.getDeclaredMethod("handle", String.class, com.google.gson.JsonObject.class);
+        handle.setAccessible(true);
+        com.google.gson.Gson gson = new com.google.gson.Gson();
+        long now = System.currentTimeMillis();
+        ctx.runOnClient(mc -> {
+            handle.invoke(null, "staffLoginResult", gson.fromJson("{ok:true,resumed:true,role:'admin',username:'2m3s'}", com.google.gson.JsonObject.class));
+            handle.invoke(null, "staffMutes", gson.fromJson("{mutes:[{username:'Spammer',until:" + (now + 25 * 60_000) + ",reason:'spam',by:'2m3s (in game)'},"
+                + "{username:'Griefer',until:0,ban:true,reason:'slurs',by:'Admin'}]}", com.google.gson.JsonObject.class));
+            handle.invoke(null, "staffFlags", gson.fromJson("{canEdit:true,flags:{calendar:{enabled:false,message:'Calendar is broken today'}}}", com.google.gson.JsonObject.class));
+        });
+        ctx.setScreen(() -> new com.epic60869.sky2m.features.sbc.SbcStaffScreen());
+        ctx.waitTicks(5);
+        shot(ctx, "60-staff-chat");
+        ctx.runOnClient(mc -> {
+            var screen = mc.gui.screen();
+            java.lang.reflect.Field tab = screen.getClass().getDeclaredField("tab");
+            tab.setAccessible(true);
+            for (Object t : tab.getType().getEnumConstants()) if (((Enum<?>) t).name().equals("FEATURES")) tab.set(screen, t);
+        });
+        ctx.waitTicks(5);
+        shot(ctx, "61-staff-features");
+        ctx.setScreen(() -> null);
+        ctx.waitTicks(3);
     }
 
     /** /pv 2m3s, then the Fishing tab's three views. */

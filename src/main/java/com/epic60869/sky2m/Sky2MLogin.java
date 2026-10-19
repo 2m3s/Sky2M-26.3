@@ -81,6 +81,8 @@ public final class Sky2MLogin {
             com.epic60869.sky2m.features.slayer.SlayerLeaderboard.onLoggedIn();
             // Replies to your reports (or, for admins, reports waiting) since you were last on.
             com.epic60869.sky2m.reports.Reports.onLoggedIn();
+            // A saved /s2 stafflogin logs in again on this connection.
+            com.epic60869.sky2m.features.sbc.SbcStaff.onLoggedIn();
         } else {
             problem = message == null || message.isEmpty() ? "The server couldn't verify your Minecraft login." : message;
             WAITING.clear();
