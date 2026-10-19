@@ -60,7 +60,8 @@ public final class SkillFeatures {
 
     private static List<Component> sweepLines() {
         List<Component> lines = new ArrayList<>();
-        lines.add(kv("Sweep: ", sweep));
+        // /s2 gui draws every HUD, before the tab list has shown your sweep.
+        lines.add(kv("Sweep: ", sweep == null ? "?" : sweep));
         SWEEP_LOGS.forEach((tree, logs) -> lines.add(kv(tree + ": ", logs + " Logs")));
         return lines;
     }

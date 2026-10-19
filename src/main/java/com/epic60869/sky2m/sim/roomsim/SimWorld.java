@@ -404,6 +404,8 @@ public final class SimWorld {
      */
     public static void onWorldLoaded(Minecraft client) {
         // Every world join lands here, Hypixel's server changes included; only a pending sim request does anything.
+        // Reset run state so an armed or running run from a previous sim session cannot leak into this one.
+        SimRun.reset();
         if (pendingCode == null) {
             return;
         }

@@ -55,6 +55,8 @@ public abstract class Sky2MChatScreenMixin {
     @Inject(method = "extractRenderState", at = @At("HEAD"))
     private void sky2m$currentChatDisplay(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         com.epic60869.sky2m.Sky2MCurrentChat.render(graphics, ((ChatScreen) (Object) this).height);
+        // Draw tabs at the same stage as Current Chat Display, before Minecraft renders command suggestions.
+        com.epic60869.sky2m.features.misc.ChatTabs.render(graphics, ((ChatScreen) (Object) this).height, input, mouseX, mouseY);
     }
 
     @Inject(method = "extractRenderState", at = @At("TAIL"))
@@ -64,12 +66,13 @@ public abstract class Sky2MChatScreenMixin {
         mc.gui.hud.getChat().captureClickableText(finder, mc.getWindow().getGuiScaledHeight(), mc.gui.hud.getGuiTicks(), displayMode);
         com.epic60869.sky2m.Sky2MImagePreview.render(graphics, finder.result(), mouseX, mouseY);
         com.epic60869.sky2m.features.sbc.SbcChatOverlay.render(graphics, ((ChatScreen) (Object) this).height, mouseX, mouseY);
-        com.epic60869.sky2m.features.misc.ChatTabs.render(graphics, ((ChatScreen) (Object) this).height, input, mouseX, mouseY);
     }
 
     /** Chat Tabs: clicking a tab, Ctrl+F, and Enter while searching. */
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void sky2m$chatTabsClick(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
+        // The tabs sit under the command suggestions, so while a command is typed the suggestions get the click.
+        if (input.getValue().startsWith("/")) return;
         if (com.epic60869.sky2m.features.misc.ChatTabs.mouseClicked(event.x(), event.y(), ((ChatScreen) (Object) this).height, input)) cir.setReturnValue(true);
     }
 
@@ -103,7 +106,7 @@ public abstract class Sky2MChatScreenMixin {
     /** Side Chat: clicking a message's clickable part, like in chat. */
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void sky2m$sideChatClick(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
-        if (event.button() != 0) return;
+        if (event.button() != com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) return;
         net.minecraft.network.chat.Style style = com.epic60869.sky2m.features.misc.SideChat.styleAt(event.x(), event.y());
         if (style == null) return;
         boolean insert = insertionClickMode();

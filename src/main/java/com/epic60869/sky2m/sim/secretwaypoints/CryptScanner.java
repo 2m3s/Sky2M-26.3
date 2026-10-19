@@ -125,7 +125,7 @@ public final class CryptScanner {
         List<BlockPos> crowns = new ArrayList<>();
         for (int cx = bounds[0] >> 4; cx <= (bounds[2] >> 4); cx++) {
             for (int cz = bounds[1] >> 4; cz <= (bounds[3] >> 4); cz++) {
-                if (!level.hasChunk(cx, cz)) {
+                if (!com.epic60869.sky2m.sim.util.SimChunks.isLoaded(level, cx, cz)) {
                     continue;
                 }
                 var chunk = level.getChunk(cx, cz);

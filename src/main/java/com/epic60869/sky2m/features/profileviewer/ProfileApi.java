@@ -65,7 +65,7 @@ public final class ProfileApi {
         if (cached != null && System.currentTimeMillis() - cached.at() < CACHE_MS) return CompletableFuture.completedFuture(cached.player());
         CompletableFuture<Player> running = IN_FLIGHT.get(key);
         if (running != null && !running.isDone()) return running;
-        CompletableFuture<Player> fresh = playerFresh(name);
+        CompletableFuture<Player> fresh = playerFresh(name, true);
         IN_FLIGHT.put(key, fresh);
         fresh.whenComplete((p, e) -> IN_FLIGHT.remove(key, fresh));
         return fresh;
@@ -133,11 +133,23 @@ public final class ProfileApi {
         }
     }
 
-    /** How long the SkyBlockPV backend gets before Sky2M's proxy is asked too (still only used if the backend fails). */
+    /** How long the SkyBlockPV backend gets before Sky2M's proxy is asked too. */
     private static final long PROXY_HEDGE_MS = 5000;
+    /** For /pv: how long SkyBlockPV gets before the proxy is asked, and its answer may be shown instead. */
+    private static final long QUICK_HEDGE_MS = 2500;
 
     /** {@link #player}, always loaded now rather than from the last five minutes' lookups (the networth history). */
     public static CompletableFuture<Player> playerFresh(String name) {
+        return playerFresh(name, false);
+    }
+
+    /**
+     * {@code quick} (/pv): when SkyBlockPV is slow, Sky2M's proxy is asked after {@link #QUICK_HEDGE_MS} and whichever
+     * answers first is shown; SkyBlockPV's answer still replaces it in the cache when it comes, so the next look is
+     * up to date. Otherwise (the networth history) the proxy is only used when SkyBlockPV fails.
+     */
+    private static CompletableFuture<Player> playerFresh(String name, boolean quick) {
+        if (quick) return playerQuick(name);
         String key = name.toLowerCase(Locale.ROOT);
         lastSource = "";
         // Sign in to the backend (once a day) while the name is looked up, rather than after.
@@ -171,6 +183,80 @@ public final class ProfileApi {
         }).whenComplete((player, error) -> {
             if (player != null) CACHE.put(key, new Cached(player, System.currentTimeMillis()));
         });
+    }
+
+    private static CompletableFuture<Player> playerQuick(String name) {
+        String key = name.toLowerCase(Locale.ROOT);
+        lastSource = "";
+        backendToken();
+        CompletableFuture<Player> result = new CompletableFuture<>();
+        lookup(name).whenComplete((found, lookupError) -> {
+            if (found == null) {
+                result.completeExceptionally(lookupError == null ? new IllegalStateException("no such player") : lookupError);
+                return;
+            }
+            String id = found.plainId();
+            String realName = found.name();
+            java.util.concurrent.atomic.AtomicInteger failed = new java.util.concurrent.atomic.AtomicInteger();
+            java.util.concurrent.atomic.AtomicReference<Throwable> backendError = new java.util.concurrent.atomic.AtomicReference<>();
+            CompletableFuture<Void> needProxy = new CompletableFuture<>();
+            CompletableFuture.delayedExecutor(QUICK_HEDGE_MS, java.util.concurrent.TimeUnit.MILLISECONDS).execute(() -> needProxy.complete(null));
+
+            backendGet("/profiles/" + id, true)
+                .thenApply(data -> data != null && data.has("profiles") ? parse(realName, id, data) : null)
+                .whenComplete((player, error) -> {
+                    if (player != null && !player.profiles().isEmpty()) {
+                        // Always the cache's copy, even when the proxy was shown first: the next /pv is up to date.
+                        CACHE.put(key, new Cached(player, System.currentTimeMillis()));
+                        if (result.complete(player)) lastSource = "SkyBlockPV";
+                        needProxy.cancel(false);
+                        return;
+                    }
+                    backendError.set(error);
+                    lastSource = "Sky2M's proxy (SkyBlockPV: " + (error == null ? "no profiles" : reason(error)) + ")";
+                    needProxy.complete(null);
+                    if (failed.incrementAndGet() == 2) result.completeExceptionally(error != null ? error : new IllegalStateException("no SkyBlock profiles"));
+                });
+
+            needProxy.thenCompose(v -> get(baseUrl() + "get/" + id))
+                .thenApply(data -> parse(realName, id, JsonParser.parseString(data).getAsJsonObject()))
+                .whenComplete((player, error) -> {
+                    if (needProxy.isCancelled()) return;
+                    if (player != null && !player.profiles().isEmpty()) {
+                        if (result.complete(player)) {
+                            if (lastSource.isEmpty()) lastSource = "Sky2M's proxy (SkyBlockPV was slow)";
+                            CACHE.putIfAbsent(key, new Cached(player, System.currentTimeMillis()));
+                        }
+                        return;
+                    }
+                    if (failed.incrementAndGet() == 2) {
+                        Throwable first = backendError.get();
+                        result.completeExceptionally(first != null ? first : error != null ? error : new IllegalStateException("no SkyBlock profiles"));
+                    }
+                });
+        });
+        return result;
+    }
+
+    /**
+     * For quick looks (Party Finder Stats): SkyBlockPV and Sky2M's proxy at the same time, whichever answers first.
+     * Dungeon stats hardly change, so the proxy being a little behind doesn't matter there.
+     */
+    public static CompletableFuture<Player> playerFast(String name) {
+        Cached cached = CACHE.get(name.toLowerCase(Locale.ROOT));
+        if (cached != null && System.currentTimeMillis() - cached.at() < CACHE_MS) return CompletableFuture.completedFuture(cached.player());
+        CompletableFuture<Player> full = player(name);
+        CompletableFuture<Player> viaProxy = lookup(name).thenCompose(found -> get(baseUrl() + "get/" + found.plainId())
+            .thenApply(data -> parse(found.name(), found.plainId(), JsonParser.parseString(data).getAsJsonObject())));
+        CompletableFuture<Player> first = new CompletableFuture<>();
+        java.util.concurrent.atomic.AtomicInteger failed = new java.util.concurrent.atomic.AtomicInteger();
+        java.util.function.BiConsumer<Player, Throwable> take = (player, error) -> {
+            if (player != null && !player.profiles().isEmpty()) first.complete(player);
+            else if (failed.incrementAndGet() == 2) first.completeExceptionally(error != null ? error : new IllegalStateException("no SkyBlock profiles"));
+        };
+        full.whenComplete(take);
+        viaProxy.whenComplete(take);
+        return first;
     }
 
     /** Why a lookup failed, in a few words. */
@@ -282,6 +368,14 @@ public final class ProfileApi {
     }
 
     /** Mojang's session handshake for a backend token, kept for 23 of its 24 hours. */
+    /** Start the backend sign-in before the first /pv, so opening a viewer does not pay its handshake latency. */
+    public static void warmBackend() {
+        backendToken().exceptionally(error -> {
+            System.err.println("[Sky2M] Profile Viewer: backend warm-up failed: " + reason(error));
+            return null;
+        });
+    }
+
     private static synchronized CompletableFuture<String> backendToken() {
         String token = backendToken;
         if (token != null && System.currentTimeMillis() - backendTokenAt < 23L * 60 * 60 * 1000) return CompletableFuture.completedFuture(token);

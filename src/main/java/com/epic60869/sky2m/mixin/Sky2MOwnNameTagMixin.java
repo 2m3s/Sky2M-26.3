@@ -30,16 +30,26 @@ public abstract class Sky2MOwnNameTagMixin {
     private void sky2m$ownNameTagLine(Avatar entity, AvatarRenderState state, float partialTick, CallbackInfo ci) {
         // Render states are reused, so this is always set (null when there's no line).
         state.setData(OwnNameTag.LINE, state.nameTag == null ? null : OwnNameTag.line(entity));
+        state.setData(OwnNameTag.BOARD_LINE, state.nameTag == null ? null : OwnNameTag.boardLine(entity));
     }
 
     @Inject(method = "submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V", at = @At("TAIL"))
     private void sky2m$submitOwnNameTagLine(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera, CallbackInfo ci) {
-        Component line = state.getData(OwnNameTag.LINE);
-        if (line == null || state.nameTag == null || state.nameTagAttachment == null) return;
+        if (state.nameTag == null || state.nameTagAttachment == null) return;
+        // Bottom to top: the name (and a scoreboard line under it), the stats line, then the leaderboard line.
+        int lines = state.scoreText != null ? 1 : 0;
+        Component stats = state.getData(OwnNameTag.LINE);
+        if (stats != null) submitLine(state, poseStack, collector, camera, stats, ++lines);
+        Component board = state.getData(OwnNameTag.BOARD_LINE);
+        if (board != null) submitLine(state, poseStack, collector, camera, board, ++lines);
+    }
+
+    /** One line {@code linesUp} name-tag lines (vanilla's spacing) above the name. */
+    private static void submitLine(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera,
+                                   Component line, int linesUp) {
         poseStack.pushPose();
-        // One name tag line (vanilla's spacing) above the name, two when there's a scoreboard line under it.
         float step = 9 * 1.15f * 0.025f;
-        poseStack.translate(0, step * (state.scoreText != null ? 2 : 1), 0);
+        poseStack.translate(0, step * linesUp, 0);
         collector.submitNameTag(poseStack, state.nameTagAttachment, state.showExtraEars ? -10 : 0, line, !state.isDiscrete, state.lightCoords, camera);
         poseStack.popPose();
     }

@@ -459,7 +459,7 @@ public final class Sky2MGlobalChat {
                     return;
                 }
 
-                if (type.startsWith("leaderboard")) {
+                if (type.startsWith("leaderboard") || type.startsWith("statLeaderboard")) {
                     Minecraft.getInstance().execute(() -> Sky2MLeaderboards.handle(type, packet));
                     return;
                 }
@@ -480,6 +480,17 @@ public final class Sky2MGlobalChat {
                     String code = packetString(packet, "code");
                     String message = packetString(packet, "message");
                     Minecraft.getInstance().execute(() -> com.epic60869.sky2m.reports.Reports.plainError(code, message));
+                    return;
+                }
+
+                // Full item data behind [item] and [inv] in Hypixel chat.
+                if ("shareData".equals(type) || "shareMissing".equals(type)) {
+                    Minecraft.getInstance().execute(() -> com.epic60869.sky2m.features.sbc.SbcItems.onSharePacket(type, packet));
+                    return;
+                }
+                if ("shareStored".equals(type)) return;
+                if ("uploadToken".equals(type)) {
+                    com.epic60869.sky2m.features.misc.ScreenshotShare.onUploadToken(packet);
                     return;
                 }
 

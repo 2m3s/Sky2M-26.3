@@ -49,13 +49,13 @@ final class ProfitTrackerHud {
     static final int KERNELS_PER_ITEM = 25;
     private static final ThreadLocal<DecimalFormat> SHORT = ThreadLocal.withInitial(() -> new DecimalFormat("#,##0.#", DecimalFormatSymbols.getInstance(Locale.US)));
 
-    enum Control { PERIOD, PRICE_SOURCE, RESET, CANCEL, CONFIRM }
+    enum Control { PERIOD, PRICE_SOURCE, RESET, CANCEL, CONFIRM, ITEM }
 
     /** A line of the tracker: Skysoft's ProfitLine. */
     private record Row(String left, String middle, String right, ItemStack icon, int height, int textY, Control control,
-                       Control secondary, boolean centered, String leading, int reservedWidth, int leftColumnWidth) {
+                       Control secondary, boolean centered, String leading, int reservedWidth, int leftColumnWidth, String itemId) {
         static Row text(String left, String right) {
-            return new Row(left, null, right, null, ROW_HEIGHT, 0, null, null, false, null, 0, textWidth(left));
+            return new Row(left, null, right, null, ROW_HEIGHT, 0, null, null, false, null, 0, textWidth(left), null);
         }
 
         int leadingWidth() {
@@ -73,7 +73,7 @@ final class ProfitTrackerHud {
         }
     }
 
-    private record Area(Control control, int x, int y, int w, int h) {
+    private record Area(Control control, int x, int y, int w, int h, String itemId) {
         boolean contains(double px, double py) {
             return px >= x && px < x + w && py >= y && py < y + h;
         }
@@ -198,7 +198,7 @@ final class ProfitTrackerHud {
         scroll.put(preset, offset);
         List<Item> shown = items.subList(offset, Math.min(items.size(), offset + max));
 
-        rows.add(new Row("§e§l" + preset.displayName + " Profit", null, null, null, TITLE_HEIGHT, 0, null, null, false, null, 0, textWidth("§e§l" + preset.displayName + " Profit")));
+        rows.add(new Row("§e§l" + preset.displayName + " Profit", null, null, null, TITLE_HEIGHT, 0, null, null, false, null, 0, textWidth("§e§l" + preset.displayName + " Profit"), null));
         if (shown.isEmpty()) {
             rows.add(Row.text("§7No tracked drops yet.", null));
         } else {
@@ -218,8 +218,8 @@ final class ProfitTrackerHud {
                 int countWidth = textWidth("§7x§a§l" + String.format(Locale.US, "%,d", item.amount()));
                 String value = item.value() == null ? "§8Unknown" : "§6" + coins(item.value());
                 rows.add(new Row(name, quantityLeft ? null : count, value, c.details.showItemIcons ? item.stack() : null,
-                    ITEM_ROW_HEIGHT, ITEM_TEXT_Y, null, null, false, quantityLeft ? count : null, countWidth,
-                    quantityLeft ? textWidth(name) : nameColumn));
+                    ITEM_ROW_HEIGHT, ITEM_TEXT_Y, inventoryOpen ? Control.ITEM : null, null, false, quantityLeft ? count : null, countWidth,
+                    quantityLeft ? textWidth(name) : nameColumn, item.id()));
             }
         }
         int below = items.size() - offset - shown.size();
@@ -247,13 +247,28 @@ final class ProfitTrackerHud {
                 case ACTIONS -> rows.add(Row.text("§7" + preset.actionLabel, "§e" + String.format(Locale.US, "%,d", stats.actions)));
                 case UPTIME -> rows.add(Row.text("§7Uptime", "§b" + uptime(stats.activeMs)
                     + (ProfitTracker.paused(preset, System.currentTimeMillis()) ? " §c(paused)" : "")));
+                case PACE -> {
+                    // Always this session's pace, whichever period the tracker shows.
+                    if (!preset.slayer()) break;
+                    ProfitTracker.Stats session = ProfitTracker.stats(preset, ProfitTracker.Period.SESSION);
+                    String pace = SlayerPace.line(preset, session, period == ProfitTracker.Period.SESSION ? profit : profit(session, source));
+                    if (pace != null) rows.add(Row.text(pace, null));
+                }
             }
+        }
+        if (c.settings.goalMillions > 0) {
+            double goal = c.settings.goalMillions * 1_000_000d;
+            double share = Math.max(0, Math.min(1, profit / goal));
+            int filled = (int) Math.round(share * 10);
+            rows.add(Row.text("§7Goal " + "§a" + "|".repeat(filled) + "§8" + "|".repeat(10 - filled),
+                (share >= 1 ? "§a§l" : "§e") + coins(Math.max(0, profit)) + "§7/" + coins(goal) + " §8(" + Math.round(share * 100) + "%)"));
+            goalReached(preset, period, profit, goal);
         }
         if (inventoryOpen) {
             rows.add(control("§7Display Mode §a§l[" + period.label + "]", Control.PERIOD));
             rows.add(control("§7Price Source §e§l[" + source + "]", Control.PRICE_SOURCE));
             if (System.currentTimeMillis() < resetPendingUntil) {
-                rows.add(new Row("§c[Cancel]", null, "§a[Confirm]", null, ROW_HEIGHT, 0, Control.CANCEL, Control.CONFIRM, false, null, 0, textWidth("§c[Cancel]")));
+                rows.add(new Row("§c[Cancel]", null, "§a[Confirm]", null, ROW_HEIGHT, 0, Control.CANCEL, Control.CONFIRM, false, null, 0, textWidth("§c[Cancel]"), null));
             } else {
                 rows.add(control("§c[Reset " + period.label + "]", Control.RESET));
             }
@@ -261,12 +276,29 @@ final class ProfitTrackerHud {
         return rows;
     }
 
+    /** Says once per tracker and period (a new one each day for Today) when its goal is reached. */
+    private static final java.util.Set<String> GOALS_SAID = new java.util.HashSet<>();
+
+    private static void goalReached(ProfitTracker.Preset preset, ProfitTracker.Period period, double profit, double goal) {
+        String key = preset + ":" + period + ":" + (period == ProfitTracker.Period.TODAY ? java.time.LocalDate.now() : "") + ":" + (long) goal;
+        if (profit < goal || !GOALS_SAID.add(key)) return;
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            if (mc.player == null) return;
+            mc.gui.hud.getChat().addClientSystemMessage(Component.literal("[S2M] ").withStyle(ChatFormatting.LIGHT_PURPLE)
+                .append(Component.literal(preset.displayName + " profit goal reached: " + coins(goal) + " (" + period.label + ")!")
+                    .withStyle(ChatFormatting.GREEN)));
+            com.epic60869.sky2m.features.core.Sky2MAlerts.title(Component.literal("GOAL REACHED").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD),
+                Component.literal(preset.displayName + " " + coins(goal)).withStyle(ChatFormatting.GOLD));
+        });
+    }
+
     private static Row centered(String text) {
-        return new Row(text, null, null, null, ROW_HEIGHT, 0, null, null, true, null, 0, textWidth(text));
+        return new Row(text, null, null, null, ROW_HEIGHT, 0, null, null, true, null, 0, textWidth(text), null);
     }
 
     private static Row control(String text, Control control) {
-        return new Row(text, null, null, null, ROW_HEIGHT, 0, control, null, false, null, 0, textWidth(text));
+        return new Row(text, null, null, null, ROW_HEIGHT, 0, control, null, false, null, 0, textWidth(text), null);
     }
 
     /**
@@ -330,13 +362,13 @@ final class ProfitTrackerHud {
         for (Row row : rows) {
             int rightWidth = row.right() == null ? 0 : textWidth(row.right());
             if (row.control() != null) {
-                int primaryWidth = row.secondary() == null ? row.width() : textWidth(row.left());
-                Area area = new Area(row.control(), padding, y, primaryWidth, row.height());
+                int primaryWidth = row.control() == Control.ITEM ? width - padding * 2 : row.secondary() == null ? row.width() : textWidth(row.left());
+                Area area = new Area(row.control(), padding, y, primaryWidth, row.height(), row.itemId());
                 drawn.add(area);
                 if (mouseX != null && area.contains(mouseX, mouseY)) g.fill(area.x(), area.y(), area.x() + area.w(), area.y() + area.h(), CONTROL_HOVER);
             }
             if (row.secondary() != null) {
-                Area area = new Area(row.secondary(), width - padding - rightWidth, y, rightWidth, row.height());
+                Area area = new Area(row.secondary(), width - padding - rightWidth, y, rightWidth, row.height(), null);
                 drawn.add(area);
                 if (mouseX != null && area.contains(mouseX, mouseY)) g.fill(area.x(), area.y(), area.x() + area.w(), area.y() + area.h(), CONTROL_HOVER);
             }
@@ -361,6 +393,7 @@ final class ProfitTrackerHud {
     // ------------------------------------------------------------------------------------------------ in menus
 
     static void renderInScreen(GuiGraphicsExtractor g, int mouseX, int mouseY) {
+        if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return;
         areas.clear();
         bounds = null;
         ProfitTracker.Preset preset = ProfitTracker.shownPreset();
@@ -379,7 +412,7 @@ final class ProfitTrackerHud {
         g.pose().scale(p.scale, p.scale);
         for (Area area : draw(g, preset, rows, localX, localY)) {
             areas.add(new Area(area.control(), x + Math.round(area.x() * p.scale), y + Math.round(area.y() * p.scale),
-                Math.round(area.w() * p.scale), Math.round(area.h() * p.scale)));
+                Math.round(area.w() * p.scale), Math.round(area.h() * p.scale), area.itemId()));
         }
         g.pose().popMatrix();
         bounds = new int[]{x, y, Math.round(w * p.scale), Math.round(h * p.scale)};
@@ -388,6 +421,7 @@ final class ProfitTrackerHud {
 
     /** A click on one of the tracker's controls; true if it was one (the menu doesn't get it). */
     static boolean click(double mouseX, double mouseY) {
+        if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return false;
         ProfitTracker.Preset preset = boundsPreset;
         if (preset == null || bounds == null) return false;
         FeatureConfigs.ProfitTrackerSettings c = config(preset);
@@ -406,6 +440,10 @@ final class ProfitTrackerHud {
                     resetPendingUntil = 0;
                     ProfitTracker.reset(preset, period(preset));
                 }
+                case ITEM -> {
+                    editItem(preset, area.itemId());
+                    return true;
+                }
             }
             ROW_CACHE.clear();
             com.epic60869.sky2m.Sky2MConfig.saveCurrent(com.epic60869.sky2m.Sky2MConfig.current());
@@ -415,8 +453,31 @@ final class ProfitTrackerHud {
         return false;
     }
 
+    /**
+     * Clicking an item: the editor to set its amount or remove it. The change goes to every period (Session, Today and
+     * Total, by the same difference) and today's /s2 session, so they stay in step.
+     */
+    private static void editItem(ProfitTracker.Preset preset, String id) {
+        if (id == null) return;
+        ProfitTracker.Period shown = period(preset);
+        List<ProfitTracker.Stats> targets = new ArrayList<>();
+        targets.add(ProfitTracker.stats(preset, shown));
+        for (ProfitTracker.Period p : ProfitTracker.Period.values()) if (p != shown) targets.add(ProfitTracker.stats(preset, p));
+        SessionTracker.Session today = SessionTracker.session(-1);
+        if (today != null) targets.add(today.get(preset));
+        long amount = targets.getFirst().items.getOrDefault(id, 0L);
+        Screen parent = Minecraft.getInstance().gui.screen();
+        com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(new ProfitItemEditScreen(parent, id, amount, targets,
+            "Changes apply to Session, Today, Total and /s2 session.", () -> {
+                ROW_CACHE.clear();
+                ProfitTracker.markDirty();
+                SessionTracker.markDirty();
+            }));
+    }
+
     /** Scrolls the tracker's items when the mouse is over it; true if it did. */
     static boolean scroll(double mouseX, double mouseY, double amount) {
+        if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return false;
         ProfitTracker.Preset preset = boundsPreset;
         if (preset == null || bounds == null || amount == 0) return false;
         if (mouseX < bounds[0] || mouseX >= bounds[0] + bounds[2] || mouseY < bounds[1] || mouseY >= bounds[1] + bounds[3]) return false;
@@ -444,6 +505,16 @@ final class ProfitTrackerHud {
         if (abs >= 1_000_000) return format.format(value / 1_000_000) + "m";
         if (abs >= 1_000) return format.format(value / 1_000) + "k";
         return format.format(value);
+    }
+
+    /** A period's profit as the tracker works it out (coins and priced drops, minus costs), for the slayer Pace line. */
+    private static double profit(ProfitTracker.Stats stats, FeatureConfigs.ProfitPriceSource source) {
+        double revenue = stats.coins;
+        for (Map.Entry<String, Long> e : stats.items.entrySet()) {
+            double unit = Sky2MPriceTooltip.price(e.getKey(), source);
+            if (unit > 0) revenue += unit * e.getValue();
+        }
+        return revenue - stats.costs;
     }
 
     private static String signed(double value) {

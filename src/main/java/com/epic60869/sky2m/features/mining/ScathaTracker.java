@@ -106,7 +106,11 @@ public final class ScathaTracker {
 
     private static void tick() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null || !Sky2MLocation.inCrystalHollows()) return;
+        // Leaving the Hollows ends any "waiting for Scatha loot" session, so an unrelated drop can't be credited to it.
+        if (mc.level == null || mc.player == null || !Sky2MLocation.inCrystalHollows()) {
+            pendingSince = 0;
+            return;
+        }
         long now = System.currentTimeMillis();
         if (pendingSince > 0) {
             Boolean scatha = identify(mc);

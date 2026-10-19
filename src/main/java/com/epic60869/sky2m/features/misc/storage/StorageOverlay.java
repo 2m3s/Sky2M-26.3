@@ -65,6 +65,16 @@ public final class StorageOverlay {
             || screen instanceof AbstractContainerScreen<?> acs && CustomGui.get(acs) instanceof StorageOverlayCustom;
     }
 
+    /**
+     * While the storage overlay is showing, Sky2M's other HUDs and in-menu displays (Profit Trackers, Hunting, the Zealot
+     * counter, skill displays, the visitor shopping list, and the HUDs behind the screen) aren't drawn and don't take
+     * clicks: they covered the overlay's pages. The Storage Value box still shows.
+     */
+    public static boolean hidesOtherHuds() {
+        Screen screen = Minecraft.getInstance().gui.screen();
+        return screen != null && isOverlayScreen(screen);
+    }
+
     public static StorageOverviewScreen lastStorageOverlay;
     public static boolean skipNextStorageOverlayBackflip;
     public static StorageBackingHandle currentHandler;
@@ -218,6 +228,10 @@ public final class StorageOverlay {
         if (changed) StorageData.markDirty();
     }
 
+    private static final long EMPTY_PAGE_GRACE_MS = 2_000L;
+    private static Object pageSeenMenu;
+    private static long pageSeenAt;
+
     private static void rememberPage(StorageBackingHandle.Page handler, SortedMap<StoragePageSlot, StorageData.StorageInventory> data) {
         List<ItemStack> all = handler.handler().getItems();
         int end = Math.min(all.size(), handler.handler().getRowCount() * 9);
@@ -225,6 +239,17 @@ public final class StorageOverlay {
         List<ItemStack> newStacks = new ArrayList<>(all.subList(9, end));
         StorageData.StorageInventory existing = data.get(handler.storagePageSlot());
         if (existing != null && existing.inventory != null && existing.inventory.sameAs(newStacks)) return;
+        long now = System.currentTimeMillis();
+        if (handler.handler() != pageSeenMenu) {
+            pageSeenMenu = handler.handler();
+            pageSeenAt = now;
+        }
+        // A page reads empty until Hypixel sends its items; saving it then wiped the saved copy, and every page had to
+        // be opened again. An empty page only replaces saved items once it has stayed empty for a while.
+        if (existing != null && existing.inventory != null && newStacks.stream().allMatch(ItemStack::isEmpty)
+            && existing.inventory.stacks().stream().anyMatch(s -> !s.isEmpty()) && now - pageSeenAt < EMPTY_PAGE_GRACE_MS) {
+            return;
+        }
         if (existing == null) {
             existing = new StorageData.StorageInventory(handler.storagePageSlot(), null);
             data.put(handler.storagePageSlot(), existing);

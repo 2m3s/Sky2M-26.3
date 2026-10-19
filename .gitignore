@@ -11,3 +11,14 @@ out/
 .project
 *.launch
 *-prompt.md
+
+# Local agent configuration and test files (private, keep on PC only)
+AGENTS.md
+opencode.json
+opencode.json.backup
+opencode.json.backup-final
+opencode.json.before-v2-fix.bak
+opencode-glm-test.txt
+opencode-tool-test.txt
+*.bak
+.env

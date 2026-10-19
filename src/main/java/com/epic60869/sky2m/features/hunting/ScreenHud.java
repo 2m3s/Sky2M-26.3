@@ -52,6 +52,7 @@ final class ScreenHud {
     }
 
     private static void render(GuiGraphicsExtractor graphics) {
+        if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return;
         for (Entry entry : ENTRIES) {
             List<Component> lines = safeLines(entry);
             if (lines.isEmpty()) continue;
@@ -62,6 +63,7 @@ final class ScreenHud {
     }
 
     private static boolean click(double x, double y) {
+        if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return false;
         for (Entry entry : ENTRIES) {
             if (entry.onClick() == null) continue;
             List<Component> lines = safeLines(entry);

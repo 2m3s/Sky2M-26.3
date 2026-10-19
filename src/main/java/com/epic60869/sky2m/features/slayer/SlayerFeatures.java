@@ -59,7 +59,10 @@ public final class SlayerFeatures {
         Sky2MHuds.register("slayer_phase", "Slayer Boss Phase",
             () -> config() != null && config().phaseDisplay,
             () -> bossLines,
-            List.of(Component.literal("☠ Voidgloom Seraph 45M❤").withStyle(ChatFormatting.RED)),
+            List.of(Component.literal("☠ Voidgloom Seraph 45M❤").withStyle(ChatFormatting.RED),
+                Component.literal("Phase 1: ").withStyle(ChatFormatting.YELLOW).append(Component.literal("18.1s").withStyle(ChatFormatting.WHITE)),
+                Component.literal("Downtime: ").withStyle(ChatFormatting.DARK_AQUA).append(Component.literal("3.4s").withStyle(ChatFormatting.WHITE)),
+                Component.literal("Phase 2: ").withStyle(ChatFormatting.GREEN).append(Component.literal("6.2s").withStyle(ChatFormatting.WHITE))),
             8, 220);
     }
 
@@ -181,6 +184,8 @@ public final class SlayerFeatures {
             phaseBoss = "";
         }
         FeatureConfigs.Slayer config = config();
+        // Outside the owner check: the phase times keep showing while a Tier 5 Tarantula is gone between phases.
+        if (config != null && config.t5PhaseTimes && targetOwner.equals(name)) lines.addAll(SlayerPhaseTimer.t5Lines());
         if (config != null && config.showMinibosses) addMinibossLines(mc, lines);
         bossLines = lines;
     }

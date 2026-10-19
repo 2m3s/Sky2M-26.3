@@ -506,7 +506,7 @@ public final class ItemList {
         if (mainRect != null && mainRect.contains(x, y)) {
             if (filterRect.contains(x, y)) {
                 ItemListData.Category[] all = ItemListData.Category.values();
-                filter = event.button() == 1 ? ItemListData.Category.ALL : all[(filter.ordinal() + 1) % all.length];
+                filter = event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT ? ItemListData.Category.ALL : all[(filter.ordinal() + 1) % all.length];
                 config().lastFilter = filter.name();
                 mainPage = 0;
                 refreshSearch();
@@ -517,7 +517,7 @@ public final class ItemList {
                 return true;
             }
             if (boxRect.contains(x, y)) {
-                if (event.button() == 1) box.setValue("");
+                if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT) box.setValue("");
                 return false;
             }
             if (prevRect != null && prevRect.contains(x, y)) {
@@ -563,9 +563,9 @@ public final class ItemList {
                 int index = favPage * Math.max(1, favCells.size()) + i;
                 if (index >= favs.size()) break;
                 Favourite f = favs.get(index);
-                if (f.recipe() != null && event.button() == 0 && event.hasControlDown()) {
+                if (f.recipe() != null && event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT && event.hasControlDown()) {
                     ItemListFavourites.pin(ItemListFavourites.isPinned(f.recipe()) ? null : f.recipe());
-                } else if (f.recipe() != null && event.button() == 0) {
+                } else if (f.recipe() != null && event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) {
                     open(screen, ItemListStacks.stack(f.id()).getHoverName().getString(), List.of(f.recipe()));
                 } else {
                     click(event.button(), f.id(), screen);

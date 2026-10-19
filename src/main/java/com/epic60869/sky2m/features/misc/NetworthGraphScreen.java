@@ -17,7 +17,8 @@ import java.util.Locale;
 
 /**
  * /s2 networth: your saved networth as a line graph, one profile at a time, in the same dark panel as Sky2M's other
- * screens. Hover the graph for a snapshot's date, value and change from the one before.
+ * screens. Hover the graph for a snapshot's date, value and change from the one before. /s2 sacks history draws your
+ * sacks' daily value ({@link SackValueHistory}) in the same graph; a button switches between the two.
  */
 public final class NetworthGraphScreen extends Screen {
     private static final int PANEL = 0xC0101216;
@@ -31,9 +32,20 @@ public final class NetworthGraphScreen extends Screen {
     private String profile;
     private Button profileButton;
     private int panelX, panelY, panelW, panelH;
+    /** Sack value history instead of networth. */
+    private final boolean sacks;
 
     public NetworthGraphScreen() {
-        super(Component.literal("Networth History"));
+        this(false);
+    }
+
+    public NetworthGraphScreen(boolean sacks) {
+        super(Component.literal(sacks ? "Sack Value History" : "Networth History"));
+        this.sacks = sacks;
+    }
+
+    private List<NetworthHistory.Snapshot> history() {
+        return sacks ? SackValueHistory.history() : NetworthHistory.history();
     }
 
     @Override
@@ -44,43 +56,55 @@ public final class NetworthGraphScreen extends Screen {
         panelH = Math.max(100, height - panelY - 36);
         profiles.clear();
         LinkedHashSet<String> seen = new LinkedHashSet<>();
-        List<NetworthHistory.Snapshot> all = NetworthHistory.history();
+        List<NetworthHistory.Snapshot> all = history();
         for (int i = all.size() - 1; i >= 0; i--) seen.add(all.get(i).profile);
         profiles.addAll(seen);
         if (profile == null || !profiles.contains(profile)) profile = profiles.isEmpty() ? null : profiles.getFirst();
 
         int y = height - 28;
-        addRenderableWidget(Button.builder(Component.literal("Save Now"), b -> NetworthHistory.snapshot(true))
-            .bounds(width / 2 - 155, y, 100, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("Save Now"), b -> {
+            if (sacks) {
+                SackValueHistory.saveNow();
+                rebuildWidgets();
+            } else {
+                NetworthHistory.snapshot(true);
+            }
+        }).bounds(width / 2 - 207, y, 100, 20).build());
         profileButton = addRenderableWidget(Button.builder(profileLabel(), b -> {
             if (profiles.size() < 2) return;
             profile = profiles.get((profiles.indexOf(profile) + 1) % profiles.size());
             b.setMessage(profileLabel());
-        }).bounds(width / 2 - 50, y, 100, 20).build());
+        }).bounds(width / 2 - 103, y, 100, 20).build());
         profileButton.active = profiles.size() > 1;
+        addRenderableWidget(Button.builder(Component.literal(sacks ? "Networth" : "Sack Value"),
+            b -> minecraft.gui.setScreen(new NetworthGraphScreen(!sacks))).bounds(width / 2 + 1, y, 100, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose())
-            .bounds(width / 2 + 55, y, 100, 20).build());
+            .bounds(width / 2 + 105, y, 100, 20).build());
     }
 
     private Component profileLabel() {
-        return Component.literal(profile == null ? "No profile" : profile);
+        if (profile == null) return Component.literal("No profile");
+        // Sack values are kept under the profile id; a shortened one fits the button.
+        return Component.literal(sacks && profile.length() > 12 ? "Profile " + profile.substring(0, 8) : profile);
     }
 
     private List<NetworthHistory.Snapshot> points() {
         List<NetworthHistory.Snapshot> out = new ArrayList<>();
-        for (NetworthHistory.Snapshot s : NetworthHistory.history()) if (s.profile.equals(profile)) out.add(s);
+        for (NetworthHistory.Snapshot s : history()) if (s.profile.equals(profile)) out.add(s);
         out.sort(Comparator.comparingLong(s -> s.time));
         return out;
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        g.centeredText(font, Component.literal("Networth History").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), width / 2, 17, 0xFFFFFFFF);
+        g.centeredText(font, getTitle().copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), width / 2, 17, 0xFFFFFFFF);
         g.fill(panelX, panelY, panelX + panelW, panelY + panelH, PANEL);
         g.outline(panelX, panelY, panelW, panelH, PANEL_BORDER);
         List<NetworthHistory.Snapshot> points = points();
         if (points.isEmpty()) {
-            g.centeredText(font, Component.literal("No snapshots yet. Turn on Misc > Networth History, or press Save Now.").withStyle(ChatFormatting.GRAY),
+            String empty = sacks ? "No values yet. Turn on Misc > Sacks Value and open your sacks."
+                : "No snapshots yet. Turn on Misc > Networth History, or press Save Now.";
+            g.centeredText(font, Component.literal(empty).withStyle(ChatFormatting.GRAY),
                 width / 2, panelY + panelH / 2 - 4, LABEL);
             super.extractRenderState(g, mouseX, mouseY, delta);
             return;

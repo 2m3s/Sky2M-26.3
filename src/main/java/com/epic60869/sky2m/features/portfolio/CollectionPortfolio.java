@@ -215,9 +215,45 @@ public final class CollectionPortfolio {
             default -> id.replace(':', '-');
         };
         ItemStack stack = RepoItems.itemStack(neuId);
+        // Plain vanilla items with an old damage value (RAW_FISH:1, LOG:1, INK_SACK:3...) aren't SkyBlock items, so
+        // the repo has nothing for them: use the matching vanilla item.
+        if (stack.is(net.minecraft.world.item.Items.BARRIER)) {
+            net.minecraft.world.item.Item vanilla = VANILLA_ICONS.get(id);
+            if (vanilla != null) stack = new ItemStack(vanilla);
+        }
         if (RepoItems.itemsLoaded()) ICONS.put(id, stack);
         return stack;
     }
+
+    /** Collections whose ids are old damage-value items, as their vanilla item. */
+    private static final Map<String, net.minecraft.world.item.Item> VANILLA_ICONS = Map.ofEntries(
+        Map.entry("RAW_FISH", net.minecraft.world.item.Items.COD),
+        Map.entry("RAW_FISH:1", net.minecraft.world.item.Items.SALMON),
+        Map.entry("RAW_FISH:2", net.minecraft.world.item.Items.TROPICAL_FISH),
+        Map.entry("RAW_FISH:3", net.minecraft.world.item.Items.PUFFERFISH),
+        Map.entry("LOG", net.minecraft.world.item.Items.OAK_LOG),
+        Map.entry("LOG:1", net.minecraft.world.item.Items.SPRUCE_LOG),
+        Map.entry("LOG:2", net.minecraft.world.item.Items.BIRCH_LOG),
+        Map.entry("LOG:3", net.minecraft.world.item.Items.JUNGLE_LOG),
+        Map.entry("LOG_2", net.minecraft.world.item.Items.ACACIA_LOG),
+        Map.entry("LOG_2:1", net.minecraft.world.item.Items.DARK_OAK_LOG),
+        Map.entry("SAND", net.minecraft.world.item.Items.SAND),
+        Map.entry("SAND:1", net.minecraft.world.item.Items.RED_SAND),
+        Map.entry("INK_SACK", net.minecraft.world.item.Items.INK_SAC),
+        Map.entry("INK_SACK:3", net.minecraft.world.item.Items.COCOA_BEANS),
+        Map.entry("INK_SACK:4", net.minecraft.world.item.Items.LAPIS_LAZULI),
+        Map.entry("WATER_LILY", net.minecraft.world.item.Items.LILY_PAD),
+        Map.entry("MYCEL", net.minecraft.world.item.Items.MYCELIUM),
+        Map.entry("DOUBLE_PLANT", net.minecraft.world.item.Items.SUNFLOWER),
+        Map.entry("CARROT_ITEM", net.minecraft.world.item.Items.CARROT),
+        Map.entry("POTATO_ITEM", net.minecraft.world.item.Items.POTATO),
+        Map.entry("NETHER_STALK", net.minecraft.world.item.Items.NETHER_WART),
+        Map.entry("ENDER_STONE", net.minecraft.world.item.Items.END_STONE),
+        Map.entry("SULPHUR", net.minecraft.world.item.Items.GUNPOWDER),
+        Map.entry("PORK", net.minecraft.world.item.Items.PORKCHOP),
+        Map.entry("RAW_CHICKEN", net.minecraft.world.item.Items.CHICKEN),
+        Map.entry("CLAY_BALL", net.minecraft.world.item.Items.CLAY_BALL),
+        Map.entry("MELON", net.minecraft.world.item.Items.MELON_SLICE));
 
     // ----- Fetching -----
 

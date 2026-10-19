@@ -88,7 +88,7 @@ final class WitherDoorScanner {
                 }
                 int wx = START + gx * HALF_ROOM;
                 int wz = START + gz * HALF_ROOM;
-                if (!client.level.hasChunk(wx >> 4, wz >> 4)) {
+                if (!com.epic60869.sky2m.sim.util.SimChunks.isLoaded(client.level, wx >> 4, wz >> 4)) {
                     continue;
                 }
                 int height = topLayer(client, mutable, wx, wz, off);

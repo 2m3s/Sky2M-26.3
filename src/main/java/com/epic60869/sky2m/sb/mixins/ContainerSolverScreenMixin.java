@@ -53,6 +53,8 @@ public abstract class ContainerSolverScreenMixin {
 			return;
 		}
 		com.epic60869.sky2m.features.misc.PricePaid.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot);
+		// Sky2M: Party Finder Stats remembers the floor of the group you join or create.
+		com.epic60869.sky2m.features.dungeons.PartyFinderStats.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot);
 		// Sky2M: visitor reward warning (blocked offer buttons) and the Supercraft button.
 		if (com.epic60869.sky2m.features.garden.visitor.GardenVisitors.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot, input)) {
 			ci.cancel();

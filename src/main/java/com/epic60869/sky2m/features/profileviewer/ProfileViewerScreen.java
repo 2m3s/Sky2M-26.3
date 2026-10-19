@@ -56,7 +56,7 @@ public final class ProfileViewerScreen extends Screen {
         INVENTORIES("Inventories", Items.CHEST), PETS("Pets", Items.BONE), COLLECTIONS("Collections", Items.ITEM_FRAME),
         MINING("Mining & Foraging", Items.DIAMOND_PICKAXE), BESTIARY("Bestiary", Items.ZOMBIE_HEAD), CRIMSON("Crimson Isle", Items.BLAZE_POWDER),
         MUSEUM("Museum", Items.GOLD_BLOCK), RIFT("Rift", Items.ENDER_EYE), FARMING("Farming & Garden", Items.WHEAT),
-        NETWORTH("Networth", Items.GOLD_INGOT), WEIGHT("Weight", Items.ANVIL), MISC("Misc", Items.BOOK);
+        NETWORTH("Networth", Items.GOLD_INGOT), FISHING("Fishing", Items.FISHING_ROD), MISC("Misc", Items.BOOK);
 
         final String label;
         final ItemStack icon;
@@ -803,7 +803,7 @@ public final class ProfileViewerScreen extends Screen {
             }
         }
         if (player == null) return super.mouseClicked(event, doubleClick);
-        if (event.button() == 0) {
+        if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) {
             for (Hotspot h : List.copyOf(hotspots)) {
                 if (in(mx, my, h.x(), h.y(), h.w(), h.h())) {
                     h.action().run();
@@ -824,7 +824,7 @@ public final class ProfileViewerScreen extends Screen {
                 int bx = left + 8, by = top + 18 + 150 + 18;
                 if (in(mx, my, bx, by, 100, 14) && player.profiles().size() > 1) {
                     int n = player.profiles().size();
-                    profileIndex = (profileIndex + (mx < bx + 50 && event.button() == 0 ? n - 1 : 1)) % n;
+                    profileIndex = (profileIndex + (mx < bx + 50 && event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT ? n - 1 : 1)) % n;
                     equipModel();
                     pages.reset();
                     return true;

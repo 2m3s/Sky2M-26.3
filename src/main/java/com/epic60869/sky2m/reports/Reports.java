@@ -83,6 +83,8 @@ public final class Reports {
 
     public static final int TITLE_MAX = 100;
     public static final int MESSAGE_MAX = 1000;
+    /** The longest description the server takes. */
+    public static final int DESCRIPTION_MAX = 4000;
     /** Shortest gap between two sends (new reports and replies); the server enforces it too. */
     static final long SEND_GAP_MS = 3_000L;
 
@@ -467,7 +469,8 @@ public final class Reports {
         pendingSubmitTitle = t;
         pendingSubmitDescription = d;
         JsonObject p = Sbc.packet("reportSubmit");
-        p.addProperty("type", type.id);
+        // "type" is the packet's own name; overwriting it with "bug"/"suggestion" made the server drop the report.
+        p.addProperty("reportType", type.id);
         p.addProperty("title", t);
         p.addProperty("description", d);
         p.addProperty("modVersion", version());

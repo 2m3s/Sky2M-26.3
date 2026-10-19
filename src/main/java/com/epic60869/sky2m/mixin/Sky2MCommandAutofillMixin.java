@@ -62,23 +62,9 @@ public abstract class Sky2MCommandAutofillMixin {
         Suggestions ours = CommandAutofill.suggest(uptoCursor);
         if (ours == null) return;
 
-        CompletableFuture<Suggestions> original = pendingSuggestions;
-        CompletableFuture<Suggestions> mine;
-        if (original != null && original.isDone()) {
-            Suggestions theirs = original.isCompletedExceptionally() ? null : original.getNow(null);
-            mine = CompletableFuture.completedFuture(theirs == null ? ours : CommandAutofill.merge(uptoCursor, theirs, ours));
-        } else {
-            mine = CompletableFuture.completedFuture(ours);
-            if (original != null) {
-                // The server answers later: add its suggestions if it has any and the input hasn't changed since.
-                original.thenAccept(theirs -> {
-                    if (pendingSuggestions != mine || theirs == null || theirs.isEmpty()) return;
-                    boolean shown = suggestions != null;
-                    pendingSuggestions = CompletableFuture.completedFuture(CommandAutofill.merge(uptoCursor, theirs, ours));
-                    if (shown) showSuggestions(false);
-                });
-            }
-        }
+        // Replace server suggestions instead of merging them. Hypixel's own AH/Bazaar
+        // search suggestions can otherwise take over the popup and show its search menu.
+        CompletableFuture<Suggestions> mine = CompletableFuture.completedFuture(ours);
         pendingSuggestions = mine;
         if (allowSuggestions && Minecraft.getInstance().options.autoSuggestions().get()) showSuggestions(false);
     }

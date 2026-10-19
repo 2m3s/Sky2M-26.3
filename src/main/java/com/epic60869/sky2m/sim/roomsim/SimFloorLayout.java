@@ -181,7 +181,11 @@ public final class SimFloorLayout {
      * point of it, and this class is only used by the random generator.
      */
     private static final java.util.List<java.util.Set<String>> EXCLUSIVE_GROUPS = java.util.List.of(
-            java.util.Set.of("higher blaze", "lower blaze"));
+            java.util.Set.of("higher blaze", "lower blaze"),
+            // NOT a Hypixel rule - a sim limit: both rooms run on SimQuizPuzzle, which holds one arena, so the second was
+            // never armed and never asked its question; Auto Secret waited Puzzle Wait's 30 s in it and moved on with
+            // the puzzle undone (fullclear-1016 run 020, Quiz beside Three Weirdos). Lift this when the puzzle holds two.
+            java.util.Set.of("quiz", "three weirdos"));
 
     private SimFloorLayout() {
     }
@@ -266,6 +270,21 @@ public final class SimFloorLayout {
     private static final int FLOOR_RETRIES = 12;
     private static final int PINNED_FLOOR_RETRIES = 4;
 
+    /**
+     * Past this, {@link #run} keeps the best floor it has rather than laying out another. The designer plans on the
+     * render thread, and a request the small floors cannot hold missed on all 12 whole floors at ~190 ms each: a
+     * 2.3 s freeze on every press. An exact floor takes 3-40 ms and is never cut short by this.
+     */
+    private static final long RETRY_BUDGET_NANOS = 400_000_000L;
+
+    /** Blind carves (a door through a wall with no walkable floor behind it) the fill pass wanted and was refused - only
+     *  goes up; read by the testkit, which also counts the "NOT a walkable cut" note that must never appear again. */
+    private static final java.util.concurrent.atomic.AtomicInteger BLIND_REFUSED = new java.util.concurrent.atomic.AtomicInteger();
+
+    public static int blindCarvesRefused() {
+        return BLIND_REFUSED.get();
+    }
+
     /** The one attempt loop both {@link #generate} overloads use. {@code pinned} may be null or empty. */
     private static PinnedFloor run(Map<String, RoomLibrary.Room> usable, int minRooms, int wantCells,
                                    int puzzles, int roomsToBlood, Map<Integer, String> pinned, Random rng) {
@@ -279,7 +298,13 @@ public final class SimFloorLayout {
         int refused = resolvePinsRefused(pinned, usable);
         PinnedFloor best = null;
         int bestMissed = Integer.MAX_VALUE;
+        long started = System.nanoTime();
         for (int t = 0; t < tries; t++) {
+            if (best != null && System.nanoTime() - started > RETRY_BUDGET_NANOS) {
+                LOGGER.info("Sim floor: stopped after {} whole floor(s), {} ms", t,
+                        (System.nanoTime() - started) / 1_000_000);
+                break;
+            }
             PinnedFloor out = runOnce(pool, usable, minRooms, wantCells, puzzles, roomsToBlood, pinned, rng);
             if (out == null) {
                 continue;
@@ -466,6 +491,24 @@ public final class SimFloorLayout {
             }
         }
         return new PinnedFloor(floor, best.reached(), unused, List.of());
+    }
+
+    /**
+     * A room Hypixel only ever gives ONE door: a puzzle, a trap, Blood, the Entrance, a champion (miniboss) room or a
+     * rare room. Every one of these types measures exactly one doorway in the shipped captures (RoomDoors.of), so the layout
+     * only ever joins them there; the fill pass's carve through a wall must never pick one.
+     */
+    public static boolean isDeadEnd(String name, String type) {
+        if (isTrap(name, type)) {
+            return true;
+        }
+        if (type == null) {
+            return false;
+        }
+        return switch (type.toUpperCase(Locale.ROOT)) {
+            case "PUZZLE", "BLOOD", "ENTRANCE", "CHAMPION", "RARE" -> true;
+            default -> false;
+        };
     }
 
     /**
@@ -851,64 +894,108 @@ public final class SimFloorLayout {
 
         /**
          * Step 3: a 1x1 whose own doorway faces a neighbour, the door carved through that neighbour's wall - only
-         * where the cut lands on floor he can walk (RoomDoors.carvable). {@link #carveOnce(boolean)} with false is
-         * the last resort that carves anyway, so the cell, trap and puzzle guarantees hold as they did.
+         * where the cut lands on floor he can walk (RoomDoors.carvable), and of every such wall on the floor the one
+         * with the least wall behind its plane ({@link RoomDoors#carveCost}). {@link #carveOnce(boolean)} with false is
+         * the last resort that carves anyway, so the cell, trap and puzzle guarantees hold as they did. Never into a
+         * room {@link #isDeadEnd} - that cut would be its second door.
+         *
+         * <p>Thinnest first because every carve is a doorway the capture does not have, and a thick one is a tunnel through
+         * a decorated wall.
          */
         boolean carveOnce() {
             return carveOnce(true);
         }
 
+        /** How many doors were carved without a walkable floor behind them (the unchecked last resort). */
+        int carvedBlind;
+
         boolean carveOnce(boolean checked) {
+            if (!checked) {
+                // Never a door he cannot walk through. A blind carve once put Cell at 5,5 through Scaffolding:
+                // Cell's only door led into a wall, no warp or walk reached it. A floor that needed one is laid
+                // out again (run's FLOOR_RETRIES), and if none can do without, the floor is kept a room short instead.
+                BLIND_REFUSED.incrementAndGet();
+                return false;
+            }
+            int bestCost = Integer.MAX_VALUE;
+            int bestCell = -1;
+            int bestTry = -1;
+            Candidate bestRoom = null;
+            int bestRotation = -1;
             for (int cell = 0; cell < GRID * GRID; cell++) {
                 if (occupied[cell] >= 0) {
                     continue;
                 }
                 int cx = cell % GRID;
                 int cz = cell / GRID;
-                for (int tryNo = 0; tryNo < 8; tryNo++) {
-                    int side = tryNo % 4;
+                for (int tryNo = 0; tryNo < 4; tryNo++) {
+                    int side = tryNo;
                     Placement nb = at(cx + RoomDoors.DX[side], cz + RoomDoors.DZ[side]);
-                    if (nb == null || "BLOOD".equalsIgnoreCase(nb.type()) || isOneDoor(nb.type())
-                            || (tryNo < 4 && "ENTRANCE".equalsIgnoreCase(nb.type()))) {
-                        continue;   // blood and a puzzle have exactly one way in; the green room only as a last resort
+                    if (nb == null || isDeadEnd(nb.name(), nb.type())) {
+                        // A room Hypixel only ever gives one door is never carved into, not even as a last resort:
+                        // the cut would be its second door.
+                        continue;
                     }
-                    if (checked && !carvableFrom(nb, cx, cz, side)) {
+                    int cost = checked ? carveCostFrom(nb, cx, cz, side) : 0;
+                    if (cost < 0) {
                         continue;   // the cut would open onto a wall, a platform or a drop - RoomDoors.carvable
+                    }
+                    if (cost >= bestCost) {
+                        continue;
                     }
                     for (Candidate c : order) {
                         if (c.area(0) != 1 || !available(c) || forbiddenPair(c.type(), nb.type())) {
                             continue;
                         }
-                        for (int r = 0; r < 4; r++) {
+                        int found = -1;
+                        for (int r = 0; r < 4 && found < 0; r++) {
                             if (c.byRotation()[r].edges().contains(RoomDoors.edge(side, 0))) {
-                                commitFill(c, r, cx, cz, side);
-                                carvedNotes.add(c.name() + " at " + cx + "," + cz + " through " + nb.name()
-                                        + (checked ? "" : " (NOT a walkable cut - nothing else fitted)"));
-                                return true;
+                                found = r;
                             }
                         }
+                        if (found >= 0) {
+                            bestCost = cost;
+                            bestCell = cell;
+                            bestTry = tryNo;
+                            bestRoom = c;
+                            bestRotation = found;
+                            break;
+                        }
+                    }
+                    if (!checked && bestRoom != null) {
+                        break;   // the blind carve keeps its old order: the first that fits
                     }
                 }
+                if ((!checked || bestCost == 0) && bestRoom != null) {
+                    break;   // nothing beats a wall the cut comes straight through
+                }
             }
-            return false;
+            if (bestRoom == null) {
+                return false;
+            }
+            int cx = bestCell % GRID;
+            int cz = bestCell / GRID;
+            int side = bestTry % 4;
+            Placement nb = at(cx + RoomDoors.DX[side], cz + RoomDoors.DZ[side]);
+            commitFill(bestRoom, bestRotation, cx, cz, side);
+            carvedNotes.add(bestRoom.name() + " at " + cx + "," + cz + " through " + nb.name()
+                    + (checked ? (bestCost == 0 ? "" : " (" + bestCost + " blocks behind its wall)")
+                    : " (NOT a walkable cut - nothing else fitted)"));
+            carvedBlind += checked ? 0 : 1;
+            return true;
         }
 
         /**
-         * Whether a door carved from the empty cell {@code (cx, cz)} into its neighbour {@code nb} on {@code side}
-         * lands somewhere he can walk in and back out of: {@link RoomDoors#carvable} at nb's placed rotation, on
-         * the wall facing the empty cell. A room it cannot measure is refused.
+         * {@link RoomDoors#carveCost} of the cut from the empty cell {@code (cx, cz)} into its neighbour {@code nb} on
+         * {@code side}, at nb's placed rotation, on the wall facing the empty cell; -1 when it does not land somewhere
+         * he can walk in and back out of, or nb cannot be measured.
          */
-        private boolean carvableFrom(Placement nb, int cx, int cz, int side) {
-            RoomDoors.Mask m = RoomDoors.carvable(nb.name());
-            if (m == null) {
-                return false;
-            }
-            m = RoomDoors.rotate(m, nb.rotation());
+        private int carveCostFrom(Placement nb, int cx, int cz, int side) {
             int wall = (side + 2) % 4;
             int nx = cx + RoomDoors.DX[side];
             int nz = cz + RoomDoors.DZ[side];
             int index = wall == RoomDoors.NORTH || wall == RoomDoors.SOUTH ? nx - nb.originX() : nz - nb.originZ();
-            return m.has(wall, index);
+            return RoomDoors.carveCost(nb.name(), nb.rotation(), nb.cellsX(), nb.cellsZ(), wall, index);
         }
 
         private void commitFill(Candidate c, int r, int ox, int oz, int forcedSide) {

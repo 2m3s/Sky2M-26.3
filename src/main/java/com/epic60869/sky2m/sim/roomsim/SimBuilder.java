@@ -402,6 +402,7 @@ public final class SimBuilder {
             doorWork.add(() -> {
                 SimDoors.CHESTS_CARVED_AWAY = 0;
                 SimDoors.FLOORED = 0;
+                SimDoors.KEPT_TRIM = 0;
                 // BEFORE the carves, so the carve reopens the one door this room really has - see
                 // closeGreenRoomShell.
                 closeGreenRoomShell(level);
@@ -412,8 +413,9 @@ public final class SimBuilder {
                     SimDoors.sealDoorway(level, new net.minecraft.core.BlockPos(sc[0], 70, sc[1]), sc[2] == 1);
                 }
                 LOGGER.info("Sim doors: {} carved, {} sealed, {} secret chest(s) removed by the carve, "
-                                + "{} block(s) of floor laid where a doorway had none",
-                        doorCells.size(), sealCells.size(), SimDoors.CHESTS_CARVED_AWAY, SimDoors.FLOORED);
+                                + "{} block(s) of floor laid where a doorway had none, {} doorway trim block(s) kept",
+                        doorCells.size(), sealCells.size(), SimDoors.CHESTS_CARVED_AWAY, SimDoors.FLOORED,
+                        SimDoors.KEPT_TRIM);
             });
             final int firstCell = entranceCell[0] >= 0 ? entranceCell[0] : firstPlacedCell[0];
             SimBuildQueue.whenDone(() -> {
@@ -1619,7 +1621,7 @@ public final class SimBuilder {
         for (boolean[] row : present) {
             java.util.Arrays.fill(row, true);
         }
-        int[] missing = lMissingTile(room, tilesX, tilesZ);
+        int[] missing = RoomLShape.missingTile(room);
         if (missing != null) {
             present[missing[0]][missing[1]] = false;
         }
@@ -1648,46 +1650,6 @@ public final class SimBuilder {
         if (gx >= 0 && gz >= 0 && gx < DungeonLayout.GRID && gz < DungeonLayout.GRID) {
             cellRoom[gz * DungeonLayout.GRID + gx] = 0;
         }
-    }
-
-    /** For an L room (2x2 capture, database shape "L"), its missing quarter as {tx, tz}; null for any other room. */
-    private static int[] lMissingTile(RoomLibrary.Room room, int tilesX, int tilesZ) {
-        if (tilesX != 2 || tilesZ != 2) {
-            return null;
-        }
-        com.epic60869.sky2m.sim.roomdatabase.RoomEntry entry =
-                com.epic60869.sky2m.sim.roomdatabase.RoomDatabase.lookupByName(room.name);
-        if (entry == null || entry.shape == null || !"L".equalsIgnoreCase(entry.shape.trim())) {
-            return null;
-        }
-        int[] best = null;
-        long bestSolid = Long.MAX_VALUE;
-        for (int tx = 0; tx < 2; tx++) {
-            for (int tz = 0; tz < 2; tz++) {
-                int x0 = room.margin + tx * (RoomLibrary.TILE + 1);
-                int z0 = room.margin + tz * (RoomLibrary.TILE + 1);
-                long solid = 0;
-                for (int y = 66; y <= 99; y++) {
-                    for (int a = 0; a < RoomLibrary.TILE; a++) {
-                        for (int b = 0; b < RoomLibrary.TILE; b++) {
-                            short id = room.at(x0 + a, y, z0 + b);
-                            if (id >= 0 && id < room.palette.size() && !room.palette.get(id).endsWith("air")) {
-                                solid++;
-                            }
-                        }
-                    }
-                }
-                if (solid < bestSolid) {
-                    bestSolid = solid;
-                    best = new int[]{tx, tz};
-                }
-            }
-        }
-        if (bestSolid > 0) {
-            LOGGER.warn("Sim map: L room {} has no empty quarter - using tile {},{} ({} solid blocks)", room.name,
-                    best[0], best[1], bestSolid);
-        }
-        return best;
     }
 
     /** The map code for a room loaded on its own, so the sidebar's "Room:" and every room lookup name it. */

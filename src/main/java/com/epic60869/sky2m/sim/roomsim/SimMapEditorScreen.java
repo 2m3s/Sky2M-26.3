@@ -597,7 +597,7 @@ public class SimMapEditorScreen extends Screen {
             int gx = (int) ((mx - gridX) / cell);
             int gz = (int) ((my - gridY) / cell);
             int slot = gz * GRID + gx;
-            if (event.button() == 1) {
+            if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT) {
                 Integer anchor = occupiedBy.get(slot);
                 if (anchor != null) {
                     planStale();
@@ -641,7 +641,7 @@ public class SimMapEditorScreen extends Screen {
             int row = (int) ((my - top + scroll) / ROW_H);
             if (row >= 0 && row < listed.size()) {
                 if (panel == Panel.MAPS) {
-                    if (event.button() == 1) {
+                    if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT) {
                         SimMapPresets.remove(listed.get(row));
                         refilter();
                         status = "deleted that saved map";

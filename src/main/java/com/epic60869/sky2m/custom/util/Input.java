@@ -52,9 +52,15 @@ public final class Input {
         };
     }
 
-    /** Whether a key (SDL key code) is held. */
+    /**
+     * Whether a key (SDL key code) is held. An unset key (0, SDL's unknown, or -1, which is "unknown" in 26.2 and what
+     * settings carried over from it hold) or a code past SDL's keyboard state is never held: InputConstants.isKeyDown
+     * reads that state by index, and -1 crashed the game every tick (a Hunting fusion keybind left unset).
+     */
     public static boolean keyDown(int key) {
-        return key != InputConstants.UNKNOWN.getValue() && InputConstants.isKeyDown(key);
+        if (key <= 0 || key == InputConstants.UNKNOWN.getValue()) return false;
+        java.nio.ByteBuffer state = org.lwjgl.sdl.SDLKeyboard.SDL_GetKeyboardState();
+        return state != null && key < state.limit() && InputConstants.isKeyDown(key);
     }
 
     /** The key's name as Minecraft shows it ("A", "Left Shift"...). */

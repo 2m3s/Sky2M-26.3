@@ -7,13 +7,16 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/** /s2 cosmetics: pick the badge shown before your name and the cape you wear, from the ones you've unlocked. */
+/** /s2 cosmetics: pick the emblem shown before your name and the cape you wear, from the ones you've unlocked. */
 public final class SbcCosmeticsScreen extends Screen {
-    private record Option(String id, String name, String symbol, int colour, String url, String description, boolean owned) {}
+    /** {@code image}: an uploaded emblem's picture URL (drawn instead of {@code symbol}). */
+    private record Option(String id, String name, String symbol, int colour, String url, String description, boolean owned, String image) {}
 
     private static final int PANEL_W = 170;
     private static final int ROW = 14;
@@ -81,7 +84,7 @@ public final class SbcCosmeticsScreen extends Screen {
         String description = Sbc.str(o, "description");
         if (description.isBlank()) description = Sbc.str(o, "unlock");
         return new Option(id, name.isBlank() ? id : name, Sbc.str(o, "symbol"), Sbc.hex(Sbc.str(o, "color"), 0xFFFFFF),
-            Sbc.str(o, "url"), description, owned);
+            Sbc.str(o, "url"), description, owned, Sbc.str(o, "image"));
     }
 
     private int left() {
@@ -105,7 +108,7 @@ public final class SbcCosmeticsScreen extends Screen {
         g.centeredText(font, tier.isEmpty() ? "No supporter tier" : "Supporter tier: " + tier, width / 2, top, 0xFF000000 | (tier.isEmpty() ? 0x777777 : tierColour));
 
         int y0 = top + 16;
-        drawPanel(g, "Badge", badges, shownBadge, left, y0, mouseX, mouseY, false);
+        drawPanel(g, "Emblem", badges, shownBadge, left, y0, mouseX, mouseY, false);
         drawPanel(g, "Cape", capes, cape, left + PANEL_W + 10, y0, mouseX, mouseY, true);
 
         // Cape preview: the front of the cape, big.
@@ -145,7 +148,10 @@ public final class SbcCosmeticsScreen extends Screen {
                 continue;
             }
             int colour = o.owned() ? 0xFF000000 | o.colour() : 0xFF555555;
-            String label = (o.symbol().isBlank() ? "" : o.symbol() + " ") + o.name() + (o.owned() ? "" : " (locked)");
+            MutableComponent label = Component.empty();
+            if (!o.image().isBlank()) label.append(SbcEmblems.component(o.image(), Style.EMPTY)).append(" ");
+            else if (!o.symbol().isBlank()) label.append(o.symbol() + " ");
+            label.append(o.name() + (o.owned() ? "" : " (locked)"));
             g.text(font, label, x + 8, ry + 3, colour, false);
             if (hover) {
                 if (capePanel) previewCape = o;

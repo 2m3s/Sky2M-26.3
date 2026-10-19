@@ -30,14 +30,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 /**
- * Cosmetics from the Sky2M server: each player's supporter tier symbol and shown badge (drawn before their name in
- * chat, tab and nametags) and cape. The table ({@code cosmetics}) is sent after hello and on every change. Capes are
- * downloaded once per URL (the URL changes when the texture does) and kept in config/sky2m/capes.
+ * Cosmetics from the Sky2M server: each player's supporter tier symbol and shown emblem ("badge" in the protocol;
+ * drawn before their name in chat and nametags, after it in the tab list) and cape. The table ({@code cosmetics}) is
+ * sent after hello and on every change. Capes and image emblems are downloaded once per URL (the URL changes when the
+ * picture does) and kept in config/sky2m/capes and config/sky2m/emblems.
  */
 public final class SbcCosmetics {
-    public record Symbol(String id, String name, String symbol, int colour) {}
+    /** {@code image}: an uploaded emblem's PNG URL ("" for a text symbol); when set it's drawn instead of the symbol. */
+    public record Symbol(String id, String name, String symbol, int colour, String image) {
+        public boolean shown() {
+            return !image.isBlank() || !symbol.isBlank();
+        }
+    }
 
     public record Entry(Symbol tier, Symbol badge, String capeName, String capeUrl) {}
 
@@ -81,7 +88,8 @@ public final class SbcCosmetics {
                 Symbol badge = symbol(Sbc.obj(packet, "badge"));
                 String message = Sbc.str(packet, "message");
                 MutableComponent line = Component.literal("Badge earned! ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
-                if (badge != null) line.append(Component.literal(badge.symbol() + " " + badge.name()).withStyle(Style.EMPTY.withColor(badge.colour()).withBold(false)));
+                if (badge != null) line.append(Component.empty().append(text(badge)).append(Component.literal(" " + badge.name()))
+                    .withStyle(Style.EMPTY.withColor(badge.colour()).withBold(false)));
                 if (!message.isBlank()) line.append(Component.literal(" " + message).withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY).withBold(false)));
                 Sbc.say(line);
                 Sbc.toast(Component.literal("Badge earned!").withStyle(ChatFormatting.GOLD),
@@ -98,32 +106,85 @@ public final class SbcCosmetics {
         String symbol = Sbc.str(o, "symbol");
         String name = Sbc.str(o, "name");
         if (symbol.isBlank() && name.isBlank()) return null;
-        return new Symbol(Sbc.str(o, "id"), name, symbol, Sbc.hex(Sbc.str(o, "color"), 0xFFFFFF));
+        return new Symbol(Sbc.str(o, "id"), name, symbol, Sbc.hex(Sbc.str(o, "color"), 0xFFFFFF), Sbc.str(o, "image"));
     }
 
     public static Entry entry(UUID uuid) {
         return uuid == null ? null : table.get(uuid);
     }
 
-    /** The tier symbol and badge (with a space after), or null if the player has neither or symbols are off. */
+    /** The tier symbol and emblem (with a space after), or null if the player has neither or symbols are off. */
     public static Component symbols(UUID uuid) {
+        Component symbols = bare(uuid, false);
+        return symbols == null ? null : Component.empty().append(symbols).append(Component.literal(" "));
+    }
+
+    /**
+     * The tier symbol and emblem with a space before, for after a name: the tab list. Other mods' tab lists (SkyHanni's
+     * compact tab) only treat a line as a player, and draw its head, when the name follows the level directly.
+     */
+    public static Component symbolsAfter(UUID uuid) {
+        Component symbols = bare(uuid, true);
+        return symbols == null ? null : Component.literal(" ").append(symbols);
+    }
+
+    /**
+     * {@code legacy}: colours limited to Minecraft's 16 chat colours (the nearest one), for the tab list. SkyHanni's
+     * compact tab rebuilds lines from legacy colour codes and prints an RGB colour as "<#55CCFF>" text instead.
+     */
+    private static Component bare(UUID uuid, boolean legacy) {
         if (!Sbc.config().cosmetics.symbols || !Flags.isEnabled("cosmetics")) return null;
         Entry entry = entry(uuid);
         if (entry == null || (entry.tier() == null && entry.badge() == null)) return null;
         MutableComponent out = Component.empty();
+        boolean any = false;
         for (Symbol s : new Symbol[]{entry.tier(), entry.badge()}) {
-            if (s == null || s.symbol().isBlank()) continue;
-            out.append(Component.literal(s.symbol()).withStyle(Style.EMPTY.withColor(s.colour()).withBold(false).withItalic(false)
-                .withHoverEvent(new HoverEvent.ShowText(Component.literal(s.name()).withStyle(Style.EMPTY.withColor(s.colour()))))));
+            if (s == null || !s.shown()) continue;
+            out.append((legacy ? text(s, nearestChatColour(s.colour())) : text(s)).withStyle(style -> style.withHoverEvent(
+                new HoverEvent.ShowText(Component.literal(s.name()).withStyle(Style.EMPTY.withColor(s.colour()))))));
+            any = true;
         }
-        if (out.getString().isEmpty()) return null;
-        return out.append(Component.literal(" "));
+        return any ? out : null;
+    }
+
+    /** One symbol as text: its character in its colour, or an image emblem's picture. */
+    public static MutableComponent text(Symbol s) {
+        return text(s, s.colour());
+    }
+
+    private static MutableComponent text(Symbol s, int colour) {
+        Style style = Style.EMPTY.withColor(colour).withBold(false).withItalic(false);
+        if (!s.image().isBlank()) return SbcEmblems.component(s.image(), style);
+        return Component.literal(s.symbol()).withStyle(style);
+    }
+
+    /** The chat colour (one of the 16) closest to {@code rgb}, as an RGB value. */
+    static int nearestChatColour(int rgb) {
+        int best = rgb, bestDistance = Integer.MAX_VALUE;
+        for (ChatFormatting format : ChatFormatting.values()) {
+            net.minecraft.network.chat.TextColor colour = net.minecraft.network.chat.TextColor.fromLegacyFormat(format);
+            if (colour == null) continue;
+            int c = colour.getValue();
+            int dr = (c >> 16 & 255) - (rgb >> 16 & 255), dg = (c >> 8 & 255) - (rgb >> 8 & 255), db = (c & 255) - (rgb & 255);
+            int distance = dr * dr * 3 + dg * dg * 4 + db * db * 2;
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = c;
+            }
+        }
+        return best;
     }
 
     /** {@code name} with the player's symbols in front. */
     public static Component decorate(UUID uuid, Component name) {
         Component symbols = symbols(uuid);
         return symbols == null ? name : Component.empty().append(symbols).append(name);
+    }
+
+    /** {@code name} with the player's symbols after it (tab list). */
+    public static Component decorateAfter(UUID uuid, Component name) {
+        Component symbols = symbolsAfter(uuid);
+        return symbols == null ? name : Component.empty().append(name).append(symbols);
     }
 
     /** Players who have a symbol to show. */
@@ -147,12 +208,23 @@ public final class SbcCosmetics {
     public static Cape cape(String url) {
         if (url == null || url.isBlank()) return null;
         Cape cape = CAPES.get(url);
-        if (cape == null && !FAILED.contains(url) && LOADING.add(url)) download(url);
+        if (cape == null) loadImage(url, "capes", "Cape", image -> {
+            String hash = hash(url);
+            Identifier id = Compat.id("capes/" + hash);
+            Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(() -> "sky2m cape " + hash, image));
+            CAPES.put(url, new Cape(id, image.getWidth(), image.getHeight()));
+        });
         return cape;
     }
 
-    private static void download(String url) {
-        Path dir = Minecraft.getInstance().gameDirectory.toPath().resolve("config").resolve("sky2m").resolve("capes");
+    /**
+     * Gets a picture from the Sky2M server once (capes, image emblems): from config/sky2m/{folder} if it was
+     * downloaded before, otherwise over HTTP and saved there. {@code onLoaded} runs on the render thread. A URL that
+     * failed isn't tried again this session.
+     */
+    static void loadImage(String url, String folder, String what, Consumer<NativeImage> onLoaded) {
+        if (url == null || url.isBlank() || FAILED.contains(url) || !LOADING.add(url)) return;
+        Path dir = Minecraft.getInstance().gameDirectory.toPath().resolve("config").resolve("sky2m").resolve(folder);
         String hash = hash(url);
         Path file = dir.resolve(hash + ".png");
         Thread thread = new Thread(() -> {
@@ -174,22 +246,20 @@ public final class SbcCosmetics {
                 }
                 NativeImage image = NativeImage.read(new ByteArrayInputStream(bytes));
                 Minecraft.getInstance().execute(() -> {
-                    Identifier id = Compat.id("capes/" + hash);
-                    Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(() -> "sky2m cape " + hash, image));
-                    CAPES.put(url, new Cape(id, image.getWidth(), image.getHeight()));
+                    onLoaded.accept(image);
                     LOADING.remove(url);
                 });
             } catch (Exception e) {
                 FAILED.add(url);
                 LOADING.remove(url);
-                System.err.println("[Sky2M] Cape download failed (" + url + "): " + e.getMessage());
+                System.err.println("[Sky2M] " + what + " download failed (" + url + "): " + e.getMessage());
             }
-        }, "Sky2M cape download");
+        }, "Sky2M " + what.toLowerCase(java.util.Locale.ROOT) + " download");
         thread.setDaemon(true);
         thread.start();
     }
 
-    private static String hash(String url) {
+    static String hash(String url) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-1").digest(url.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);

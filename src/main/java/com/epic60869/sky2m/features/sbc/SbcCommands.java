@@ -49,7 +49,7 @@ public final class SbcCommands {
             new Help("/s2 who", "Who's online with Sky2M"),
             new Help("/s2 friend add|remove|accept|deny <player>", "Manage Sky2M friends"),
             new Help("/s2 friend list", "Your friends (or /s2 friends)"),
-            new Help("/s2 cosmetics", "Pick your badge and cape"))),
+            new Help("/s2 cosmetics", "Pick your emblem and cape"))),
         new Section("Leaderboards", List.of(
             new Help("/s2 leaderboard", "Sky2M leaderboards"))),
         new Section("SkyBlock", List.of(

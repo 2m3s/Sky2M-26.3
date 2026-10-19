@@ -298,7 +298,7 @@ public final class TermismScreen extends Screen {
             case RUBIX -> {
                 if (!c.puzzle) return;
                 int i = RUBIX_ORDER.indexOf(c.colour);
-                c.colour = RUBIX_ORDER.get(Math.floorMod(i + (button == 1 ? -1 : 1), RUBIX_ORDER.size()));
+                c.colour = RUBIX_ORDER.get(Math.floorMod(i + (button == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT ? -1 : 1), RUBIX_ORDER.size()));
                 c.stack = pane(c.colour);
             }
             case NUMBERS -> {

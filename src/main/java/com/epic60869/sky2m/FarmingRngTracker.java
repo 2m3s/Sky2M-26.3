@@ -221,10 +221,23 @@ public final class FarmingRngTracker {
         return found[0] == -1 ? 0xFFFFFFFF : found[0];
     }
 
+    private static final Pattern DROP_WORD = Pattern.compile("(?i)RARE CROP|RARE DROP|PET DROP|PRAY TO RNGESUS|RNGESUS INCARNATE|you (?:found|dropped|got|received)");
+
+    /**
+     * Someone's chat message ("Guild > [MVP+] Name: RARE CROP! Crystalized Moonlight", party, co-op, DMs, Sky2M chat):
+     * a "Name:" comes before the drop. Hypixel's own drop lines never have one, so only your drops are shown.
+     */
+    private static boolean fromAPlayer(String raw) {
+        Matcher drop = DROP_WORD.matcher(raw);
+        int at = drop.find() ? drop.start() : raw.length();
+        return raw.substring(0, at).contains(":");
+    }
+
     private void handle(Component message) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         String raw = message.getString().replaceAll("§[0-9a-fk-or]", "").trim();
+        if (fromAPlayer(raw)) return;
         if (handleSlug(message, raw)) return;
         Parsed parsed = parse(raw);
         if (parsed == null) return;

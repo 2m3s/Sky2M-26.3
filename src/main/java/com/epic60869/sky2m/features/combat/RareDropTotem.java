@@ -8,12 +8,13 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
  * RNG drop totem animation, ported from Skyblocker's RareDropSpecialEffects and SpecialEffects: when a big RNG drop
  * lands, the item pops up like a Totem of Undying, with particles and the challenge-complete sound. It plays for
- * Skyblocker's list of RNG drops, and for any PRAY TO RNGESUS or RNG METER drop.
+ * Skyblocker's list of RNG drops, any PRAY TO RNGESUS or RNG METER drop, and dyes.
  */
 public final class RareDropTotem {
     /** Skyblocker's list: the drop name in chat -> its item id. */
@@ -52,9 +53,9 @@ public final class RareDropTotem {
         return c != null && c.combat.rareDrops.totemAnimation;
     }
 
-    /** An RNG drop: one on Skyblocker's list (slayer, Diana and fishing RNG items), or any PRAY TO RNGESUS or RNG METER drop. */
+    /** An RNG drop: one on Skyblocker's list (slayer, Diana and fishing RNG items), any PRAY TO RNGESUS or RNG METER drop, or any dye. */
     static boolean isRngDrop(String type, String item) {
-        return RNG_DROPS.containsKey(item) || type.startsWith("PRAY TO RNGESUS") || type.startsWith("RNG METER");
+        return RNG_DROPS.containsKey(item) || type.startsWith("PRAY TO RNGESUS") || type.startsWith("RNG METER") || item.endsWith(" Dye");
     }
 
     /** A rare drop line ({@link CombatFeatures}): {@code type} is "RARE DROP!", "PRAY TO RNGESUS DROP!", .... */
@@ -62,6 +63,7 @@ public final class RareDropTotem {
         if (!enabled() || !isRngDrop(type, item)) return;
         String id = RNG_DROPS.get(item);
         if (id == null) id = RepoItems.idByName(item);
+        if (id == null && item.endsWith(" Dye")) id = "DYE_" + item.substring(0, item.lastIndexOf(' ')).replace(' ', '_').toUpperCase(Locale.ROOT);
         if (id == null) return;
         ItemStack stack = RepoItems.itemStack(id);
         if (stack.isEmpty() || stack.is(Items.BARRIER)) return;

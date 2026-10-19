@@ -164,6 +164,7 @@ public final class DungeonFeatures {
         TerracottaTimer.init();
         AutoRequeue.init();
         PartyFinderStats.init();
+        PfRequirements.init();
         BlessingDisplay.init();
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> resetRun());
         Sky2MLocation.onAreaChange(area -> {

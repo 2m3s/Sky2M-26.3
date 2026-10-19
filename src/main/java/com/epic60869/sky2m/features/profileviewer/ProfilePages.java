@@ -59,7 +59,6 @@ final class ProfilePages {
 
     private final ProfileViewerScreen s;
     private final Map<JsonObject, ProfileExtras> extras = new IdentityHashMap<>();
-    private final Map<JsonObject, SkyblockWeight.Both> weights = new IdentityHashMap<>();
     private final Map<JsonObject, CompletableFuture<Networth.Result>> networth = new IdentityHashMap<>();
     private final Map<JsonObject, Boolean> networthWithMuseum = new IdentityHashMap<>();
     private final Map<JsonObject, MuseumView> museums = new IdentityHashMap<>();
@@ -94,7 +93,7 @@ final class ProfilePages {
             case RIFT -> rift(g, mx, my);
             case FARMING -> farming(g, mx, my);
             case NETWORTH -> networth(g, mx, my);
-            case WEIGHT -> weight(g, mx, my);
+            case FISHING -> fishing(g, mx, my);
             default -> misc(g, mx, my);
         }
     }
@@ -1184,126 +1183,219 @@ final class ProfilePages {
         scrollbar(g, rx + rw - 5, top, visible * rowH, cats.size(), visible);
     }
 
-    // ------------------------------------------------------------------------------------------------ weight
+    // ------------------------------------------------------------------------------------------------ fishing
 
-    private void weight(GuiGraphicsExtractor g, int mx, int my) {
-        SkyblockWeight.Both both = weights.computeIfAbsent(member(), SkyblockWeight::compute);
-        int colW = (cw - 4) / 2, top = cy + 76, visible = Math.max(1, (cy + ch - 4 - top) / 10);
-        int rows = Math.max(weightRows(both.senither()).size(), weightRows(both.lily()).size());
-        s.pageScroll = Math.clamp(s.pageScroll, 0, Math.max(0, rows - visible));
-        weightColumn(g, both.senither(), cx, colW, top, visible, mx, my, "Senither's weight (hypixel-skyblock-facade).",
-            "Overflow: skill XP past level 50/60, slayer XP past 1M, dungeon XP past level 50.");
-        weightColumn(g, both.lily(), cx + colW + 4, cw - colW - 4, top, visible, mx, my, "LilyWeight by Antonio32A (lilyweight).",
-            "Overflow: skill XP past level 60. Dungeons: Catacombs XP and floor completions.");
-    }
+    /** The trophy fish, in Hypixel's order (their profile keys, as in "blobfish_gold"). */
+    private static final String[] TROPHY_FISH = {"blobfish", "flyfish", "golden_fish", "gusher", "karate_fish", "lava_horse", "mana_ray",
+        "moldfin", "obfuscated_fish_1", "obfuscated_fish_2", "obfuscated_fish_3", "skeleton_fish", "slugfish", "soul_fish",
+        "steaming_hot_flounder", "sulphur_skitter", "vanille", "volcanic_stonefish"};
+    private static final String[] TROPHY_TIERS = {"bronze", "silver", "gold", "diamond"};
+    private static final int[] TROPHY_COLOURS = {0xFFC27C46, 0xFFC0C0C0, 0xFFFFAA00, 0xFF55FFFF};
+    private static final String[] TROPHY_RANKS = {"None", "Bronze Hunter", "Silver Hunter", "Gold Hunter", "Diamond Hunter"};
 
-    private static String weightNum(double v) {
-        return String.format(Locale.ROOT, "%,.1f", v);
-    }
+    /** A player's fishing gear, found in their inventory, armour, equipment, ender chest, backpacks, wardrobe and vault. */
+    private record FishingGear(List<PvItem> rods, List<PvItem> armour, List<PvItem> equipment) {}
 
-    private static String weightExact(double v) {
-        return String.format(Locale.ROOT, "%,.2f", v);
-    }
+    private final Map<JsonObject, FishingGear> fishingGear = new IdentityHashMap<>();
 
-    private void withOverflow(GuiGraphicsExtractor g, double weight, double overflow, int rightX, int y, int colour) {
-        String ovf = overflow > 0 ? " +" + weightNum(overflow) : "";
-        int ovfW = f().width(ovf);
-        if (!ovf.isEmpty()) g.text(f(), ovf, rightX - ovfW, y, DIM, true);
-        String val = weightNum(weight);
-        g.text(f(), val, rightX - ovfW - f().width(val), y, colour, true);
-    }
-
-    private void weightColumn(GuiGraphicsExtractor g, SkyblockWeight.Result r, int x, int w, int listTop, int visible, int mx, int my, String about1, String about2) {
-        inset(g, x, cy, w, ch);
-        int lx = x + 6, rightX = x + w - 8, y = cy + 5;
-        String heading = r.system() + " Weight";
-        title(g, heading, lx, y);
-        if (in(mx, my, lx, y - 1, f().width(heading), 10)) tip(line(heading, ChatFormatting.GOLD), line(about1, ChatFormatting.GRAY),
-            line(about2, ChatFormatting.GRAY), line("Worked out from this profile's API data.", ChatFormatting.DARK_GRAY));
-        y += 12;
-        String total = weightNum(r.total());
-        g.pose().pushMatrix();
-        g.pose().translate(lx, y);
-        g.pose().scale(1.5f, 1.5f);
-        g.text(f(), total, 0, 0, GOLD, true);
-        g.pose().popMatrix();
-        if (in(mx, my, lx, y - 1, w - 12, 14)) tip(weightSummary(r));
-        y += 14;
-        g.text(f(), f().plainSubstrByWidth(weightNum(r.weight()) + " + " + weightNum(r.overflow()) + " overflow", w - 12), lx, y, DIM, true);
-        y += 12;
-        for (SkyblockWeight.Group grp : List.of(r.skills(), r.slayers(), r.dungeons())) {
-            text(g, grp.name(), lx, y, LABEL);
-            if (grp == r.skills() && !r.skillsApi()) right(g, "API off", rightX, y, DIM);
-            else withOverflow(g, grp.weight(), grp.overflow(), rightX, y, VALUE);
-            if (in(mx, my, lx - 2, y - 1, w - 8, 11)) tip(weightGroup(r, grp));
-            y += 10;
+    private void fishing(GuiGraphicsExtractor g, int mx, int my) {
+        int navW = 84;
+        inset(g, cx, cy, navW, ch);
+        int view = nav(g, new String[]{"Overview", "Gear", "Bestiary"}, cx + 4, cy + 4, navW - 8, mx, my);
+        int rx = cx + navW + 4, rw = cw - navW - 4;
+        inset(g, rx, cy, rw, ch);
+        switch (view) {
+            case 0 -> fishingOverview(g, rx, rw, mx, my);
+            case 1 -> fishingGear(g, rx, rw, mx, my);
+            default -> fishingBestiary(g, rx, rw, mx, my);
         }
-        g.fill(x + 4, listTop - 4, x + w - 4, listTop - 3, INSET_EDGE);
-        List<Object[]> rows = weightRows(r);
-        int start = s.pageScroll;
-        for (int i = start; i < rows.size() && i - start < visible; i++) {
-            Object[] row = rows.get(i);
-            SkyblockWeight.Group grp = (SkyblockWeight.Group) row[0];
-            SkyblockWeight.Part part = (SkyblockWeight.Part) row[1];
-            int ry = listTop + (i - start) * 10;
-            if (part == null) {
-                title(g, grp.name(), lx, ry);
-                if (grp == r.skills() && !r.skillsApi()) right(g, "Skills API off", rightX, ry, DIM);
-                else withOverflow(g, grp.weight(), grp.overflow(), rightX, ry, VALUE);
-                if (in(mx, my, lx - 2, ry - 1, w - 8, 10)) tip(weightGroup(r, grp));
-            } else {
-                text(g, f().plainSubstrByWidth(part.name(), w / 2), lx + 6, ry, part.total() > 0 ? VALUE : DIM);
-                withOverflow(g, part.weight(), part.overflow(), rightX, ry, part.total() > 0 ? VALUE : DIM);
-                if (in(mx, my, lx - 2, ry - 1, w - 8, 10)) {
+    }
+
+    private void fishingOverview(GuiGraphicsExtractor g, int rx, int rw, int mx, int my) {
+        JsonObject m = member();
+        int x = rx + 6, w = 150, y = cy + 6;
+        if (ProfileStats.hasSkill(m, "fishing")) {
+            s.bar(g, x, y, w, "Fishing", ProfileStats.skill(m, "fishing"), new ItemStack(Items.FISHING_ROD), mx, my);
+        } else {
+            text(g, "Fishing: Skills API off", x, y + 2, DIM);
+        }
+        y += 20;
+        title(g, "Items Fished", x, y);
+        y += 11;
+        JsonObject fished = Json.path(m, "player_stats.items_fished");
+        y = stat(g, x, y, w, "Total", commas(Json.num(fished, "total")));
+        y = stat(g, x, y, w, "Normal", commas(Json.num(fished, "normal")));
+        y = stat(g, x, y, w, "Treasure", commas(Json.num(fished, "treasure")));
+        y = stat(g, x, y, w, "Large Treasure", commas(Json.num(fished, "large_treasure")));
+        y = stat(g, x, y, w, "Trophy Fish", commas(Json.num(fished, "trophy_fish")));
+        y += 4;
+        // The Dolphin pet's milestone counts every sea creature killed.
+        double seaCreatures = Json.num(Json.path(m, "player_stats.pets.milestone"), "sea_creatures_killed");
+        if (seaCreatures <= 0) seaCreatures = Json.num(Json.obj(m, "player_stats"), "sea_creature_kills");
+        y = stat(g, x, y, w, "Sea Creatures Killed", commas(seaCreatures));
+
+        // Trophy fish on the right: hunter rank, total, and each fish's best tier.
+        JsonObject trophy = Json.obj(m, "trophy_fish");
+        int px = x + w + 12, pw = rx + rw - 6 - px, py = cy + 6;
+        title(g, "Trophy Fish", px, py);
+        py += 11;
+        if (trophy == null) {
+            text(g, "No trophy fish yet", px, py, DIM);
+            return;
+        }
+        int rank = Math.clamp(Json.arr(trophy, "rewards").size(), 0, TROPHY_RANKS.length - 1);
+        py = stat(g, px, py, pw, "Rank", TROPHY_RANKS[rank]);
+        py = stat(g, px, py, pw, "Caught", commas(Json.num(trophy, "total_caught")));
+        py += 4;
+        int perRow = Math.max(1, Math.min(6, pw / 20));
+        for (int i = 0; i < TROPHY_FISH.length; i++) {
+            String fish = TROPHY_FISH[i];
+            int ix = px + (i % perRow) * 20, iy = py + (i / perRow) * 20;
+            int best = -1;
+            for (int t = TROPHY_TIERS.length - 1; t >= 0 && best < 0; t--) if (Json.num(trophy, fish + "_" + TROPHY_TIERS[t]) > 0) best = t;
+            ItemStack icon = icon(fish.toUpperCase(Locale.ROOT) + "_" + TROPHY_TIERS[Math.max(0, best)].toUpperCase(Locale.ROOT));
+            if (icon.is(Items.PAPER)) icon = new ItemStack(Items.TROPICAL_FISH);
+            g.fill(ix, iy, ix + 18, iy + 18, SLOT_BG);
+            g.outline(ix, iy, 18, 18, best < 0 ? INSET_EDGE : TROPHY_COLOURS[best]);
+            g.item(best < 0 ? new ItemStack(Items.DYE.gray()) : icon, ix + 1, iy + 1);
+            if (in(mx, my, ix, iy, 18, 18)) {
+                List<Component> t = new ArrayList<>();
+                t.add(line(titleCase(fish), ChatFormatting.GOLD));
+                t.add(line("Caught: " + commas(Json.num(trophy, fish)), ChatFormatting.GRAY));
+                ChatFormatting[] tierColours = {ChatFormatting.RED, ChatFormatting.GRAY, ChatFormatting.GOLD, ChatFormatting.AQUA};
+                for (int tier = 0; tier < TROPHY_TIERS.length; tier++) {
+                    t.add(line(titleCase(TROPHY_TIERS[tier]) + ": " + commas(Json.num(trophy, fish + "_" + TROPHY_TIERS[tier])), tierColours[tier]));
+                }
+                tip(t);
+            }
+        }
+    }
+
+    private void fishingGear(GuiGraphicsExtractor g, int rx, int rw, int mx, int my) {
+        FishingGear gear = fishingGear.computeIfAbsent(member(), this::findFishingGear);
+        if (Json.obj(member(), "inventory") == null) {
+            center(g, "Their Inventory API is off.", rx, rw, DIM);
+            return;
+        }
+        int x = rx + 6, w = rw - 12, y = cy + 6;
+        int perRow = Math.max(1, w / 20);
+        String[] titles = {"Fishing Rods", "Fishing Armour", "Fishing Equipment"};
+        List<List<PvItem>> lists = List.of(gear.rods(), gear.armour(), gear.equipment());
+        for (int section = 0; section < lists.size(); section++) {
+            List<PvItem> items = lists.get(section);
+            title(g, titles[section], x, y);
+            right(g, String.valueOf(items.size()), x + w, y, VALUE);
+            y += 11;
+            if (items.isEmpty()) {
+                text(g, "None found", x, y, DIM);
+                y += 14;
+                continue;
+            }
+            for (int i = 0; i < items.size(); i++) {
+                int ix = x + (i % perRow) * 20, iy = y + (i / perRow) * 20;
+                if (iy + 18 > cy + ch - 2) break;
+                slot(g, items.get(i), ix, iy, mx, my);
+            }
+            y += (items.size() + perRow - 1) / perRow * 20 + 4;
+            if (y > cy + ch - 12) break;
+        }
+    }
+
+    /** Rods say "FISHING ROD" on their rarity line; fishing armour and equipment have fishing stats. */
+    private FishingGear findFishingGear(JsonObject m) {
+        List<PvItem> rods = new ArrayList<>(), armour = new ArrayList<>(), equipment = new ArrayList<>();
+        JsonObject inv = Json.obj(m, "inventory");
+        if (inv == null) return new FishingGear(rods, armour, equipment);
+        List<PvItem> all = new ArrayList<>();
+        for (String key : new String[]{"inv_contents", "inv_armor", "equipment_contents", "ender_chest_contents", "wardrobe_contents",
+            "personal_vault_contents"}) {
+            all.addAll(ProfileItems.decode(Json.obj(inv, key)));
+        }
+        for (List<PvItem> backpack : ProfileItems.numbered(Json.obj(inv, "backpack_contents"))) all.addAll(backpack);
+        for (PvItem item : all) {
+            if (item == null || item.stack().isEmpty() || item.tooltip() == null || item.tooltip().isEmpty()) continue;
+            List<String> lore = new ArrayList<>();
+            for (Component c : item.tooltip()) lore.add(ChatFormatting.stripFormatting(c.getString()));
+            String rarity = "";
+            for (int i = lore.size() - 1; i >= 0 && rarity.isEmpty(); i--) rarity = lore.get(i).trim().toUpperCase(Locale.ROOT);
+            if (rarity.contains("FISHING ROD") || rarity.contains("FISHING WEAPON")) {
+                rods.add(item);
+                continue;
+            }
+            boolean fishingStats = lore.stream().anyMatch(l -> l.contains("Sea Creature Chance") || l.contains("Fishing Speed")
+                || l.contains("Trophy Fish Chance") || l.contains("Double Hook Chance"));
+            if (!fishingStats) continue;
+            if (rarity.matches(".*\\b(HELMET|CHESTPLATE|LEGGINGS|BOOTS)\\b.*")) armour.add(item);
+            else if (rarity.matches(".*\\b(NECKLACE|CLOAK|BELT|GLOVES|BRACELET)\\b.*")) equipment.add(item);
+        }
+        return new FishingGear(rods, armour, equipment);
+    }
+
+    private void fishingBestiary(GuiGraphicsExtractor g, int rx, int rw, int mx, int my) {
+        ProfileExtras ex = ex();
+        if (ex.bestiaryKills == null) {
+            center(g, "No bestiary data on this profile.", rx, rw, DIM);
+            return;
+        }
+        CompletableFuture<List<ProfileTables.BestiaryCategory>> tf = ProfileTables.bestiary();
+        List<ProfileTables.BestiaryCategory> cats = ProfileTables.now(tf);
+        if (cats == null) {
+            center(g, tf.isDone() ? "Couldn't load the bestiary." : "Loading the bestiary...", rx, rw, tf.isDone() ? BAD : LABEL);
+            return;
+        }
+        ProfileTables.BestiaryCategory fishingCat = cats.stream().filter(c -> c.id().equalsIgnoreCase("fishing")).findFirst().orElse(null);
+        if (fishingCat == null) {
+            center(g, "No fishing bestiary in the data.", rx, rw, DIM);
+            return;
+        }
+        // One row of icons per group (Water, Lava, Spooky Festival...), scrolled together.
+        Map<String, List<ProfileTables.BestiaryFamily>> groups = new LinkedHashMap<>();
+        for (ProfileTables.BestiaryFamily fam : fishingCat.families()) groups.computeIfAbsent(fam.group(), k -> new ArrayList<>()).add(fam);
+        int cell = 20, cols = Math.max(1, (rw - 16) / cell);
+        List<Object> rows = new ArrayList<>();   // a group name, or a List of families on one row
+        for (Map.Entry<String, List<ProfileTables.BestiaryFamily>> e : groups.entrySet()) {
+            rows.add(e.getKey());
+            List<ProfileTables.BestiaryFamily> fams = e.getValue();
+            for (int i = 0; i < fams.size(); i += cols) rows.add(fams.subList(i, Math.min(fams.size(), i + cols)));
+        }
+        int top = cy + 6, visible = Math.max(1, (ch - 10) / cell);
+        int scroll = clampScroll(rows.size(), visible);
+        int startX = rx + (rw - cols * cell) / 2;
+        for (int r = scroll; r < rows.size() && r - scroll < visible; r++) {
+            int ry = top + (r - scroll) * cell;
+            if (rows.get(r) instanceof String name) {
+                title(g, name, rx + 6, ry + 6);
+                continue;
+            }
+            @SuppressWarnings("unchecked")
+            List<ProfileTables.BestiaryFamily> row = (List<ProfileTables.BestiaryFamily>) rows.get(r);
+            for (int i = 0; i < row.size(); i++) {
+                ProfileTables.BestiaryFamily fam = row.get(i);
+                int ix = startX + i * cell;
+                long k = familyKills(ex, fam);
+                long[] tiers = toLongs(fam.tiers());
+                int tier = countAtOrBelow(tiers, k);
+                boolean isMaxed = tiers.length > 0 && tier >= tiers.length;
+                ItemStack icon = k == 0 ? new ItemStack(Items.DYE.gray()) : familyIcon(fam);
+                g.fill(ix + 1, ry + 1, ix + cell - 1, ry + cell - 1, SLOT_BG);
+                g.outline(ix + 1, ry + 1, cell - 2, cell - 2, isMaxed ? GOLD : INSET_EDGE);
+                g.item(icon, ix + 2, ry + 2);
+                g.itemDecorations(f(), icon, ix + 2, ry + 2, (isMaxed ? "§6" : "§f") + tier);
+                if (in(mx, my, ix, ry, cell, cell)) {
                     List<Component> t = new ArrayList<>();
-                    t.add(line(r.system() + " · " + part.name(), ChatFormatting.GOLD));
-                    t.add(line("Weight: " + weightExact(part.weight()), ChatFormatting.GRAY));
-                    if (part.overflow() > 0) {
-                        t.add(line("Overflow: " + weightExact(part.overflow()), ChatFormatting.DARK_GRAY));
-                        t.add(line("Total: " + weightExact(part.total()), ChatFormatting.GRAY));
+                    t.add(line(fam.name(), ChatFormatting.GOLD));
+                    t.add(line("Tier: " + tier + " / " + tiers.length, ChatFormatting.GRAY));
+                    if (isMaxed || tiers.length == 0) {
+                        t.add(line("Kills: " + commas(k) + (isMaxed ? "  MAXED" : ""), isMaxed ? ChatFormatting.GOLD : ChatFormatting.GRAY));
+                    } else {
+                        t.add(line("Kills: " + commas(k) + " / " + commas(tiers[tiers.length - 1]), ChatFormatting.GRAY));
+                        t.add(line("Next tier: " + commas(k) + " / " + commas(tiers[tier]), ChatFormatting.DARK_GRAY));
                     }
-                    for (String d : part.detail()) t.add(line(d, ChatFormatting.DARK_GRAY));
                     tip(t);
                 }
             }
         }
-        scrollbar(g, x + w - 4, listTop, visible * 10, rows.size(), visible);
-    }
-
-    /** Each group, then its parts: {group, part or null}. */
-    private static List<Object[]> weightRows(SkyblockWeight.Result r) {
-        List<Object[]> out = new ArrayList<>();
-        for (SkyblockWeight.Group grp : List.of(r.skills(), r.slayers(), r.dungeons())) {
-            out.add(new Object[]{grp, null});
-            for (SkyblockWeight.Part p : grp.parts()) out.add(new Object[]{grp, p});
-        }
-        return out;
-    }
-
-    private static List<Component> weightSummary(SkyblockWeight.Result r) {
-        List<Component> t = new ArrayList<>();
-        t.add(line(r.system() + " Weight: " + weightExact(r.total()), ChatFormatting.GOLD));
-        t.add(line("Base: " + weightExact(r.weight()) + "   Overflow: " + weightExact(r.overflow()), ChatFormatting.DARK_GRAY));
-        for (SkyblockWeight.Group grp : List.of(r.skills(), r.slayers(), r.dungeons())) {
-            if (grp == r.skills() && !r.skillsApi()) t.add(line(grp.name() + ": Skills API off", ChatFormatting.DARK_GRAY));
-            else t.add(line(grp.name() + ": " + weightExact(grp.weight()) + (grp.overflow() > 0 ? "  (+" + weightExact(grp.overflow()) + " overflow)" : ""), ChatFormatting.GRAY));
-        }
-        return t;
-    }
-
-    private static List<Component> weightGroup(SkyblockWeight.Result r, SkyblockWeight.Group grp) {
-        List<Component> t = new ArrayList<>();
-        t.add(line(r.system() + " · " + grp.name() + ": " + weightExact(grp.total()), ChatFormatting.GOLD));
-        if (grp == r.skills() && !r.skillsApi()) {
-            t.add(line("Their Skills API is off.", ChatFormatting.DARK_GRAY));
-            return t;
-        }
-        if (grp.overflow() > 0) t.add(line("Base " + weightExact(grp.weight()) + " + overflow " + weightExact(grp.overflow()), ChatFormatting.DARK_GRAY));
-        for (SkyblockWeight.Part p : grp.parts()) {
-            t.add(line("  " + p.name() + ": " + weightExact(p.weight()) + (p.overflow() > 0 ? " (+" + weightExact(p.overflow()) + ")" : ""),
-                p.total() > 0 ? ChatFormatting.GRAY : ChatFormatting.DARK_GRAY));
-        }
-        return t;
+        scrollbar(g, rx + rw - 5, top, visible * cell, rows.size(), visible);
     }
 
     // ------------------------------------------------------------------------------------------------ misc

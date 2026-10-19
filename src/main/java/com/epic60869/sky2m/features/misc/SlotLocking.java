@@ -133,6 +133,15 @@ public final class SlotLocking {
         return 1;
     }
 
+    /** Titles used by Hypixel NPC shop/sell menus. Don't block ordinary storage or the player's own inventory. */
+    private static boolean isNpcShopScreen(AbstractContainerScreen<?> screen) {
+        if (screen instanceof InventoryScreen) return false;
+        String title = net.minecraft.ChatFormatting.stripFormatting(screen.getTitle().getString());
+        if (title == null) return false;
+        title = title.toLowerCase(java.util.Locale.ROOT).trim();
+        return title.contains("sell") || title.contains("merchant") || title.contains("shop") || title.contains("trades");
+    }
+
     /**
     * Called for every slot click in a menu (ContainerSolverScreenMixin); true cancels protected-item drops or handles
     * a shift-click on a bound slot.
@@ -140,6 +149,19 @@ public final class SlotLocking {
     public static boolean onSlotClicked(AbstractContainerScreen<?> screen, Slot slot, int button, ContainerInput input) {
         Sky2MConfig.SlotLocking c = config();
         if (c == null) return false;
+
+        // Keep protected items out of NPC sell/shop menus as well as preventing drops. Hypixel's sell screens
+        // can sell an item just by clicking it in the player inventory, so check both the clicked stack and cursor.
+        if (isNpcShopScreen(screen)) {
+            ItemStack clicked = slot == null ? ItemStack.EMPTY : slot.getItem();
+            ItemStack carried = screen.getMenu().getCarried();
+            if (isProtected(clicked) || isProtected(carried)) {
+                say(Component.literal("★ ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal("That item is protected and cannot be sold or traded here. Use /s2 protect to unprotect it.").withStyle(ChatFormatting.RED)));
+                return true;
+            }
+        }
+
         if (input == ContainerInput.THROW || slot == null && input == ContainerInput.PICKUP) {
             ItemStack dropped = slot == null ? screen.getMenu().getCarried() : slot.getItem();
             if (isProtected(dropped)) {

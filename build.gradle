@@ -22,6 +22,18 @@ loom {
     }
 }
 
+// Client game tests (src/gametest): `gradle runClientGameTest` starts a client, opens a test world and checks Sky2M's
+// screens, saving screenshots to build/run/clientGameTest/screenshots. Not part of the mod jar.
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "sky2m-gametest"
+        enableGameTests = false
+        enableClientGameTests = true
+        eula = true
+    }
+}
+
 repositories {
     mavenCentral()
     maven { url = uri('https://maven.notenoughupdates.org/releases/') }

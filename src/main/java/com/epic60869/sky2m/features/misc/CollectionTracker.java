@@ -696,6 +696,8 @@ public final class CollectionTracker {
                 found.put(str(b, "itemId"), new Board(e.getKey(), str(b, "itemId"), title));
             }
             Minecraft.getInstance().execute(() -> {
+                boardsLoading = false;
+                if (found.isEmpty()) boardsRetryAt = System.currentTimeMillis() + 60_000;   // a 200 without current boards: retry later instead of sticking forever
                 BOARDS.putAll(found);
                 for (Board board : found.values()) {
                     NAMES.put(board.title().substring(0, board.title().length() - " Collection".length()).toLowerCase(Locale.ROOT), board.itemId());
@@ -851,6 +853,14 @@ public final class CollectionTracker {
     private static boolean showing() {
         if (!enabled() || current.isEmpty()) return false;
         return !pinned().isEmpty() || System.currentTimeMillis() - lastGain < IDLE_HIDE_MS;
+    }
+
+    /**
+     * The collection you're gathering right now ("WHEAT", "INK_SACK:3"), or "" when the tracker is off or you've
+     * stopped: the Rival HUD shows that collection's board.
+     */
+    public static String gathering() {
+        return showing() ? current : "";
     }
 
     /** The collection item's icon (mushrooms and gemstones use a red mushroom and a rough ruby). */

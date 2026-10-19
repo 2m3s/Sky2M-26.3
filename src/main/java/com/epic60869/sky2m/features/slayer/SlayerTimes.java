@@ -43,9 +43,6 @@ public final class SlayerTimes {
 
     private static long questStartedAt;
     private static long spawnedAt;
-    /** The last scan your boss was seen alive, and when it died (0 while alive): see {@link #onBoss}. */
-    private static long lastSeenAt;
-    private static long diedAt;
     /** When its health showed 0: certainly dead, unlike a nametag that went (Tier 5 Tarantula between phases). */
     private static long zeroAt;
     /** "☠ Revenant Horror V 0❤": the boss is dead even if its nametag lingers. */
@@ -72,7 +69,8 @@ public final class SlayerTimes {
     /** Whether the boss scan in {@link SlayerFeatures} has to run for these messages. */
     static boolean enabled() {
         Sky2MConfig.PersonalBest config = config();
-        return config != null && (config.timeToKill || config.personalBests) || SlayerBossProfit.enabled();
+        return config != null && (config.timeToKill || config.personalBests) || SlayerBossProfit.enabled()
+            || SlayerBossSpawnAlert.enabled();
     }
 
     /**
@@ -84,22 +82,21 @@ public final class SlayerTimes {
     static void onBoss(String healthLine) {
         long now = System.currentTimeMillis();
         if (healthLine == null) {
+            // A missing nametag can be a Tarantula phase transition, not a kill. Only kill chat
+            // (or an observed 0-health line) confirms the end of the fight.
             killed = false;
-            if (spawnedAt > 0 && diedAt == 0 && lastSeenAt > 0) diedAt = lastSeenAt;
             return;
         }
         if (killed) return;
-        if (spawnedAt == 0) {
+        boolean spawned = spawnedAt == 0;
+        if (spawned) {
             spawnedAt = now;
             SlayerBossProfit.onSpawn();
         }
         if (healthLine.isEmpty() || ZERO_HEALTH.matcher(healthLine).find()) {
-            if (diedAt == 0 && lastSeenAt > 0) diedAt = healthLine.isEmpty() ? lastSeenAt : now;
             if (zeroAt == 0 && !healthLine.isEmpty()) zeroAt = now;
         } else {
             // Alive: back in range, or Tier 5 Tarantula's second phase after the first one went.
-            lastSeenAt = now;
-            diedAt = 0;
             zeroAt = 0;
         }
         Matcher m = BOSS.matcher(healthLine);
@@ -110,15 +107,21 @@ public final class SlayerTimes {
                 saveLastBoss();
             }
         }
+        // After the name is read, so the alert can say which boss and tier it is.
+        if (spawned) SlayerBossSpawnAlert.onNametagSpawn(boss);
     }
 
     /**
      * The boss key a nametag name is saved under. A Tier 5 Tarantula is one boss in two phases, "Tarantula
      * Broodfather V" and then "Conjoined Brood" (no tier in its nametag), so both count as "Tarantula Broodfather V",
-     * as in SkyHanni. Otherwise the key would change mid-fight and the PB HUD would switch boards.
+     * as in SkyHanni. Otherwise the key would change mid-fight and the PB HUD would switch boards. Tier 5 Revenant's
+     * nametag is "Atoned Horror", so it counts as "Revenant Horror V" (older saves are merged into it on load).
      */
     static String key(String name) {
-        return name.equalsIgnoreCase("Conjoined Brood") ? "Tarantula Broodfather V" : name;
+        String base = name.trim().replaceFirst("(?i)\\s+[IVX]+$", "");
+        if (base.equalsIgnoreCase("Conjoined Brood")) return "Tarantula Broodfather V";
+        if (base.equalsIgnoreCase("Atoned Horror")) return "Revenant Horror V";
+        return name;
     }
 
     /** Your current boss key, or if none is alive, the last one you fought; null if you haven't fought one yet. */
@@ -170,20 +173,16 @@ public final class SlayerTimes {
     private static void reset() {
         questStartedAt = 0;
         spawnedAt = 0;
-        lastSeenAt = 0;
-        diedAt = 0;
         zeroAt = 0;
         boss = null;
     }
 
     private static void onKill() {
         if (spawnedAt == 0 || boss == null) return;
-        long time = (diedAt > 0 ? diedAt : System.currentTimeMillis()) - spawnedAt;
+        long time = (zeroAt > 0 ? zeroAt : System.currentTimeMillis()) - spawnedAt;
         String name = boss;
         SlayerBossProfit.onKill(name);
         spawnedAt = 0;
-        lastSeenAt = 0;
-        diedAt = 0;
         zeroAt = 0;
         boss = null;
         killed = true;
@@ -283,6 +282,27 @@ public final class SlayerTimes {
             }
         } catch (Exception e) {
             System.err.println("[Sky2M] Could not read slayer-personal-bests.json: " + e.getMessage());
+        }
+        resetTarantulaOnce();
+    }
+
+    /**
+     * Tarantula PBs saved before the phase fix could be a single phase (a "3.1s" kill), so they are cleared once and
+     * set again by real kills.
+     */
+    private static void resetTarantulaOnce() {
+        Path marker = file.resolveSibling("slayer-tarantula-reset-1.txt");
+        if (Files.exists(marker)) return;
+        boolean removed = false;
+        for (Map<String, Long> bests : BESTS.values()) {
+            removed |= bests.keySet().removeIf(boss -> boss.startsWith("Tarantula Broodfather") || boss.startsWith("Conjoined Brood"));
+        }
+        if (removed) save();
+        try {
+            Files.createDirectories(marker.getParent());
+            Files.writeString(marker, "Tarantula personal bests were reset once after the phase timing fix.", StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.err.println("[Sky2M] Could not save the Tarantula reset marker: " + e.getMessage());
         }
     }
 

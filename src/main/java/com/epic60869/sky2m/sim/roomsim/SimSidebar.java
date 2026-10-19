@@ -61,14 +61,12 @@ public final class SimSidebar {
         return "\u00a7" + "0123456789abcdef".charAt(i & 15) + "\u00a7r";
     }
 
-    /** Top line of the sidebar and the tab list header. */
-    public static final String INFO_TITLE = "killer560's personal testing sim";
+    /** The tab list header. (The sidebar no longer starts with it, or ends with a Discord invite.) */
+    public static final String INFO_TITLE = "Dungeon Sim";
 
     /** Said plainly, so a screenshot of the sim is never mistaken for a Hypixel run. */
     public static final String INFO_NOT_HYPIXEL = "Local practice world - not Hypixel";
 
-    /** His Discord invite - the same one README.md, HomeMainTab and partycommands.InfoReplies carry. */
-    public static final String DISCORD = "discord.gg/hkQMF5fE84";
 
     /** What the sidebar said last tick, so the scoreboard is only touched when something changed. */
     private static List<String> lastLines = List.of();
@@ -126,8 +124,8 @@ public final class SimSidebar {
      * The sidebar text, top line first.
      *
      * <p>killer560 (2026-10-04): "For the sim scoreboard there still shows a lot of stuff like time, keys,
-     * k560l4 and stuff like that." So: who this world belongs to, the two things worth glancing at while
-     * practising - secrets and the room he is in - and the Discord link. No clock, no keys/doors, no "not
+     * k560l4 and stuff like that." So: the two things worth glancing at while
+     * practising - secrets and the room he is in. No title line or Discord invite either. No clock, no keys/doors, no "not
      * Hypixel" line (the tab list footer still says that). The Catacombs line STAYS: the floor change it
      * produces in {@code DungeonState} is what starts the run timer, Score Calc's run and the Live Map's grid
      * reset (his 2026-10-04 log, the three lines right after "Dungeon floor changed"), and Hypixel shows it too.
@@ -135,14 +133,11 @@ public final class SimSidebar {
      */
     private static List<String> compose(Minecraft client) {
         List<String> lines = new ArrayList<>();
-        lines.add(INFO_TITLE);
         lines.add("");
         lines.add("The Catacombs (" + SimState.floorLabel() + ")");
         lines.add("Secrets: " + SimScore.secretsFound() + "/" + SimScore.secretsTotal());
         String room = SimState.currentRoomName();
         lines.add("Room: " + (room == null || room.isBlank() ? "Entrance" : room));
-        lines.add("");
-        lines.add(DISCORD);
         return lines;
     }
 

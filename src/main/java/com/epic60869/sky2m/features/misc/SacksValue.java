@@ -209,6 +209,7 @@ public final class SacksValue {
         lastCompute = System.currentTimeMillis();
         Map<String, Long> sacks = SackTracker.snapshot();
         boolean stale = SackTracker.isStale();
+        String profile = SackTracker.profileKey();
         Sky2MPriceTooltip.warmup();
         CompletableFuture.runAsync(() -> {
             try {
@@ -230,6 +231,8 @@ public final class SacksValue {
                     high += Math.max(lowEach, highEach) * amount;
                 }
                 lines = line(mode, low, high, items, stale, sacks.isEmpty());
+                // A stale total (a sale it couldn't follow) would put a wrong point on the graph.
+                if (!stale && !sacks.isEmpty()) SackValueHistory.record(profile, Math.round(mode == FeatureConfigs.SacksPriceMode.SELL_OFFER ? high : low));
             } finally {
                 COMPUTING.set(false);
             }
@@ -257,11 +260,11 @@ public final class SacksValue {
         if (cached != null) return cached.isEmpty() ? null : cached;
         String id = RepoItems.idByLooseName(name);
         if (id == null) {
-            // The repo may not have loaded yet: guess the usual id ("Enchanted Carrot" -> ENCHANTED_CARROT) for now.
-            String guess = name.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9 ]", "").trim().replace(' ', '_');
-            // Once the repo is loaded the guess is as good as it gets: remember it instead of searching again.
-            if (!RepoItems.allNames().isEmpty()) IDS.put(name, guess);
-            return guess.isEmpty() ? null : guess;
+            // Do not guess an API ID from a display name. A guessed ID can belong to a different Bazaar product,
+            // assigning its price to this sack item and massively inflating the total. If the repo is not loaded yet,
+            // try again on the next calculation; once loaded, remember unknown names as unknown.
+            if (!RepoItems.allNames().isEmpty()) IDS.put(name, "");
+            return null;
         }
         IDS.put(name, id);
         return id;

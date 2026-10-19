@@ -1,0 +1,93 @@
+package com.epic60869.sky2m.features.core;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * /s2 perf's measurements: how long each HUD, in-world renderer and chat listener takes, added up over 5-second
+ * windows. Timing is two System.nanoTime() calls around each one, so it's always on and costs next to nothing.
+ */
+public final class Sky2MPerf {
+    public enum Kind { HUD, WORLD, CHAT }
+
+    /** One feature over the last full window: total time, calls, slowest call. */
+    public record Stat(Kind kind, String name, long nanos, long calls, long worstNanos) {}
+
+    private static final long WINDOW_NANOS = 5_000_000_000L;
+    private static final Map<String, long[]> CURRENT = new ConcurrentHashMap<>(); // "KIND|name" -> {nanos, calls, worst}
+    private static final ClassValue<String> NAMES = new ClassValue<>() {
+        @Override
+        protected String computeValue(Class<?> type) {
+            String name = type.getName();
+            int lambda = name.indexOf("$$");
+            if (lambda > 0) name = name.substring(0, lambda);
+            name = name.substring(name.lastIndexOf('.') + 1);
+            int inner = name.indexOf('$');
+            return inner > 0 ? name.substring(0, inner) : name;
+        }
+    };
+
+    private static volatile List<Stat> last = List.of();
+    private static volatile long lastFrames;
+    private static volatile double lastSeconds = 5;
+    private static long windowStart = System.nanoTime();
+    private static long frames;
+
+    private Sky2MPerf() {}
+
+    public static long start() {
+        return System.nanoTime();
+    }
+
+    public static void end(Kind kind, String name, long start) {
+        long took = System.nanoTime() - start;
+        CURRENT.compute(kind.name() + "|" + name, (k, v) -> {
+            if (v == null) return new long[]{took, 1, took};
+            v[0] += took;
+            v[1]++;
+            if (took > v[2]) v[2] = took;
+            return v;
+        });
+    }
+
+    /** A readable name for a listener or renderer: its class, without the lambda and package parts. */
+    public static String nameOf(Object callback) {
+        return callback == null ? "?" : NAMES.get(callback.getClass());
+    }
+
+    /** Once per frame (from the HUD pass): counts frames and closes the window every 5 seconds. */
+    public static void frame() {
+        frames++;
+        long now = System.nanoTime();
+        if (now - windowStart < WINDOW_NANOS) return;
+        List<Stat> stats = new ArrayList<>();
+        for (Map.Entry<String, long[]> e : CURRENT.entrySet()) {
+            int bar = e.getKey().indexOf('|');
+            long[] v = e.getValue();
+            stats.add(new Stat(Kind.valueOf(e.getKey().substring(0, bar)), e.getKey().substring(bar + 1), v[0], v[1], v[2]));
+        }
+        stats.sort(Comparator.comparingLong(Stat::nanos).reversed());
+        last = List.copyOf(stats);
+        lastFrames = frames;
+        lastSeconds = (now - windowStart) / 1e9;
+        CURRENT.clear();
+        frames = 0;
+        windowStart = now;
+        Sky2MPerfWarnings.onWindow(last, lastFrames);
+    }
+
+    public static List<Stat> stats() {
+        return last;
+    }
+
+    public static long frames() {
+        return lastFrames;
+    }
+
+    public static double seconds() {
+        return lastSeconds;
+    }
+}

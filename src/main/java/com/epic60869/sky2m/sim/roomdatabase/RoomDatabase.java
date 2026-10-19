@@ -236,6 +236,27 @@ public final class RoomDatabase {
         Files.deleteIfExists(zipFile);
     }
 
+    /** Same core-hash walk as {@link #getCore}, but reading block IDs from a {@link Function} instead
+     *  of a live world - used for room captures (e.g. deciding which quarter of an L capture is missing). */
+    public static int coreOfColumn(java.util.function.Function<Integer, String> blockIdAt) {
+        int hash = 1;
+        for (int y = 140; y >= 12; y--) {
+            String id = blockIdAt.apply(y);
+            int tokenHash = tokenHashOf(id);
+            hash = hash * 31 + tokenHash;
+        }
+        return hash;
+    }
+
+    private static int tokenHashOf(String id) {
+        int bracket = id.indexOf('[');
+        String name = bracket < 0 ? id : id.substring(0, bracket);
+        if (IGNORED_CORE_BLOCKS.contains(name) || name.endsWith("_planks")) {
+            name = "minecraft:air";
+        }
+        return name.hashCode();
+    }
+
     /** Real room-identification hash, ported directly from NoammAddons' own {@code ScanUtils.getCore} -
      *  same block-token rules, same {@code hash = hash*31 + tokenHash} accumulation, same y=140..12
      *  scan range. Kotlin's {@code String.hashCode()} on the JVM IS {@code java.lang.String.hashCode()},

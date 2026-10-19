@@ -1,9 +1,9 @@
 package com.epic60869.sky2m.features.portfolio;
 
+import com.epic60869.sky2m.Sky2MGuiStyle;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -20,12 +20,17 @@ import java.util.Locale;
 /**
  * /s2 collections: how much each collection has gone up over the last day, week, month or since tracking began
  * ({@link CollectionPortfolio}), and a graph of one collection. Click a column header to sort by it, a row to graph it.
+ *
+ * <p>Drawn like the /s2 settings ({@link Sky2MGuiStyle}): a header bar with the title, a toolbar with the tabs and
+ * periods as category-style entries and MoulConfig buttons, and the table or graph in a panel's sunken box.
  */
 public final class CollectionPortfolioScreen extends Screen {
     private enum Tab { TABLE, GRAPH }
 
     private static final int ROW = 14;
     private static final int ICON = 12;
+    /** Secondary text, between the settings' grey and dark grey. */
+    private static final int GREY = 0xFF808080;
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("MMM d HH:mm").withZone(ZoneId.systemDefault());
     private static final String[] HEADERS = {"Collection", "Total", "Gained", "Per day"};
 
@@ -39,6 +44,11 @@ public final class CollectionPortfolioScreen extends Screen {
     private int sortColumn = -1;
     private boolean ascending;
 
+    /** A clickable toolbar entry drawn this frame. */
+    private record Hit(int x0, int y0, int x1, int y1, Runnable action) {}
+
+    private final List<Hit> hits = new ArrayList<>();
+
     public CollectionPortfolioScreen() {
         super(Component.literal("Sky2M Collections"));
     }
@@ -47,71 +57,113 @@ public final class CollectionPortfolioScreen extends Screen {
     private int top() { return 10; }
     private int panelWidth() { return width - 20; }
     private int panelHeight() { return height - 20; }
-    private int tableTop() { return top() + 54; }
-    private int tableBottom() { return top() + panelHeight() - 8; }
-
-    @Override
-    protected void init() {
-        rebuild();
-    }
-
-    private void rebuild() {
-        clearWidgets();
-        int x = left() + 8, y = top() + 24;
-        for (Tab t : Tab.values()) {
-            String label = t == Tab.TABLE ? "Collections" : "Graph";
-            addRenderableWidget(Button.builder(Component.literal(t == tab ? "» " + label + " «" : label), b -> {
-                tab = t;
-                scroll = 0;
-                rebuild();
-            }).bounds(x, y, 80, 20).build());
-            x += 84;
-        }
-        x += 12;
-        for (CollectionPortfolio.Period p : CollectionPortfolio.Period.values()) {
-            addRenderableWidget(Button.builder(Component.literal(p == period ? "» " + p.label + " «" : p.label), b -> {
-                period = p;
-                scroll = 0;
-                rebuild();
-            }).bounds(x, y, 46, 20).build());
-            x += 50;
-        }
-        int rx = left() + panelWidth() - 8 - 60;
-        addRenderableWidget(Button.builder(Component.literal("Refresh"), b -> CollectionPortfolio.refresh())
-            .bounds(rx, y, 60, 20).build());
-        if (tab == Tab.TABLE) {
-            rx -= 114;
-            addRenderableWidget(Button.builder(Component.literal(hideUnchanged ? "Unchanged: Hidden" : "Unchanged: Shown"), b -> {
-                hideUnchanged = !hideUnchanged;
-                scroll = 0;
-                rebuild();
-            }).bounds(rx, y, 110, 20).build());
-        }
-    }
+    private int toolbarTop() { return top() + 29; }
+    private int toolbarRow() { return toolbarTop() + 4; }
+    private int contentTop() { return toolbarTop() + 28; }
+    /** The sunken box the table or graph sits in, under the summary line. */
+    private int insetLeft() { return left() + 9; }
+    private int insetRight() { return left() + panelWidth() - 9; }
+    private int insetTop() { return contentTop() + 16; }
+    private int insetBottom() { return top() + panelHeight() - 10; }
+    private int tableTop() { return insetTop() + 5; }
+    private int tableBottom() { return insetBottom() - 2; }
+    /** Table rows span these x's (the scroll bar is right of them). */
+    private int rowLeft() { return insetLeft() + 3; }
+    private int rowRight() { return insetRight() - 12; }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        g.fill(0, 0, width, height, 0xFF07090D);
-        g.fill(left(), top(), left() + panelWidth(), top() + panelHeight(), 0xFF181B21);
-        g.fill(left(), top(), left() + panelWidth(), top() + 2, 0xFF55FF55);
-        g.text(font, Component.literal("Collections").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD), left() + 8, top() + 8, 0xFFFFFFFF, true);
+        Sky2MGuiStyle.backdrop(g, width, height);
+        Sky2MGuiStyle.panel(g, left(), top(), panelWidth(), panelHeight(), true);
 
+        String status = CollectionPortfolio.status();
+        long updated = CollectionPortfolio.lastUpdate();
+        String right = !status.isEmpty() ? status : updated > 0 ? "updated " + ago(updated) : "";
+        drawHeader(g, right, !status.isEmpty());
+        hits.clear();
+        drawToolbar(g, mouseX, mouseY);
+
+        Sky2MGuiStyle.panel(g, left() + 4, contentTop(), panelWidth() - 9, insetBottom() + 5 - contentTop(), false);
         List<CollectionPortfolio.Change> changes = CollectionPortfolio.changes(period);
         long gainedTotal = 0;
         for (CollectionPortfolio.Change c : changes) gainedTotal += c.gained();
         long since = changes.isEmpty() ? 0 : changes.getFirst().since();
+        // The summary sits where the settings put a category's description.
         Component summary = Component.literal("Gained: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(fmt(gainedTotal)).withStyle(ChatFormatting.GREEN))
             .append(Component.literal(since > 0 ? "   since " + DATE.format(Instant.ofEpochMilli(since)) : "").withStyle(ChatFormatting.GRAY));
-        g.text(font, summary, left() + 90, top() + 8, 0xFFFFFFFF, false);
-        String status = CollectionPortfolio.status();
-        long updated = CollectionPortfolio.lastUpdate();
-        String right = !status.isEmpty() ? status : updated > 0 ? "updated " + ago(updated) : "";
-        g.text(font, right, left() + panelWidth() - 8 - font.width(right), top() + 8, status.isEmpty() ? 0xFF7A8290 : 0xFFFFAA00, false);
+        g.text(font, summary, insetLeft() + 1, contentTop() + 5, Sky2MGuiStyle.DESCRIPTION, true);
+        Sky2MGuiStyle.inset(g, insetLeft(), insetTop(), insetRight(), insetBottom());
 
         if (tab == Tab.TABLE) drawTable(g, changes, mouseX, mouseY);
         else drawGraph(g, changes);
         super.extractRenderState(g, mouseX, mouseY, delta);
+    }
+
+    /** The settings' header bar: the title in the middle, the last update (or a warning, orange) on the right. */
+    private void drawHeader(GuiGraphicsExtractor g, String status, boolean warning) {
+        int x = left() + 4, w = panelWidth() - 9;
+        Component title = Sky2MGuiStyle.title("Collections");
+        int titleX = x + (w - font.width(title)) / 2;
+        int statusRoom = x + w - 6 - (titleX + font.width(title) + 10);
+        if (statusRoom < font.width(status)) {
+            // Too narrow for both with the title in the middle: title on the left, the status after it.
+            titleX = x + 6;
+            statusRoom = x + w - 6 - (titleX + font.width(title) + 10);
+        }
+        Sky2MGuiStyle.panel(g, x, top() + 5, w, 20, false);
+        g.text(font, title, titleX, top() + 11, Sky2MGuiStyle.TITLE, false);
+        String fit = font.plainSubstrByWidth(status, Math.max(0, statusRoom));
+        g.text(font, fit, x + w - 6 - font.width(fit), top() + 11, warning ? 0xFFFFAA00 : Sky2MGuiStyle.TITLE, false);
+    }
+
+    /** Tabs and periods as category-style entries; Refresh and the unchanged switch as MoulConfig buttons. */
+    private void drawToolbar(GuiGraphicsExtractor g, int mouseX, int mouseY) {
+        Sky2MGuiStyle.panel(g, left() + 4, toolbarTop(), panelWidth() - 9, 24, false);
+        int x = left() + 12;
+        for (Tab t : Tab.values()) {
+            x += entry(g, t == Tab.TABLE ? "Collections" : "Graph", x, t == tab, mouseX, mouseY, () -> {
+                tab = t;
+                scroll = 0;
+            }) + 12;
+        }
+        x += 8;
+        g.fill(x - 10, toolbarRow() + 2, x - 9, toolbarRow() + 14, Sky2MGuiStyle.LINE);
+        for (CollectionPortfolio.Period p : CollectionPortfolio.Period.values()) {
+            x += entry(g, p.label, x, p == period, mouseX, mouseY, () -> {
+                period = p;
+                scroll = 0;
+            }) + 10;
+        }
+        int bw = Sky2MGuiStyle.buttonWidth(font, "Refresh");
+        int bx = left() + panelWidth() - 10 - bw;
+        button(g, "Refresh", bx, bw, mouseX, mouseY, CollectionPortfolio::refresh);
+        if (tab == Tab.TABLE) {
+            bw = Sky2MGuiStyle.buttonWidth(font, "Unchanged: Hidden");
+            bx -= bw + 4;
+            button(g, hideUnchanged ? "Unchanged: Hidden" : "Unchanged: Shown", bx, bw, mouseX, mouseY, () -> {
+                hideUnchanged = !hideUnchanged;
+                scroll = 0;
+            });
+        }
+    }
+
+    /** A category-style toolbar entry, clickable; returns its width. */
+    private int entry(GuiGraphicsExtractor g, String text, int x, boolean isSelected, int mouseX, int mouseY, Runnable action) {
+        int w = font.width(text);
+        Hit hit = new Hit(x - 3, toolbarRow(), x + w + 3, toolbarRow() + 16, action);
+        hits.add(hit);
+        return Sky2MGuiStyle.category(g, font, text, x, toolbarRow() + 4, isSelected, inside(hit, mouseX, mouseY));
+    }
+
+    private void button(GuiGraphicsExtractor g, String text, int x, int w, int mouseX, int mouseY, Runnable action) {
+        Hit hit = new Hit(x, toolbarRow(), x + w, toolbarRow() + 16, action);
+        hits.add(hit);
+        Sky2MGuiStyle.button(g, font, text, x, toolbarRow(), w, 16, inside(hit, mouseX, mouseY));
+    }
+
+    private static boolean inside(Hit hit, double x, double y) {
+        return x >= hit.x0() && x < hit.x1() && y >= hit.y0() && y < hit.y1();
     }
 
     // ----- Table -----
@@ -131,9 +183,14 @@ public final class CollectionPortfolioScreen extends Screen {
     }
 
     private int[] columns() {
-        int w = panelWidth() - 16;
-        int x = left() + 8;
+        int x = insetLeft() + 6;
+        int w = rowRight() - 2 - x;
         return new int[]{x, x + w * 40 / 100, x + w * 60 / 100, x + w * 80 / 100};
+    }
+
+    /** Table rows that fit: each is {@link #ROW} tall, the first one's highlight starting 13px below the headers. */
+    private int rowsVisible() {
+        return Math.max(1, (tableBottom() - tableTop() - 13) / ROW);
     }
 
     private void drawTable(GuiGraphicsExtractor g, List<CollectionPortfolio.Change> changes, int mouseX, int mouseY) {
@@ -141,28 +198,33 @@ public final class CollectionPortfolioScreen extends Screen {
         int y = tableTop();
         for (int i = 0; i < HEADERS.length; i++) {
             String text = HEADERS[i] + (i == sortColumn ? (ascending ? " ▲" : " ▼") : "");
-            g.text(font, text, c[i], y, i == sortColumn ? 0xFF9CFF9C : 0xFF55FF55, false);
+            g.text(font, text, c[i], y, i == sortColumn ? Sky2MGuiStyle.SELECTED : Sky2MGuiStyle.HEADING, false);
         }
-        g.fill(left() + 6, y + 10, left() + panelWidth() - 6, y + 11, 0xFF3A3F48);
+        g.fill(rowLeft(), y + 10, rowRight(), y + 11, Sky2MGuiStyle.LINE);
 
         List<CollectionPortfolio.Change> rows = rows(changes);
         if (changes.isEmpty()) {
-            g.text(font, "No collection history yet. Your collections are saved every 30 minutes while you're on SkyBlock.", c[0], y + 18, 0xFF7A8290, false);
-            g.text(font, "Make sure the Collections API is on in your SkyBlock settings.", c[0], y + 30, 0xFF7A8290, false);
+            int ly = y + 18;
+            for (var line : font.split(Component.literal("No collection history yet. Your collections are saved every 30 minutes while"
+                + " you're on SkyBlock. Make sure the Collections API is on in your SkyBlock settings."), rowRight() - c[0])) {
+                g.text(font, line, c[0], ly, GREY, false);
+                ly += 10;
+            }
             return;
         }
         if (rows.isEmpty()) {
-            g.text(font, "None of your collections went up in the last " + period.label + ".", c[0], y + 18, 0xFF7A8290, false);
+            g.text(font, "None of your collections went up in the last " + period.label + ".", c[0], y + 18, GREY, false);
             return;
         }
-        int rowsVisible = (tableBottom() - y - 14) / ROW;
+        int rowsVisible = rowsVisible();
         scroll = Math.max(0, Math.min(scroll, Math.max(0, rows.size() - rowsVisible)));
         int ry = y + 16;
         for (int i = scroll; i < rows.size() && i < scroll + rowsVisible; i++) {
             CollectionPortfolio.Change ch = rows.get(i);
-            boolean hover = mouseY >= ry - 3 && mouseY < ry + ROW - 3 && mouseX >= left() && mouseX < left() + panelWidth();
-            if (ch.id().equals(selected)) g.fill(left() + 6, ry - 3, left() + panelWidth() - 6, ry + ROW - 3, 0xFF2E3440);
-            else if (hover) g.fill(left() + 6, ry - 3, left() + panelWidth() - 6, ry + ROW - 3, 0xFF22262E);
+            boolean hover = mouseY >= ry - 3 && mouseY < ry + ROW - 3 && mouseX >= rowLeft() && mouseX < rowRight();
+            boolean isSelected = ch.id().equals(selected);
+            if (isSelected) g.fill(rowLeft(), ry - 3, rowRight(), ry + ROW - 3, Sky2MGuiStyle.ROW_HOVER);
+            else if (hover) g.fill(rowLeft(), ry - 3, rowRight(), ry + ROW - 3, Sky2MGuiStyle.ROW);
             int nameX = c[0];
             ItemStack icon = CollectionPortfolio.icon(ch.id());
             if (icon != null && !icon.isEmpty()) {
@@ -173,13 +235,17 @@ public final class CollectionPortfolioScreen extends Screen {
                 g.pose().popMatrix();
                 nameX += ICON + 3;
             }
-            g.text(font, font.plainSubstrByWidth(CollectionPortfolio.name(ch.id()), c[1] - nameX - 6), nameX, ry, 0xFFFFFFFF, false);
-            g.text(font, fmt(ch.total()), c[1], ry, 0xFFB8C0CC, false);
-            g.text(font, ch.gained() > 0 ? "+" + fmt(ch.gained()) : "0", c[2], ry, ch.gained() > 0 ? 0xFF55FF55 : 0xFF7A8290, false);
+            // The graphed collection is aqua and underlined, like the settings' selected category.
+            String name = font.plainSubstrByWidth(CollectionPortfolio.name(ch.id()), c[1] - nameX - 6);
+            g.text(font, isSelected ? Component.literal(name).withStyle(ChatFormatting.UNDERLINE) : Component.literal(name), nameX, ry,
+                isSelected ? Sky2MGuiStyle.SELECTED : Sky2MGuiStyle.TEXT, false);
+            g.text(font, fmt(ch.total()), c[1], ry, Sky2MGuiStyle.TEXT_DIM, false);
+            g.text(font, ch.gained() > 0 ? "+" + fmt(ch.gained()) : "0", c[2], ry, ch.gained() > 0 ? 0xFF55FF55 : GREY, false);
             double perDay = ch.perDay();
-            g.text(font, perDay > 0 ? Portfolio.coins(perDay) : "-", c[3], ry, 0xFFFFFFFF, false);
+            g.text(font, perDay > 0 ? Portfolio.coins(perDay) : "-", c[3], ry, Sky2MGuiStyle.TEXT, false);
             ry += ROW;
         }
+        Sky2MGuiStyle.scrollbar(g, insetRight() - 10, insetTop() + 4, insetBottom() - 4, scroll, rowsVisible, rows.size());
     }
 
     // ----- Graph -----
@@ -187,14 +253,19 @@ public final class CollectionPortfolioScreen extends Screen {
     private void drawGraph(GuiGraphicsExtractor g, List<CollectionPortfolio.Change> changes) {
         String id = selected;
         if (id == null && !changes.isEmpty()) id = changes.getFirst().id();
-        int gx = left() + 70, gy = tableTop() + 14, gw = panelWidth() - 90, gh = tableBottom() - gy - 20;
+        int gx = insetLeft() + 62, gy = tableTop() + 14, gw = insetRight() - 10 - gx, gh = tableBottom() - gy - 14;
         String label = id == null ? "Collection" : CollectionPortfolio.name(id) + " collection (click a row in Collections to pick another)";
-        g.text(font, label, left() + 8, tableTop(), 0xFF55FF55, false);
-        g.fill(gx, gy, gx + gw, gy + gh, 0xFF101318);
-        g.outline(gx, gy, gw, gh, 0xFF3A3F48);
+        g.text(font, font.plainSubstrByWidth(label, insetRight() - insetLeft() - 12), insetLeft() + 6, tableTop(), Sky2MGuiStyle.HEADING, false);
+        // The plot area in the settings' scroll bar track colour, edged like its panels.
+        g.fill(gx, gy, gx + gw, gy + gh, 0xFF101010);
+        g.outline(gx, gy, gw, gh, 0xFF303036);
         List<long[]> points = id == null ? List.of() : CollectionPortfolio.graph(id, period);
         if (points.size() < 2) {
-            g.text(font, "Not enough history yet. A snapshot is saved every 30 minutes while you're on SkyBlock.", gx + 8, gy + 8, 0xFF7A8290, false);
+            int ly = gy + 8;
+            for (var line : font.split(Component.literal("Not enough history yet. A snapshot is saved every 30 minutes while you're on SkyBlock."), gw - 16)) {
+                g.text(font, line, gx + 8, ly, GREY, false);
+                ly += 10;
+            }
             return;
         }
         long minT = points.getFirst()[0], maxT = points.getLast()[0];
@@ -210,13 +281,13 @@ public final class CollectionPortfolioScreen extends Screen {
         if (maxT == minT) maxT++;
         for (int i = 0; i <= 4; i++) {
             int ly = gy + gh - gh * i / 4;
-            g.fill(gx, ly, gx + gw, ly + 1, 0xFF22262E);
+            g.fill(gx, ly, gx + gw, ly + 1, Sky2MGuiStyle.ROW_HOVER);
             String v = Portfolio.coins(minV + (maxV - minV) * i / 4.0);
-            g.text(font, v, gx - 4 - font.width(v), ly - 4, 0xFF7A8290, false);
+            g.text(font, v, gx - 4 - font.width(v), ly - 4, GREY, false);
         }
-        g.text(font, DATE.format(Instant.ofEpochMilli(minT)), gx, gy + gh + 4, 0xFF7A8290, false);
+        g.text(font, DATE.format(Instant.ofEpochMilli(minT)), gx, gy + gh + 4, GREY, false);
         String end = DATE.format(Instant.ofEpochMilli(maxT));
-        g.text(font, end, gx + gw - font.width(end), gy + gh + 4, 0xFF7A8290, false);
+        g.text(font, end, gx + gw - font.width(end), gy + gh + 4, GREY, false);
         int lastX = -1, lastY = -1;
         for (long[] p : points) {
             int x = gx + (int) ((p[0] - minT) * (gw - 1) / (double) (maxT - minT));
@@ -256,10 +327,19 @@ public final class CollectionPortfolioScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (super.mouseClicked(event, doubleClick)) return true;
-        if (event.button() != InputConstants.MOUSE_BUTTON_LEFT || tab != Tab.TABLE) return false;
+        if (event.button() != InputConstants.MOUSE_BUTTON_LEFT) return false;
+        // Tabs, periods and buttons, where they were drawn last frame.
+        for (Hit hit : List.copyOf(hits)) {
+            if (inside(hit, event.x(), event.y())) {
+                Sky2MGuiStyle.click();
+                hit.action().run();
+                return true;
+            }
+        }
+        if (tab != Tab.TABLE) return false;
         int y = tableTop();
         int[] c = columns();
-        if (event.y() >= y - 2 && event.y() < y + 10) {
+        if (event.y() >= y - 2 && event.y() < y + 10 && event.x() < rowRight()) {
             for (int i = c.length - 1; i >= 0; i--) {
                 if (event.x() < c[i]) continue;
                 // First click sorts biggest first (names A-Z), the next reverses it.
@@ -270,7 +350,7 @@ public final class CollectionPortfolioScreen extends Screen {
             return false;
         }
         int rowsTop = y + 13;
-        if (event.y() >= rowsTop && event.y() < tableBottom()) {
+        if (event.y() >= rowsTop && event.y() < rowsTop + rowsVisible() * ROW && event.x() >= rowLeft() && event.x() < rowRight()) {
             List<CollectionPortfolio.Change> rows = rows(CollectionPortfolio.changes(period));
             int index = scroll + (int) ((event.y() - rowsTop) / ROW);
             if (index >= 0 && index < rows.size()) {

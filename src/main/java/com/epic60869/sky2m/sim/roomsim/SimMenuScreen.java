@@ -318,9 +318,10 @@ public class SimMenuScreen extends Screen {
             return true;
         }
         if ((mode == Mode.ROOM || mode == Mode.PREVIOUS) && !listed.isEmpty()) {
+            double mx = event.x();
             double my = event.y();
             int row = (int) ((my - listTop() + scroll) / 14);
-            if (my >= listTop() && my <= listTop() + listHeight() && row >= 0 && row < listed.size()) {
+            if (mx >= panelX && mx <= panelX + panelW && my >= listTop() && my <= listTop() + listHeight() && row >= 0 && row < listed.size()) {
                 String picked = listed.get(row);
                 if (mode == Mode.ROOM) {
                     SimBuilder.buildSingleRoom(this.minecraft, picked);

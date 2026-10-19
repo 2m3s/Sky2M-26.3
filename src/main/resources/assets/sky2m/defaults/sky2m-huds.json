@@ -1,0 +1,575 @@
+{
+  "craft_helper": {
+    "x": 8,
+    "y": 200,
+    "scale": 1.0,
+    "background": false
+  },
+  "arrows": {
+    "x": 571,
+    "y": 509,
+    "scale": 1.0,
+    "background": false
+  },
+  "legion": {
+    "x": 8,
+    "y": 134,
+    "scale": 1.0,
+    "background": false
+  },
+  "zealots": {
+    "x": 8,
+    "y": 300,
+    "scale": 1.0,
+    "background": false
+  },
+  "slayer_tracker": {
+    "x": 8,
+    "y": 160,
+    "scale": 1.0,
+    "background": false
+  },
+  "slayer_phase": {
+    "x": 8,
+    "y": 220,
+    "scale": 1.0,
+    "background": false
+  },
+  "yaw_pitch": {
+    "x": 491,
+    "y": 249,
+    "scale": 1.0,
+    "background": false
+  },
+  "pest_cooldown": {
+    "x": 8,
+    "y": 340,
+    "scale": 1.0,
+    "background": false
+  },
+  "bps": {
+    "x": 8,
+    "y": 354,
+    "scale": 1.0,
+    "background": false
+  },
+  "fishing_stats": {
+    "x": 8,
+    "y": 380,
+    "scale": 1.0,
+    "background": false
+  },
+  "hook_timer": {
+    "x": 8,
+    "y": 440,
+    "scale": 1.0,
+    "background": false
+  },
+  "bait": {
+    "x": 8,
+    "y": 454,
+    "scale": 1.0,
+    "background": false
+  },
+  "ch_map": {
+    "x": 0,
+    "y": 129,
+    "scale": 1.0,
+    "background": false
+  },
+  "mineshaft": {
+    "x": 150,
+    "y": 480,
+    "scale": 1.0,
+    "background": false
+  },
+  "pickaxe_ability": {
+    "x": 0,
+    "y": 356,
+    "scale": 1.0,
+    "background": false
+  },
+  "sweep": {
+    "x": 8,
+    "y": 620,
+    "scale": 1.0,
+    "background": false
+  },
+  "blood_move_timer": {
+    "x": 422,
+    "y": 46,
+    "scale": 1.3,
+    "background": false
+  },
+  "dungeon_splits": {
+    "x": 8,
+    "y": 740,
+    "scale": 1.0,
+    "background": false
+  },
+  "tick_timers": {
+    "x": 200,
+    "y": 740,
+    "scale": 1.0,
+    "background": false
+  },
+  "mask_timers": {
+    "x": 200,
+    "y": 780,
+    "scale": 1.0,
+    "background": false
+  },
+  "dungeon_score": {
+    "x": 200,
+    "y": 820,
+    "scale": 1.0,
+    "background": false
+  },
+  "toggle_sprint": {
+    "x": 851,
+    "y": 515,
+    "scale": 1.0,
+    "background": false
+  },
+  "collection_tracker": {
+    "x": 8,
+    "y": 150,
+    "scale": 1.0,
+    "background": false
+  },
+  "bestiary_overlay": {
+    "x": 269,
+    "y": 237,
+    "scale": 1.0,
+    "background": false
+  },
+  "diana_profit": {
+    "x": 8,
+    "y": 120,
+    "scale": 1.0,
+    "background": false
+  },
+  "diana_mobs": {
+    "x": 109,
+    "y": 29,
+    "scale": 1.0,
+    "background": false
+  },
+  "diana_mob_hp": {
+    "x": 335,
+    "y": 159,
+    "scale": 1.3,
+    "background": false
+  },
+  "profit_tracker": {
+    "x": 0,
+    "y": 220,
+    "scale": 1.0,
+    "background": false
+  },
+  "blaze_daggers": {
+    "x": 8,
+    "y": 260,
+    "scale": 1.0,
+    "background": false
+  },
+  "blaze_fire_pillar": {
+    "x": 8,
+    "y": 290,
+    "scale": 1.0,
+    "background": false
+  },
+  "slayer_rng_meter": {
+    "x": 8,
+    "y": 260,
+    "scale": 1.0,
+    "background": false
+  },
+  "slayer_pb_leaderboard": {
+    "x": 8,
+    "y": 260,
+    "scale": 1.0,
+    "background": false
+  },
+  "slayer_boss_profit": {
+    "x": 395,
+    "y": 103,
+    "scale": 1.3,
+    "background": false
+  },
+  "pest_timer": {
+    "x": 383,
+    "y": 93,
+    "scale": 1.0,
+    "background": false
+  },
+  "fishing_bobber_timer": {
+    "x": 10,
+    "y": 10,
+    "scale": 1.0,
+    "background": false
+  },
+  "fishing_hook_display": {
+    "x": 225,
+    "y": 150,
+    "scale": 1.0,
+    "background": false
+  },
+  "drill_fuel": {
+    "x": 8,
+    "y": 330,
+    "scale": 1.0,
+    "background": false
+  },
+  "skill_progress": {
+    "x": 380,
+    "y": 421,
+    "scale": 1.0,
+    "background": false
+  },
+  "skill_progress_bar": {
+    "x": 250,
+    "y": 218,
+    "scale": 1.0,
+    "background": false
+  },
+  "skill_eta": {
+    "x": 5,
+    "y": 155,
+    "scale": 1.0,
+    "background": false
+  },
+  "skill_all": {
+    "x": 5,
+    "y": 209,
+    "scale": 1.0,
+    "background": false
+  },
+  "hunting_shard_tracker": {
+    "x": 80,
+    "y": 180,
+    "scale": 1.0,
+    "background": false
+  },
+  "hunting_profit_tracker": {
+    "x": 20,
+    "y": 20,
+    "scale": 1.0,
+    "background": false
+  },
+  "hunting_lasso": {
+    "x": 380,
+    "y": 210,
+    "scale": 1.0,
+    "background": false
+  },
+  "hunting_fusion": {
+    "x": 30,
+    "y": 210,
+    "scale": 1.0,
+    "background": false
+  },
+  "hunting_safari_checklist": {
+    "x": 80,
+    "y": 100,
+    "scale": 1.0,
+    "background": false
+  },
+  "spirit_bear": {
+    "x": 425,
+    "y": 116,
+    "scale": 1.5,
+    "background": false
+  },
+  "livid_timer": {
+    "x": 447,
+    "y": 96,
+    "scale": 1.5,
+    "background": false
+  },
+  "blessings": {
+    "x": 643,
+    "y": 79,
+    "scale": 1.5,
+    "background": false
+  },
+  "storm_py": {
+    "x": 200,
+    "y": 760,
+    "scale": 1.0,
+    "background": false
+  },
+  "server_info": {
+    "x": 731,
+    "y": 0,
+    "scale": 1.0,
+    "background": false
+  },
+  "server_info_fps": {
+    "x": 8,
+    "y": 30,
+    "scale": 1.0,
+    "background": false
+  },
+  "server_info_tps": {
+    "x": 8,
+    "y": 43,
+    "scale": 1.0,
+    "background": false
+  },
+  "server_info_ping": {
+    "x": 8,
+    "y": 56,
+    "scale": 1.0,
+    "background": false
+  },
+  "server_info_time": {
+    "x": 8,
+    "y": 69,
+    "scale": 1.0,
+    "background": false
+  },
+  "inventory_hud": {
+    "x": 4,
+    "y": 60,
+    "scale": 1.0,
+    "background": false
+  },
+  "item_pickup_log": {
+    "x": 722,
+    "y": 199,
+    "scale": 1.0,
+    "background": false
+  },
+  "speed_display": {
+    "x": 333,
+    "y": 515,
+    "scale": 1.0,
+    "background": false
+  },
+  "secrets_display": {
+    "x": 429,
+    "y": 78,
+    "scale": 1.2,
+    "background": false
+  },
+  "rival_hud": {
+    "x": 8,
+    "y": 190,
+    "scale": 1.0,
+    "background": false
+  },
+  "sky2m_lobby": {
+    "x": 4,
+    "y": 220,
+    "scale": 1.0,
+    "background": false
+  },
+  "sacks_value": {
+    "x": 8,
+    "y": 180,
+    "scale": 1.0,
+    "background": false
+  },
+  "visitor_shopping_list": {
+    "x": 240,
+    "y": 233,
+    "scale": 1.0,
+    "background": false
+  },
+  "visitor_timer": {
+    "x": 223,
+    "y": 184,
+    "scale": 1.0,
+    "background": false
+  },
+  "visitor_stats": {
+    "x": 5,
+    "y": 20,
+    "scale": 1.0,
+    "background": false
+  },
+  "charmed_visitors": {
+    "x": 727,
+    "y": 151,
+    "scale": 1.0,
+    "background": false
+  },
+  "itemCooldowns": {
+    "x": 8,
+    "y": 200,
+    "scale": 1.0,
+    "background": false
+  },
+  "deployable_timers": {
+    "x": 8,
+    "y": 120,
+    "scale": 1.0,
+    "background": false
+  },
+  "ability_timers": {
+    "x": 10,
+    "y": 200,
+    "scale": 1.0,
+    "background": false
+  },
+  "custom_scoreboard": {
+    "x": 10000,
+    "y": 60,
+    "scale": 1.0,
+    "background": false
+  },
+  "rag_axe": {
+    "x": 732,
+    "y": 84,
+    "scale": 1.0,
+    "background": false
+  },
+  "rag_axe_prompt": {
+    "x": 517,
+    "y": 206,
+    "scale": 1.6,
+    "background": false
+  },
+  "terminal_timers": {
+    "x": 740,
+    "y": 108,
+    "scale": 1.0,
+    "background": false
+  },
+  "boss_phases": {
+    "x": 713,
+    "y": 172,
+    "scale": 1.0,
+    "background": false
+  },
+  "dungeon_sim_map": {
+    "x": 10,
+    "y": 10,
+    "scale": 1.0,
+    "background": false
+  },
+  "party_dungeon_data": {
+    "x": 836,
+    "y": 86,
+    "scale": 1.0,
+    "background": false
+  },
+  "team_melody": {
+    "x": 207,
+    "y": 80,
+    "scale": 1.0,
+    "background": false
+  },
+  "eventCalendar": {
+    "x": 8,
+    "y": 120,
+    "scale": 1.0,
+    "background": false
+  },
+  "pestHighlight": {
+    "x": 8,
+    "y": 60,
+    "scale": 1.0,
+    "background": false
+  },
+  "terminal_progress": {
+    "x": 10,
+    "y": 300,
+    "scale": 1.0,
+    "background": false
+  },
+  "death_tracker": {
+    "x": 10,
+    "y": 200,
+    "scale": 1.0,
+    "background": false
+  },
+  "class_arrows": {
+    "x": 10,
+    "y": 250,
+    "scale": 1.0,
+    "background": false
+  },
+  "class_damage_taken": {
+    "x": 10,
+    "y": 262,
+    "scale": 1.0,
+    "background": false
+  },
+  "key_holders": {
+    "x": 519,
+    "y": 81,
+    "scale": 1.0,
+    "background": false
+  },
+  "dragon_splits": {
+    "x": 814,
+    "y": 39,
+    "scale": 1.3,
+    "background": false
+  },
+  "scatha_tracker": {
+    "x": 10,
+    "y": 120,
+    "scale": 1.0,
+    "background": false
+  },
+  "gemstone_tracker": {
+    "x": 10,
+    "y": 200,
+    "scale": 1.0,
+    "background": false
+  },
+  "slayer_phase_timer": {
+    "x": 8,
+    "y": 240,
+    "scale": 1.0,
+    "background": false
+  },
+  "voidgloom_lasers": {
+    "x": 200,
+    "y": 160,
+    "scale": 1.0,
+    "background": false
+  },
+  "damage_numbers": {
+    "x": 10,
+    "y": 380,
+    "scale": 1.0,
+    "background": false
+  },
+  "carry_tracker": {
+    "x": 10,
+    "y": 340,
+    "scale": 1.0,
+    "background": false
+  },
+  "mayor_display": {
+    "x": 10,
+    "y": 60,
+    "scale": 1.0,
+    "background": false
+  },
+  "side_chat": {
+    "x": 4,
+    "y": 60,
+    "scale": 1.0,
+    "background": false
+  },
+  "fairy_souls_finder": {
+    "x": 4,
+    "y": 180,
+    "scale": 1.0,
+    "background": false
+  },
+  "shopping_list": {
+    "x": 4,
+    "y": 220,
+    "scale": 1.0,
+    "background": false
+  },
+  "#backgroundsOff": true,
+  "#refWidth": 960,
+  "#refHeight": 529
+}

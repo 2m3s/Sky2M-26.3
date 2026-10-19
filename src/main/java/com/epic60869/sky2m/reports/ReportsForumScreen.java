@@ -209,7 +209,7 @@ public final class ReportsForumScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (super.mouseClicked(event, doubleClick)) return true;
-        if (event.button() != 0 || !problem().isEmpty()) return false;
+        if (event.button() != com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT || !problem().isEmpty()) return false;
         int left = left();
         int top = top();
         if (event.x() < left || event.x() >= left + panelW() || event.y() < top + 2 || event.y() >= bottom()) return false;

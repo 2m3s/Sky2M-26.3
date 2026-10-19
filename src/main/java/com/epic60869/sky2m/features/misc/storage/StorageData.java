@@ -128,39 +128,87 @@ public final class StorageData {
             }
             root.add("profiles", profiles);
             Files.createDirectories(file.getParent());
-            Files.writeString(file, GSON.toJson(root), StandardCharsets.UTF_8);
+            // Written to a temporary file and moved over, with the last good file kept as a backup: a crash or a
+            // full disk mid-write left a cut-off file, it failed to load, and the next save replaced every page.
+            Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
+            Files.writeString(tmp, GSON.toJson(root), StandardCharsets.UTF_8);
+            if (Files.exists(file) && loadedOk) {
+                Files.copy(file, backupFile(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+            try {
+                Files.move(tmp, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+                Files.move(tmp, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+            loadedOk = true;
         } catch (Exception e) {
             System.err.println("[Sky2M] Could not save the storage overlay: " + e.getMessage());
         }
     }
 
+    /** False while the file on disk could not be read, so it is not copied over the good backup. */
+    private static boolean loadedOk = true;
+
+    private static Path backupFile() {
+        return file.resolveSibling(file.getFileName() + ".bak");
+    }
+
     private static void load() {
+        if (Files.exists(file) && readFile(file)) return;
+        Path backup = backupFile();
+        if (Files.exists(backup) && readFile(backup)) {
+            System.err.println("[Sky2M] The storage overlay file could not be read; loaded its backup instead.");
+            if (Files.exists(file)) {
+                loadedOk = false;
+                try {
+                    Files.copy(file, file.resolveSibling(file.getFileName() + ".broken"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                } catch (Exception ignored) {}
+            }
+            dirty = true;
+        }
+    }
+
+    /** Reads one file into {@link #PROFILES}; a bad page or profile is skipped instead of losing the rest. */
+    private static boolean readFile(Path path) {
+        JsonObject root;
         try {
-            if (!Files.exists(file)) return;
-            JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
-            if (!root.has("profiles")) return;
-            for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("profiles").entrySet()) {
+            root = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (Exception e) {
+            System.err.println("[Sky2M] Could not read the storage overlay (" + path.getFileName() + "): " + e.getMessage());
+            return false;
+        }
+        if (!root.has("profiles")) return true;
+        PROFILES.clear();
+        for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("profiles").entrySet()) {
+            StorageData data = new StorageData();
+            data.imported = true;
+            try {
                 JsonObject profile = e.getValue().getAsJsonObject();
-                StorageData data = new StorageData();
-                data.imported = true;
                 if (profile.has("pages")) {
                     for (Map.Entry<String, JsonElement> p : profile.getAsJsonObject("pages").entrySet()) {
-                        StoragePageSlot slot = new StoragePageSlot(Integer.parseInt(p.getKey()));
-                        JsonObject page = p.getValue().getAsJsonObject();
-                        VirtualInventory inv = page.has("blob")
-                            ? VirtualInventory.fromSaved(page.get("rows").getAsInt(), page.get("blob").getAsString()) : null;
-                        data.storageInventories.put(slot, new StorageInventory(slot, inv));
+                        try {
+                            StoragePageSlot slot = new StoragePageSlot(Integer.parseInt(p.getKey()));
+                            JsonObject page = p.getValue().getAsJsonObject();
+                            VirtualInventory inv = page.has("blob") && page.has("rows")
+                                ? VirtualInventory.fromSaved(page.get("rows").getAsInt(), page.get("blob").getAsString()) : null;
+                            data.storageInventories.put(slot, new StorageInventory(slot, inv));
+                        } catch (Exception bad) {
+                            System.err.println("[Sky2M] Skipped a broken storage page " + p.getKey() + ": " + bad.getMessage());
+                        }
                     }
                 }
                 if (profile.has("names")) {
                     for (Map.Entry<String, JsonElement> n : profile.getAsJsonObject("names").entrySet()) {
-                        data.customNames.put(new StoragePageSlot(Integer.parseInt(n.getKey())), n.getValue().getAsString());
+                        try {
+                            data.customNames.put(new StoragePageSlot(Integer.parseInt(n.getKey())), n.getValue().getAsString());
+                        } catch (Exception ignored) {}
                     }
                 }
-                PROFILES.put(e.getKey(), data);
+            } catch (Exception bad) {
+                System.err.println("[Sky2M] Skipped a broken storage profile: " + bad.getMessage());
             }
-        } catch (Exception e) {
-            System.err.println("[Sky2M] Could not read the storage overlay: " + e.getMessage());
+            PROFILES.put(e.getKey(), data);
         }
+        return true;
     }
 }

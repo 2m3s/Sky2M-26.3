@@ -333,8 +333,8 @@ public final class SbcSocial {
         SbcNet.sendQuietly(p);
     }
 
-    /** The server id from the sidebar ("11/08/24 m45CD" -> "m45CD"). */
-    private static String server() {
+    /** The server id from the sidebar ("11/08/24 m45CD" -> "m45CD"), or "" when it isn't shown. */
+    static String server() {
         for (String line : Sky2MLocation.scoreboard()) {
             Matcher m = SERVER_LINE.matcher(line);
             if (m.find()) return m.group(1);

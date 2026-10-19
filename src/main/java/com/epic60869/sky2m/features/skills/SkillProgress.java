@@ -632,6 +632,7 @@ public final class SkillProgress {
     }
 
     private static void afterScreen(Screen screen, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return;
         if (screen instanceof AbstractContainerScreen<?> && isDisplayEnabled() && !display.isEmpty()) {
             // SkyHanni draws the ETA display in chest menus and the all skills display above every menu.
             for (Sky2MHuds.Element element : Sky2MHuds.elements()) {
@@ -651,6 +652,7 @@ public final class SkillProgress {
     }
 
     private static boolean click(double mouseX, double mouseY) {
+        if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return false;
         for (Region r : regions()) {
             if (r.onClick() != null && mouseX >= r.x1() && mouseX < r.x2() && mouseY >= r.y1() && mouseY < r.y2()) {
                 r.onClick().run();

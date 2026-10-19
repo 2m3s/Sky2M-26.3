@@ -58,25 +58,27 @@ public final class Sky2MNick {
         // Your own nickname comes from the server like everyone else's.
         RemoteNick remote = local ? localNick() : shownNick(uuid);
 
+        // Symbols go after the name in the tab list, not before: SkyHanni's compact tab list only treats an entry as a
+        // player (and draws their head) when the name comes straight after "[level] ", so a symbol in front hid the head.
         if (remote == null) {
             // Hypixel tab entries are fake profiles, so match usernames in the text instead.
             // Only the name is replaced; the level, rank and colours around it are kept.
-            if (local) return insertSymbols(original, uuid, actualName);
+            if (local) return insertSymbolsAfter(original, uuid, actualName);
             Component result = original;
             // Only rebuild the entry for names that are actually in it.
             String plain = original.getString();
             RemoteNick self = localNick();
-            if (self != null && plain.contains(mc.getUser().getName())) result = replaceExactName(result, mc.getUser().getName(), styled(self));
+            if (self != null && plain.contains(mc.getUser().getName())) result = replaceExactName(result, mc.getUser().getName(), styledTab(self));
             for (RemoteNick r : REMOTE_NICKS.values()) {
                 if (!r.shown() || r.name.isBlank() || r.username.isBlank() || isLocalUuid(r.uuid) || !plain.contains(r.username)) continue;
-                result = replaceExactName(result, r.username, styled(r));
+                result = replaceExactName(result, r.username, styledTab(r));
             }
-            result = insertSymbols(result, uuid, actualName);
-            return insertSymbols(result);
+            result = insertSymbolsAfter(result, uuid, actualName);
+            return insertSymbolsAfter(result);
         }
 
         // If the name is not in the text, leave the entry alone rather than replacing its formatting.
-        return replaceExactName(original, actualName, styled(remote));
+        return replaceExactName(original, actualName, styledTab(remote));
     }
 
     /**
@@ -174,6 +176,12 @@ public final class Sky2MNick {
     /** The nickname in its style, after the player's supporter symbol and badge. */
     private static Component styled(RemoteNick nick) {
         return com.epic60869.sky2m.features.sbc.SbcCosmetics.decorate(nick.uuid,
+            styled(nick.name, nick.mode, nick.customHex, nick.gradientHex, nick.font));
+    }
+
+    /** The nickname in its style with the symbols after it, for the tab list. */
+    private static Component styledTab(RemoteNick nick) {
+        return com.epic60869.sky2m.features.sbc.SbcCosmetics.decorateAfter(nick.uuid,
             styled(nick.name, nick.mode, nick.customHex, nick.gradientHex, nick.font));
     }
 
@@ -406,7 +414,33 @@ public final class Sky2MNick {
         return result;
     }
 
+    /** The player's symbols right after their name (tab list). */
+    private static Component insertSymbolsAfter(Component message, UUID uuid, String actualName) {
+        if (message == null || uuid == null || actualName == null || actualName.isBlank()) return message;
+        Component symbols = com.epic60869.sky2m.features.sbc.SbcCosmetics.symbolsAfter(uuid);
+        return symbols == null ? message : insertAtName(message, actualName, symbols, true);
+    }
+
+    /** Symbols after every Sky2M player without a nickname whose name is in the tab entry. */
+    private static Component insertSymbolsAfter(Component message) {
+        if (message == null) return message;
+        String plain = message.getString();
+        Component result = message;
+        for (UUID uuid : com.epic60869.sky2m.features.sbc.SbcCosmetics.decoratedPlayers()) {
+            if (shownNick(uuid) != null) continue;
+            String name = username(uuid);
+            if (name.isBlank() || !plain.contains(name)) continue;
+            result = insertSymbolsAfter(result, uuid, name);
+        }
+        return result;
+    }
+
     private static Component insertBeforeName(Component message, String actualName, Component prefix) {
+        return insertAtName(message, actualName, prefix, false);
+    }
+
+    /** {@code piece} before (or after) every whole-word {@code actualName} in the text, keeping all other styling. */
+    private static Component insertAtName(Component message, String actualName, Component piece, boolean after) {
         List<StyledRun> runs = new java.util.ArrayList<>();
         StringBuilder plain = new StringBuilder();
         message.visit((style, value) -> {
@@ -417,7 +451,7 @@ public final class Sky2MNick {
             return java.util.Optional.empty();
         }, Style.EMPTY);
         String text = plain.toString();
-        String prefixText = prefix.getString();
+        String pieceText = piece.getString();
         MutableComponent result = Component.empty();
         int cursor = 0;
         int search = 0;
@@ -429,15 +463,17 @@ public final class Sky2MNick {
             boolean leftOk = at == 0 || !isNameChar(text.charAt(at - 1));
             boolean rightOk = end >= text.length() || !isNameChar(text.charAt(end));
             // Already has its symbols (the text went through here before).
-            boolean done = at >= prefixText.length() && text.startsWith(prefixText, at - prefixText.length());
+            boolean done = after ? text.startsWith(pieceText, end)
+                : at >= pieceText.length() && text.startsWith(pieceText, at - pieceText.length());
             if (!leftOk || !rightOk || done) {
                 search = at + 1;
                 continue;
             }
-            appendStyledRange(result, runs, cursor, at);
-            result.append(prefix.copy());
+            int split = after ? end : at;
+            appendStyledRange(result, runs, cursor, split);
+            result.append(piece.copy());
             changed = true;
-            cursor = at;
+            cursor = split;
             search = end;
         }
         if (!changed) return message;

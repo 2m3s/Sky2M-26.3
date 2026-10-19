@@ -12,7 +12,8 @@ public final class BindKeys {
 
     /** Whether the bind is set at all. */
     public static boolean isSet(int bind) {
-        return bind != InputConstants.UNKNOWN.getValue() && bind != 0;
+        // -1 is "unset" in settings from 26.2 (its unknown key); 26.3's own unknown key is 0.
+        return bind != InputConstants.UNKNOWN.getValue() && bind != 0 && bind != -1;
     }
 
     public static boolean down(int bind) {

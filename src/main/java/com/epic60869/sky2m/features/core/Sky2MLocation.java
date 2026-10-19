@@ -246,11 +246,24 @@ public final class Sky2MLocation {
         return area.toLowerCase(Locale.ROOT).equals(name.toLowerCase(Locale.ROOT));
     }
 
-    /** First scoreboard line that starts with {@code prefix}, without the prefix, or null. */
+    /**
+     * First scoreboard line that starts with {@code prefix}, without the prefix, or null. Falls back to the sidebar's
+     * team lines, which a scoreboard mod (SkyHanni's custom scoreboard) can't take away, and skips padding symbols
+     * Hypixel puts at the start of a line.
+     */
     public static String scoreboardValue(String prefix) {
-        for (String line : scoreboard) {
-            if (line.startsWith(prefix)) return line.substring(prefix.length()).trim();
+        String value = valueIn(scoreboard, prefix);
+        return value != null ? value : valueIn(teamLines, prefix);
+    }
+
+    private static String valueIn(List<String> lines, String prefix) {
+        for (String line : lines) {
+            int at = line.indexOf(prefix);
+            // Only symbols (no letters or digits) may come before the prefix, so "Purse:" doesn't match inside a sentence.
+            if (at >= 0 && !LEADING_TEXT.matcher(line.substring(0, at)).find()) return line.substring(at + prefix.length()).trim();
         }
         return null;
     }
+
+    private static final Pattern LEADING_TEXT = Pattern.compile("[\\p{L}\\p{N}]");
 }

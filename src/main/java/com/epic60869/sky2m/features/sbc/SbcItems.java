@@ -63,7 +63,7 @@ public final class SbcItems {
     private static int nextShared = 1;
     /** Ids may hold ';' (pets "GOLDEN_DRAGON;4", books "ENCHANTMENT_ULTIMATE_WISE;5", runes). */
     private static final Pattern PUBLIC_ITEM = Pattern.compile("\\[\\[SBITEM\\|([A-Za-z0-9_:;.\\-]+)\\|(\\d{1,2})(?:\\|([A-Za-z0-9_-]+))?]]"
-        + "|\\[([^\\[\\]()]{1,60})]\\(sb:([A-Za-z0-9_:;.\\-]+)(?:\\*(\\d{1,2}))?\\)");
+        + "|\\[([^\\[\\]()]{1,60})]\\(sb:([A-Za-z0-9_:;.\\-]+)(?:\\*(\\d{1,2}))?(?:#([a-z0-9]{4,12}))?\\)");
     private static final Pattern ITEM_TOKEN = Pattern.compile("(?i)\\[item]");
     /** [inv] shares your whole inventory; [brag] still works the same way. */
     private static final Pattern INV_TOKEN = Pattern.compile("(?i)\\[(?:inv|brag)]");
@@ -103,6 +103,35 @@ public final class SbcItems {
 
     private static final Queue<Followup> FOLLOWUPS = new ArrayDeque<>();
     private static long nextFollowupAt;
+
+    /**
+     * Hypixel chat only fits an item's id, so [item] and [inv] also store the real items (reforge, recomb, enchants,
+     * skull texture) on the Sky2M server under a short key that goes in the message; receivers fetch them by it.
+     */
+    private static final Map<String, JsonObject> SHARE_DATA = lru(200);
+    /** Keys the server said it doesn't have (or that can't be fetched), so they aren't asked again. */
+    private static final Map<String, Boolean> SHARE_MISSING = lru(200);
+    /** Keys asked for and when, so one key is asked once at a time. */
+    private static final Map<String, Long> SHARE_REQUESTED = lru(200);
+    /** Shared [item]s in chat waiting for their full data: key -> the item and its hover text to fill in. */
+    private static final Map<String, List<PendingHover>> PENDING_HOVERS = lru(100);
+    /** [inv]s clicked before their full data arrived: key -> when. */
+    private static final Map<String, Long> PENDING_VIEWS = lru(20);
+    private static final long SHARE_WAIT_MS = 2_500L;
+    /** Lines of lore kept per item when a shared inventory is too big to upload whole. */
+    private static final int[] SHARE_LORE_STEPS = {40, 20, 8, 0};
+    private static final int SHARE_MAX_JSON = 64_000;
+
+    private record PendingHover(JsonObject item, MutableComponent hover) {}
+
+    private static <V> Map<String, V> lru(int max) {
+        return java.util.Collections.synchronizedMap(new LinkedHashMap<>() {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String, V> eldest) {
+                return size() > max;
+            }
+        });
+    }
 
     private SbcItems() {}
 
@@ -172,8 +201,20 @@ public final class SbcItems {
     }
 
     private static String replaceItemTokens(String message) {
+        if (!ITEM_TOKEN.matcher(message).find()) return message;
         ItemStack stack = heldOrHovered();
-        String marker = publicMarker(stack, true);
+        if (stack == null || stack.isEmpty()) return message;
+        String key = SbcNet.online() ? newShareKey() : null;
+        String withKey = replaceItemTokens(message, publicMarker(stack, true, key));
+        // Hypixel allows 256 characters (a "/msg SomeLongName " included): without the key it still shows the item.
+        if (key == null || withKey.length() <= 230) {
+            if (key != null) uploadShare(key, "item", java.util.Collections.singletonList(toJson(stack)));
+            return withKey;
+        }
+        return replaceItemTokens(message, publicMarker(stack, true, null));
+    }
+
+    private static String replaceItemTokens(String message, String marker) {
         if (marker == null) return message;
         Matcher matcher = ITEM_TOKEN.matcher(message);
         StringBuilder out = new StringBuilder();
@@ -183,6 +224,93 @@ public final class SbcItems {
             cursor = matcher.end();
         }
         return cursor == 0 ? message : out.append(message, cursor, message.length()).toString();
+    }
+
+    // ------------------------------------------------------------------------------------------------ share store
+
+    private static String newShareKey() {
+        String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        java.util.concurrent.ThreadLocalRandom random = java.util.concurrent.ThreadLocalRandom.current();
+        StringBuilder key = new StringBuilder(6);
+        for (int i = 0; i < 6; i++) key.append(chars.charAt(random.nextInt(chars.length())));
+        return key.toString();
+    }
+
+    /** Stores the real items behind a shared [item] or [inv] on the Sky2M server (quietly; chat still works without). */
+    private static void uploadShare(String key, String kind, List<JsonObject> items) {
+        Minecraft mc = Minecraft.getInstance();
+        JsonObject packet = null;
+        for (int lore : SHARE_LORE_STEPS) {
+            packet = Sbc.packet("shareStore");
+            packet.addProperty("key", key);
+            packet.addProperty("kind", kind);
+            JsonArray array = new JsonArray();
+            for (JsonObject item : items) {
+                if (item == null) {
+                    array.add(com.google.gson.JsonNull.INSTANCE);
+                    continue;
+                }
+                JsonObject copy = item.deepCopy();
+                JsonArray lines = Sbc.arr(item, "lore");
+                JsonArray kept = new JsonArray();
+                for (int i = 0; i < Math.min(lore, lines.size()); i++) kept.add(lines.get(i));
+                copy.add("lore", kept);
+                array.add(copy);
+            }
+            packet.add("items", array);
+            if (packet.toString().length() <= SHARE_MAX_JSON) break;
+        }
+        // Your own message shows the full items straight away.
+        JsonObject own = new JsonObject();
+        own.addProperty("key", key);
+        own.addProperty("kind", kind);
+        own.addProperty("owner", mc.getUser().getName());
+        own.add("items", packet.get("items"));
+        SHARE_DATA.put(key, own);
+        if (!SbcNet.online()) return;
+        JsonObject send = packet;
+        mc.execute(() -> com.epic60869.sky2m.Sky2MLogin.whenLoggedIn(() -> Sky2MGlobalChat.send(send)));
+    }
+
+    /** Asks the server for a key's items once (answers arrive in {@link #onSharePacket}). */
+    private static void requestShare(String key) {
+        if (key == null || SHARE_DATA.containsKey(key) || SHARE_MISSING.containsKey(key)) return;
+        Long asked = SHARE_REQUESTED.get(key);
+        if (asked != null && System.currentTimeMillis() - asked < 10_000L) return;
+        SHARE_REQUESTED.put(key, System.currentTimeMillis());
+        JsonObject packet = Sbc.packet("shareGet");
+        packet.addProperty("key", key);
+        if (!SbcNet.sendQuietly(packet)) shareFailed(key);
+    }
+
+    /** shareData / shareMissing from the server, on the game thread. */
+    public static void onSharePacket(String type, JsonObject packet) {
+        String key = Sbc.str(packet, "key");
+        if (key.isEmpty()) return;
+        SHARE_REQUESTED.remove(key);
+        if (!"shareData".equals(type)) {
+            shareFailed(key);
+            return;
+        }
+        SHARE_DATA.put(key, packet);
+        List<PendingHover> hovers = PENDING_HOVERS.remove(key);
+        JsonArray items = Sbc.arr(packet, "items");
+        if (hovers != null && !items.isEmpty() && items.get(0).isJsonObject()) {
+            JsonObject full = items.get(0).getAsJsonObject();
+            for (PendingHover pending : hovers) {
+                long count = Sbc.lng(pending.item(), "count", 1);
+                for (var entry : full.entrySet()) pending.item().add(entry.getKey(), entry.getValue().deepCopy());
+                pending.item().addProperty("count", count);
+                fillHover(pending.hover(), pending.item());
+            }
+        }
+        if (PENDING_VIEWS.remove(key) != null) viewInventory(key);
+    }
+
+    private static void shareFailed(String key) {
+        SHARE_MISSING.put(key, true);
+        PENDING_HOVERS.remove(key);
+        if (PENDING_VIEWS.remove(key) != null) viewInventory(key);
     }
 
     /**
@@ -198,7 +326,10 @@ public final class SbcItems {
         List<String> parts = new ArrayList<>();
         for (int i = 0; i < data.length(); i += partLength) parts.add(data.substring(i, Math.min(data.length(), i + partLength)));
         if (parts.isEmpty()) parts.add("");
-        String key = Long.toString(Math.floorMod(System.nanoTime() ^ mc.player.getUUID().getLeastSignificantBits(), 2_176_782_336L), 36);
+        String key = newShareKey();
+        List<JsonObject> items = new ArrayList<>();
+        for (int slot = 0; slot < 40; slot++) items.add(toJson(mc.player.getInventory().getItem(slot)));
+        uploadShare(key, "inv", items);
         List<String> lines = new ArrayList<>();
         for (int i = 0; i < parts.size(); i++) lines.add("[[SBINV|" + key + "|" + (i + 1) + "/" + parts.size() + "|" + parts.get(i) + "]]");
         String prefix = INV_TOKEN.matcher(message.substring(0, token.start())).replaceAll("").trim();
@@ -269,17 +400,36 @@ public final class SbcItems {
                 inventory.parts[part - 1] = matcher.group(4);
                 if (part == 1) inventory.owner = sender(text.substring(0, matcher.start()));
             }
+            // Fetch the real items now, so clicking it opens straight away.
+            if (part == 1 && sharingEnabled()) requestShare(matcher.group(1));
             if (part == 1) onlyFollowups = false;
         }
         return any && onlyFollowups && sharingEnabled();
     }
 
-    /** "Party > [MVP+] Name: " -> "Name". */
+    /** Extracts the actual Minecraft username from vanilla party/guild/private chat prefixes. */
     private static String sender(String before) {
-        int colon = before.lastIndexOf(':');
+        // Do not infer the sender from the final word: prefixes can contain rank labels and channel
+        // formatting, and some chat layouts include additional text before the message body.
+        // Colour codes go first: "§b2m3s§b§f" with its § signs lost read as "b2m3sbf".
+        String cleaned = before.replaceAll("§.", "");
+        int colon = cleaned.lastIndexOf(':');
         if (colon < 0) return "";
-        String[] words = before.substring(0, colon).trim().split(" ");
-        return words.length == 0 ? "" : words[words.length - 1].replaceAll("[^A-Za-z0-9_]", "");
+        String prefix = cleaned.substring(0, colon);
+        Matcher username = Pattern.compile("([A-Za-z0-9_]{1,16})\\s*$").matcher(prefix);
+        if (!username.find()) return "";
+        String word = username.group(1);
+        // Prefer a real name from the tab list: the exact word, or the longest name inside it.
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.getConnection() == null) return word;
+        String best = "";
+        for (var info : mc.getConnection().getOnlinePlayers()) {
+            String name = info.getProfile().name();
+            if (name == null || name.isEmpty()) continue;
+            if (name.equalsIgnoreCase(word)) return name;
+            if (word.toLowerCase(Locale.ROOT).contains(name.toLowerCase(Locale.ROOT)) && name.length() > best.length()) best = name;
+        }
+        return best.length() >= 3 ? best : word;
     }
 
     /** The clickable "[Inventory]" a shared inventory shows as. */
@@ -300,6 +450,31 @@ public final class SbcItems {
         SharedInventory inventory;
         synchronized (INVENTORIES) {
             inventory = INVENTORIES.get(key);
+        }
+        // The real items from the Sky2M server, with their reforges, enchants and the sharer's own name.
+        JsonObject full = SHARE_DATA.get(key);
+        if (full != null && "inv".equals(Sbc.str(full, "kind"))) {
+            List<JsonObject> items = new ArrayList<>();
+            for (JsonElement e : Sbc.arr(full, "items")) items.add(e.isJsonObject() ? e.getAsJsonObject() : null);
+            while (items.size() < 40) items.add(null);
+            String owner = Sbc.str(full, "owner");
+            if (owner.isEmpty() && inventory != null) owner = inventory.owner;
+            Compat.queueOpenScreen(new SbcInventoryScreen(owner, items.subList(0, 40)));
+            return;
+        }
+        if (SbcNet.online() && !SHARE_MISSING.containsKey(key)) {
+            // Still on its way: wait a moment for it, then show what the chat message holds.
+            PENDING_VIEWS.put(key, System.currentTimeMillis());
+            requestShare(key);
+            Minecraft mc = Minecraft.getInstance();
+            java.util.concurrent.CompletableFuture.delayedExecutor(SHARE_WAIT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+                .execute(() -> mc.execute(() -> {
+                    if (PENDING_VIEWS.remove(key) != null) {
+                        SHARE_MISSING.put(key, true);
+                        viewInventory(key);
+                    }
+                }));
+            return;
         }
         if (inventory == null) {
             Sbc.error("That inventory is too old to show.");
@@ -337,14 +512,71 @@ public final class SbcItems {
      * "[Heroic Hyperion](sb:HYPERION)" ("(sb:ENCHANTED_DIAMOND*12)" for a stack): readable for players without
      * Sky2M, and a hoverable item for players with it.
      */
-    private static String publicMarker(ItemStack stack, boolean includeName) {
+    private static final char HIDDEN_START = '\u2063';
+    private static final char HIDDEN_ZERO = '\u200B';
+    private static final char HIDDEN_ONE = '\u200C';
+    private static final char HIDDEN_END = '\u200D';
+    /** "[Name]" + hidden "id|count" + optionally a second hidden part: the share key (older Sky2M ignores it). */
+    private static final Pattern HIDDEN_ITEM = Pattern.compile("\\[([^\\]\\n]{1,60})]" + HIDDEN_START + "([\\u200B\\u200C]+)" + HIDDEN_END
+        + "(?:" + HIDDEN_START + "([\\u200B\\u200C]+)" + HIDDEN_END + ")?");
+
+    private static String hiddenBits(String text) {
+        StringBuilder hidden = new StringBuilder(text.length() * 8 + 2).append(HIDDEN_START);
+        for (byte b : text.getBytes(java.nio.charset.StandardCharsets.UTF_8)) {
+            for (int bit = 7; bit >= 0; bit--) hidden.append(((b >> bit) & 1) == 0 ? HIDDEN_ZERO : HIDDEN_ONE);
+        }
+        return hidden.append(HIDDEN_END).toString();
+    }
+
+    /** The text hidden in zero-width bits, or null if they don't decode. */
+    private static String readBits(String bits) {
+        if (bits == null || bits.length() % 8 != 0 || bits.length() > 4096) return null;
+        byte[] bytes = new byte[bits.length() / 8];
+        for (int i = 0; i < bytes.length; i++) {
+            int value = 0;
+            for (int bit = 0; bit < 8; bit++) value = (value << 1) | (bits.charAt(i * 8 + bit) == HIDDEN_ONE ? 1 : 0);
+            bytes[i] = (byte) value;
+        }
+        return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    /** Encodes metadata using zero-width characters so non-mod clients see only the item name. */
+    private static String publicMarker(ItemStack stack, boolean includeName, String shareKey) {
         if (stack == null || stack.isEmpty()) return null;
         String id = Compat.neuName(stack);
         if (id.isBlank()) id = stack.getItem().toString().toUpperCase(Locale.ROOT).replace("MINECRAFT:", "");
         String name = includeName ? Compat.realName(stack).getString().replaceAll("[\\[\\]()]", "").trim() : "";
         if (name.isEmpty() || name.length() > 60) name = id.replace('_', ' ');
         int count = Math.clamp(stack.getCount(), 1, 99);
-        return "[" + name + "](sb:" + id + (count > 1 ? "*" + count : "") + ")";
+        return "[" + name + "]" + hiddenBits(id + "|" + count) + (shareKey == null ? "" : hiddenBits(shareKey));
+    }
+
+    /** Converts zero-width item metadata back into a parser-only marker while retaining the readable name. */
+    private static String restoreHiddenItemMarkers(String text) {
+        Matcher matcher = HIDDEN_ITEM.matcher(text);
+        StringBuilder out = new StringBuilder();
+        int cursor = 0;
+        while (matcher.find()) {
+            out.append(text, cursor, matcher.start());
+            try {
+                String payload = readBits(matcher.group(2));
+                int separator = payload == null ? -1 : payload.lastIndexOf('|');
+                if (separator <= 0) out.append(matcher.group());
+                else {
+                    String id = payload.substring(0, separator);
+                    int count = Integer.parseInt(payload.substring(separator + 1));
+                    String key = readBits(matcher.group(3));
+                    if (key != null && !key.matches("[a-z0-9]{4,12}")) key = null;
+                    if (!id.matches("[A-Za-z0-9_:;.\\-]+") || count < 1 || count > 99) out.append(matcher.group());
+                    else out.append('[').append(matcher.group(1)).append("](sb:").append(id).append(count > 1 ? "*" + count : "")
+                        .append(key == null ? "" : "#" + key).append(')');
+                }
+            } catch (RuntimeException ignored) {
+                out.append(matcher.group());
+            }
+            cursor = matcher.end();
+        }
+        return cursor == 0 ? text : out.append(text, cursor, text.length()).toString();
     }
 
     /** Replaces compact public-chat item references with the same clickable preview used by Sky2M chat. */
@@ -355,11 +587,22 @@ public final class SbcItems {
             if (recordInventoryParts(message)) return message;
             message = replaceInventoryMarkers(message);
         }
-        String plain = message.getString();
+        String plain = restoreHiddenItemMarkers(message.getString());
         if (!plain.contains("[[SBITEM|") && !plain.contains("](sb:")) return message;
+        // Part by part first, so the rest of the line keeps its colours (ranks, names, channel).
+        Component styled = decorateItems(message, true);
+        if (styled != null) return styled;
+        // A marker split across differently styled parts: match it in the plain text.
+        Component flat = decorateItems(Component.literal(plain), false);
+        return flat != null ? flat : message;
+    }
+
+    /** The message with its item markers as hoverable [Item]s, or null if none were found. */
+    private static Component decorateItems(Component source, boolean restore) {
         MutableComponent result = Component.empty();
         boolean[] replaced = {false};
-        message.visit((style, value) -> {
+        source.visit((style, raw) -> {
+            String value = restore ? restoreHiddenItemMarkers(raw) : raw;
             Matcher matcher = PUBLIC_ITEM.matcher(value);
             int cursor = 0;
             while (matcher.find()) {
@@ -367,14 +610,46 @@ public final class SbcItems {
                 JsonObject item = matcher.group(4) != null
                     ? publicItem(matcher.group(5), matcher.group(6) == null ? 1 : Integer.parseInt(matcher.group(6)), null, matcher.group(4))
                     : publicItem(matcher.group(1), Integer.parseInt(matcher.group(2)), matcher.group(3));
-                result.append(chatComponent(item));
+                result.append(sharedItemComponent(item, matcher.group(4) != null ? matcher.group(7) : null));
                 cursor = matcher.end();
                 replaced[0] = true;
             }
             if (cursor < value.length()) result.append(Component.literal(value.substring(cursor)).withStyle(style));
             return Optional.empty();
         }, Style.EMPTY);
-        return replaced[0] ? result : message;
+        return replaced[0] ? result : null;
+    }
+
+    /**
+     * A shared [item] with its real data when the sender stored it: straight away if it's here already, otherwise
+     * its hover text and click view are filled in when the server answers.
+     */
+    private static MutableComponent sharedItemComponent(JsonObject item, String key) {
+        if (key == null) return chatComponent(item);
+        JsonObject data = SHARE_DATA.get(key);
+        JsonArray items = data == null ? new JsonArray() : Sbc.arr(data, "items");
+        if (!items.isEmpty() && items.get(0).isJsonObject()) {
+            long count = Sbc.lng(item, "count", 1);
+            JsonObject full = items.get(0).getAsJsonObject().deepCopy();
+            full.addProperty("count", count);
+            return chatComponent(full);
+        }
+        if (SHARE_MISSING.containsKey(key)) return chatComponent(item);
+        MutableComponent hover = Component.empty();
+        MutableComponent component = chatComponent(item, hover);
+        PENDING_HOVERS.computeIfAbsent(key, k -> java.util.Collections.synchronizedList(new ArrayList<>())).add(new PendingHover(item, hover));
+        requestShare(key);
+        return component;
+    }
+
+    /** Refills a chat item's hover text (the chat line keeps the same object, so the tooltip updates in place). */
+    private static void fillHover(MutableComponent hover, JsonObject item) {
+        hover.getSiblings().clear();
+        List<Component> lines = tooltip(item);
+        for (int i = 0; i < lines.size(); i++) {
+            if (i > 0) hover.append("\n");
+            hover.append(lines.get(i));
+        }
     }
 
     /** The first part of a shared inventory becomes a clickable [Inventory]; follow-up parts disappear. */
@@ -595,6 +870,11 @@ public final class SbcItems {
 
     /** "[Item Name]" in the item's colour; hover shows the tooltip, click shows the item. */
     public static MutableComponent chatComponent(JsonObject item) {
+        return chatComponent(item, Component.empty());
+    }
+
+    /** {@code hover} is filled with the tooltip and kept, so it can be refilled later. */
+    private static MutableComponent chatComponent(JsonObject item, MutableComponent hover) {
         int key;
         synchronized (SHARED) {
             key = nextShared++;
@@ -603,12 +883,7 @@ public final class SbcItems {
         MutableComponent name = parseLegacy(name(item));
         TextColor colour = firstColour(name);
         long count = Sbc.lng(item, "count", 1);
-        MutableComponent hover = Component.empty();
-        List<Component> lines = tooltip(item);
-        for (int i = 0; i < lines.size(); i++) {
-            if (i > 0) hover.append("\n");
-            hover.append(lines.get(i));
-        }
+        fillHover(hover, item);
         String plain = ChatFormatting.stripFormatting(name.getString());
         return Component.literal("[" + (count > 1 ? count + "x " : "") + plain + "]").withStyle(Style.EMPTY
             .withColor(colour == null ? TextColor.fromLegacyFormat(ChatFormatting.AQUA) : colour)

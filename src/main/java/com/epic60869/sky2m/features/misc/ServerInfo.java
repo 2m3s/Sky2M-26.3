@@ -354,7 +354,7 @@ public final class ServerInfo {
                 yield tps == null ? "--" : String.format(Locale.ROOT, "%.1f", tps);
             }
             case PING -> {
-                Integer ping = pingMs;
+                Integer ping = ping();
                 yield ping == null ? "--" : ping + " ms";
             }
             case TIME -> (c == null || c.timeFormat == null ? TimeFormat.TWENTY_FOUR_HOUR : c.timeFormat).format(LocalTime.now());

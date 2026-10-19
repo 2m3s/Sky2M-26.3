@@ -23,6 +23,8 @@ public final class ReportScreen extends Screen {
     private boolean sending;
     private String keptTitle = "";
     private String keptDescription = "";
+    /** Add the game info (versions, location, recent errors) under the description; on for bug reports. */
+    private static boolean attachInfo = true;
 
     public ReportScreen(Reports.Type type) {
         super(Component.literal(type.label));
@@ -61,6 +63,21 @@ public final class ReportScreen extends Screen {
             .bounds(x + w - 150, descTop + descH + 10, 150, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose())
             .bounds(x, descTop + descH + 10, 80, 20).build());
+        if (type == Reports.Type.BUG) {
+            addRenderableWidget(Button.builder(attachLabel(), b -> {
+                attachInfo = !attachInfo;
+                b.setMessage(attachLabel());
+            }).bounds(x + 84, descTop + descH + 10, w - 84 - 154, 20)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                    "Adds your Sky2M and Minecraft versions, where you are on SkyBlock and the latest warnings and errors "
+                        + "from your game log (never chat) under the description, so the team can find the bug.")))
+                .build());
+        }
+    }
+
+    private static Component attachLabel() {
+        return Component.literal("Attach game info: " + (attachInfo ? "ON" : "OFF"))
+            .withStyle(attachInfo ? ChatFormatting.GREEN : ChatFormatting.GRAY);
     }
 
     private void send() {
@@ -76,6 +93,7 @@ public final class ReportScreen extends Screen {
         submit.active = false;
         status = "Sending...";
         statusColour = 0xFFAAAAAA;
+        if (type == Reports.Type.BUG && attachInfo) d = d + ReportAttachment.build(Reports.DESCRIPTION_MAX - d.length());
         Reports.submit(type, t, d).thenAccept(result -> minecraft.execute(() -> {
             sending = false;
             if (result.ok()) {

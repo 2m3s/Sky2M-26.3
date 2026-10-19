@@ -1521,6 +1521,7 @@ public final class GardenVisitors {
     }
 
     private static void afterScreen(Screen screen, GuiGraphicsExtractor graphics) {
+        if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return;
         VisitorConfig config = config();
         if (config == null) return;
         if (config.shoppingList.enabled && showShoppingList() && !shoppingLines.isEmpty() && showInScreen(screen)) {

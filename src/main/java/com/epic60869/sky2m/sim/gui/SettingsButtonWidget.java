@@ -172,7 +172,7 @@ public final class SettingsButtonWidget extends AbstractWidget {
      *  no cycling behavior can never have right-click do anything. */
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (onSecondaryPress != null && active && visible && event.button() == 1
+        if (onSecondaryPress != null && active && visible && event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT
                 && isMouseOver(event.x(), event.y())) {
             onSecondaryPress.onPress(this);
             return true;

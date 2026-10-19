@@ -41,9 +41,11 @@ public final class CombatFeatures {
     private static final Pattern RARE_DROP = Pattern.compile(
         "^\\s*(?<type>(?:(?:VERY |CRAZY |INSANE |INCREDIBLY )?RARE|PRAY TO RNGESUS|INSANE|PET|RNG METER|LEGENDARY) (?:DROP|CROP|REWARD)!|OUTSTANDING CATCH!)"
             // The "(+241% ✯ Magic Find)" or "(+100 ☘ Farming Fortune)" after the item isn't part of its name.
-            + "\\s+\\(?(?<item>.+?)\\)?(?:\\s+x(?<amount>[\\d,]+))?(?:\\s+\\(\\+[\\d,.]+%? ?[^)]*\\))?\\s*$");
+            + "\\s+(?:\\((?<wrapped>[^()]+)\\)|(?<item>.+?))(?:\\s+x(?<amount>[\\d,]+))?(?:\\s+\\(\\+[\\d,.]+%? ?[^)]*\\))?\\s*$");
     /** "You dug out a Minos Relic!", "You found a Recombobulator 3000!": just the item. */
     private static final Pattern DROP_WORDS = Pattern.compile("^(?:You (?:dug out|found|caught|got)(?: an?)? )?(?<item>.+?)!?$");
+    /** "WOW! You found a Mythological Dye #123!" or "WOW! [MVP+] Name found a Pure Black Dye #4!". */
+    private static final Pattern DYE_DROP = Pattern.compile("^\\s*WOW! (?:\\[[^]]+] )?(?<name>\\w+) found an? (?<item>.+? Dye)(?: #[\\d,]+)?!?\\s*$");
     private static final double LEGION_RANGE = 30;
 
     private static String arrowType;
@@ -186,9 +188,10 @@ public final class CombatFeatures {
             }
         }
 
-        if ((m = RARE_DROP.matcher(text)).find()) {
-            Matcher words = DROP_WORDS.matcher(m.group("item").trim());
-            String item = words.matches() ? words.group("item").trim() : m.group("item").trim();
+        if ((m = RARE_DROP.matcher(text)).find() && !someoneElsesDrop(text)) {
+            String raw = m.group("wrapped") != null ? m.group("wrapped") : m.group("item");
+            Matcher words = DROP_WORDS.matcher(raw.trim());
+            String item = words.matches() ? words.group("item").trim() : raw.trim();
             int amount = m.group("amount") == null ? 1 : Integer.parseInt(m.group("amount").replace(",", ""));
             // "2x Item" as well as "Item x2".
             Matcher prefixed = AMOUNT_FIRST.matcher(item);
@@ -217,9 +220,47 @@ public final class CombatFeatures {
                 RareDropTotem.onDrop(dropType, dropItem);
             });
         }
+
+        if ((m = DYE_DROP.matcher(text)).find()) {
+            String name = m.group("name");
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null && ("You".equalsIgnoreCase(name) || name.equalsIgnoreCase(mc.player.getGameProfile().name()))) {
+                RareDropTotem.onDrop("RNG DYE DROP!", m.group("item"));
+            }
+        }
     }
 
     private static final Pattern AMOUNT_FIRST = Pattern.compile("^(?<amount>\\d+)\\s*x\\s+(?<item>.+)$", Pattern.CASE_INSENSITIVE);
+    /** "[MVP+] Name has obtained X" / "Name found X" anywhere in the line: a player's drop announced to the lobby. */
+    private static final Pattern NAMED_DROP = Pattern.compile("(?:\\[[^\\]]+]\\s*)?\\b(?<name>[A-Za-z0-9_]{1,16})\\s+(?:has obtained|has found|has dropped|obtained|found|got|dropped)\\b");
+    /** A Hypixel rank before a name ("[MVP++] Name"): only other players' drops are announced with one. */
+    private static final Pattern RANKED_NAME = Pattern.compile("\\[(?:VIP|MVP|YOUTUBE|ADMIN|GM|MOD|HELPER|OWNER|PIG|INNIT|MOJANG|EVENTS|BUILD TEAM|STAFF)[+]*]\\s*(?<name>[A-Za-z0-9_]{1,16})");
+
+    /**
+     * Whether a rare drop line is someone else's (the Dungeon Hub announces other players' drops), so it isn't copied
+     * or counted: a ranked name, "Name has obtained/found...", or a player from the tab list who isn't you.
+     */
+    private static boolean someoneElsesDrop(String line) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || line == null) return false;
+        String own = mc.player.getGameProfile().name();
+        Matcher ranked = RANKED_NAME.matcher(line);
+        while (ranked.find()) if (!ranked.group("name").equalsIgnoreCase(own)) return true;
+        Matcher named = NAMED_DROP.matcher(line);
+        while (named.find()) {
+            String name = named.group("name");
+            if (name.equalsIgnoreCase("You") || name.equalsIgnoreCase("you")) continue;
+            if (!name.equalsIgnoreCase(own)) return true;
+        }
+        if (mc.getConnection() == null) return false;
+        String padded = " " + line.replaceAll("[^A-Za-z0-9_]", " ") + " ";
+        for (var info : mc.getConnection().getOnlinePlayers()) {
+            String name = info.getProfile().name();
+            if (name == null || name.length() < 3 || name.equalsIgnoreCase(own) || info.getProfile().id().version() != 4) continue;
+            if (padded.contains(" " + name + " ")) return true;
+        }
+        return false;
+    }
 
     /** Mobs worth a cocoon alert: slayer bosses and minibosses, elusive mobs and important bosses. */
     private static final List<String> IMPORTANT_MOBS = List.of(
@@ -257,7 +298,10 @@ public final class CombatFeatures {
     private static void onRareDrop(FeatureConfigs.RareDrops config, String text, String item, int amount,
                                    boolean rng, boolean slayer, boolean garden) {
         Minecraft mc = Minecraft.getInstance();
-        if (config.copy || (config.copyRng && rng) || (config.copySlayer && slayer) || (config.copyGarden && garden)) {
+        // Garden drops (rare crops, pest drops) only with Copy Garden Drops, so that toggle really turns them off;
+        // Copy Rare Drops and Copy RNG Drops cover everything else.
+        boolean copy = garden ? config.copyGarden : config.copy || (config.copyRng && rng) || (config.copySlayer && slayer);
+        if (copy) {
             mc.execute(() -> {
                 mc.keyboardHandler.setClipboard(text);
                 com.epic60869.sky2m.features.misc.CopyChat.showPreview("Drop copied", text);
@@ -266,7 +310,7 @@ public final class CombatFeatures {
         if (config.animation) {
             int count = Math.max(1, amount);
             ItemPriceResolver.valueByNameAsync(item).thenAccept(value -> {
-                if (value != null && value * count >= config.thresholdMillions * 1_000_000d) {
+                if (value != null && value > 0 && value * count >= config.thresholdMillions * 1_000_000d) {
                     Sky2MAlerts.dropAnimation(Component.literal(item + "!").withStyle(ChatFormatting.BOLD), 0xFFAA00);
                     Sky2MAlerts.chat(Component.literal(item + " is worth " + formatCoins(value * count) + " coins!").withStyle(ChatFormatting.GOLD));
                 }

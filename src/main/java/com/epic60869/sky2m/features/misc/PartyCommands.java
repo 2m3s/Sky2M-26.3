@@ -15,7 +15,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +45,10 @@ public final class PartyCommands {
     private static final Pattern MEMBER_LEFT = Pattern.compile("^" + PLAYER + " (?:has left the party|has been removed from the party|was removed from your party because they disconnected)");
     private static final Pattern MEMBER_LIST = Pattern.compile("^(?:Party (?:Leader|Moderators|Members): |You'll be partying with: )(?<names>.+)$");
     private static final Pattern LIST_NAME = Pattern.compile("(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w{1,16})");
+    /** A kick you send ("/p kick Name", the [KICK] buttons, auto kick), to tell your kicks from a moderator's. */
+    private static final Pattern KICK_COMMAND = Pattern.compile("^(?:p|party) kick (?<name>\\w{1,16})\\b", Pattern.CASE_INSENSITIVE);
+    /** How long after sending a kick Hypixel's "has been removed from the party" still counts as yours. */
+    private static final long KICK_CONFIRM_MS = 10_000L;
 
     private static final Pattern INSTANCE = Pattern.compile("([fmt])([1-7])");
     private static final String[] FLOORS = {"ENTRANCE", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN"};
@@ -68,13 +76,20 @@ public final class PartyCommands {
     private static long lastSent;
     /** Commands waiting to be sent, one at a time so Hypixel doesn't say "Woah slow down". */
     private static final Deque<Pending> pending = new ArrayDeque<>();
+    /** Lower-case name -> when you sent a kick for them. */
+    private static final Map<String, Long> sentKicks = new ConcurrentHashMap<>();
+    private static final List<Consumer<String>> joinListeners = new CopyOnWriteArrayList<>();
+    private static final List<Consumer<String>> kickListeners = new CopyOnWriteArrayList<>();
 
     private PartyCommands() {}
 
     public static void init() {
         Sky2MChat.onChat(PartyCommands::onChat);
         ClientSendMessageEvents.CHAT.register(message -> lastSent = System.currentTimeMillis());
-        ClientSendMessageEvents.COMMAND.register(command -> lastSent = System.currentTimeMillis());
+        ClientSendMessageEvents.COMMAND.register(command -> {
+            lastSent = System.currentTimeMillis();
+            noteKick(command);
+        });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             Pending next = pending.peek();
             long now = System.currentTimeMillis();
@@ -175,10 +190,16 @@ public final class PartyCommands {
 
     private static void trackMembers(String text) {
         Matcher m;
-        if ((m = MEMBER_JOINED.matcher(text)).find()) addMember(m.group("name"));
-        else if ((m = MEMBER_LEFT.matcher(text)).find()) {
+        if ((m = MEMBER_JOINED.matcher(text)).find()) {
+            String name = m.group("name");
+            addMember(name);
+            if (!name.equalsIgnoreCase(me())) for (Consumer<String> listener : joinListeners) listener.accept(name);
+        } else if ((m = MEMBER_LEFT.matcher(text)).find()) {
             String name = m.group("name");
             members.removeIf(n -> n.equalsIgnoreCase(name));
+            if (text.contains("has been removed from the party") && kickedByYou(name)) {
+                for (Consumer<String> listener : kickListeners) listener.accept(name);
+            }
         } else if ((m = TRANSFERRED.matcher(text)).find()) addMember(m.group("name"));
         else if ((m = JOINED_OTHER.matcher(text)).find()) {
             members.clear();
@@ -190,6 +211,29 @@ public final class PartyCommands {
                 if (n.find()) addMember(n.group("name"));
             }
         }
+    }
+
+    /** Called with the name of everyone who joins your party ("Name joined the party."), not you. */
+    public static void onMemberJoined(Consumer<String> listener) {
+        joinListeners.add(listener);
+    }
+
+    /**
+     * Called when Hypixel says someone "has been removed from the party" after you sent a kick for them (or while you
+     * lead), so a kick that failed or a moderator's kick isn't counted as yours.
+     */
+    public static void onMemberKicked(Consumer<String> listener) {
+        kickListeners.add(listener);
+    }
+
+    private static void noteKick(String command) {
+        Matcher m = KICK_COMMAND.matcher(command.startsWith("/") ? command.substring(1) : command);
+        if (m.find()) sentKicks.put(m.group("name").toLowerCase(Locale.ROOT), System.currentTimeMillis());
+    }
+
+    private static boolean kickedByYou(String name) {
+        Long sent = sentKicks.remove(name.toLowerCase(Locale.ROOT));
+        return sent != null && System.currentTimeMillis() - sent <= KICK_CONFIRM_MS || me().equalsIgnoreCase(leader);
     }
 
     /** The party members Sky2M knows of (not you), for Best Friends. */
@@ -268,6 +312,7 @@ public final class PartyCommands {
     /** Sends a command through the same queue, so it doesn't trip Hypixel's "slow down". */
     public static void queueCommand(String command) {
         long now = System.currentTimeMillis();
+        noteKick(command);
         Minecraft.getInstance().execute(() -> pending.add(new Pending(command, now + 300)));
     }
 

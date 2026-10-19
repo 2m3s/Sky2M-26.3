@@ -136,6 +136,32 @@ public final class KeyConflicts {
         }
     }
 
+    /** One line of /s2 keybinds: a Sky2M key, where it's set, and what else uses the same key (empty if nothing). */
+    public record SheetRow(String name, String path, String key, String where, String clashesWith) {}
+
+    /** Every Sky2M key (settings, Sky2M's Controls and Command Keys macros), sorted by where it's set, then name. */
+    public static List<SheetRow> sheet() {
+        List<Bind> binds = collect();
+        Map<String, List<Bind>> conflicts = findConflicts();
+        List<SheetRow> out = new ArrayList<>();
+        for (Bind bind : binds) {
+            if (bind.source() == Source.OTHER_MAPPING) continue;
+            List<String> others = new ArrayList<>();
+            for (List<Bind> group : conflicts.values()) {
+                if (!group.contains(bind)) continue;
+                for (Bind other : group) if (other != bind && !others.contains(other.name())) others.add(other.name());
+            }
+            String where = switch (bind.source()) {
+                case CONFIG -> "Settings";
+                case MACRO -> "Command Keys";
+                default -> "Controls";
+            };
+            out.add(new SheetRow(bind.name(), bind.path(), bind.key().getDisplayName().getString(), where, String.join(", ", others)));
+        }
+        out.sort(java.util.Comparator.comparing(SheetRow::where).thenComparing(SheetRow::name, String.CASE_INSENSITIVE_ORDER));
+        return out;
+    }
+
     private static void listAll() {
         Map<String, List<Bind>> conflicts = findConflicts();
         if (conflicts.isEmpty()) {

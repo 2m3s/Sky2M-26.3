@@ -22,11 +22,12 @@ import java.util.Locale;
  * Misc > Hypixel Button: a "Hypixel" button on the title screen that connects straight to play.hypixel.net. Next to
  * Multiplayer (which gets half as wide), placed like SkyOcean's Quick Join button. When a custom main menu mod hides
  * or replaces the title screen's buttons, it floats in the top right instead, drawn after (over) everything else and
- * taking its clicks first, so it shows over custom menus too.
+ * taking its clicks first, so it shows over custom menus too. A small "S2" button beside it (always shown) opens the
+ * Sky2M settings.
  */
 public final class HypixelButton {
     private static final String ADDRESS = "play.hypixel.net";
-    private static final int FLOAT_WIDTH = 80, FLOAT_HEIGHT = 20, FLOAT_MARGIN = 6;
+    private static final int FLOAT_WIDTH = 80, FLOAT_HEIGHT = 20, FLOAT_MARGIN = 6, GAP = 4;
 
     private HypixelButton() {}
 
@@ -50,9 +51,23 @@ public final class HypixelButton {
         ConnectScreen.startConnecting(screen, client, ServerAddress.parseString(ADDRESS), data, false, null);
     }
 
+    /** Sky2M's settings (what /s2 opens), going back to the title screen when closed. Needs no world or player. */
+    private static void openSettings(Screen screen) {
+        Sky2MConfig.openGuiOver(screen);
+    }
+
+    /** The square "S2" settings button, sized like vanilla's icon buttons (language, accessibility). */
+    private static Button settingsButton(Screen screen, int size) {
+        return Button.builder(Component.literal("S2"), b -> openSettings(screen))
+            .size(size, size)
+            .tooltip(Tooltip.create(Component.literal("Sky2M settings")))
+            .build();
+    }
+
     public static void init() {
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-            if (!enabled() || !isMainMenu(screen)) return;
+            // The S2 button is always there; the Hypixel button only when turned on.
+            if (Sky2MConfig.current() == null || !isMainMenu(screen)) return;
             Button multiplayer = null;
             for (AbstractWidget widget : Screens.getWidgets(screen)) {
                 if (widget instanceof Button button && button.getMessage().getContents() instanceof TranslatableContents contents
@@ -62,50 +77,89 @@ public final class HypixelButton {
                 }
             }
             if (multiplayer != null && multiplayer.visible) {
-                besideMultiplayer(screen, multiplayer);
+                besideMultiplayer(screen, multiplayer, enabled());
             } else {
-                floating(screen);
+                floating(screen, enabled());
             }
         });
     }
 
-    private static void besideMultiplayer(Screen screen, Button multiplayerButton) {
-        int half = (multiplayerButton.getWidth() - 4) / 2;
-        multiplayerButton.setWidth(half);
-        Button hypixel = Button.builder(Component.literal("Hypixel"), b -> connect(screen))
-            .bounds(multiplayerButton.getX() + half + 4, multiplayerButton.getY(), half, multiplayerButton.getHeight())
-            .tooltip(Tooltip.create(Component.literal("Join " + ADDRESS + " (Sky2M)")))
-            .build();
-        Screens.getWidgets(screen).add(hypixel);
+    /**
+     * Multiplayer, Hypixel (when on) and S2 share Multiplayer's row, together exactly as wide as Multiplayer was, so
+     * nothing reaches into the vanilla buttons beside or below it.
+     */
+    private static void besideMultiplayer(Screen screen, Button multiplayerButton, boolean withHypixel) {
+        int height = multiplayerButton.getHeight();
+        int rest = multiplayerButton.getWidth() - height - GAP;
+        Button hypixel = null;
+        if (withHypixel) {
+            int half = (rest - GAP) / 2;
+            multiplayerButton.setWidth(half);
+            hypixel = Button.builder(Component.literal("Hypixel"), b -> connect(screen))
+                .bounds(multiplayerButton.getX() + half + GAP, multiplayerButton.getY(), rest - half - GAP, height)
+                .tooltip(Tooltip.create(Component.literal("Join " + ADDRESS + " (Sky2M)")))
+                .build();
+            Screens.getWidgets(screen).add(hypixel);
+        } else {
+            multiplayerButton.setWidth(rest);
+        }
+        Button settings = settingsButton(screen, height);
+        Screens.getWidgets(screen).add(settings);
+        Button hypixelButton = hypixel;
         boolean[] floated = {false};
-        // The title screen can move its buttons (e.g. while it fades in), so keep this one next to Multiplayer.
+        Runnable place = () -> {
+            int x = multiplayerButton.getX() + multiplayerButton.getWidth() + GAP;
+            if (hypixelButton != null) {
+                hypixelButton.setX(x);
+                hypixelButton.setY(multiplayerButton.getY());
+                x += hypixelButton.getWidth() + GAP;
+            }
+            settings.setX(x);
+            settings.setY(multiplayerButton.getY());
+        };
+        place.run();
+        // The title screen can move its buttons (e.g. while it fades in), so keep these next to Multiplayer.
         ScreenEvents.afterTick(screen).register(s -> {
-            hypixel.setX(multiplayerButton.getX() + multiplayerButton.getWidth() + 4);
-            hypixel.setY(multiplayerButton.getY());
+            place.run();
             // A custom menu mod can hide the buttons after the screen opens: float instead.
             if (!multiplayerButton.visible && !floated[0]) {
                 floated[0] = true;
-                hypixel.visible = false;
-                floating(screen);
+                if (hypixelButton != null) hypixelButton.visible = false;
+                settings.visible = false;
+                floating(screen, hypixelButton != null);
             }
         });
     }
 
-    /** Not a widget of the screen: drawn last and clicked first, so a custom menu drawing over the screen can't hide it. */
-    private static void floating(Screen screen) {
-        Button hypixel = Button.builder(Component.literal("Join Hypixel"), b -> connect(screen))
-            .bounds(screen.width - FLOAT_WIDTH - FLOAT_MARGIN, FLOAT_MARGIN, FLOAT_WIDTH, FLOAT_HEIGHT)
-            .tooltip(Tooltip.create(Component.literal("Join " + ADDRESS + " (Sky2M)")))
-            .build();
+    /** Top right: Join Hypixel (when on) with S2 to its left. */
+    private static void floating(Screen screen, boolean withHypixel) {
+        int inset = FLOAT_MARGIN;
+        if (withHypixel) {
+            Button hypixel = Button.builder(Component.literal("Join Hypixel"), b -> connect(screen))
+                .size(FLOAT_WIDTH, FLOAT_HEIGHT)
+                .tooltip(Tooltip.create(Component.literal("Join " + ADDRESS + " (Sky2M)")))
+                .build();
+            floatButton(screen, hypixel, inset, HypixelButton::connect);
+            inset += FLOAT_WIDTH + GAP;
+        }
+        floatButton(screen, settingsButton(screen, FLOAT_HEIGHT), inset, HypixelButton::openSettings);
+    }
+
+    /**
+     * Not a widget of the screen: drawn last and clicked first, so a custom menu drawing over the screen can't hide it.
+     * {@code rightInset} is the gap between its right edge and the screen's.
+     */
+    private static void floatButton(Screen screen, Button button, int rightInset, java.util.function.Consumer<Screen> press) {
+        button.setPosition(screen.width - rightInset - button.getWidth(), FLOAT_MARGIN);
         ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> {
-            hypixel.setX(s.width - FLOAT_WIDTH - FLOAT_MARGIN);
+            button.setX(s.width - rightInset - button.getWidth());
             graphics.nextStratum();
-            hypixel.extractRenderState(graphics, mouseX, mouseY, delta);
+            button.extractRenderState(graphics, mouseX, mouseY, delta);
         });
         ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> {
-            if (event.button() != 0 || !hypixel.isMouseOver(event.x(), event.y())) return true;
-            hypixel.playDownSound(Minecraft.getInstance().getSoundManager());
-            connect(s);
+            if (event.button() != com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT || !button.isMouseOver(event.x(), event.y())) return true;
+            button.playDownSound(Minecraft.getInstance().getSoundManager());
+            press.accept(s);
             return false;
         });
     }

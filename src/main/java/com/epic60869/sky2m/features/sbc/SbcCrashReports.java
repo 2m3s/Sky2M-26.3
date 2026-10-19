@@ -60,7 +60,8 @@ public final class SbcCrashReports {
 
     /** Reports an error caught around feature code ({@code context} says where). Safe from any thread. */
     public static void report(Throwable error, String context) {
-        System.err.println("[Sky2M] " + context + " failed: " + error);
+        // Logged in full once, then counted: a HUD that throws every frame printed a line every frame.
+        com.epic60869.sky2m.features.core.Sky2MErrors.log(context, error);
         if (error == null || !enabled()) return;
         StringWriter writer = new StringWriter();
         error.printStackTrace(new PrintWriter(writer));

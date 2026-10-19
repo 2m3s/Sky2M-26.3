@@ -38,11 +38,13 @@ public final class Sky2MChat {
     /** Called on the render thread for every system chat packet, before other mods can cancel it. */
     public static void onPacket(Component component, boolean overlay) {
         for (GameListener listener : GAME) {
+            long started = Sky2MPerf.start();
             try {
                 listener.onMessage(component, overlay);
             } catch (Exception e) {
-                com.epic60869.sky2m.features.sbc.SbcCrashReports.report(e, "chat listener");
+                Sky2MErrors.caught(Sky2MPerf.nameOf(listener), e, "chat listener");
             }
+            Sky2MPerf.end(Sky2MPerf.Kind.CHAT, Sky2MPerf.nameOf(listener), started);
         }
         dispatch(overlay ? ACTION_BAR : CHAT, component);
     }
@@ -51,11 +53,13 @@ public final class Sky2MChat {
         if (listeners.isEmpty()) return;
         Message message = new Message(component, Sky2MLocation.strip(component.getString()));
         for (Listener listener : listeners) {
+            long started = Sky2MPerf.start();
             try {
                 listener.onMessage(message);
             } catch (Exception e) {
-                com.epic60869.sky2m.features.sbc.SbcCrashReports.report(e, "chat listener");
+                Sky2MErrors.caught(Sky2MPerf.nameOf(listener), e, "chat listener");
             }
+            Sky2MPerf.end(Sky2MPerf.Kind.CHAT, Sky2MPerf.nameOf(listener), started);
         }
     }
 }

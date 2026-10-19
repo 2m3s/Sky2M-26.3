@@ -43,7 +43,7 @@ public final class SbcConfig {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Cosmetics", desc = "Badges, supporter symbols and capes of Sky2M players.")
+        @ConfigOption(name = "Cosmetics", desc = "Emblems, supporter symbols and capes of Sky2M players.")
         public Cosmetics cosmetics = new Cosmetics();
 
         @Expose
@@ -150,6 +150,11 @@ public final class SbcConfig {
         public LocationSharing location = LocationSharing.EVERYONE;
 
         @Expose
+        @ConfigOption(name = "Lobby Finder HUD", desc = "A HUD with the Sky2M players in your lobby, and how many are elsewhere on your island (only players who share their location with you). /s2 lobby lists them in chat any time. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean lobbyHud = false;
+
+        @Expose
         @ConfigOption(name = "Allow Friend Requests", desc = "Let other Sky2M players send you friend requests.")
         @ConfigEditorBoolean
         public boolean friendRequests = true;
@@ -171,7 +176,7 @@ public final class SbcConfig {
 
     public static final class Cosmetics {
         @Expose
-        @ConfigOption(name = "Badges & Supporter Symbols", desc = "Draw players' Sky2M badge and supporter symbol before their name in chat, tab and nametags.")
+        @ConfigOption(name = "Emblems & Supporter Symbols", desc = "Draw players' Sky2M emblem and supporter symbol before their name in chat and nametags, and after it in the tab list.")
         @ConfigEditorBoolean
         public boolean symbols = true;
 
@@ -180,7 +185,7 @@ public final class SbcConfig {
         @ConfigEditorBoolean
         public boolean capes = true;
 
-        @ConfigOption(name = "My Cosmetics", desc = "Pick the badge and cape you show.")
+        @ConfigOption(name = "My Cosmetics", desc = "Pick the emblem and cape you show.")
         @ConfigEditorButton(buttonText = "OPEN")
         public Runnable open = () -> SbcCosmetics.openScreen();
     }

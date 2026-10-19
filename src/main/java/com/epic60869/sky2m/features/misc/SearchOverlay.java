@@ -95,10 +95,20 @@ public final class SearchOverlay extends Screen {
         });
     }
 
-    /** /ahs, /ahsearch and /bzs: the search box, or Hypixel's own command when the feature is off. */
+    /**
+     * /ahs, /ahsearch and /bzs: with an item ("/ahs grand") it searches for it straight away; on its own, the search
+     * box (or Hypixel's own command when the feature is off).
+     */
     private static int command(String root, Mode mode, String item) {
         Minecraft mc = Minecraft.getInstance();
         Sky2MConfig c = Sky2MConfig.current();
+        if (!item.isBlank()) {
+            // Straight to the server: sendCommand would run this client command again, forever.
+            String query = item.trim();
+            if (mc.getConnection() != null) mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundChatCommandPacket(
+                (mode == Mode.BAZAAR ? "bz " : "auctionsearch ") + query));
+            return 1;
+        }
         if (c == null || !c.misc.searchOverlay) {
             // Straight to the server: sendCommand would run this client command again, forever.
             if (mc.getConnection() != null) mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundChatCommandPacket(item.isEmpty() ? root : root + " " + item));
@@ -319,7 +329,7 @@ public final class SearchOverlay extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() == 0) {
+        if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) {
             int x = left();
             double mx = event.x(), my = event.y();
             if (mode == Mode.AUCTION) {

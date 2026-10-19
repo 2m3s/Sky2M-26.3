@@ -11,6 +11,7 @@ import java.util.List;
 /**
  * An inventory shared with [inv] (click its [Inventory] in chat): the armour, the inventory and the hotbar laid out
  * like your own inventory, with each item's tooltip on hover. Clicking an item shows it big, like a shared [item].
+ * Each item's value (Bazaar, else lowest BIN, for the base item) is in its tooltip, and the whole inventory's under it.
  */
 public final class SbcInventoryScreen extends Screen {
     private static final int SLOT = 18;
@@ -47,10 +48,30 @@ public final class SbcInventoryScreen extends Screen {
         for (int col = 0; col < 9; col++) drawSlot(g, slot(col), gridLeft + col * SLOT, gridTop + 3 * SLOT + 4, mouseX, mouseY);
         if (hovered != null) {
             List<Component> tooltip = new java.util.ArrayList<>(SbcItems.tooltip(hovered));
+            double value = value(hovered);
+            if (value > 0) tooltip.add(Component.literal("Value: ").withStyle(s -> s.withColor(0xAAAAAA))
+                .append(Component.literal(com.epic60869.sky2m.features.combat.CombatFeatures.formatCoins(value)).withStyle(s -> s.withColor(0xFFAA00))));
             tooltip.add(Component.literal("Click to view").withStyle(s -> s.withColor(0xFFFF55)));
             g.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
         }
-        g.centeredText(font, "Click an item to view it  ·  Esc to close", width / 2, top + PANEL_HEIGHT + 6, 0xFFAAAAAA);
+        double total = 0;
+        for (JsonObject item : slots) total += value(item);
+        if (total > 0) {
+            g.centeredText(font, Component.literal("Worth about ").withStyle(s -> s.withColor(0xAAAAAA))
+                .append(Component.literal(com.epic60869.sky2m.features.combat.CombatFeatures.formatCoins(total)).withStyle(s -> s.withColor(0xFFAA00)))
+                .append(Component.literal(" (Bazaar / lowest BIN, base items)").withStyle(s -> s.withColor(0x777777))),
+                width / 2, top + PANEL_HEIGHT + 6, 0xFFFFFFFF);
+        }
+        g.centeredText(font, "Click an item to view it  ·  Esc to close", width / 2, top + PANEL_HEIGHT + (total > 0 ? 18 : 6), 0xFFAAAAAA);
+    }
+
+    /** What the item's stack is worth: Bazaar insta-sell, else lowest BIN, times the count. 0 if unknown. */
+    private static double value(JsonObject item) {
+        if (item == null) return 0;
+        String id = Sbc.str(item, "id");
+        if (id.isEmpty()) return 0;
+        double each = com.epic60869.sky2m.Sky2MPriceTooltip.price(id, com.epic60869.sky2m.features.FeatureConfigs.ProfitPriceSource.INSTANT_SELL);
+        return each <= 0 ? 0 : each * Math.max(1, Sbc.lng(item, "count", 1));
     }
 
     private JsonObject slot(int index) {

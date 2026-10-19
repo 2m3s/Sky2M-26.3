@@ -171,7 +171,7 @@ public final class SimPrince {
         int z1 = Math.max(min.getZ(), max.getZ()) + RoomLibrary.TILE;
         for (int cx = x0 >> 4; cx <= (x1 >> 4); cx++) {
             for (int cz = z0 >> 4; cz <= (z1 >> 4); cz++) {
-                if (!level.hasChunk(cx, cz)) {
+                if (!com.epic60869.sky2m.sim.util.SimChunks.isLoaded(level, cx, cz)) {
                     continue;
                 }
                 var chunk = level.getChunk(cx, cz);

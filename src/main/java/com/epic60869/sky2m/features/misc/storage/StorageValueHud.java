@@ -2,14 +2,10 @@ package com.epic60869.sky2m.features.misc.storage;
 
 import com.epic60869.sky2m.Sky2MPriceTooltip;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -21,11 +17,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** Value breakdown for an open Ender Chest page or backpack. */
+/**
+ * Value breakdown for an open Ender Chest page or backpack. Its place is set in /s2 gui ("Storage Value"): it used to
+ * sit right of the menu, which with the storage overlay on covered the overlay's second column of pages.
+ */
 public final class StorageValueHud {
     private static final int WIDTH = 176;
     private static final int MAX_ITEMS = 5;
     private static final long REFRESH_MS = 500;
+    private static final String HUD_ID = "storage_value";
 
     private StorageValueHud() {}
 
@@ -35,8 +35,53 @@ public final class StorageValueHud {
                 || !(StorageBackingHandle.fromScreen(screen) instanceof StorageBackingHandle.Page)
                 || !StorageOverlay.config().valueBreakdown) return;
             Sky2MPriceTooltip.warmup();
-            Screens.getWidgets(screen).add(new ValueWidget(container));
+            ValueBox box = new ValueBox(container);
+            ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> box.render(graphics));
         });
+        com.epic60869.sky2m.features.core.Sky2MHuds.registerCustom(HUD_ID, "Storage Value",
+            () -> StorageOverlay.config().valueBreakdown, new com.epic60869.sky2m.features.core.Sky2MHuds.CustomHud() {
+                @Override
+                public int width() {
+                    return WIDTH;
+                }
+
+                @Override
+                public int height() {
+                    return heightFor(PREVIEW.size());
+                }
+
+                /** Only drawn over an Ender Chest page or backpack, never on the HUD. */
+                @Override
+                public boolean visible() {
+                    return false;
+                }
+
+                @Override
+                public void render(GuiGraphicsExtractor graphics, boolean preview) {
+                    draw(graphics, PREVIEW);
+                }
+            }, 4, 60);
+        com.epic60869.sky2m.features.core.Sky2MHuds.setSettingsSearch(HUD_ID, "Storage Value Breakdown");
+    }
+
+    private static final List<Component> PREVIEW = List.of(
+        Component.literal("Estimated Storage Value").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+        Component.literal("Total: 12.40M coins").withStyle(ChatFormatting.WHITE),
+        Component.literal("1x Hyperion  9.80M coins").withStyle(ChatFormatting.GRAY),
+        Component.literal("64x Enchanted ..  1.20M coins").withStyle(ChatFormatting.GRAY));
+
+    private static int heightFor(int lines) {
+        return 8 + lines * 10;
+    }
+
+    private static void draw(GuiGraphicsExtractor graphics, List<Component> lines) {
+        int h = heightFor(lines.size());
+        graphics.fill(0, 0, WIDTH, h, 0xD0101010);
+        graphics.fill(0, 0, WIDTH, 1, 0xFFFFD54F);
+        var font = Minecraft.getInstance().font;
+        for (int i = 0; i < lines.size(); i++) {
+            graphics.text(font, lines.get(i), 6, 5 + i * 10, 0xFFFFFFFF);
+        }
     }
 
     private record ItemValue(String name, int count, double value) {}
@@ -51,44 +96,31 @@ public final class StorageValueHud {
         }
     }
 
-    private static final class ValueWidget extends AbstractWidget {
+    private static final class ValueBox {
         private final ContainerScreen screen;
         private List<Component> lines = List.of();
         private long lastRefresh;
 
-        private ValueWidget(ContainerScreen screen) {
-            super(0, 0, WIDTH, 88, Component.empty());
+        private ValueBox(ContainerScreen screen) {
             this.screen = screen;
-            this.active = false;
-            updatePosition();
         }
 
-        private void updatePosition() {
-            int left = ((com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor) screen).sky2m$getLeftPos();
-            int top = ((com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor) screen).sky2m$getTopPos();
-            int x = left + 180;
-            if (x + WIDTH > screen.width - 4) x = left - WIDTH - 4;
-            if (x < 4) x = 4;
-            int y = Math.max(4, Math.min(top + 8, screen.height - getHeight() - 4));
-            setPosition(x, y);
-        }
-
-        @Override
-        protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        private void render(GuiGraphicsExtractor graphics) {
             if (!StorageOverlay.config().valueBreakdown) return;
-            updatePosition();
             long now = System.currentTimeMillis();
             if (now - lastRefresh >= REFRESH_MS) {
                 lastRefresh = now;
                 updateLines();
             }
-
-            graphics.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), 0xD0101010);
-            graphics.fill(getX(), getY(), getX() + getWidth(), getY() + 1, 0xFFFFD54F);
-            var font = Minecraft.getInstance().font;
-            for (int i = 0; i < lines.size(); i++) {
-                graphics.text(font, lines.get(i), getX() + 6, getY() + 5 + i * 10, 0xFFFFFFFF);
-            }
+            var p = com.epic60869.sky2m.features.core.Sky2MHuds.placement(HUD_ID);
+            int x = com.epic60869.sky2m.features.core.Sky2MHuds.mapX(p.x, Math.round(WIDTH * p.scale));
+            int y = com.epic60869.sky2m.features.core.Sky2MHuds.mapY(p.y, Math.round(heightFor(lines.size()) * p.scale));
+            graphics.nextStratum();
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(x, y);
+            graphics.pose().scale(p.scale, p.scale);
+            draw(graphics, lines);
+            graphics.pose().popMatrix();
         }
 
         private void updateLines() {
@@ -141,11 +173,5 @@ public final class StorageValueHud {
             if (value >= 1_000) return String.format(Locale.US, "%.1fK coins", value / 1_000);
             return String.format(Locale.US, "%,.0f coins", value);
         }
-
-        @Override
-        public void onClick(MouseButtonEvent click, boolean doubled) {}
-
-        @Override
-        protected void updateWidgetNarration(NarrationElementOutput builder) {}
     }
 }

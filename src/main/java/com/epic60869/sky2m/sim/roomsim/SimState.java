@@ -38,13 +38,20 @@ public final class SimState {
      * be impossible rather than unlikely.
      */
     public static boolean canAct(Minecraft client) {
-        return active
-                && client != null
-                && client.player != null
-                && client.level != null
-                && client.getSingleplayerServer() != null
-                && client.getCurrentServer() == null;
+        if (!active || client == null || client.player == null || client.level == null) return false;
+        // A running integrated server IS the local world: on a real server getSingleplayerServer() is null. This used to
+        // also want getCurrentServer() == null, but on 26.2 another mod can give the singleplayer connection server data,
+        // and then every sim command gated on this (/simitem, /map, /item...) said "Unknown command" inside the sim.
+        boolean local = client.getSingleplayerServer() != null && client.isLocalServer();
+        if (!local && !loggedRefusal) {
+            loggedRefusal = true;
+            org.slf4j.LoggerFactory.getLogger("sky2m-sim").warn("Sim: active but not acting - singleplayerServer={}, localServer={}, currentServer={}",
+                    client.getSingleplayerServer() != null, client.isLocalServer(), client.getCurrentServer());
+        }
+        return local;
     }
+
+    private static boolean loggedRefusal;
 
     /**
      * May a sim world be opened right now?
@@ -54,7 +61,7 @@ public final class SimState {
      * is whether he is attached to somebody else's server, and if he is the answer is no.
      */
     public static boolean canOpen(Minecraft client) {
-        return client != null && client.getCurrentServer() == null;
+        return client != null && (client.getCurrentServer() == null || client.isLocalServer());
     }
 
     public static void enter(String code) {

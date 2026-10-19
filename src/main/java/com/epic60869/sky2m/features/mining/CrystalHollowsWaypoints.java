@@ -7,6 +7,7 @@ import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
+import com.epic60869.sky2m.features.misc.PartyCommands;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -21,6 +22,8 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.LinkedHashMap;
@@ -31,11 +34,14 @@ import java.util.regex.Pattern;
 
 /**
  * Crystal Hollows waypoints, following Skyblocker's CrystalsLocationsManager (LGPL-3.0), without its waypoint
- * sharing server:
+ * sharing server (Skyblocker's WebSocket at ws.hysky.de needs a token its own API issues to Skyblocker clients, so
+ * Sky2M doesn't use it; finds are shared through party chat instead):
  * <ul>
  *     <li>Walking into Mines of Divan, Jungle Temple, Goblin Queen's Den, ... marks it at your position.</li>
  *     <li>NPC and crystal messages (e.g. "[NPC] King Yolkar:") move the waypoint to where you are.</li>
  *     <li>Coordinates in chat ("Divan 512 100 488") become waypoints; without a place name you get a menu to pick one.</li>
+ *     <li>Optionally, NPC and boss nametags (King Yolkar, Odawa, Corleone, ...) mark their place as soon as they load.</li>
+ *     <li>Optionally, places you find yourself are posted once per lobby in party chat in the format above.</li>
  *     <li>/s2 crystalwaypoints add|share|remove|clear.</li>
  * </ul>
  * Waypoints are per lobby and cleared when you leave.
@@ -78,6 +84,16 @@ public final class CrystalHollowsWaypoints {
     private static final Pattern COORDS = Pattern.compile("\\Dx?(\\d{3})(?=[, ]),? ?y?(\\d{2,3})(?=[, ]),? ?z?(\\d{3})\\D?(?!\\d)");
     private static final Map<Place, BlockPos> ACTIVE = new LinkedHashMap<>();
     private static final java.util.Set<Place> VERIFIED = java.util.EnumSet.noneOf(Place.class);
+    /** Places already posted in party chat this lobby, so each is shared at most once. */
+    private static final java.util.Set<Place> SHARED = java.util.EnumSet.noneOf(Place.class);
+    /** Nametag text -> the place that NPC or mob stands at. */
+    private static final Map<String, Place> NAMETAGS = Map.of(
+        "Kalhuiki Door Guardian", Place.JUNGLE_TEMPLE,
+        "King Yolkar", Place.KING_YOLKAR,
+        "Odawa", Place.ODAWA,
+        "Xalx", Place.XALX,
+        "Corleone", Place.CORLEONE,
+        "Key Guardian", Place.KEY_GUARDIAN);
     private static int ticks;
 
     private CrystalHollowsWaypoints() {}
@@ -96,11 +112,13 @@ public final class CrystalHollowsWaypoints {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> {
             ACTIVE.clear();
             VERIFIED.clear();
+            SHARED.clear();
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 40 != 0 || !enabled() || mc.player == null) return;
             Place here = Place.of(Sky2MLocation.location());
-            if (here != null && here != Place.UNKNOWN && !ACTIVE.containsKey(here)) add(here, mc.player.blockPosition());
+            if (here != null && here != Place.UNKNOWN && !ACTIVE.containsKey(here)) found(here, mc.player.blockPosition());
+            if (config().crystalWaypointsNametags) scanNametags(mc);
         });
         Sky2MChat.onChat(message -> onChat(message.text()));
         Sky2MWorldRender.register(collector -> {
@@ -176,6 +194,33 @@ public final class CrystalHollowsWaypoints {
         ACTIVE.put(place, pos.immutable());
     }
 
+    /** A place you found yourself (not one read from chat): mark it and, if enabled, tell your party. */
+    private static void found(Place place, BlockPos pos) {
+        add(place, pos);
+        FeatureConfigs.MiningFeatures c = config();
+        if (c == null || !c.crystalWaypointsPartyShare || PartyCommands.members().isEmpty() || !SHARED.add(place)) return;
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null) connection.sendCommand("pc " + place.label + ": " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ());
+    }
+
+    /**
+     * NPC and boss nametags load from much further away than you'd walk into the place, so they find King Yolkar,
+     * Corleone and the rest early. Each place is only taken from a nametag once.
+     */
+    private static void scanNametags(Minecraft mc) {
+        if (mc.level == null) return;
+        for (Entity entity : mc.level.entitiesForRendering()) {
+            if (!(entity instanceof ArmorStand stand) || !stand.hasCustomName()) continue;
+            String name = Sky2MLocation.strip(stand.getCustomName().getString());
+            for (var entry : NAMETAGS.entrySet()) {
+                Place place = entry.getValue();
+                if (!name.contains(entry.getKey()) || ACTIVE.containsKey(place)) continue;
+                BlockPos pos = stand.blockPosition();
+                if (inHollows(pos)) found(place, pos);
+            }
+        }
+    }
+
     private static boolean inHollows(BlockPos pos) {
         return pos.getX() >= 202 && pos.getX() <= 823 && pos.getZ() >= 202 && pos.getZ() <= 823 && pos.getY() >= 31 && pos.getY() <= 188;
     }
@@ -192,7 +237,7 @@ public final class CrystalHollowsWaypoints {
                     ? text.trim().equals(place.linkedMessage.trim())
                     : text.startsWith(place.linkedMessage);
                 if (matches && VERIFIED.add(place)) {
-                    add(place, mc.player.blockPosition());
+                    found(place, mc.player.blockPosition());
                 }
             }
         }

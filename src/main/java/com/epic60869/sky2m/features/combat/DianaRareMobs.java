@@ -1074,8 +1074,8 @@ public final class DianaRareMobs {
         pendingLocalSpawns.removeIf(p -> p.server().equals(server) && p.mob() == mob);
         recentLocalDeaths.removeIf(d -> d.server().equals(server) && d.mob() == mob);
         List<Target> locals = current.stream().filter(t -> t.source == Source.LOCAL && t.mob == mob).toList();
-        Target newest = locals.stream().max(Comparator.comparingLong((Target t) -> t.createdAt).thenComparingLong(t -> t.id)).orElse(null);
-        for (Target t : locals) clearTarget(t, t == newest ? MOB_DIED : "cocooned");
+        // "cocooned", not MOB_DIED: the mob isn't defeated, and this already shares where it will hatch right below.
+        for (Target t : locals) clearTarget(t, "cocooned");
 
         PartyChat.send("Cocooned a " + mob.label + "!");
         if (location == null) return;

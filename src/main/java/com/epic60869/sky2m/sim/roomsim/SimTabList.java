@@ -177,8 +177,7 @@ public final class SimTabList {
         // Column D: what this world is.
         int d = 3 * ROWS;
         slot[d++] = "Info";
-        slot[d++] = " " + SimSidebar.INFO_NOT_HYPIXEL;
-        slot[d] = " " + SimSidebar.DISCORD;
+        slot[d] = " " + SimSidebar.INFO_NOT_HYPIXEL;
         return List.of(slot);
     }
 
@@ -292,9 +291,7 @@ public final class SimTabList {
 
     private static ClientboundTabListPacket headerFooter() {
         Component head = Component.literal(SimSidebar.INFO_TITLE).withStyle(ChatFormatting.GOLD);
-        Component foot = Component.literal(SimSidebar.INFO_NOT_HYPIXEL).withStyle(ChatFormatting.GRAY)
-                .append(Component.literal("\nDiscord: ").withStyle(ChatFormatting.GRAY))
-                .append(Component.literal(SimSidebar.DISCORD).withStyle(ChatFormatting.AQUA));
+        Component foot = Component.literal(SimSidebar.INFO_NOT_HYPIXEL).withStyle(ChatFormatting.GRAY);
         return new ClientboundTabListPacket(head, foot);
     }
 

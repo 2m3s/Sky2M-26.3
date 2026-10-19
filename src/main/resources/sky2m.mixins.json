@@ -82,6 +82,7 @@
     "Sky2MToggleSprintMixin",
     "Sky2MChromaTextMixin",
     "Sky2MCapeMixin",
+    "Sky2MEmblemFontMixin",
     "Sky2MItemCooldownMixin",
     "Sky2MEntityGlowMixin",
     "Sky2MEntityGlowColourMixin",

@@ -28,6 +28,7 @@ public final class ProfileViewer {
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             com.epic60869.sky2m.features.profileviewer.networth.SkyHelperNetworth.warm();
             ProfileApi.loadTables();
+            ProfileApi.warmBackend();
         });
     }
 

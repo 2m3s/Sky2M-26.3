@@ -139,7 +139,7 @@ public final class ItemCooldowns {
             if (!ACTIVE.isEmpty()) {
                 ACTIVE.values().removeIf(c -> {
                     if (now - c.start() < c.duration()) return false;
-                    if (config().readySound && mc.player != null) Sky2MAlerts.play(SoundEvents.NOTE_BLOCK_PLING.value(), 2f, 0.6f);
+                    if (config() != null && config().enabled && config().readySound && mc.player != null) Sky2MAlerts.play(SoundEvents.NOTE_BLOCK_PLING.value(), 2f, 0.6f);
                     return true;
                 });
             }

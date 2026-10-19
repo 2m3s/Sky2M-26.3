@@ -162,7 +162,11 @@ public final class BazaarNotifications {
         for (var slot : screen.getMenu().slots) {
             if (slot.container instanceof Inventory || !slot.hasItem()) continue;
             WatchedOrder order = parseOrderStack(slot.getItem());
-            if (order != null) remember(order);
+            if (order == null) continue;
+            // Filled orders are waiting to be claimed, not live orders that can become outdated.
+            // Drop them from the watcher as soon as the orders menu shows them as 100% filled.
+            if (isFull(slot.getItem())) ORDERS.remove(order.key);
+            else remember(order);
         }
     }
 

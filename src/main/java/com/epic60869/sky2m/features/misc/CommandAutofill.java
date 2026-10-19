@@ -56,7 +56,7 @@ public final class CommandAutofill {
         if (space < 0) return null;
         String command = uptoCursor.substring(1, space).toLowerCase(Locale.ROOT);
         List<Entry> source = switch (command) {
-            case "bz", "bazaar" -> config.bazaar ? bazaarEntries() : null;
+            case "bz", "bzs", "bazaar" -> config.bazaar ? bazaarEntries() : null;
             case "ahs", "ahsearch" -> config.auctionHouse ? itemNameEntries() : null;
             case "viewrecipe", "recipe" -> config.recipes ? itemIdEntries() : null;
             default -> null;
@@ -112,10 +112,17 @@ public final class CommandAutofill {
         if (snapshot != bazaarSource) {
             Set<String> ids = new LinkedHashSet<>(snapshot.buy().keySet());
             ids.addAll(snapshot.sell().keySet());
+            Map<String, JsonObject> items = PriceService.items();
             List<Entry> next = new ArrayList<>(ids.size());
+            Set<String> seen = new LinkedHashSet<>();
             for (String id : ids) {
-                String text = id.toLowerCase(Locale.ROOT);
-                next.add(new Entry(text, normalise(text)));
+                // The item's real name, as the Bazaar shows it: spaces stay spaces, and a hyphen only where the
+                // name has one. Products without a known name fall back to their id with spaces.
+                JsonObject item = items == null ? null : items.get(id);
+                JsonElement nameElement = item == null ? null : item.get("name");
+                String name = nameElement != null && nameElement.isJsonPrimitive() ? cleanName(nameElement.getAsString()) : "";
+                if (name.isEmpty()) name = id.toLowerCase(Locale.ROOT).replace('_', ' ');
+                if (seen.add(name)) next.add(new Entry(name, normalise(name) + " " + normalise(id)));
             }
             bazaar = next;
             bazaarSource = snapshot;
@@ -163,7 +170,7 @@ public final class CommandAutofill {
 
     /** Lower case, with spaces as underscores. */
     private static String normalise(String text) {
-        return text.toLowerCase(Locale.ROOT).replace(' ', '_');
+        return text.toLowerCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
     }
 
     private static @Nullable Config config() {
@@ -178,12 +185,12 @@ public final class CommandAutofill {
         public boolean enabled = true;
 
         @Expose
-        @ConfigOption(name = "Bazaar (/bz)", desc = "Suggest Bazaar products for /bz and /bazaar, like enchanted_diamond and enchanted_diamond_block. Spaces and underscores both match.")
+        @ConfigOption(name = "Bazaar (/bz)", desc = "Suggest Bazaar products for /bz, /bzs and /bazaar. Search matches names and product IDs, with spaces, underscores and hyphens interchangeable; Tab inserts the item's name as the Bazaar shows it (spaces, and a hyphen only where the name has one).")
         @ConfigEditorBoolean
         public boolean bazaar = true;
 
         @Expose
-        @ConfigOption(name = "Auction House (/ahs)", desc = "Suggest item names for /ahs and /ahsearch (/ah itself takes a player name, so it is left alone).")
+        @ConfigOption(name = "Auction House (/ahs)", desc = "Suggest matching item names for /ahs and /ahsearch, including partial searches such as grand. Item names retain their original spaces and hyphens. /ah itself takes a player name, so it is left alone.")
         @ConfigEditorBoolean
         public boolean auctionHouse = true;
 

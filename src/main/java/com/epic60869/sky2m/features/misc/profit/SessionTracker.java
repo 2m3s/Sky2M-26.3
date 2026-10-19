@@ -36,18 +36,17 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * /s2 session: your Diana, Mining and Farming for this game session, counted in the background whether or not their
- * profit trackers are on ({@link ProfitTracker} counts the drops, coins and actions into the session too). Each
- * activity's playtime pauses after a few seconds of not mining, farming or digging. The session lasts until the game
- * closes; on the next launch it's moved to the saved past sessions and its breakdown is shown in chat.
+ * /s2 session: one local-calendar-day record for every built-in profit preset, counted in the background even when
+ * an individual profit tracker is disabled. Reopening the game does not start another section for the same day.
  */
 public final class SessionTracker {
-    /** The activities, in the screen's tab order (after Total). */
-    static final ProfitTracker.Preset[] ACTIVITIES = {
-        ProfitTracker.Preset.FARMING, ProfitTracker.Preset.MINING, ProfitTracker.Preset.MYTHOLOGICAL_RITUAL};
+    /** Every built-in profit preset, including trackers whose HUD is disabled. */
+    static final ProfitTracker.Preset[] ACTIVITIES = ProfitTracker.Preset.values();
 
     static final class Session {
-        /** When the game was started. */
+        /** Epoch day this daily section belongs to (local timezone). */
+        @Expose long day;
+        /** First time Sky2M saw this day. */
         @Expose long started;
         /** When the session was last saved: about when the game closed, for a past session. */
         @Expose long ended;
@@ -121,14 +120,36 @@ public final class SessionTracker {
     public static void init(Path configDir) {
         file = configDir.resolve("sky2m").resolve("sessions.json");
         load();
-        // The last game's session ended when it closed: keep it with the past sessions and show its breakdown.
-        if (saved.current != null && saved.current.hasAny()) {
-            saved.history.addFirst(saved.current);
-            pendingSummary = saved.current;
+        // Keep one record per day across game restarts; only a day rollover creates a new history entry.
+        long today = java.time.LocalDate.now().toEpochDay();
+        if (saved.current != null) {
+            if (saved.current.day == 0) saved.current.day = java.time.Instant.ofEpochMilli(saved.current.started).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay();
+            if (saved.current.day == today) {
+                current = saved.current;
+            } else {
+                if (saved.current.hasAny()) {
+                    saved.history.addFirst(saved.current);
+                    pendingSummary = saved.current;
+                }
+                current = new Session();
+                current.day = today;
+                current.started = System.currentTimeMillis();
+                saved.current = current;
+            }
+        } else {
+            current = new Session();
+            current.day = today;
+            current.started = System.currentTimeMillis();
+            saved.current = current;
         }
-        current = new Session();
-        current.started = System.currentTimeMillis();
-        saved.current = current;
+        // If an older version stored multiple sessions for the currently open day, fold them into today's record.
+        if (current != null) {
+            saved.history.removeIf(oldDay -> {
+                if (oldDay.day != current.day) return false;
+                merge(current, oldDay);
+                return true;
+            });
+        }
         trim();
         save();
         ClientTickEvents.END_CLIENT_TICK.register(SessionTracker::tick);
@@ -146,11 +167,9 @@ public final class SessionTracker {
 
     // ------------------------------------------------------------------------------------------------ counting
 
-    /** Whether the session is counting this preset (Diana, Mining or Farming, with the Session Tracker on). */
+    /** Collect every built-in profit preset while daily history is enabled, independent of HUD/feature toggles. */
     static boolean tracks(ProfitTracker.Preset preset) {
-        if (!on()) return false;
-        for (ProfitTracker.Preset p : ACTIVITIES) if (p == preset) return true;
-        return false;
+        return on() && preset != null;
     }
 
     /** Where {@link ProfitTracker} adds this preset's drops, coins and actions for the session; null if not tracked. */
@@ -189,6 +208,24 @@ public final class SessionTracker {
         playerTicks++;
         showSummary(mc);
         if (!on() || current == null) return;
+
+        // One daily section, regardless of how often the game is launched.
+        long today = java.time.LocalDate.now().toEpochDay();
+        if (current.day != today) {
+            if (current.hasAny()) {
+                saved.history.addFirst(current);
+                // Playing through midnight: the finished day's breakdown, like on the first launch of a day.
+                pendingSummary = current;
+                playerTicks = 100;
+            }
+            current = new Session();
+            current.day = today;
+            current.started = now;
+            saved.current = current;
+            lastActive.clear();
+            trim();
+            dirty = true;
+        }
 
         // Mining and farming are holding attack on a block; Diana is using or swinging the spade.
         ProfitTracker.Preset where = ProfitTracker.currentPreset();
@@ -243,7 +280,7 @@ public final class SessionTracker {
         HoverEvent hover = new HoverEvent.ShowText(Component.literal("Click to open it in /s2 session").withStyle(ChatFormatting.YELLOW));
         ClickEvent click = new ClickEvent.RunCommand("/s2 session last");
         MutableComponent text = Component.literal("[S2M] ").withStyle(ChatFormatting.LIGHT_PURPLE)
-            .append(Component.literal("Last session ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD))
+            .append(Component.literal("Previous day ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD))
             .append(Component.literal(date(s.firstActiveAny()) + " " + time(s.firstActiveAny()) + ", " + duration(s.playtime()) + ": ").withStyle(ChatFormatting.GRAY))
             .append(signed(profit(s)));
         for (ProfitTracker.Preset preset : ACTIVITIES) {
@@ -300,6 +337,11 @@ public final class SessionTracker {
 
     // ------------------------------------------------------------------------------------------------ sessions
 
+    /** Saves soon: an item was edited or removed by hand. */
+    static void markDirty() {
+        dirty = true;
+    }
+
     /** The session at {@code index}: -1 is this one, 0 the last game's, and so on. */
     static Session session(int index) {
         if (index < 0 || index >= saved.history.size()) return current;
@@ -330,9 +372,25 @@ public final class SessionTracker {
             if (loaded.history == null) loaded.history = new ArrayList<>();
             loaded.history.removeIf(s -> s == null || s.activities == null);
             for (Session s : loaded.history) fix(s);
+            // Migrate older versions' multiple game sessions into one record per local calendar day.
+            Map<Long, Session> byDay = new LinkedHashMap<>();
+            for (Session oldSession : loaded.history) {
+                Session daySession = byDay.get(oldSession.day);
+                if (daySession == null) {
+                    byDay.put(oldSession.day, oldSession);
+                } else {
+                    merge(daySession, oldSession);
+                }
+            }
+            loaded.history = new ArrayList<>(byDay.values());
             if (loaded.current != null) {
                 if (loaded.current.activities == null) loaded.current = null;
-                else fix(loaded.current);
+                else {
+                    fix(loaded.current);
+                    if (loaded.current.day == 0 && loaded.current.started > 0) {
+                        loaded.current.day = Instant.ofEpochMilli(loaded.current.started).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay();
+                    }
+                }
             }
             saved = loaded;
         } catch (Exception e) {
@@ -341,12 +399,37 @@ public final class SessionTracker {
     }
 
     private static void fix(Session s) {
+        if (s.day == 0 && s.started > 0) s.day = Instant.ofEpochMilli(s.started).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay();
         if (s.firstActive == null) s.firstActive = new LinkedHashMap<>();
         for (ProfitTracker.Stats stats : s.activities.values()) {
             if (stats.items == null) stats.items = new LinkedHashMap<>();
             if (stats.pestKills == null) stats.pestKills = new LinkedHashMap<>();
         }
         s.activities.values().removeIf(java.util.Objects::isNull);
+        // Bait counted by older versions comes out of every day's totals.
+        for (ProfitTracker.Stats stats : s.activities.values()) stats.items.keySet().removeIf(ProfitTracker::isBait);
+    }
+
+    private static void merge(Session into, Session from) {
+        into.started = into.started <= 0 ? from.started : from.started <= 0 ? into.started : Math.min(into.started, from.started);
+        into.ended = Math.max(into.ended, from.ended);
+        if (into.firstActive == null) into.firstActive = new LinkedHashMap<>();
+        if (from.firstActive != null) from.firstActive.forEach((key, value) -> into.firstActive.merge(key, value, Math::min));
+        if (into.activities == null) into.activities = new LinkedHashMap<>();
+        if (from.activities == null) return;
+        from.activities.forEach((key, source) -> {
+            if (source == null) return;
+            ProfitTracker.Stats target = into.activities.computeIfAbsent(key, ignored -> new ProfitTracker.Stats());
+            if (target.items == null) target.items = new LinkedHashMap<>();
+            if (source.items != null) source.items.forEach((id, amount) -> target.items.merge(id, amount, Long::sum));
+            if (target.pestKills == null) target.pestKills = new LinkedHashMap<>();
+            if (source.pestKills != null) source.pestKills.forEach((name, amount) -> target.pestKills.merge(name, amount, Long::sum));
+            target.coins += source.coins;
+            target.kernels += source.kernels;
+            target.actions += source.actions;
+            target.activeMs += source.activeMs;
+            target.costs += source.costs;
+        });
     }
 
     private static void save() {

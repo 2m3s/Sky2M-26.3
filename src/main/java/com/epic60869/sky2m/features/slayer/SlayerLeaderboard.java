@@ -247,6 +247,14 @@ public final class SlayerLeaderboard {
 
     private static final Map<String, Standings> STANDINGS = new java.util.concurrent.ConcurrentHashMap<>();
 
+    /** The /s2 leaderboard screen's refresh callback (called on the game thread whenever standings are (re)cached). */
+    private static volatile Runnable killTimesListener;
+
+    /** Registers (or, with null, unregisters) the leaderboard screen's callback. */
+    public static void killTimesListener(Runnable listener) {
+        killTimesListener = listener;
+    }
+
     /** The last standings the server sent for {@code boss}, or null. */
     public static Standings cached(String boss) {
         return boss == null ? null : STANDINGS.get(boss);
@@ -277,6 +285,8 @@ public final class SlayerLeaderboard {
             time = you.has("timeMs") ? you.get("timeMs").getAsLong() : 0;
         }
         STANDINGS.put(boss, new Standings(List.copyOf(entries), rank, time));
+        Runnable listener = killTimesListener;
+        if (listener != null) listener.run();
     }
 
     private static void rememberSummary(JsonObject packet) {

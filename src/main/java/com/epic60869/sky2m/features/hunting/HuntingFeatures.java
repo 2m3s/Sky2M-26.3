@@ -134,6 +134,7 @@ public final class HuntingFeatures {
         if (!Sky2MLocation.onSkyblock()) {
             glow = Map.of();
             lasso = List.of();
+            invisibugBoxes = List.of();
             return;
         }
         if (ticks % 10 == 0) highlights(mc, c.mobHighlight);

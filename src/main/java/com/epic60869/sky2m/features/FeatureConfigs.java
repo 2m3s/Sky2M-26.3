@@ -918,7 +918,7 @@ public final class FeatureConfigs {
 
     public static final class RareDrops {
         @Expose
-        @ConfigOption(name = "Copy Rare Drops", desc = "Copy rare drop messages to your clipboard (RARE, VERY RARE, CRAZY RARE, INSANE, PRAY TO RNGESUS, PET and RNG METER drops, rare crops, rare rewards and outstanding catches). What was copied shows in chat, using Copy Chat's preview settings.")
+        @ConfigOption(name = "Copy Rare Drops", desc = "Copy rare drop messages to your clipboard (RARE, VERY RARE, CRAZY RARE, INSANE, PRAY TO RNGESUS, PET and RNG METER drops, rare rewards and outstanding catches). Garden drops (rare crops, pest drops) are copied only with Copy Garden Drops. Only your own drops are copied, not other players' drops announced in the lobby. What was copied shows in chat, using Copy Chat's preview settings.")
         @ConfigEditorBoolean
         public boolean copy = false;
 
@@ -933,22 +933,22 @@ public final class FeatureConfigs {
         public boolean copySlayer = false;
 
         @Expose
-        @ConfigOption(name = "Copy Garden Drops", desc = "Copy only Garden drops to your clipboard: RARE CROP drops and anything else that drops in the Garden, like pest drops. Not needed with Copy Rare Drops on.")
+        @ConfigOption(name = "Copy Garden Drops", desc = "Copy only Garden drops to your clipboard: RARE CROP drops and anything else that drops in the Garden, like pest drops. The other copy options never copy Garden drops, so with this off none are copied.")
         @ConfigEditorBoolean
         public boolean copyGarden = false;
 
         @Expose
-        @ConfigOption(name = "Big Drop Animation", desc = "Play an animation when a rare drop is worth more than the threshold.")
+        @ConfigOption(name = "Big Drop Animation", desc = "Play an animation and a chat message when any rare drop is worth at least the Animation Threshold. Separate from the RNG Drop Totem Animation below.")
         @ConfigEditorBoolean
         public boolean animation = false;
 
         @Expose
-        @ConfigOption(name = "Animation Threshold (millions)", desc = "Minimum drop value, in millions of coins, for the animation.")
+        @ConfigOption(name = "Animation Threshold (millions)", desc = "Minimum drop value, in millions of coins, for the Big Drop Animation. Does not affect the RNG Drop Totem Animation.")
         @ConfigEditorSlider(minValue = 1, maxValue = 500, minStep = 1)
         public float thresholdMillions = 10;
 
         @Expose
-        @ConfigOption(name = "RNG Drop Totem Animation", desc = "Skyblocker's special effect: big RNG drops (slayer, Diana and fishing RNG items, and any PRAY TO RNGESUS or RNG METER drop) pop up like a Totem of Undying, with particles and a sound.")
+        @ConfigOption(name = "RNG Drop Totem Animation", desc = "Skyblocker's special effect: RNG drops pop up like a Totem of Undying, with particles and a sound, whatever they are worth (no threshold). Plays for slayer, Diana and fishing RNG items, dyes, and every PRAY TO RNGESUS DROP! or RNG METER DROP! chat message (the item you were filling the RNG Meter for), not for every item listed in the RNG Meter menu.")
         @ConfigEditorBoolean
         public boolean totemAnimation = false;
     }
@@ -963,6 +963,54 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Show Minibosses", desc = "Also show slayer minibosses near you in the HUD, under Hypixel's SLAYER MINIBOSS line with their name and health.")
         @ConfigEditorBoolean
         public boolean showMinibosses = true;
+
+        @Expose
+        @ConfigOption(name = "T5 Phase Times", desc = "For Tier 5 Tarantula and Tier 5 Revenant, under the boss in the Boss Phase Display (needs it on): hits left while the nametag shows hits, the current phase's time, and each finished phase's time with the downtime between phases (while the boss's nametag is gone, e.g. Tarantula Broodfather to Conjoined Brood).")
+        @ConfigEditorBoolean
+        public boolean t5PhaseTimes = false;
+
+        @Expose
+        @ConfigOption(name = "T5 Phase Summary", desc = "When a Tier 5 Tarantula or Revenant dies, one line in chat (only you see it), e.g. \"T5 Tara: 41.2s (phase 1 18.1s · downtime 3.4s · phase 2 19.7s)\". Replaces the Phase Timer's chat summary for those bosses.")
+        @ConfigEditorBoolean
+        public boolean t5PhaseSummary = false;
+    }
+
+    /** Title and sound when your slayer boss spawns, for runs where you aren't watching the screen. */
+    public static final class BossSpawnAlert {
+        @Expose
+        @ConfigOption(name = "Boss Spawn Alert", desc = "\"BOSS SPAWNED\" with the boss and tier (e.g. Tarantula Broodfather V) and a sound as soon as the sidebar says \"Slay the boss!\" for your quest, or when your boss's nametag appears. If the boss is off-screen, the subtitle says where it is.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Sound", desc = "Sound played with the alert.")
+        @ConfigEditorDropdown
+        public BossSpawnSound sound = BossSpawnSound.ANVIL;
+
+        @Expose
+        @ConfigOption(name = "Volume", desc = "Volume of the alert sound.")
+        @ConfigEditorSlider(minValue = 0.1f, maxValue = 1f, minStep = 0.05f)
+        public float volume = 1f;
+
+        @Expose
+        @ConfigOption(name = "Repeat Until Seen", desc = "Play the sound again every 2 seconds until your boss is on-screen or under your crosshair, for up to 10 seconds.")
+        @ConfigEditorBoolean
+        public boolean repeatUntilSeen = false;
+    }
+
+    public enum BossSpawnSound {
+        ANVIL("Anvil"), BELL("Bell"), PLING("Pling"), LEVEL_UP("Level Up"), WITHER("Wither Spawn"), DRAGON("Dragon Growl");
+
+        private final String label;
+
+        BossSpawnSound(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
     /** Voidgloom Seraph helpers, ported from SkyHanni's Enderman slayer features. */
@@ -1707,6 +1755,16 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Waypoints From Chat", desc = "Turn Crystal Hollows coordinates in chat into waypoints.")
         @ConfigEditorBoolean
         public boolean crystalWaypointsFromChat = true;
+
+        @Expose
+        @ConfigOption(name = "Auto-Find From Nametags", desc = "Mark King Yolkar, Odawa, Xalx, Corleone, the Key Guardian and the Jungle Temple door guardian as soon as their nametags load, even from a distance.")
+        @ConfigEditorBoolean
+        public boolean crystalWaypointsNametags = false;
+
+        @Expose
+        @ConfigOption(name = "Share Finds In Party Chat", desc = "When you find a place yourself, post it once per lobby in party chat (\"Place: x, y, z\"), which Sky2M and Skyblocker party members turn into waypoints.")
+        @ConfigEditorBoolean
+        public boolean crystalWaypointsPartyShare = false;
 
         @Expose
         @ConfigOption(name = "Pickaxe Ability HUD", desc = "Cooldown of your pickaxe ability (Mining Speed Boost, Pickobulus, ...) on the mining islands (Gold Mine, Deep Caverns, Dwarven Mines, Crystal Hollows, Mineshafts). Move it in /s2 gui.")
@@ -3930,6 +3988,21 @@ public final class FeatureConfigs {
         public boolean enabled = false;
 
         @Expose
+        @ConfigOption(name = "Played Before", desc = "When someone you've seen before joins your group, say so: dungeon runs you played together (from Run History), how many finished, your best together, when you last played, how often they joined your groups and how often you kicked them. /s2 pfhistory lists recent players.")
+        @ConfigEditorBoolean
+        public boolean history = true;
+
+        @Expose
+        @ConfigOption(name = "Flag Kicked Players", desc = "When someone you kicked from your group before joins your Party Finder group or your party, warn in chat: how often you kicked them and when last, your note on them, and [Kick] and [History] buttons. Kicks count once Hypixel says they were removed.")
+        @ConfigEditorBoolean
+        public boolean flagKicked = true;
+
+        @Expose
+        @ConfigOption(name = "Auto-Note Kicks", desc = "The first time you kick someone who joined your Party Finder group, save a note on them (\"Kicked from M7 on Oct 18, 2026\") unless they already have one. See /s2 notes.")
+        @ConfigEditorBoolean
+        public boolean autoNoteKicks = false;
+
+        @Expose
         @ConfigOption(name = "Kick Button", desc = "Adds a [KICK] button under the stats that kicks them from the party.")
         @ConfigEditorBoolean
         public boolean kickButton = true;
@@ -3938,6 +4011,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Auto Kick", desc = "While you lead, kick players who don't meet the requirements below (0 turns a requirement off).")
         @ConfigEditorBoolean
         public boolean autoKick = false;
+
+        @Expose
+        @ConfigOption(name = "Per-Floor Requirements", desc = "Use different requirements for each floor (F1-F7 and M1-M7), set with /s2 pfreq: the ones for the floor you're queued for or playing. Floors without their own fall back to the requirements below.")
+        @ConfigEditorBoolean
+        public boolean perFloor = false;
 
         @Expose
         @ConfigOption(name = "Floor", desc = "The floor whose S+ time is checked.")
@@ -4070,7 +4148,7 @@ public final class FeatureConfigs {
 
     public static final class SessionTrackerSettings {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Track your Diana, Mining and Farming this game session: playtime, drops and profit. Open it with /s2 session. When you restart the game the session ends and its breakdown shows in chat; past sessions stay in /s2 session.")
+        @ConfigOption(name = "Enabled", desc = "Track all built-in profit presets into one daily record, including when individual tracker HUDs are disabled. Open /s2 session to click a day and see total profit plus each tracker's drops and breakdown. Game restarts do not split a day; history is kept by calendar day.")
         @ConfigEditorBoolean
         public boolean enabled = true;
 
@@ -4090,12 +4168,12 @@ public final class FeatureConfigs {
         public ProfitPriceSource priceSource = ProfitPriceSource.INSTANT_SELL;
 
         @Expose
-        @ConfigOption(name = "Breakdown on Launch", desc = "When you join after restarting the game, show your last session's breakdown in chat.")
+        @ConfigOption(name = "Breakdown on Launch", desc = "When you join on a new day, show the previous day's breakdown in chat.")
         @ConfigEditorBoolean
         public boolean summaryOnLaunch = true;
 
         @Expose
-        @ConfigOption(name = "Sessions Kept", desc = "How many past sessions /s2 session keeps.")
+        @ConfigOption(name = "Sessions Kept", desc = "How many past daily sections /s2 session keeps.")
         @ConfigEditorSlider(minValue = 1, maxValue = 100, minStep = 1)
         public int keep = 50;
 
@@ -4153,6 +4231,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Maximum Items", desc = "Most tracked item rows shown at once.")
         @ConfigEditorSlider(minValue = 1, maxValue = 15, minStep = 1)
         public int maximumItems = 8;
+
+        @Expose
+        @ConfigOption(name = "Profit Goal", desc = "A profit goal for the period the tracker shows (Session, Today or Total), in millions of coins: a Goal line with your progress, and a message when you reach it. 0 turns it off.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 2000, minStep = 5)
+        public int goalMillions = 0;
     }
 
     public static final class ProfitTrackerDetails {
@@ -4222,7 +4305,9 @@ public final class FeatureConfigs {
 
     public enum ProfitSummaryLine {
         COINS("Coins"), KERNEL_PROFIT("Kernel Profit"), QUEST_COSTS("Costs"), TOTAL_PROFIT("Total Profit"),
-        PROFIT_PER_HOUR("Profit/h"), ACTIONS("Actions"), UPTIME("Uptime");
+        PROFIT_PER_HOUR("Profit/h"), ACTIONS("Actions"), UPTIME("Uptime"),
+        /** Slayer trackers only: bosses/h and profit/boss this session, with your best session. Not in any defaults. */
+        PACE("Slayer Pace");
 
         private final String label;
 
@@ -4236,7 +4321,7 @@ public final class FeatureConfigs {
         }
 
         static List<ProfitSummaryLine> farmingDefaults() {
-            return List.of(values());
+            return List.of(COINS, KERNEL_PROFIT, QUEST_COSTS, TOTAL_PROFIT, PROFIT_PER_HOUR, ACTIONS, UPTIME);
         }
 
         static List<ProfitSummaryLine> standardDefaults() {
@@ -4335,6 +4420,15 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Price", desc = "Bazaar insta-sell price, sell offer price, or both as a range (insta-sell to sell offer). Items not on the bazaar use their NPC sell price.")
         @ConfigEditorDropdown
         public SacksPriceMode priceMode = SacksPriceMode.RANGE;
+
+        @Expose
+        @ConfigOption(name = "Value History", desc = "Save your sacks' total value once a day per profile (the latest value of each day; the insta-sell value when Price is Range) whenever Sacks Value works it out, and draw it as a graph with /s2 sacks history. Needs Sacks Value on.")
+        @ConfigEditorBoolean
+        public boolean history = true;
+
+        @ConfigOption(name = "Open Value Graph", desc = "Your sacks' value over time. Also /s2 sacks history.")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable openHistory = com.epic60869.sky2m.features.misc.SackValueHistory::open;
     }
 
     public enum SacksPriceMode {
@@ -5641,6 +5735,24 @@ public final class FeatureConfigs {
         public boolean phaseAlerts = false;
     }
 
+    /** Slayer RNG meter HUD, ported from SkyHanni's SlayerRngMeterDisplay. */
+    public static final class SlayerRngMeterDisplay {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "A HUD for your current quest's slayer: the drop selected in its RNG Meter (open Maddox's RNG Meter menu once to read it), the meter's progress (\"Scythe Blade: 63.2% (XP / needed)\") from the Stored XP line after each boss, and about how many bosses are left. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Bosses Left", desc = "Show how many bosses are left: the XP still needed over the XP one boss added last time (or the tier's slayer XP before that).")
+        @ConfigEditorBoolean
+        public boolean bossesLeft = true;
+
+        @Expose
+        @ConfigOption(name = "Warn Without a Drop", desc = "After a boss, say in chat when that slayer has no RNG Meter drop selected.")
+        @ConfigEditorBoolean
+        public boolean warnEmpty = false;
+    }
+
     public static final class DamageNumbers {
         @Expose
         @ConfigOption(name = "Short Numbers", desc = "Show damage numbers short (1.2M instead of 1,234,567), keeping their colours.")
@@ -6175,6 +6287,60 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Open Waypoint Manager", desc = "Add, edit, import and export waypoints. Also /s2w.")
         @ConfigEditorButton(buttonText = "Open")
         public Runnable open = com.epic60869.sky2m.features.misc.waypoints.AreaWaypoints::open;
+    }
+    /** Fairy Soul finder (SkyHanni's Fast Fairy Soul Finder / NEU-Souls Pathfinder style, /s2 souls). */
+    public static final class FairySouls {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Draw every Fairy Soul you haven't collected on this island as a box with a label, with the nearest ones you still need highlighted, using NEU's soul coordinates. One saved for all profiles. Commands: /s2 souls.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Nearby Souls", desc = "How many of the nearest uncollected Fairy Souls to draw.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 1)
+        public int nearbySouls = 4;
+
+        @Expose
+        @ConfigOption(name = "Faded Colour", desc = "Colour of the boxes that aren't the nearest one.")
+        @ConfigEditorColour
+        public String faded = "0:255:119:41:145";
+
+        @Expose
+        @ConfigOption(name = "Show Through Walls", desc = "Draw the boxes and labels through walls.")
+        @ConfigEditorBoolean
+        public boolean throughWalls = true;
+
+        @Expose
+        @ConfigOption(name = "Labels", desc = "Write \"Fairy Soul\" above each box.")
+        @ConfigEditorBoolean
+        public boolean labels = true;
+
+        @Expose
+        @ConfigOption(name = "Distances", desc = "Add how far away each nearest Fairy Soul is, in metres.")
+        @ConfigEditorBoolean
+        public boolean distances = true;
+
+        @Expose
+        @ConfigOption(name = "HUD", desc = "A HUD with how many Fairy Souls you've found on this island, out of all of them (\"Fairy Souls 45/81 — Hub\"). Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "Progress on Island Join", desc = "Say the island's Fairy Souls count in chat each time you arrive.")
+        @ConfigEditorBoolean
+        public boolean progress = true;
+    }
+    /** A shopping list of what to get and how many (/s2 shopping), ticked off by what you pick up. */
+    public static final class ShoppingList {
+        @Expose
+        @ConfigOption(name = "HUD", desc = "Show what's still on your shopping list. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "Auto Pickups", desc = "Count what you pick up towards the list: an entry whose name matches an item that lands in your inventory goes up on its own, and says in chat when it's done.")
+        @ConfigEditorBoolean
+        public boolean autoPickups = true;
     }
     public static final class TerminalProgress {
         @Expose

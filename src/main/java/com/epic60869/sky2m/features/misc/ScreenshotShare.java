@@ -91,6 +91,34 @@ public final class ScreenshotShare {
                 .append(Component.literal("Uploads publicly to " + host + ": anyone with the link can see it.").withStyle(ChatFormatting.YELLOW))))));
     }
 
+    /** The one-time token for the upload in progress ("" if none came). */
+    private static volatile String uploadToken = "";
+    private static volatile java.util.concurrent.CompletableFuture<String> pendingToken;
+
+    /** Asks the Sky2M server (logging in first if needed) for a token proving the next upload is yours. */
+    private static java.util.concurrent.CompletableFuture<String> requestUploadToken() {
+        java.util.concurrent.CompletableFuture<String> future = new java.util.concurrent.CompletableFuture<>();
+        pendingToken = future;
+        if (!com.epic60869.sky2m.features.sbc.SbcNet.online()) {
+            com.epic60869.sky2m.Sky2MGlobalChat.ensureConnected();
+        }
+        com.epic60869.sky2m.Sky2MLogin.whenLoggedIn(() -> {
+            com.google.gson.JsonObject packet = new com.google.gson.JsonObject();
+            packet.addProperty("type", "uploadToken");
+            com.epic60869.sky2m.Sky2MGlobalChat.send(packet);
+        });
+        return future;
+    }
+
+    /** The server's answer to uploadToken. */
+    public static void onUploadToken(com.google.gson.JsonObject packet) {
+        java.util.concurrent.CompletableFuture<String> future = pendingToken;
+        if (future == null) return;
+        pendingToken = null;
+        boolean ok = packet.has("ok") && packet.get("ok").getAsBoolean();
+        future.complete(ok && packet.has("token") ? packet.get("token").getAsString() : "");
+    }
+
     private static int upload(String name) {
         Minecraft mc = Minecraft.getInstance();
         Path file = mc.gameDirectory.toPath().resolve("screenshots").resolve(name).normalize();
@@ -99,9 +127,19 @@ public final class ScreenshotShare {
         }
         Host host = host(config());
         say(Component.literal("Uploading " + name + "...").withStyle(ChatFormatting.GRAY));
+        // On the Sky2M host, the website's Screenshots page shows it with your name and head: the logged-in Sky2M
+        // connection gets a one-time token that goes with the upload (waiting up to 6 seconds; it uploads anyway).
+        java.util.concurrent.CompletableFuture<String> token = host == Host.SKY2M ? requestUploadToken()
+            : java.util.concurrent.CompletableFuture.completedFuture("");
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
+                String proof = "";
+                try {
+                    proof = token.get(6, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (Exception ignored) {}
+                uploadToken = proof == null ? "" : proof;
                 String link = uploadWithFallback(file, host);
+                ScreenshotGallery.uploaded(file.getFileName().toString(), link);
                 MutableComponent message = Component.literal("Screenshot uploaded: ").withStyle(ChatFormatting.GREEN)
                     .append(Component.literal(link).withStyle(s -> s.withColor(ChatFormatting.AQUA).withUnderlined(true)
                         .withClickEvent(new ClickEvent.OpenUrl(URI.create(link)))))
@@ -176,6 +214,8 @@ public final class ScreenshotShare {
             .header("User-Agent", "Sky2M/" + com.epic60869.sky2m.features.sbc.SbcInfo.modVersion());
         // Lets the server rate-limit uploads per player.
         if (host == Host.SKY2M) builder.header("X-Minecraft-Uuid", String.valueOf(Minecraft.getInstance().getUser().getProfileId()));
+        // Proves the upload is yours, so the website can show it with your name (see requestUploadToken).
+        if (host == Host.SKY2M && !uploadToken.isEmpty()) builder.header("X-Sky2M-Upload-Token", uploadToken);
         HttpRequest request = builder.POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build();
         HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
         String text = response.body().trim();

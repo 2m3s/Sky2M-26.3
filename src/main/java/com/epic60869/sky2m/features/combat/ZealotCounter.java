@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Zealot tracker in the style of SkyHanni's trackers: kills and Summoning Eyes, shown either for
@@ -64,6 +66,24 @@ public final class ZealotCounter {
     private static long lastCombatXp;
     private static final long XP_WINDOW_MS = 1500;
     private static final java.util.regex.Pattern COMBAT_XP = java.util.regex.Pattern.compile("\\+[\\d,.]+ Combat \\(");
+    /** Hypixel Wither Impact feedback, e.g. "Your Implosion hit 3 enemies for 1,023,504.2 damage." */
+    private static final Pattern IMPLOSION_HITS = Pattern.compile("Your\\s+Implosion\\s+hit\\s+(\\d+)\\s+enemies?\\s+for\\s+[\\d,.]+(?:\\s+damage)?\\.?$", Pattern.CASE_INSENSITIVE);
+    private static final long IMPLOSION_CONFIRM_MS = 1800;
+    private static int pendingImplosionHits;
+    private static long pendingImplosionAt;
+    private static final Pattern TAB_COUNTER_VALUE = Pattern.compile("([\\d,]+)\\s*/\\s*([\\d,]+)");
+    /** Hypixel TAB row: "Special Zealots: 123 / 400"; the first number is kills since the last eye. */
+    private static final Pattern SPECIAL_ZEALOTS_TAB = Pattern.compile("special\\s+zealots\\s*:\\s*([\\d,]+)\\s*/\\s*400", Pattern.CASE_INSENSITIVE);
+    /** True while Hypixel's authoritative tab-list pity counter is available. */
+    private static boolean tabPityDetected;
+    /** Last observed Hypixel Special Zealots counter, used to reconcile TAB updates with local detections. */
+    private static int lastObservedTabPity = -1;
+    /** Previous TAB count captured when Hypixel resets the counter after spawning a Special Zealot. */
+    private static int tabPityBeforeReset = -1;
+    private static long tabPityResetAt;
+    private static final long TAB_RESET_DROP_WINDOW_MS = 3000;
+    /** Locally counted kills that TAB has not caught up with yet. Prevents delayed TAB updates double-counting them. */
+    private static int localUnconfirmedKills;
     private static final long UPTIME_IDLE_MS = 10_000L;
     private static long uptimeAccumulated;
     private static long uptimeSegmentStart;
@@ -103,6 +123,13 @@ public final class ZealotCounter {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> {
             COUNTED.clear();
             HIT_BY_YOU.clear();
+            lastObservedTabPity = -1;
+            tabPityBeforeReset = -1;
+            tabPityResetAt = 0;
+            localUnconfirmedKills = 0;
+            tabPityDetected = false;
+            pendingImplosionHits = 0;
+            pendingImplosionAt = 0;
         });
         Sky2MChat.onChat(message -> {
             String text = message.text().trim();
@@ -115,11 +142,17 @@ public final class ZealotCounter {
             lastEyeTime = now;
             totalEyes++;
             sessionEyes++;
-            // The Zealot that dropped it is usually still waiting for its Combat XP to be counted, so kills waiting
-            // now count towards this Eye (and not again towards the next one once they're confirmed).
-            lastEyeKills = sinceEye + PENDING.size();
+            // TAB can reset to 0 as soon as a Special Zealot spawns, before its eye drop message arrives.
+            // If a reset happened just now, use the value TAB showed immediately before the reset.
+            // Otherwise use the live TAB value, or the local estimate if TAB is unavailable.
+            boolean justReset = tabPityBeforeReset >= 0 && now - tabPityResetAt <= TAB_RESET_DROP_WINDOW_MS;
+            lastEyeKills = justReset ? tabPityBeforeReset : (tabPityDetected ? sinceEye : sinceEye + PENDING.size());
+            if (justReset) {
+                tabPityBeforeReset = -1;
+                tabPityResetAt = 0;
+            }
             BEFORE_EYE.addAll(PENDING.keySet());
-            sinceEye = 0;
+            if (!tabPityDetected) sinceEye = 0;
             save();
         });
         // "RARE DROP! Summoning Eye (Kills: 100)": how many Zealots that eye took, added to Hypixel's drop line.
@@ -148,6 +181,21 @@ public final class ZealotCounter {
         ClientTickEvents.END_CLIENT_TICK.register(ZealotCounter::tick);
         Sky2MChat.onActionBar(message -> {
             if (COMBAT_XP.matcher(message.text()).find()) lastCombatXp = System.currentTimeMillis();
+        });
+        // Implosion reports how many enemies the blast actually hit. In the End's Zealot
+        // areas, keep that count as a fallback for Zealots that die/despawn before the entity
+        // tracker can observe their death. Combat XP confirms the kills before applying it.
+        Sky2MChat.onChat(message -> {
+            if (!enabled()) return;
+            String text = Sky2MLocation.strip(message.text()).trim();
+            Matcher implosion = IMPLOSION_HITS.matcher(text);
+            if (!implosion.find()) return;
+            int hits;
+            try { hits = Math.min(20, Math.max(0, Integer.parseInt(implosion.group(1)))); }
+            catch (NumberFormatException ignored) { return; }
+            if (hits == 0) return;
+            pendingImplosionHits = Math.max(pendingImplosionHits, hits);
+            pendingImplosionAt = System.currentTimeMillis();
         });
 
         com.epic60869.sky2m.features.core.Sky2MHuds.setting("zealots", () -> Sky2MConfig.current() != null && Sky2MConfig.current().combat.zealotCounter);
@@ -209,6 +257,7 @@ public final class ZealotCounter {
     }
 
     private static void renderInInventory(GuiGraphicsExtractor graphics) {
+        if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return;
         if (!enabled()) return;
         List<Component> lines = lines(true);
         int[] pos = Sky2MHuds.screenPosition("zealots", lines);
@@ -218,6 +267,7 @@ public final class ZealotCounter {
 
     /** Switches between total and session when the matching "[...]" on the mode line is clicked. */
     private static boolean clickModeSwitch(double mouseX, double mouseY) {
+        if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return false;
         if (!enabled()) return false;
         List<Component> lines = lines(true);
         int[] pos = Sky2MHuds.screenPosition("zealots", lines);
@@ -252,6 +302,7 @@ public final class ZealotCounter {
 
     private static void tick(Minecraft mc) {
         updateUptime(System.currentTimeMillis());
+        updateTabPity(mc);
         if (mc.player == null || mc.level == null || !enabled()) {
             HIT_BY_YOU.clear();
             COUNTED.clear();
@@ -261,6 +312,25 @@ public final class ZealotCounter {
             return;
         }
         long now = System.currentTimeMillis();
+
+        // A matching Combat XP tick confirms the recent Implosion hit count. Count it only
+        // in the configured End/Zealot areas (enabled() already checks this) and consume nearby
+        // entity-based pending detections first to avoid double-counting the same blast.
+        if (pendingImplosionHits > 0) {
+            if (lastCombatXp >= pendingImplosionAt - 250 && lastCombatXp <= pendingImplosionAt + IMPLOSION_CONFIRM_MS) {
+                int inferred = pendingImplosionHits;
+                int alreadyPending = Math.min(inferred, PENDING.size());
+                inferred -= alreadyPending;
+                if (inferred > 0) {
+                    for (int i = 0; i < inferred; i++) count(false, pendingImplosionAt);
+                }
+                pendingImplosionHits = 0;
+                pendingImplosionAt = 0;
+            } else if (now - pendingImplosionAt > IMPLOSION_CONFIRM_MS) {
+                pendingImplosionHits = 0;
+                pendingImplosionAt = 0;
+            }
+        }
 
         if (witherImpactTicks > 0) {
             witherImpactTicks--;
@@ -311,12 +381,107 @@ public final class ZealotCounter {
         PENDING.put(entity.getId(), System.currentTimeMillis());
     }
 
+    /**
+     * Reads Hypixel's live Zealot/Eye pity counter from the ordered TAB entries. This is more
+     * reliable than counting visible entities because it includes kills from every supported method.
+     */
+    private static void updateTabPity(Minecraft mc) {
+        tabPityDetected = false;
+        if (mc.getConnection() == null) return;
+
+        Integer pity = null;
+        // Hypixel's actual TAB row is "Special Zealots: <kills> / 400". Match this exact label first;
+        // don't require the word "pity", "counter" or "kills" to appear in the row.
+        for (var entry : mc.getConnection().getOnlinePlayers()) {
+            Component row = com.epic60869.sky2m.custom.util.Compat.rawTabName(entry);
+            if (row == null) continue;
+            String text = Sky2MLocation.strip(row.getString()).toLowerCase(Locale.ROOT);
+            Matcher matcher = SPECIAL_ZEALOTS_TAB.matcher(text);
+            if (matcher.find()) {
+                pity = parseTabNumber(matcher.group(1));
+                break;
+            }
+        }
+
+        // Fall back to explicitly labelled pity rows on other TAB layouts.
+        for (var entry : mc.getConnection().getOnlinePlayers()) {
+            Component row = com.epic60869.sky2m.custom.util.Compat.rawTabName(entry);
+            if (row == null) continue;
+            String text = Sky2MLocation.strip(row.getString()).toLowerCase(Locale.ROOT);
+            if (!text.contains("pity") || !(text.contains("zealot") || text.contains("eye"))) continue;
+            Matcher matcher = TAB_COUNTER_VALUE.matcher(text);
+            if (matcher.find()) {
+                pity = parseTabNumber(matcher.group(1));
+                break;
+            }
+        }
+
+        // Some TAB layouts name the row as a Zealot/Eye counter rather than explicitly calling it pity.
+        if (pity == null) {
+            for (var entry : mc.getConnection().getOnlinePlayers()) {
+                Component row = com.epic60869.sky2m.custom.util.Compat.rawTabName(entry);
+                if (row == null) continue;
+                String text = Sky2MLocation.strip(row.getString()).toLowerCase(Locale.ROOT);
+                if (!(text.contains("zealot") || text.contains("summoning eye"))
+                    || !(text.contains("counter") || text.contains("kills") || text.contains("eye pity"))
+                    || text.contains("chance") || text.contains("odds")) continue;
+                Matcher matcher = TAB_COUNTER_VALUE.matcher(text);
+                if (matcher.find()) {
+                    pity = parseTabNumber(matcher.group(1));
+                    break;
+                }
+            }
+        }
+
+        if (pity != null && pity >= 0) {
+            sinceEye = pity;
+            tabPityDetected = true;
+
+            // TAB is authoritative for "since last eye", while local detection keeps the total responsive.
+            // When TAB advances, first use its increase to confirm locally counted kills that it had not shown yet.
+            // Only any increase beyond those local estimates is added as recovered/missed kills.
+            if (lastObservedTabPity < 0) {
+                lastObservedTabPity = pity;
+            } else if (pity >= lastObservedTabPity) {
+                int gained = pity - lastObservedTabPity;
+                if (gained > 0) {
+                    int confirmedLocal = Math.min(gained, localUnconfirmedKills);
+                    localUnconfirmedKills -= confirmedLocal;
+                    int missedLocally = gained - confirmedLocal;
+                    if (missedLocally > 0) {
+                        totalKills += missedLocally;
+                        sessionKills += missedLocally;
+                        if (totalKills % 25 < missedLocally) save();
+                    }
+                }
+                lastObservedTabPity = pity;
+            } else {
+                // Hypixel can reset this counter when a Special Zealot spawns, not only when an eye drops.
+                // Preserve the previous displayed value briefly so the imminent eye-drop line reports that count.
+                tabPityBeforeReset = lastObservedTabPity;
+                tabPityResetAt = System.currentTimeMillis();
+                lastObservedTabPity = pity;
+            }
+        }
+    }
+
+    private static int parseTabNumber(String value) {
+        try {
+            return Integer.parseInt(value.replace(",", ""));
+        } catch (NumberFormatException ignored) {
+            return -1;
+        }
+    }
+
     private static void count(boolean beforeEye, long killedAt) {
+        // Keep the main-branch detector responsive: count confirmed local kills immediately.
+        // TAB later reconciles these estimates and only adds kills that local detection missed.
         totalKills++;
         sessionKills++;
-        if (!beforeEye) sinceEye++;
-        recordKillTime(killedAt);
+        localUnconfirmedKills++;
+        if (!tabPityDetected && !beforeEye) sinceEye++;
         if (totalKills % 25 == 0) save();
+        recordKillTime(killedAt);
     }
 
     private static void recordKillTime(long killedAt) {

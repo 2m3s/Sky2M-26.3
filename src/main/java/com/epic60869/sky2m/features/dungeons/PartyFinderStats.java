@@ -4,6 +4,7 @@ import com.epic60869.sky2m.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;
+import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.misc.PartyCommands;
 import com.epic60869.sky2m.features.profileviewer.ProfileApi;
 import com.google.gson.JsonArray;
@@ -60,6 +61,43 @@ public final class PartyFinderStats {
 
     private static final Set<String> KICKED = ConcurrentHashMap.newKeySet();
 
+    /** "Floor: Master Mode Floor V", "Floor VII", "The Catacombs - Floor 5" in a Party Finder item. */
+    private static final Pattern MENU_FLOOR = Pattern.compile("(?i)\\bfloor:?\\s+(?:master mode\\s+)?(?:the catacombs\\s+)?(?:floor\\s+)?(?<floor>VII|VI|V|IV|III|II|I|[1-7])\\b|\\bfloor\\s+(?<floor2>VII|VI|V|IV|III|II|I|[1-7])\\b");
+    private static volatile int pickedFloor;
+    private static volatile boolean pickedMaster;
+    private static volatile long pickedFloorAt;
+
+    /**
+     * A click in a Party Finder menu: the floor of the group you join, or of the floor you pick when creating one, so
+     * the stats show that floor's PBs while you wait in the hub.
+     */
+    public static void onSlotClicked(net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen, net.minecraft.world.inventory.Slot slot) {
+        if (slot == null || !slot.hasItem()) return;
+        String title = screen.getTitle().getString().toLowerCase(Locale.ROOT);
+        if (!title.contains("party finder") && !title.contains("select floor") && !title.contains("catacombs")) return;
+        net.minecraft.world.item.ItemStack stack = slot.getItem();
+        List<String> lines = new ArrayList<>();
+        lines.add(stack.getHoverName().getString());
+        for (Component line : stack.getOrDefault(net.minecraft.core.component.DataComponents.LORE, net.minecraft.world.item.component.ItemLore.EMPTY).lines()) {
+            lines.add(line.getString());
+        }
+        boolean master = false;
+        for (String line : lines) if (ChatFormatting.stripFormatting(line).toLowerCase(Locale.ROOT).contains("master mode")) master = true;
+        for (String line : lines) {
+            Matcher m = MENU_FLOOR.matcher(ChatFormatting.stripFormatting(line));
+            if (!m.find()) continue;
+            String value = m.group("floor") != null ? m.group("floor") : m.group("floor2");
+            int floor = switch (value.toUpperCase(Locale.ROOT)) {
+                case "I" -> 1; case "II" -> 2; case "III" -> 3; case "IV" -> 4; case "V" -> 5; case "VI" -> 6; case "VII" -> 7;
+                default -> Integer.parseInt(value);
+            };
+            pickedFloor = floor;
+            pickedMaster = master;
+            pickedFloorAt = System.currentTimeMillis();
+            return;
+        }
+    }
+
     private PartyFinderStats() {}
 
     private static FeatureConfigs.PartyFinderStats config() {
@@ -68,13 +106,16 @@ public final class PartyFinderStats {
     }
 
     public static void init() {
+        PfHistory.init();
         Sky2MChat.onChat(message -> {
             FeatureConfigs.PartyFinderStats c = config();
-            if (c == null || (!c.enabled && !c.autoKick)) return;
+            if (c == null || (!c.enabled && !c.autoKick && !c.history && !c.flagKicked)) return;
             Matcher m = JOINED.matcher(message.text().trim());
             if (!m.matches()) return;
             String name = m.group("name");
             if (name.equalsIgnoreCase(Minecraft.getInstance().getUser().getName())) return;
+            PfHistory.onJoined(name, c.history);
+            if (!c.enabled && !c.autoKick) return;
             if (c.autoKick && c.kickCache && KICKED.contains(name.toLowerCase(Locale.ROOT)) && PartyCommands.maybeLeader()) {
                 kick(name, c.informKicked ? "kicked before" : null);
                 say(Component.literal("Kicked " + name + ": you kicked them before. /s2 cata clearkicks to forget.").withStyle(ChatFormatting.YELLOW));
@@ -126,8 +167,8 @@ public final class PartyFinderStats {
     }
 
     private static CompletableFuture<Stats> lookup(String name) {
-        // ProfileApi keeps its own five-minute cache.
-        return ProfileApi.player(name).thenApply(player -> parse(player.name(), player.profiles().getFirst().member()));
+        // ProfileApi keeps its own five-minute cache; the fast lookup takes whichever source answers first.
+        return ProfileApi.playerFast(name).thenApply(player -> parse(player.name(), player.profiles().getFirst().member()));
     }
 
     private static Stats parse(String name, JsonObject member) {
@@ -279,7 +320,8 @@ public final class PartyFinderStats {
         out.append("§7Floors: ").append(hover("§6Normal", floorHover(s.normal(), "§6§lNormal Floors", "§eF")));
         out.append(" §8| ").append(hover("§cMaster", floorHover(s.master(), "§c§lMaster Floors", "§cM")));
         out.append(" §8| §7MP: " + (s.magicalPower() > 0 ? "§d" + big(s.magicalPower()) : "§8?"));
-        out.append(" §8| §7F7: " + time(s.normal()[7]) + " §7M7: " + time(s.master()[7]) + "\n");
+        int floor = currentFloorNumber();
+        out.append(" §8| §7F" + floor + ": " + time(s.normal()[floor]) + " §7M" + floor + ": " + time(s.master()[floor]) + "\n");
         if (!s.inventoryApi()) out.append("§7Armor: §cInventory API off\n");
         else if (!s.armour().isEmpty()) {
             out.append("§7Armor: ");
@@ -310,6 +352,37 @@ public final class PartyFinderStats {
         }
         out.append("§8§m" + " ".repeat(kickButton ? 12 : 20));
         say(out);
+    }
+
+    /**
+     * Use the floor the player is queued for or currently playing. The location tracker handles in-run floors;
+     * the tab list also labels queued players as "Catacombs (M5 Queue)", which we parse as a fallback.
+     */
+    /** "M5" / "F7" for the floor you're in, picked in the Party Finder or queued for; null when unknown. */
+    static String currentFloorKey() {
+        String floor = Sky2MLocation.dungeonFloor();
+        if (floor != null && floor.matches("[FM][1-7]")) return floor;
+        if (pickedFloor > 0 && System.currentTimeMillis() - pickedFloorAt < 60 * 60_000L) return (pickedMaster ? "M" : "F") + pickedFloor;
+        Pattern queuedFloor = Pattern.compile("Catacombs\\s*\\(([FM])([1-7])(?:\\s+Queue)?\\)");
+        for (String line : Sky2MLocation.teamLines()) {
+            Matcher matcher = queuedFloor.matcher(Sky2MLocation.strip(line));
+            if (matcher.find()) return matcher.group(1) + matcher.group(2);
+        }
+        return null;
+    }
+
+    private static int currentFloorNumber() {
+        String floor = Sky2MLocation.dungeonFloor();
+        if (floor != null && floor.matches("[FM][1-7]")) return floor.charAt(1) - '0';
+        // The group you joined or created in the Party Finder (kept for an hour).
+        if (pickedFloor > 0 && System.currentTimeMillis() - pickedFloorAt < 60 * 60_000L) return pickedFloor;
+
+        Pattern queuedFloor = Pattern.compile("Catacombs\\s*\\(([FM])([1-7])(?:\\s+Queue)?\\)");
+        for (String line : Sky2MLocation.teamLines()) {
+            Matcher matcher = queuedFloor.matcher(Sky2MLocation.strip(line));
+            if (matcher.find()) return Integer.parseInt(matcher.group(2));
+        }
+        return 7;
     }
 
     private static String floorHover(Floor[] floors, String title, String prefix) {
@@ -348,16 +421,25 @@ public final class PartyFinderStats {
 
     private static void autoKick(Stats s, FeatureConfigs.PartyFinderStats c) {
         List<String> reasons = new ArrayList<>();
-        Floor floor = (c.masterMode ? s.master() : s.normal())[c.floor];
-        String label = (c.masterMode ? "M" : "F") + c.floor;
-        if (c.maxPbSeconds > 0) {
+        // The floor's own requirements (/s2 pfreq) when there are some for where you're going, else the settings'.
+        String key = c.perFloor ? currentFloorKey() : null;
+        PfRequirements.Req req = key == null ? null : PfRequirements.forFloor(key);
+        boolean master = req != null ? key.startsWith("M") : c.masterMode;
+        int floorNumber = req != null ? key.charAt(1) - '0' : c.floor;
+        int maxPb = req != null ? req.maxPbSeconds : c.maxPbSeconds;
+        int minSecretsK = req != null ? req.minSecretsK : c.minSecretsK;
+        int minCata = req != null ? req.minCata : c.minCata;
+        int minMp = req != null ? req.minMagicalPower : c.minMagicalPower;
+        Floor floor = (master ? s.master() : s.normal())[Math.clamp(floorNumber, 0, 7)];
+        String label = (master ? "M" : "F") + floorNumber;
+        if (maxPb > 0) {
             if (floor.sPlusMs() <= 0) reasons.add("no S+ on " + label);
-            else if (floor.sPlusMs() / 1000 > c.maxPbSeconds) reasons.add(label + " PB " + clock(floor.sPlusMs()) + " > " + clock(c.maxPbSeconds * 1000L));
+            else if (floor.sPlusMs() / 1000 > maxPb) reasons.add(label + " PB " + clock(floor.sPlusMs()) + " > " + clock(maxPb * 1000L));
         }
-        if (c.minSecretsK > 0 && s.secrets() < c.minSecretsK * 1000L) reasons.add("secrets " + big(s.secrets()) + " < " + c.minSecretsK + "k");
-        if (c.minCata > 0 && s.cata() < c.minCata) reasons.add("cata " + fmt(s.cata(), 1) + " < " + c.minCata);
+        if (minSecretsK > 0 && s.secrets() < minSecretsK * 1000L) reasons.add("secrets " + big(s.secrets()) + " < " + minSecretsK + "k");
+        if (minCata > 0 && s.cata() < minCata) reasons.add("cata " + fmt(s.cata(), 1) + " < " + minCata);
         if (s.inventoryApi() || s.magicalPower() > 0) {
-            if (c.minMagicalPower > 0 && s.magicalPower() < c.minMagicalPower) reasons.add("MP " + s.magicalPower() + " < " + c.minMagicalPower);
+            if (minMp > 0 && s.magicalPower() < minMp) reasons.add("MP " + s.magicalPower() + " < " + minMp);
         }
         if (!s.inventoryApi() && c.apiOffKick) reasons.add("inventory API off");
         if (reasons.isEmpty()) return;
@@ -368,6 +450,7 @@ public final class PartyFinderStats {
     }
 
     private static void kick(String name, String why) {
+        // Counted in PfHistory once Hypixel says they were removed, so a kick that fails isn't counted.
         if (why != null) PartyCommands.partyChat("Kicked " + name + " (" + why + ")");
         PartyCommands.queueCommand("party kick " + name);
     }

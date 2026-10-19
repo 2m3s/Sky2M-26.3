@@ -202,8 +202,11 @@ public final class ProfileTables {
 
     // ------------------------------------------------------------------------------------------------ bestiary
 
-    /** {@code icon} is a vanilla item id ("dragon_egg") or null; {@code texture} a skull texture or null. */
-    public record BestiaryFamily(String name, String icon, String texture, int cap, List<String> mobs, int[] tiers) {}
+    /**
+     * {@code icon} is a vanilla item id ("dragon_egg") or null; {@code texture} a skull texture or null; {@code group}
+     * the part of its category it's listed under (Fishing has Water, Lava, Spooky Festival...), else the category's name.
+     */
+    public record BestiaryFamily(String name, String icon, String texture, int cap, List<String> mobs, int[] tiers, String group) {}
 
     public record BestiaryCategory(String id, String name, String icon, String texture, List<BestiaryFamily> families) {}
 
@@ -224,12 +227,14 @@ public final class ProfileTables {
             JsonObject cat = asObj(e.getValue());
             if (cat == null || !cat.has("name")) continue;
             List<BestiaryFamily> families = new ArrayList<>();
+            String catName = cleanName(str(cat, "name", e.getKey()));
             if (asArr(cat.get("mobs")) != null) {
-                addFamilies(families, asArr(cat.get("mobs")), brackets, sets);
+                addFamilies(families, asArr(cat.get("mobs")), brackets, sets, catName);
             } else {
                 for (Map.Entry<String, JsonElement> sub : cat.entrySet()) {
                     JsonObject so = asObj(sub.getValue());
-                    if (so != null && asArr(so.get("mobs")) != null) addFamilies(families, asArr(so.get("mobs")), brackets, sets);
+                    if (so != null && asArr(so.get("mobs")) != null)
+                        addFamilies(families, asArr(so.get("mobs")), brackets, sets, cleanName(str(so, "name", sub.getKey())));
                 }
             }
             JsonObject icon = asObj(cat.get("icon"));
@@ -239,7 +244,8 @@ public final class ProfileTables {
         return out.isEmpty() ? null : Collections.unmodifiableList(out);
     }
 
-    private static void addFamilies(List<BestiaryFamily> out, JsonArray mobs, Map<String, int[]> brackets, Map<String, Map<String, int[]>> sets) {
+    private static void addFamilies(List<BestiaryFamily> out, JsonArray mobs, Map<String, int[]> brackets, Map<String, Map<String, int[]>> sets,
+                                    String group) {
         for (JsonElement el : mobs) {
             JsonObject m = asObj(el);
             if (m == null) continue;
@@ -262,7 +268,7 @@ public final class ProfileTables {
                 tiers = t.stream().mapToInt(Integer::intValue).toArray();
             }
             out.add(new BestiaryFamily(cleanName(str(m, "name", "?")), str(m, "item", null), fixTexture(str(m, "texture", null)), cap,
-                strings(m.get("mobs")), tiers));
+                strings(m.get("mobs")), tiers, group));
         }
     }
 

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "sky2m-gametest",
+  "version": "1.0.0",
+  "name": "Sky2M Client Game Tests",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": [
+      "com.epic60869.sky2m.gametest.Sky2MScreensGameTest"
+    ]
+  },
+  "depends": {
+    "sky2m": "*"
+  }
+}

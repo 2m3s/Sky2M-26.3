@@ -221,7 +221,42 @@ public final class RepoItems {
 		synchronized (ITEMS) {
 			item = ITEMS.get(id);
 		}
-		return item == null ? Compat.barrier() : createStack(item);
+		if (item != null) return createStack(item);
+		ItemStack book = enchantedBook(id);
+		return book != null ? book : Compat.barrier();
+	}
+
+	private static final java.util.regex.Pattern BOOK_ID = java.util.regex.Pattern.compile("^ENCHANTMENT_(.+)_(\\d+)$");
+
+	/**
+	 * Price ids name enchanted books "ENCHANTMENT_ULTIMATE_CHIMERA_1" (the profit trackers and /s2 session store drops
+	 * that way), while the repo keys them "ULTIMATE_CHIMERA;1": look that up, else draw a plain enchanted book named
+	 * after the enchant, so a book never shows as a barrier. Null when {@code id} isn't a book.
+	 */
+	private static ItemStack enchantedBook(String id) {
+		if (id == null) return null;
+		java.util.regex.Matcher m = BOOK_ID.matcher(id);
+		if (!m.matches() && !id.equals("ENCHANTED_BOOK")) return null;
+		if (m.matches()) {
+			RepoItem item;
+			synchronized (ITEMS) {
+				item = ITEMS.get(m.group(1) + ";" + m.group(2));
+			}
+			if (item != null) return createStack(item);
+		}
+		ItemStack stack = new ItemStack(net.minecraft.world.item.Items.ENCHANTED_BOOK);
+		stack.set(net.minecraft.core.component.DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+		if (m.matches()) {
+			StringBuilder name = new StringBuilder();
+			for (String word : m.group(1).replaceFirst("^ULTIMATE_", "").split("_")) {
+				if (word.isEmpty()) continue;
+				if (!name.isEmpty()) name.append(' ');
+				name.append(word.charAt(0)).append(word.substring(1).toLowerCase(java.util.Locale.ROOT));
+			}
+			stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME,
+				net.minecraft.network.chat.Component.literal(name + " " + m.group(2)));
+		}
+		return stack;
 	}
 
 	private static ItemStack createStack(RepoItem repoItem) {

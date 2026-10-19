@@ -79,6 +79,13 @@ public final class CustomScoreboard {
     private static final Pattern OBJECTIVE = Pattern.compile("(?:Objective|Quest)\\b.*");
     private static final Pattern SLAYER = Pattern.compile("Slayer(?::| Quest).*");
     private static final Pattern NUMBER = Pattern.compile("(Purse|Piggy|Motes|Bits|Copper|Sowdust|Heat|Cold|North Stars): ([\\d,.]+)(.*)");
+    /**
+     * While sowdust is being gained Hypixel shortens its line to "Sowdust: 30.1M (+798)" (SkyHanni's sowdustGainedPattern);
+     * read as a plain number that's 30.1, so the line jumped between that and the exact value with huge fake changes.
+     */
+    private static final Pattern SHORTENED = Pattern.compile("([\\d.]+)([kKmMbB])\\s*(?:\\((\\+[\\d.,kKmMbB]+)\\))?.*");
+    /** The Garden's tab widget line, for the exact sowdust while the sidebar only has the shortened one. */
+    private static final Pattern TAB_SOWDUST = Pattern.compile("Sowdust: ([\\d,]+)");
     private static final Pattern TAB_VALUE = Pattern.compile("(Gems|Bank|Soulflow): (.+)");
     private static final Pattern POWDER = Pattern.compile("(Mithril|Gemstone|Glacite): ([\\d,.]+)");
     private static final Pattern PLAYERS = Pattern.compile("(?:Players|Island|Coop|Guests) \\((\\d+)\\)");
@@ -112,6 +119,8 @@ public final class CustomScoreboard {
     private static final Map<String, Tracked> TRACKED = new HashMap<>();
     /** The purse from the last sidebar that had it, for when Hypixel leaves the line off. */
     private static double lastPurse = Double.NaN;
+    /** The last exact sowdust seen, for while Hypixel only shows the shortened line. */
+    private static double lastSowdust = Double.NaN;
     private static final Map<Element, String> COLOURS = new EnumMap<>(Element.class);
     private static List<Line> lines = List.of();
     private static boolean hasSidebar;
@@ -388,7 +397,8 @@ public final class CustomScoreboard {
                         out.add(Line.of(indent + sidebar.get(i).legacy(), align).withAction("/warp", "Click to open the warp menu."));
                     }
                 }
-                case PURSE, MOTES, BITS, COPPER, SOWDUST, HEAT, COLD, NORTH_STARS -> number(c, out, sidebar, used, element, align);
+                case PURSE, MOTES, BITS, COPPER, HEAT, COLD, NORTH_STARS -> number(c, out, sidebar, used, element, align);
+                case SOWDUST -> sowdust(c, out, sidebar, tab, used, align);
                 case GEMS, BANK, SOULFLOW -> tabValue(c, out, tab, element, align);
                 case PROFILE -> tabLine(out, tab, "Profile:", align, "/profiles", "Click to see your profiles.");
                 case SKYBLOCK_LEVEL -> tabLine(out, tab, "SB Level:", align, "/sblevels", "Click to see your SkyBlock levels.");
@@ -544,6 +554,52 @@ public final class CustomScoreboard {
         if (element == Element.BITS) line = line.withAction("/sbmenu", "Click to open the SkyBlock menu to resync your bits.");
         if (element == Element.COPPER) line = line.withAction("/desk", "Click to open the Garden desk.");
         out.add(line);
+    }
+
+    /**
+     * Sowdust: the exact sidebar number when Hypixel shows one; while it's shortened ("30.1M (+798)") the tab widget's
+     * exact number or the last exact one, with Hypixel's own gain beside it, so the change tracker only ever sees exact
+     * values. Only when no exact value was ever seen is the shortened one shown as it is.
+     */
+    private static void sowdust(FeatureConfigs.CustomScoreboard c, List<Line> out, List<Raw> sidebar, List<Raw> tab, Set<Integer> used, Align align) {
+        int index = -1;
+        Matcher m = null;
+        for (int i = 0; i < sidebar.size() && index < 0; i++) {
+            Matcher n = NUMBER.matcher(sidebar.get(i).plain());
+            if (n.find() && n.group(1).equals("Sowdust")) {
+                index = i;
+                m = n;
+            }
+        }
+        if (index < 0) return;
+        used.add(index);
+        String key = Element.SOWDUST.name(), colour = style(c, "Sowdust")[1];
+        Matcher s = SHORTENED.matcher(m.group(2) + m.group(3));
+        if (!s.matches()) {
+            double value = parse(m.group(2));
+            lastSowdust = value;
+            if (c.lineOptions.hideEmpty && value == 0) return;
+            out.add(new Line(numberLine(c, "Sowdust", formatNumber(c, value), change(c, key, value, colour)), align, false, null, null));
+            return;
+        }
+        for (Raw r : tab) {
+            Matcher t = TAB_SOWDUST.matcher(r.plain());
+            if (t.matches()) {
+                lastSowdust = parse(t.group(1));
+                break;
+            }
+        }
+        Component gain = s.group(3) == null ? Component.empty() : Component.literal(" (").withColor(0xAAAAAA)
+            .append(Component.literal(s.group(3)).withColor(colour(colour) & 0xFFFFFF)).append(Component.literal(")"));
+        String number;
+        if (!Double.isNaN(lastSowdust)) {
+            // Keep the tracker's last value in step without showing its change: Hypixel's gain is the one shown.
+            change(c, key, lastSowdust, colour);
+            number = formatNumber(c, lastSowdust);
+        } else {
+            number = s.group(1) + s.group(2);
+        }
+        out.add(new Line(numberLine(c, "Sowdust", number, gain), align, false, null, null));
     }
 
     /** Gems, Bank and Soulflow, from the tab list. */

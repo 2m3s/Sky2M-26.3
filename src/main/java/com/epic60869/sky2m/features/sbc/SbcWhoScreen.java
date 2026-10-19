@@ -147,7 +147,7 @@ public final class SbcWhoScreen extends Screen {
                 SbcSocial.Player p = players.get(index);
                 int rowY = top() + 2 + (index - scroll) * ROW;
                 if (y >= rowY + 4 && y < rowY + 18) {
-                    if (x >= right - 52 && x < right - 6 && !p.friend()) {
+                    if (x >= right - 52 && x < right - 6 && !p.friend() && p.uuid() != null && !p.uuid().equals(Sbc.self())) {
                         SbcSocial.friend("friendRequest", p.username());
                         return true;
                     }

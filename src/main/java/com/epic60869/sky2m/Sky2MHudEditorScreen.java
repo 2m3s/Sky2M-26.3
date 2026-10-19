@@ -14,9 +14,14 @@ import java.util.List;
 public final class Sky2MHudEditorScreen extends Screen {
     /** GLFW key code for the keypad minus key. */
     private static final int KEYPAD_MINUS = 333;
+    private static final int TOP_MARGIN = 6, BUTTON_HEIGHT = 20, BUTTON_GAP = 4;
+    private static final String HELP = "Drag to move • Scroll to resize • Right-click opens its settings • Middle-click toggles background • Arrow keys move";
+    /** Where the top button rows end; the title and help text go under them. */
+    private int buttonsBottom;
     private final Screen parent;
     private final List<EditableHud> elements = new ArrayList<>();
     private EditableHud selected;
+    private String categoryFilter = "All";
     private int dragOffsetX;
     private int dragOffsetY;
 
@@ -28,9 +33,73 @@ public final class Sky2MHudEditorScreen extends Screen {
     @Override
     protected void init() {
         clearWidgets();
-        addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose())
-            .bounds(width - 90, 16, 70, 24).build());
+        List<Button> buttons = new ArrayList<>();
+        String[] categories = {"All", "Mining", "Dungeons", "Combat", "Pets", "Trackers", "Other"};
+        for (String category : categories) {
+            int buttonWidth = category.equals("Dungeons") || category.equals("Trackers") ? 76 : 62;
+            buttons.add(Button.builder(Component.literal((category.equals(categoryFilter) ? "• " : "") + category), b -> {
+                categoryFilter = category;
+                selected = null;
+                init();
+            }).size(buttonWidth, BUTTON_HEIGHT).build());
+        }
+        buttons.add(Button.builder(Component.literal("Done"), b -> onClose()).size(70, BUTTON_HEIGHT).build());
+        buttonsBottom = layoutTopCentre(buttons);
+        for (Button button : buttons) addRenderableWidget(button);
         rebuildElements();
+    }
+
+    /**
+     * Lays the buttons out in rows centred at the top of the screen, wrapping onto another row (and shrinking a button
+     * wider than the screen) when the window is narrow. Returns the y just below the last row.
+     */
+    private int layoutTopCentre(List<Button> buttons) {
+        int maxRowWidth = Math.max(20, width - 2 * BUTTON_GAP);
+        int y = TOP_MARGIN;
+        int i = 0;
+        while (i < buttons.size()) {
+            int end = i, rowWidth = 0;
+            while (end < buttons.size()) {
+                int w = Math.min(buttons.get(end).getWidth(), maxRowWidth);
+                int next = rowWidth == 0 ? w : rowWidth + BUTTON_GAP + w;
+                if (next > maxRowWidth && end > i) break;
+                rowWidth = next;
+                end++;
+            }
+            int x = (width - rowWidth) / 2;
+            for (int j = i; j < end; j++) {
+                Button button = buttons.get(j);
+                button.setWidth(Math.min(button.getWidth(), maxRowWidth));
+                button.setPosition(x, y);
+                x += button.getWidth() + BUTTON_GAP;
+            }
+            y += BUTTON_HEIGHT + BUTTON_GAP;
+            i = end;
+        }
+        return y - BUTTON_GAP;
+    }
+
+    /** True over one of the buttons: they take clicks (and hover) before any HUD box underneath them. */
+    private boolean overButton(double mouseX, double mouseY) {
+        for (var child : children()) if (child.isMouseOver(mouseX, mouseY)) return true;
+        return false;
+    }
+
+    /** {@code text} split into lines that fit {@code maxWidth}, breaking between words. */
+    private List<String> wrap(String text, int maxWidth) {
+        List<String> lines = new ArrayList<>();
+        StringBuilder line = new StringBuilder();
+        for (String word : text.split(" ")) {
+            String candidate = line.isEmpty() ? word : line + " " + word;
+            if (font.width(candidate) > maxWidth && !line.isEmpty()) {
+                lines.add(line.toString());
+                line = new StringBuilder(word);
+            } else {
+                line = new StringBuilder(candidate);
+            }
+        }
+        if (!line.isEmpty()) lines.add(line.toString());
+        return lines;
     }
 
     private void rebuildElements() {
@@ -74,8 +143,14 @@ public final class Sky2MHudEditorScreen extends Screen {
                 () -> com.epic60869.sky2m.features.core.Sky2MHuds.editorWidth(hud),
                 () -> com.epic60869.sky2m.features.core.Sky2MHuds.editorHeight(hud),
                 (g, x, y) -> {
-                    if (hud.custom() != null) com.epic60869.sky2m.features.core.Sky2MHuds.renderCustom(g, hud, true);
-                    else com.epic60869.sky2m.features.core.Sky2MHuds.render(g, com.epic60869.sky2m.features.core.Sky2MHuds.editorLines(hud), x, y, placement.scale, placement.background);
+                    // A custom HUD that throws would otherwise take the whole editor screen down with it.
+                    if (hud.custom() != null) {
+                        try {
+                            com.epic60869.sky2m.features.core.Sky2MHuds.renderCustom(g, hud, true);
+                        } catch (Exception ex) {
+                            com.epic60869.sky2m.features.core.Sky2MErrors.caught(hud.name(), ex);
+                        }
+                    } else com.epic60869.sky2m.features.core.Sky2MHuds.render(g, com.epic60869.sky2m.features.core.Sky2MHuds.editorLines(hud), x, y, placement.scale, placement.background);
                 }, "hud:" + hud.id()));
         }
         // Move every HUD to where it is drawn on this screen (GUI scale / window size may have changed since it
@@ -90,17 +165,26 @@ public final class Sky2MHudEditorScreen extends Screen {
         g.fill(width / 2 - 1, 0, width / 2 + 1, height, 0x18FFFFFF);
         g.fill(0, height / 2 - 1, width, height / 2 + 1, 0x18FFFFFF);
 
-        g.text(font, Component.literal("Sky2M Position Editor"), 18, 18, 0xFFFFFFFF, true);
-        g.text(font, Component.literal("Drag to move • Scroll to resize • Right-click opens its settings • Middle-click toggles background • Arrow keys move"), 18, 36, 0xFFB8BEC9, false);
+        int textY = buttonsBottom + 6;
+        g.centeredText(font, Component.literal("Sky2M Position Editor"), width / 2, textY, 0xFFFFFFFF);
+        textY += 12;
+        for (String line : wrap(HELP, Math.max(40, width - 16))) {
+            g.centeredText(font, Component.literal(line), width / 2, textY, 0xFFB8BEC9);
+            textY += 10;
+        }
         if (elements.isEmpty()) {
             g.centeredText(font, Component.literal("No HUDs are turned on. Turn one on in /s2 to place it here."), width / 2, height / 2 - 20, 0xFFB8BEC9);
+        } else if (visibleElements().isEmpty()) {
+            g.centeredText(font, Component.literal("No enabled HUDs in " + categoryFilter + ". Choose All or enable a feature."), width / 2, height / 2 - 20, 0xFFB8BEC9);
         }
 
         EditableHud hovered = null;
-        for (int i = elements.size() - 1; i >= 0; i--) {
-            EditableHud e = elements.get(i);
+        boolean onButton = overButton(mouseX, mouseY);
+        List<EditableHud> visibleElements = visibleElements();
+        for (int i = visibleElements.size() - 1; i >= 0; i--) {
+            EditableHud e = visibleElements.get(i);
             int x = e.x(), y = e.y(), w = Math.max(1, e.width()), h = Math.max(1, e.height());
-            boolean hover = inside(mouseX, mouseY, x, y, w, h);
+            boolean hover = !onButton && inside(mouseX, mouseY, x, y, w, h);
             if (hover && hovered == null) hovered = e;
 
             // The box is exactly the HUD's drawn bounds, so what you see is what snaps to the edges.
@@ -141,6 +225,12 @@ public final class Sky2MHudEditorScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         int mx = (int) event.x(), my = (int) event.y();
+        if (overButton(event.x(), event.y())) {
+            // Buttons sit over the top of the screen, where HUDs can be too: the button wins, and nothing stays
+            // selected, so a drag starting on it can't move a HUD.
+            selected = null;
+            return super.mouseClicked(event, doubleClick);
+        }
         boolean right = event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT;
         boolean middle = event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_MIDDLE;
         if (right || middle) {
@@ -215,9 +305,32 @@ public final class Sky2MHudEditorScreen extends Screen {
         return true;
     }
 
+    private List<EditableHud> visibleElements() {
+        if ("All".equals(categoryFilter)) return elements;
+        return elements.stream().filter(e -> {
+            String n = e.name().toLowerCase(java.util.Locale.ROOT);
+            return switch (categoryFilter) {
+                case "Mining" -> containsAny(n, "mining", "commission", "pristine", "gemstone", "scatha", "drill", "pickaxe", "powder");
+                case "Dungeons" -> containsAny(n, "dungeon", "terminal", "storm", "spirit", "bonzo", "necron", "secret", "rag", "mage");
+                case "Combat" -> containsAny(n, "slayer", "combat", "boss", "damage", "zealot", "diana", "mob", "rng");
+                case "Pets" -> containsAny(n, "pet");
+                case "Trackers" -> containsAny(n, "tracker", "profit", "session", "counter", "history", "rng");
+                default -> !containsAny(n, "mining", "commission", "pristine", "gemstone", "scatha", "drill", "pickaxe", "powder",
+                    "dungeon", "terminal", "storm", "spirit", "bonzo", "necron", "secret", "rag", "mage",
+                    "slayer", "combat", "boss", "damage", "zealot", "diana", "mob", "pet", "tracker", "profit", "session", "counter", "history", "rng");
+            };
+        }).toList();
+    }
+
+    private static boolean containsAny(String value, String... terms) {
+        for (String term : terms) if (value.contains(term)) return true;
+        return false;
+    }
+
     private EditableHud findHovered(int mx, int my) {
-        for (int i = elements.size() - 1; i >= 0; i--) {
-            EditableHud e = elements.get(i);
+        List<EditableHud> visibleElements = visibleElements();
+        for (int i = visibleElements.size() - 1; i >= 0; i--) {
+            EditableHud e = visibleElements.get(i);
             if (inside(mx, my, e.x(), e.y(), e.width(), e.height())) return e;
         }
         return null;

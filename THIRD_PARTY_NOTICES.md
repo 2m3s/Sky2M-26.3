@@ -76,6 +76,16 @@ Sky2M's /s2 gui position editor is an adaptation of the SkyHanni GUI position ed
 
 Sky2M's implementation is independently adapted to Sky2M's own Java/Fabric 26.x HUD system and does not add SkyHanni as a runtime dependency.
 
+## SkyHanni Slayer Profit Tracker
+
+Sky2M's six slayer profit trackers follow SkyHanni's Slayer Profit Tracker: when they count (your quest's slayer, in that slayer's areas from SkyHanni's island graphs), which drops count (SkyHanni's SlayerProfitTrackerItems list), mob kill coins, the spawn cost paid (including auto-slayer's bank charge) and bosses killed. The per-kill slayer profit line and Boss Profit HUD (`SlayerBossProfit.java`) use the same drop lists, Sack-menu rule and spawn cost (`SlayerQuestCost.java`), with the quest detection shared in `SlayerArea.java`.
+
+- https://github.com/hannibal002/SkyHanni
+- Relevant source: src/main/java/at/hannibal2/skyhanni/features/slayer/SlayerProfitTracker.kt, data/SlayerApi.kt, data/PurseApi.kt and data/ItemAddManager.kt
+- License: GNU Lesser General Public License v2.1 (LGPL-2.1)
+
+Sky2M's implementation is rewritten in Java for Sky2M's own profit tracker and does not add SkyHanni as a runtime dependency.
+
 ## SkyHanni Current Chat Display
 
 Sky2M's current chat display (`Sky2MCurrentChat.java`) follows SkyHanni's CurrentChatDisplay (src/main/java/at/hannibal2/skyhanni/features/chat/CurrentChatDisplay.kt): the channel-change message patterns and the channel names and colours. SkyHanni is licensed under the GNU Lesser General Public License v2.1 (LGPL-2.1).
@@ -90,6 +100,16 @@ Sky2M's Enderman Slayer and Blaze Slayer features (`features/slayer/EndermanSlay
 - License: GNU Lesser General Public License v2.1 (LGPL-2.1)
 
 The Kotlin code was rewritten in Java on Sky2M's own HUD, world renderer and config. Entity colour tints are drawn as glowing outlines, and the landed Yang Glyph is found by checking the blocks around the thrown one instead of from block change packets.
+
+## SkyHanni Slayer RNG Meter Display
+
+Sky2M's Slayer RNG Meter Display (`features/slayer/SlayerRngMeterDisplay.java`) is ported from SkyHanni:
+
+- https://github.com/hannibal002/SkyHanni (branch beta)
+- Relevant source: src/main/java/at/hannibal2/skyhanni/features/slayer/SlayerRngMeterDisplay.kt (the "RNG Meter - … Stored XP" and RNG Meter menu patterns, reading the SELECTED drop and Maddox's Slayer menu Selected Drop, the gain per boss from two meter updates, the drop detection and its "dropped at" message, and the bosses-left count)
+- License: GNU Lesser General Public License v2.1 (LGPL-2.1)
+
+The Kotlin code was rewritten in Java on Sky2M's own HUD and config. The XP a drop needs is read from the drop's progress in the RNG Meter menu instead of NEU's rngscore table, and the state is saved per slayer in Sky2M's config folder instead of SkyHanni's profile storage.
 
 ## Short warp commands
 
