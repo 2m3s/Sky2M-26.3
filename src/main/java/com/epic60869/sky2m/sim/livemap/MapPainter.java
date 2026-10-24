@@ -249,7 +249,7 @@ public final class MapPainter {
     }
 
     /** @return whether this single cell may be painted at all. */
-    private static boolean cellRevealed(int idx) {
+    static boolean cellRevealed(int idx) {
         if (!hideUnrevealed()) {
             return true;
         }

@@ -311,7 +311,7 @@ public final class DianaRareMobs {
 
     private static FeatureConfigs.Diana config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.mayors.diana;
+        return c == null ? null : c.events.diana;
     }
 
     private static boolean onHub() {
@@ -339,7 +339,7 @@ public final class DianaRareMobs {
             return InteractionResult.PASS;
         });
         Sky2MWorldRender.register(DianaRareMobs::render);
-        EntityGlow.register(entity -> glow.getOrDefault(entity, -1));
+        EntityGlow.register(entity -> glow.isEmpty() ? -1 : glow.getOrDefault(entity, -1));
     }
 
     /** The Hypixel server you're on ("mini84BT"), from the tab list's "Server:" line. */

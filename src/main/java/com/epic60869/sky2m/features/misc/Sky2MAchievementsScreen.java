@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public final class Sky2MAchievementsScreen extends Screen {
     public static final String OVERVIEW = "Overview", DIANA = "Diana";
-    private static final List<String> TABS = List.of(OVERVIEW, "Dungeons", "Slayers", "Mining", "Combat", DIANA, "Sky2M");
+    private static final List<String> TABS = List.of(OVERVIEW, "Dungeons", "Slayers", "Mining", "Combat", "Skills", DIANA, "Sky2M");
     private static final int PANEL = 0xC0101216;
     private static final int PANEL_BORDER = 0xFF2C313A;
     private static final int TAB_H = 14;
@@ -61,7 +61,7 @@ public final class Sky2MAchievementsScreen extends Screen {
 
     private static List<Sky2MAchievements.Achievement> sky2m(String category) {
         List<Sky2MAchievements.Achievement> out = new ArrayList<>();
-        for (Sky2MAchievements.Achievement a : Sky2MAchievements.all()) if (a.category().equals(category)) out.add(a);
+        for (Sky2MAchievements.Achievement a : Sky2MAchievements.all()) if (a.category().equals(category) || (category.equals("Skills") && a.category().startsWith(Sky2MAchievements.SKILLS_PREFIX))) out.add(a);
         return out;
     }
 
@@ -117,6 +117,7 @@ public final class Sky2MAchievementsScreen extends Screen {
         switch (tab) {
             case OVERVIEW -> overview();
             case DIANA -> diana();
+            case "Skills" -> skills();
             default -> sky2mTab(tab);
         }
         int h = 0;
@@ -138,6 +139,29 @@ public final class Sky2MAchievementsScreen extends Screen {
         for (Sky2MAchievements.Stat stat : Sky2MAchievements.Stat.values()) {
             row(Component.literal(stat.label + ": ").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(number(stat, Sky2MAchievements.get(stat))).withStyle(ChatFormatting.WHITE)));
+        }
+    }
+
+    /** One section per skill, each tier with its emblem character. */
+    private void skills() {
+        Map<String, List<Sky2MAchievements.Achievement>> bySkill = new LinkedHashMap<>();
+        for (Sky2MAchievements.Achievement a : sky2m("Skills")) bySkill.computeIfAbsent(a.category().substring(Sky2MAchievements.SKILLS_PREFIX.length()), k -> new ArrayList<>()).add(a);
+        boolean first = true;
+        for (Map.Entry<String, List<Sky2MAchievements.Achievement>> e : bySkill.entrySet()) {
+            int done = 0;
+            for (Sky2MAchievements.Achievement a : e.getValue()) if (Sky2MAchievements.unlocked(a)) done++;
+            Sky2MAchievements.Stat stat = e.getValue().get(0).stat();
+            heading(Component.literal(e.getValue().get(0).symbol() + " " + e.getKey()).withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD)
+                .append(Component.literal("  " + done + "/" + e.getValue().size() + "  (level " + Sky2MAchievements.get(stat) + ")").withStyle(ChatFormatting.GRAY)), first);
+            first = false;
+            for (Sky2MAchievements.Achievement a : e.getValue()) {
+                boolean has = Sky2MAchievements.unlocked(a);
+                row(Component.literal(has ? "✔ " : "✖ ").withStyle(has ? ChatFormatting.GREEN : ChatFormatting.DARK_GRAY)
+                    .append(Component.literal(a.symbol() + " " + a.name()).withStyle(has ? a.rarity().colour : ChatFormatting.GRAY))
+                    .append(Component.literal(" - ").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(a.description()).withStyle(has ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(" (" + a.rarity().label + ")").withStyle(a.rarity().colour)));
+            }
         }
     }
 

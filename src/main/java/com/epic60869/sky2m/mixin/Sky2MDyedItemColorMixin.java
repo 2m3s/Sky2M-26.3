@@ -16,9 +16,11 @@ public class Sky2MDyedItemColorMixin {
 
     @ModifyReturnValue(method = "getOrDefault", at = @At("RETURN"))
     private static int sky2m$customDyeColor(int originalColor, ItemStack stack, int defaultColor) {
+        CustomConfigManager.GeneralConfig general = CustomConfigManager.get().general;
+        // Asked for every dyed item drawn: with nothing recoloured there is nothing to look up.
+        if (general.customAnimatedDyes.isEmpty() && general.customDyeColors.isEmpty()) return originalColor;
         if (Compat.isOnSkyblock()) {
             String itemUuid = Compat.uuid(stack);
-            CustomConfigManager.GeneralConfig general = CustomConfigManager.get().general;
 
             if (general.customAnimatedDyes.containsKey(itemUuid)) {
                 return ARGB.opaque(CustomArmorAnimatedDyes.animateColorTransition(general.customAnimatedDyes.get(itemUuid)));

@@ -83,6 +83,8 @@ public final class Sky2MLogin {
             com.epic60869.sky2m.reports.Reports.onLoggedIn();
             // A saved /s2 stafflogin logs in again on this connection.
             com.epic60869.sky2m.features.sbc.SbcStaff.onLoggedIn();
+            // Finished tracker sessions, when Share Sessions to Website is on.
+            com.epic60869.sky2m.features.misc.profit.SessionShare.uploadRecent();
         } else {
             problem = message == null || message.isEmpty() ? "The server couldn't verify your Minecraft login." : message;
             WAITING.clear();

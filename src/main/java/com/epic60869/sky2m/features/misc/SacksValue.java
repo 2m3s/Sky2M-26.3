@@ -97,7 +97,7 @@ public final class SacksValue {
 
     private static FeatureConfigs.SacksValue config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.sacksValue;
+        return c == null ? null : c.inventory.sacksValue;
     }
 
     // ----- Keeping the sacks right through bazaar sales -----

@@ -43,7 +43,12 @@ public final class Sky2MSim {
         com.epic60869.sky2m.sim.roomsim.SimPauseEntry.register();
         com.epic60869.sky2m.sim.roomsim.SimSurvival.register();
         com.epic60869.sky2m.sim.roomsim.FloorSizeLog.register();
-        com.epic60869.sky2m.sim.roomsim.RoomLibrary.loadAsync();
+        // The room library can be huge: read it ~20 s after launch (400 ticks) so it doesn't compete with start-up.
+        // Anything that needs it sooner still loads it on demand (RoomLibrary.get/has/names).
+        final int[] libraryDelay = {400};
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (libraryDelay[0] > 0 && --libraryDelay[0] == 0) com.epic60869.sky2m.sim.roomsim.RoomLibrary.loadAsync();
+        });
         com.epic60869.sky2m.sim.roomsim.SimItems.register();
         com.epic60869.sky2m.sim.roomsim.SimBuilder.register();
         com.epic60869.sky2m.sim.roomsim.SimDoors.register();
@@ -92,29 +97,7 @@ public final class Sky2MSim {
         com.epic60869.sky2m.sim.puzzlesolvers.IcePathSolverFeature.register();
         LiveMapFeature.register();
 
-        LiveMapFeature.LiveMapHudElement map = new LiveMapFeature.LiveMapHudElement();
-        Sky2MHuds.registerCustom("dungeon_sim_map", "Dungeon Sim Map", SimState::isActive, new Sky2MHuds.CustomHud() {
-            @Override
-            public int width() {
-                return map.width();
-            }
-
-            @Override
-            public int height() {
-                return map.height();
-            }
-
-            @Override
-            public boolean visible() {
-                return SimState.isActive();
-            }
-
-            @Override
-            public void render(GuiGraphicsExtractor graphics, boolean preview) {
-                map.render(graphics, 0, 0);
-            }
-        }, map.defaultX(), 10);
-
+        // The Dungeon Sim draws the selected Dungeon Map style through DungeonMapStyles (hooked from sb.skyblock.dungeon.DungeonMap); no separate sim map.
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("sim").executes(c -> {

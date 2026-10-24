@@ -117,5 +117,6 @@ public abstract class Sky2MChatScreenMixin {
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void sky2m$sideChatHover(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         com.epic60869.sky2m.features.misc.SideChat.renderHover(graphics, mouseX, mouseY);
+        com.epic60869.sky2m.features.misc.ChatCalculator.render(graphics, input);
     }
 }

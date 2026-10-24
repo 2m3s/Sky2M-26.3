@@ -152,8 +152,14 @@ public final class Sky2MStorageSearch {
 
     public static void init(Path dir) {
         configDir = dir;
-        load();
-        initialized = true;
+        // The saved pages can be big: parse them off the render thread, then fill the maps on it (everything else reads them there).
+        java.util.concurrent.CompletableFuture.supplyAsync(Sky2MStorageSearch::parseSaved)
+            .thenAccept(loaded -> Minecraft.getInstance().execute(() -> applyLoaded(loaded)))
+            .exceptionally(e -> {
+                System.err.println("[Sky2M] Failed to load storage search cache: " + e.getMessage());
+                Minecraft.getInstance().execute(() -> initialized = true);
+                return null;
+            });
         // Pages are stored per SkyBlock profile so different profiles (e.g. an ironman) never share storage.
         com.epic60869.sky2m.features.core.Sky2MChat.onChat(message -> {
             java.util.regex.Matcher m = PROFILE_ID.matcher(message.text().trim());
@@ -443,13 +449,29 @@ public final class Sky2MStorageSearch {
             contents.add(stack == null ? ItemStack.EMPTY : stack.copy());
         }
         String key = inventoryCacheKey(mc);
+        // Encoding is NBT + gzip + Base64 of 41 stacks: only when something in the inventory actually changed.
+        if (key.equals(lastInventoryKey) && sameStacks(lastInventoryContents, contents)) return;
         String blob = encode(contents);
         if (blob == null) return;
+        lastInventoryKey = key;
+        lastInventoryContents = contents;
         Page old = inventoryPages.get(key);
         if (old == null || !old.blob().equals(blob)) {
             inventoryPages.put(key, new Page("INVENTORY", 0, "Your Inventory", blob, now));
             dirty = true;
         }
+    }
+
+    private static String lastInventoryKey;
+    private static List<ItemStack> lastInventoryContents;
+
+    private static boolean sameStacks(List<ItemStack> a, List<ItemStack> b) {
+        if (a == null || a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) {
+            ItemStack x = a.get(i), y = b.get(i);
+            if (x.getCount() != y.getCount() || !ItemStack.isSameItemSameComponents(x, y)) return false;
+        }
+        return true;
     }
 
     private static String inventoryCacheKey(Minecraft mc) {
@@ -825,20 +847,23 @@ public final class Sky2MStorageSearch {
         return profilePrefix(mc) + type + "|" + number;
     }
 
-    private static void load() {
-        pages.clear();
-        if (configDir == null) return;
+    private record Loaded(Map<String, Page> pages, Map<String, Page> inventoryPages, String profile) {}
+
+    private static Loaded parseSaved() {
+        Map<String, Page> loadedPages = new LinkedHashMap<>();
+        Map<String, Page> loadedInventory = new LinkedHashMap<>();
+        String loadedProfile = null;
+        if (configDir == null) return new Loaded(loadedPages, loadedInventory, null);
 
         Path file = configDir.resolve(FILE_NAME);
-        if (!Files.exists(file)) return;
+        if (!Files.exists(file)) return new Loaded(loadedPages, loadedInventory, null);
 
         try {
             JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
-            inventoryPages.clear();
             for (String key : root.keySet()) {
                 if (key.equals(PROFILE_KEY)) {
                     JsonObject saved = root.getAsJsonObject(key);
-                    if (saved != null && saved.has("id")) profile = saved.get("id").getAsString();
+                    if (saved != null && saved.has("id")) loadedProfile = saved.get("id").getAsString();
                     continue;
                 }
                 JsonObject obj = root.getAsJsonObject(key);
@@ -851,17 +876,26 @@ public final class Sky2MStorageSearch {
                 // Older builds keyed by the exact address ("play.hypixel.net:25565|..."); all Hypixel addresses share one now.
                 if (key.substring(0, key.indexOf('|')).contains("hypixel")) key = "hypixel" + key.substring(key.indexOf('|'));
                 Page page = new Page(type, number, label, obj.get("blob").getAsString(), updated);
-                if ("INVENTORY".equals(type)) inventoryPages.put(key, page);
-                else pages.put(key, page);
+                if ("INVENTORY".equals(type)) loadedInventory.put(key, page);
+                else loadedPages.put(key, page);
             }
         } catch (Exception e) {
             System.err.println("[Sky2M] Failed to load storage search cache: " + e.getMessage());
-            pages.clear();
+            loadedPages.clear();
         }
+        return new Loaded(loadedPages, loadedInventory, loadedProfile);
+    }
+
+    /** Render thread: pages learnt before the file finished loading win over the saved ones. */
+    private static void applyLoaded(Loaded loaded) {
+        for (Map.Entry<String, Page> e : loaded.pages().entrySet()) pages.putIfAbsent(e.getKey(), e.getValue());
+        for (Map.Entry<String, Page> e : loaded.inventoryPages().entrySet()) inventoryPages.putIfAbsent(e.getKey(), e.getValue());
+        if (loaded.profile() != null && profile.isEmpty()) profile = loaded.profile();
+        initialized = true;
     }
 
     private static void save() {
-        if (configDir == null) return;
+        if (configDir == null || !initialized) return; // not before the saved pages are in, or they would be overwritten
         try {
             Files.createDirectories(configDir);
             JsonObject root = new JsonObject();

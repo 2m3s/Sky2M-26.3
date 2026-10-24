@@ -27,6 +27,8 @@ import java.util.concurrent.TimeUnit;
  * Each new version is only announced once per game session.
  */
 public final class Sky2MUpdateChecker {
+    /** The Sky2M GitHub page for this Minecraft version, linked from the update message and the settings. */
+    public static final String GITHUB_URL = "https://github.com/2m3s/Sky2M-26.3";
     private static final String LATEST_URL = "https://api.github.com/repos/2m3s/Sky2M-26.3/releases/latest";
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Sky2M");
     private static final long CHECK_EVERY_MS = 60_000L;
@@ -34,6 +36,8 @@ public final class Sky2MUpdateChecker {
     private static volatile String etag;
 
     private static long lastCheck;
+    /** While rate limited, no check before this time (GitHub's reset time, or 15 minutes without one). */
+    private static volatile long retryAt;
     private static volatile boolean checking;
     private static String announced = "";
 
@@ -54,7 +58,7 @@ public final class Sky2MUpdateChecker {
 
     private static boolean enabled() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null || c.misc.updateNotifications;
+        return c == null || c.general.updateNotifications;
     }
 
     private static String installed() {
@@ -64,7 +68,7 @@ public final class Sky2MUpdateChecker {
 
     private static void check() {
         long now = System.currentTimeMillis();
-        if (!enabled() || checking || now - lastCheck < CHECK_EVERY_MS) return;
+        if (!enabled() || checking || now - lastCheck < CHECK_EVERY_MS || now < retryAt) return;
         lastCheck = now;
         checking = true;
         HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(LATEST_URL))
@@ -75,6 +79,13 @@ public final class Sky2MUpdateChecker {
         HttpRequest request = builder.GET().build();
         HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build().sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenAccept(response -> {
             if (response.statusCode() == 304) return; // no new release since the last check
+            if (response.statusCode() == 403 || response.statusCode() == 429) {
+                // Rate limited (60 an hour per IP without a token, shared with anything else on this network).
+                retryAt = rateLimitReset(response);
+                LOGGER.info("[Sky2M] Update check: GitHub rate limit reached, next check in {} min",
+                    Math.max(1, (retryAt - System.currentTimeMillis()) / 60_000L));
+                return;
+            }
             if (response.statusCode() != 200) {
                 LOGGER.info("[Sky2M] Update check: GitHub answered HTTP {}", response.statusCode());
                 return;
@@ -95,6 +106,19 @@ public final class Sky2MUpdateChecker {
         }).whenComplete((v, e) -> checking = false);
     }
 
+    /** When GitHub says the limit resets: Retry-After (seconds) or X-RateLimit-Reset (epoch seconds), else 15 minutes. */
+    private static long rateLimitReset(HttpResponse<?> response) {
+        long now = System.currentTimeMillis();
+        try {
+            var retryAfter = response.headers().firstValue("Retry-After");
+            if (retryAfter.isPresent()) return now + Long.parseLong(retryAfter.get().trim()) * 1000L;
+            var reset = response.headers().firstValue("X-RateLimit-Reset");
+            if (reset.isPresent()) return Math.max(now + CHECK_EVERY_MS, Long.parseLong(reset.get().trim()) * 1000L);
+        } catch (NumberFormatException ignored) {
+        }
+        return now + 15 * 60_000L;
+    }
+
     private static void announce(String current, String latest, String url) {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
@@ -105,9 +129,17 @@ public final class Sky2MUpdateChecker {
                 .append(Component.literal(latest).withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN).withBold(false)))
                 .append(Component.literal("  [Download]").withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA).withBold(false).withUnderlined(true)
                     .withClickEvent(new ClickEvent.OpenUrl(URI.create(url)))
-                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("Open the Sky2M " + latest + " release on GitHub")))));
+                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("Open the Sky2M " + latest + " release on GitHub")))))
+                .append(githubLink());
             mc.gui.hud.getChat().addClientSystemMessage(message);
         });
+    }
+
+    /** "GitHub Link" in blue and underlined, opening this version's Sky2M GitHub page. */
+    public static Component githubLink() {
+        return Component.literal("  ").append(Component.literal("GitHub Link").withStyle(Style.EMPTY.withColor(ChatFormatting.BLUE).withBold(false).withUnderlined(true)
+            .withClickEvent(new ClickEvent.OpenUrl(URI.create(GITHUB_URL)))
+            .withHoverEvent(new HoverEvent.ShowText(Component.literal("Open Sky2M for Minecraft " + GITHUB_URL.substring(GITHUB_URL.lastIndexOf('-') + 1) + " on GitHub")))));
     }
 
     /**

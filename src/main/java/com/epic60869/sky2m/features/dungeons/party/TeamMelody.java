@@ -71,7 +71,18 @@ public final class TeamMelody {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && name.equalsIgnoreCase(mc.player.getGameProfile().name())) return;
             int done = Integer.parseInt(m.group(2)), rows = Integer.parseInt(m.group(3));
-            if (rows >= 3 && rows <= 4 && done <= rows) PartyDungeonState.offerMelody(name, done + 1, rows, done >= rows, Source.CHAT);
+            if (rows >= 3 && rows <= 4 && done <= rows) {
+                PartyDungeonState.offerMelody(name, done + 1, rows, done >= rows, Source.CHAT);
+                // NoammAddons' Melody Display: "Steve has 2/3 melody" on screen with a sound.
+                FeatureConfigs.TeamMelody c = config();
+                if (c != null && c.alert) {
+                    com.epic60869.sky2m.features.core.Sky2MAlerts.title(Component.empty(), Component.literal(name).withStyle(ChatFormatting.YELLOW)
+                        .append(Component.literal(" has ").withStyle(ChatFormatting.GRAY))
+                        .append(Component.literal(done + "/" + rows).withStyle(ChatFormatting.LIGHT_PURPLE))
+                        .append(Component.literal(" melody").withStyle(ChatFormatting.GRAY)), false);
+                    com.epic60869.sky2m.features.core.Sky2MAlerts.play(net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 1f);
+                }
+            }
         }
         // Your own Melody is done when you complete the terminal you have open.
         Minecraft mc = Minecraft.getInstance();
@@ -89,6 +100,13 @@ public final class TeamMelody {
                 lastSentDone = 0;
             }
             return;
+        }
+        if (!open) {
+            // Odin's Melody Send Coords: where you are, so the party knows which Melody is being done.
+            FeatureConfigs.TeamMelody c = config();
+            if (c != null && c.sendCoords && inP3 && mc.player != null && mc.getConnection() != null) {
+                mc.getConnection().sendCommand("pc x: " + mc.player.getBlockX() + ", y: " + mc.player.getBlockY() + ", z: " + mc.player.getBlockZ());
+            }
         }
         open = true;
         List<ItemStack> items = screen.getMenu().getItems();

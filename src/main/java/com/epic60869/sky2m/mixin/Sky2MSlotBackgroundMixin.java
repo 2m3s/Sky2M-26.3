@@ -20,7 +20,7 @@ public abstract class Sky2MSlotBackgroundMixin {
         Sky2MItemBackgrounds.beginContainer((AbstractContainerScreen<?>) (Object) this);
     }
 
-    /** The equipped loadout's, active pet's, bestiary, Bazaar order, shard and infested plot highlights, behind the slot's item. */
+    /** The equipped loadout's, active pet's, bestiary, Bazaar order, shard, infested plot and Item List search highlights, behind the slot's item. */
     @Inject(method = "extractSlot", at = @At("HEAD"))
     private void sky2m$slotBackground(GuiGraphicsExtractor graphics, net.minecraft.world.inventory.Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
         com.epic60869.sky2m.features.misc.LoadoutHighlight.renderSlot(graphics, slot);
@@ -31,15 +31,21 @@ public abstract class Sky2MSlotBackgroundMixin {
         com.epic60869.sky2m.features.misc.ShardLevelUpHighlight.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.garden.PestFinder.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.dungeons.DupeClass.renderSlot(graphics, slot);
+        com.epic60869.sky2m.features.itemlist.ItemList.renderSlot(graphics, slot);
+        com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.renderSlotBackground(graphics, slot);
+        com.epic60869.sky2m.features.mining.dwarven.HotxOverlay.renderSlotBackground(graphics, slot);
     }
 
-    /** /s2 protect's star and slot labels (chest profit, pet level), drawn with the slot so tooltips cover them. */
+    /** /s2 protect's star, slot labels (chest profit, pet level) and the Item List highlighter's dimming, drawn with the slot so tooltips cover them. */
     @Inject(method = "extractSlot", at = @At("TAIL"))
     private void sky2m$protectedSlot(GuiGraphicsExtractor graphics, net.minecraft.world.inventory.Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
         com.epic60869.sky2m.features.misc.SlotLocking.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.dungeons.DungeonChestProfit.renderSlotLabel(graphics, slot);
         com.epic60869.sky2m.features.misc.ActivePetHighlight.renderSlotLabel(graphics, slot);
         com.epic60869.sky2m.features.misc.ItemQuality.renderSlot(graphics, slot);
+        com.epic60869.sky2m.features.itemlist.ItemList.renderSlotDim(graphics, slot);
+        com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.renderSlotLabel(graphics, slot);
+        com.epic60869.sky2m.features.mining.dwarven.HotxOverlay.renderSlotLabel(graphics, slot);
     }
 
     @Inject(method = "extractContents", at = @At("RETURN"))

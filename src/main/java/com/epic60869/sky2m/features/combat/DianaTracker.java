@@ -242,7 +242,7 @@ public final class DianaTracker {
 
     static FeatureConfigs.Diana diana() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.mayors.diana;
+        return c == null ? null : c.events.diana;
     }
 
     private static FeatureConfigs.DianaMobTracker mobConfig() {

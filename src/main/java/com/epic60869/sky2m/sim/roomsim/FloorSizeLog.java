@@ -185,10 +185,6 @@ public final class FloorSizeLog {
         LOGGER.info("[FloorSize] {}: {} rooms, {}x{} cells, {} puzzle(s), {} trap(s), {} cells to blood",
                 floor, rooms.size(), (maxGx - minGx) / 2 + 1, (maxGz - minGz) / 2 + 1,
                 puzzles, traps, cellsToBlood);
-        ModChat.send("Floor Size", ModChat.text(floor + ": "), ModChat.value(String.valueOf(rooms.size())),
-                ModChat.text(" rooms, "), ModChat.value(String.valueOf(puzzles)),
-                ModChat.text(" puzzles, blood "), ModChat.value(String.valueOf(cellsToBlood)),
-                ModChat.text(" cells in"));
     }
 
     /**

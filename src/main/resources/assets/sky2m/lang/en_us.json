@@ -2,8 +2,11 @@
   "key.category.sky2m.main": "Sky2M",
   "key.sky2m.search": "Open Item Search",
   "key.sky2m.share_item": "Share Item in Sky2M Chat",
+  "key.sky2m.value_breakdown": "Value Breakdown (hovered item)",
   "key.sky2m.protect_item": "Protect Item (/s2 protect)",
   "key.sky2m.toggle_sprint": "Toggle Sprint",
+  "key.sky2m.peek_chat": "Peek Chat (hold)",
+  "key.sky2m.global_search": "Search Settings, HUDs and Commands",
   "sky2m.customAnimatedDyes.added": "Set a custom animated dye for your currently held item!",
   "sky2m.customAnimatedDyes.neverHad": "This item doesn't have a custom animated dye set, but why not add one? ;)",
   "sky2m.customAnimatedDyes.noItemUuid": "§cYou must be holding an item that has a uuid to set a custom animated dye.",
@@ -148,5 +151,6 @@
   "key.sky2m.diana_rare_mob_warp": "Diana: Warp to Rare Mob",
   "key.sky2m.diana_sphinx_solver": "Diana: Sphinx Solver (use at your own risk)",
   "key.sky2m.slayer_boss_select": "Slayer: Cycle Boss Phase Target",
+  "key.sky2m.radial_menu": "Radial Menu (hold)",
   "chat.sky2m.slayer_boss_target": "Slayer phase target: %s"
 }

@@ -175,7 +175,7 @@ public final class ChestHistoryScreen extends Screen {
         if (shown.isEmpty()) {
             boolean on = ChestHistory.enabled();
             g.centeredText(font, ChestHistory.chests().isEmpty()
-                    ? on ? "No reward chests recorded yet. Open one at the end of a run or at Croesus!" : "Turn on Chest Spending History (Dungeons > Chest Profit)."
+                    ? on ? "No reward chests recorded yet. Open one at the end of a run or at Croesus!" : "Turn on Chest Spending History (Dungeon > Chest Profit)."
                     : "No chests match these filters.",
                 width / 2, y + 30, TEXT);
             return;

@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -66,11 +67,11 @@ public final class InquisitorGamble {
 
     private static boolean enabled() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c != null && c.mayors.diana.inquisitorGamble;
+        return c != null && c.events.diana.inquisitorGamble;
     }
 
     public static void init() {
-        HudElementRegistry.addLast(ID, (graphics, delta) -> render(graphics));
+        HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST, ID, (graphics, delta) -> render(graphics));
         ClientTickEvents.END_CLIENT_TICK.register(mc -> tick());
         // Hypixel's "RARE DROP! Enchanted Book (Chimera 1)" (and anything else naming Chimera) waits for the shot.
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {

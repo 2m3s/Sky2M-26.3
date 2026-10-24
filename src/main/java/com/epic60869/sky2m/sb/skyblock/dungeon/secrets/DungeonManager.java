@@ -684,6 +684,12 @@ public class DungeonManager {
 			return;
 		}
 
+		// Sky2M: inside the Dungeon Sim there is no Mort and no map item, so the rooms come from the sim's floor instead.
+		if (com.epic60869.sky2m.sim.roomsim.SimState.isActive()) {
+			updateSim();
+			return;
+		}
+
 		if (physicalEntrancePos == null) {
 			//The check for the area should delay this until after the player's position has been set by the server (since the scoreboard should be sent after the player position)
 			//this is necessary otherwise the default position of (0, 0) or whatever will mess up the entrance calculation which will break all sorts of things
@@ -740,6 +746,109 @@ public class DungeonManager {
 		}
 
 		currentRoom.tick(CLIENT);
+	}
+
+	private static int simGeneration = -1;
+	private static boolean simLoaded;
+	private static String simDebugKey = "";
+
+	/**
+	 * Sky2M: the Dungeon Sim's version of {@link #update()}. There is no Mort and no map item in the sim, but the sim knows
+	 * exactly which room it placed where ({@code SimRoomIndex}), so the room under the player is built from that and
+	 * matched by its name (the direction from the world's blocks, see {@link Room#matchBySimName}) rather than found
+	 * by scanning. That gives the secret waypoints and the secret routes ({@code DungeonRoutes}) the same matched
+	 * {@link Room} they get on Hypixel. The map entrance fields stay unset: there is no map item to read.
+	 */
+	private static void updateSim() {
+		int generation = com.epic60869.sky2m.sim.livemap.LiveMapFeature.resetGeneration();
+		if (generation != simGeneration) {
+			// A new floor was published (or the grid was reset): the old rooms are of another floor.
+			simGeneration = generation;
+			rooms.clear();
+			currentRoom = null;
+		}
+		// The player's grid cell, the way the live map finds it: rooms are 32 blocks apart from -185, two grid cells each.
+		int gx = (int) Math.max(0, Math.min(10, Math.round((CLIENT.player.getX() - com.epic60869.sky2m.sim.livemap.LiveMapFeature.START_X) / 32.0) * 2));
+		int gz = (int) Math.max(0, Math.min(10, Math.round((CLIENT.player.getZ() - com.epic60869.sky2m.sim.livemap.LiveMapFeature.START_Z) / 32.0) * 2));
+		int cell = gx + gz * 11;
+		com.epic60869.sky2m.sim.roomsim.SimRoomIndex.Placed placed = null;
+		for (com.epic60869.sky2m.sim.roomsim.SimRoomIndex.Placed candidate : com.epic60869.sky2m.sim.roomsim.SimRoomIndex.placed()) {
+			for (int c : candidate.cells()) {
+				if (c == cell) {
+					placed = candidate;
+					break;
+				}
+			}
+			if (placed != null) break;
+		}
+		if (placed == null) {
+			simDebug("no sim room at grid cell " + cell + " (" + com.epic60869.sky2m.sim.roomsim.SimRoomIndex.size() + " placed)", null);
+			return;
+		}
+		// The room's tiles are its grid cells (the sim lists tiles only).
+		List<Vector2ic> segments = new ArrayList<>();
+		for (int c : placed.cells()) {
+			segments.add(DungeonMapUtils.getPhysicalRoomPos(com.epic60869.sky2m.sim.livemap.LiveMapFeature.START_X + c % 11 * 16, com.epic60869.sky2m.sim.livemap.LiveMapFeature.START_Z + c / 11 * 16));
+		}
+		if (segments.isEmpty()) return;
+		Room room = rooms.get(segments.getFirst());
+		if (room == null) {
+			room = newRoom(simRoomType(placed.name()), segments.toArray(new Vector2ic[0]));
+			if (room == null) {
+				simDebug(placed.name() + ": could not build a room from " + segments, null);
+				return;
+			}
+		}
+		if (!simLoaded) {
+			simLoaded = true;
+			DungeonEvents.DUNGEON_LOADED.invoker().onDungeonLoaded();
+		}
+		if (currentRoom != room) currentRoom = room;
+		if (!room.isMatched() && room.getType().ordinal() != Room.Type.ENTRANCE.ordinal() && room.getType() != Room.Type.BLOOD && room.getType() != Room.Type.FAIRY) {
+			room.matchBySimName(CLIENT.level, placed.name());
+		}
+		currentRoom.tick(CLIENT);
+		simDebug(placed.name(), room);
+	}
+
+	/** Entrance, blood and fairy come from the room database when it is loaded; puzzle, trap and miniboss from which shape of room data holds the name. */
+	private static Room.Type simRoomType(String simName) {
+		com.epic60869.sky2m.sim.roomdatabase.RoomEntry entry = com.epic60869.sky2m.sim.roomdatabase.RoomDatabase.lookupByName(simName);
+		String type = entry == null || entry.type == null ? "" : entry.type.toUpperCase(java.util.Locale.ROOT);
+		switch (type) {
+			case "ENTRANCE": return Room.Type.ENTRANCE;
+			case "FAIRY": return Room.Type.FAIRY;
+			case "BLOOD": return Room.Type.BLOOD;
+			case "PUZZLE": return Room.Type.PUZZLE;
+			case "TRAP": return Room.Type.TRAP;
+			case "CHAMPION": case "MINIBOSS": return Room.Type.MINIBOSS;
+			default: break;
+		}
+		String key = simName.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z]", "");
+		Map<String, Map<String, int[]>> shapes = ROOMS_DATA.getOrDefault("catacombs", Map.of());
+		for (Room.Shape shape : new Room.Shape[]{Room.Shape.PUZZLE, Room.Shape.TRAP, Room.Shape.MINIBOSS}) {
+			for (String name : shapes.getOrDefault(shape.shape, Map.of()).keySet()) {
+				if (name.toLowerCase(java.util.Locale.ROOT).replaceAll("-\\d+$", "").replaceAll("[^a-z]", "").equals(key)) {
+					return shape == Room.Shape.PUZZLE ? Room.Type.PUZZLE : shape == Room.Shape.TRAP ? Room.Type.TRAP : Room.Type.MINIBOSS;
+				}
+			}
+		}
+		return Room.Type.ROOM;
+	}
+
+	/** /s2 debug room line: one chat line whenever the sim room under the player (or whether it is matched) changes. */
+	private static void simDebug(String simName, @Nullable Room room) {
+		if (!com.epic60869.sky2m.Sky2MDebug.roomDebug()) return;
+		String key = simName + "|" + (room != null && room.isMatched()) + "|" + (room == null ? "" : room.simFailure());
+		if (key.equals(simDebugKey)) return;
+		simDebugKey = key;
+		if (room == null) {
+			com.epic60869.sky2m.Sky2MDebug.roomLine("Sim room: " + simName);
+			return;
+		}
+		com.epic60869.sky2m.Sky2MConfig config = com.epic60869.sky2m.Sky2MConfig.current();
+		String settings = config == null ? "" : " | Secret Waypoints " + (config.dungeons.secrets.secretWaypoints ? "on" : "OFF") + ", Routes " + (config.dungeons.secrets.routes ? "on" : "OFF");
+		com.epic60869.sky2m.Sky2MDebug.roomLine("Sim room: " + simName + " (" + room.getType() + ") | matched: " + (room.isMatched() ? "yes as " + room.getName() + " " + room.getDirection() : "no") + (room.isMatched() || room.simFailure().isEmpty() ? "" : " | failed: " + room.simFailure()) + " | secret waypoints loaded: " + room.secretWaypoints.size() + settings);
 	}
 
 	private static void updateAllRoomCheckmarks() {
@@ -1023,6 +1132,9 @@ public class DungeonManager {
 		bloodOpened = false;
 		hasKey = false;
 		runEnded = false;
+		simGeneration = -1;
+		simLoaded = false;
+		simDebugKey = "";
 	}
 
 	/**

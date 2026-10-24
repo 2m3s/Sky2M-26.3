@@ -32,7 +32,7 @@ public abstract class ContainerSolverMenuMixin {
 	@Inject(method = "initializeContents", at = @At("RETURN"))
 	private void sky2m$onInitializeContents(int stateId, List<ItemStack> items, ItemStack carried, CallbackInfo ci) {
 		ContainerSolverManager.markHighlightsDirty();
-		com.epic60869.sky2m.features.dungeons.OdinTerminals.onSetItem((AbstractContainerMenu) (Object) this, 32);
+		com.epic60869.sky2m.features.dungeons.OdinTerminals.onContents((AbstractContainerMenu) (Object) this);
 		if ((Object) this instanceof ChestMenu) broadcastChanges();
 	}
 }

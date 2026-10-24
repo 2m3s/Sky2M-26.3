@@ -90,6 +90,16 @@ Sky2M's implementation is rewritten in Java for Sky2M's own profit tracker and d
 
 Sky2M's current chat display (`Sky2MCurrentChat.java`) follows SkyHanni's CurrentChatDisplay (src/main/java/at/hannibal2/skyhanni/features/chat/CurrentChatDisplay.kt): the channel-change message patterns and the channel names and colours. SkyHanni is licensed under the GNU Lesser General Public License v2.1 (LGPL-2.1).
 
+## SkyHanni Compact Tab List
+
+Sky2M's Compact Tab List (`features/qol/CompactTabList.java` and the Sky2MCompactTabMixin mixin) is ported from SkyHanni's compact tab list:
+
+- https://github.com/hannibal002/SkyHanni (branch beta)
+- Relevant source: src/main/java/at/hannibal2/skyhanni/features/misc/compacttablist/ (TabListReader, TabListRenderer, TabColumn, TabSection, RenderColumn, TabLine, TabStringType), the tab list reading in utils/TabListData.kt and the options in config/features/misc/compacttablist/CompactTabListConfig.kt
+- License: GNU Lesser General Public License v2.1 (LGPL-2.1)
+
+The Kotlin code was rewritten in Java on Sky2M's config. SkyHanni's Advanced Player List (player sorting and custom player names) is not included.
+
 ## SkyHanni Enderman and Blaze slayer features
 
 Sky2M's Enderman Slayer and Blaze Slayer features (`features/slayer/EndermanSlayer.java`, `features/slayer/BlazeSlayer.java`, the phase numbers in `features/slayer/SlayerFeatures.java`, and the Sky2MSlayerPacketsMixin and Sky2MHideFireballsMixin mixins) are ported from SkyHanni:
@@ -212,7 +222,7 @@ Sky2M's dungeon map ("NoammAddons (Legit)" style) and dungeon score calculator a
 - https://github.com/Noamm9/NoammAddons (26.2 branch)
 - Relevant source: `features/impl/dungeon/map/MapRenderer.kt`, `MapConfig.kt`, `utils/dungeons/map/handlers/HotbarMapColorParser.kt`, `MapUpdater.kt`, `ScoreCalculation.kt`, `utils/dungeons/map/utils/MapUtils.kt`, `utils/dungeons/map/core/`, `features/impl/dungeon/ScoreCalculator.kt`, and the checkmark and marker textures in `textures/gui/dungeonmap/` (copied to `assets/sky2m/textures/gui/dungeonmap/`)
 
-Ported to Java in `features/dungeons/NoammMap.java` and `features/dungeons/ScoreCalculator.java`. The M7 dragon priority (the dragon that spawns first, Solo Priority, First Dragon Only) and the relic place timer in `features/dungeons/WitherDragons.java` follow NoammAddons' `floor7/dragons/DragonCheck.kt` and `floor7/M7Relics.kt`. NoammAddons is dedicated to the public domain under CC0 1.0 Universal.
+Ported to Java in `features/dungeons/ScoreCalculator.java`. The M7 dragon priority (the dragon that spawns first, Solo Priority, First Dragon Only) and the relic place timer in `features/dungeons/WitherDragons.java` follow NoammAddons' `floor7/dragons/DragonCheck.kt` and `floor7/M7Relics.kt`. NoammAddons is dedicated to the public domain under CC0 1.0 Universal.
 
 ## Skysoft Held Item
 
@@ -330,6 +340,7 @@ Sky2M's Ordered Waypoints (`features/mining/OrderedWaypoints.java`) are ported f
 
 Several Sky2M features are ported from Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod, commit 3744aa3). Only the mod's legit behaviour is ported; each ported file names its source in its class comment.
 
+- Play as Mob: `features/misc/playasmob/PlayAsMobs.java`, `PlayAsMobRender.java` and the Sky2MPlayAsMobDispatcherMixin mixin (mobskin/, at commit 7e34368), with the Model page of `SbcCosmeticsScreen` written for Sky2M after mobskin/MobPickerScreen; Sky2M's 3D models (`CustomModels`, `GltfModels`, `GeoModels`, `ServerModels`) are its own
 - Trail: `features/misc/Trail.java` (trail/)
 - Revert Master Stars: `features/misc/RevertMasterStars.java`, the idea of revertmasterstars/ (itself from QUOI's RevertMasterStars), written anew
 - GIF Player and DVD Screensaver: `features/misc/gif/` (gifplayer/, dvd/)

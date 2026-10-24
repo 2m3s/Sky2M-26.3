@@ -29,7 +29,7 @@ public final class ProfileStats {
     public static final String[][] SKILLS = {
         {"farming", "Farming", "golden_hoe"}, {"mining", "Mining", "stone_pickaxe"}, {"combat", "Combat", "stone_sword"},
         {"foraging", "Foraging", "jungle_sapling"}, {"fishing", "Fishing", "fishing_rod"}, {"enchanting", "Enchanting", "enchanting_table"},
-        {"alchemy", "Alchemy", "brewing_stand"}, {"taming", "Taming", "spawn_egg"}, {"carpentry", "Carpentry", "crafting_table"},
+        {"alchemy", "Alchemy", "brewing_stand"}, {"taming", "Taming", "bone"}, {"carpentry", "Carpentry", "crafting_table"},
         {"runecrafting", "Runecrafting", "magma_cream"}, {"social", "Social", "emerald"}, {"hunting", "Hunting", "lead"}};
     /** Skills in the skill average. */
     private static final List<String> AVERAGE = List.of("farming", "mining", "combat", "foraging", "fishing", "enchanting", "alchemy", "taming", "carpentry");

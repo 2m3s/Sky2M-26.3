@@ -35,7 +35,7 @@ public final class SlotLocking {
 
     private static Sky2MConfig.SlotLocking config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.slotLocking;
+        return c == null ? null : c.inventory.slotLocking;
     }
 
     public static void init() {
@@ -139,7 +139,38 @@ public final class SlotLocking {
         String title = net.minecraft.ChatFormatting.stripFormatting(screen.getTitle().getString());
         if (title == null) return false;
         title = title.toLowerCase(java.util.Locale.ROOT).trim();
-        return title.contains("sell") || title.contains("merchant") || title.contains("shop") || title.contains("trades");
+        return title.contains("sell") || title.contains("merchant") || title.contains("shop") || title.contains("trades")
+            || title.contains("bazaar") || title.contains("buy back") || title.contains("buyback")
+            || title.contains("create bin auction") || title.contains("create auction");
+    }
+
+    /** Menus where moving a protected item is fine: storage, equipment and crafting menus. */
+    private static boolean isSafeMenu(AbstractContainerScreen<?> screen) {
+        String title = net.minecraft.ChatFormatting.stripFormatting(screen.getTitle().getString());
+        if (title == null) return false;
+        title = title.toLowerCase(java.util.Locale.ROOT);
+        for (String safe : new String[] {"chest", "ender", "backpack", "bag", "storage", "sack", "wardrobe", "equipment",
+            "loadout", "pets", "anvil", "reforge", "forge", "craft", "enchant", "accessory", "quiver", "vault", "museum",
+            "salvage", "dye", "rune", "skin", "upgrade", "auction", "minion", "hopper"}) {
+            if (title.contains(safe)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * True if any item in the player's own inventory (including the offhand) is protected. With bazaarOnly, items with
+     * a UUID are ignored: the Bazaar's "Sell Inventory Now" only sells stackable commodities, never unique gear.
+     */
+    private static boolean anyProtectedInInventory(boolean bazaarOnly) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return false;
+        var inv = mc.player.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (bazaarOnly && !Compat.uuid(stack).isBlank()) continue;
+            if (isProtected(stack)) return true;
+        }
+        return false;
     }
 
     /**
@@ -152,12 +183,38 @@ public final class SlotLocking {
 
         // Keep protected items out of NPC sell/shop menus as well as preventing drops. Hypixel's sell screens
         // can sell an item just by clicking it in the player inventory, so check both the clicked stack and cursor.
-        if (isNpcShopScreen(screen)) {
+        boolean shop = isNpcShopScreen(screen);
+        // NPC shops have many titles (Weaponsmith, Armorsmith, a Merchant's name ...), so a menu that is not a known
+        // storage or utility menu is treated like a shop: a protected item can't be clicked there.
+        if (!shop && !(screen instanceof InventoryScreen) && !isSafeMenu(screen)) {
+            ItemStack clicked = slot == null ? ItemStack.EMPTY : slot.getItem();
+            if (isProtected(clicked) || isProtected(screen.getMenu().getCarried())) shop = true;
+        }
+        if (shop) {
             ItemStack clicked = slot == null ? ItemStack.EMPTY : slot.getItem();
             ItemStack carried = screen.getMenu().getCarried();
-            if (isProtected(clicked) || isProtected(carried)) {
+            boolean blocked = isProtected(clicked) || isProtected(carried);
+            // Number-key / offhand swap: the hotbar (or offhand) item being swapped into the shop.
+            if (!blocked && input == ContainerInput.SWAP) {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player != null && (button >= 0 && button < 9 || button == 40)) {
+                    blocked = isProtected(mc.player.getInventory().getItem(button));
+                }
+            }
+            // Bulk-sell buttons ("Sell Inventory Now") sell everything they accept, protected items included. In the
+            // Bazaar that is only commodities, so protected gear doesn't stop the button.
+            if (!blocked && !clicked.isEmpty() && screen.getMenu().slots.contains(slot)) {
+                String name = ChatFormatting.stripFormatting(clicked.getHoverName().getString());
+                if (name != null) {
+                    name = name.toLowerCase(java.util.Locale.ROOT);
+                    String title = ChatFormatting.stripFormatting(screen.getTitle().getString());
+                    boolean bazaar = title != null && title.toLowerCase(java.util.Locale.ROOT).contains("bazaar");
+                    if ((name.contains("sell inventory") || name.contains("sell all")) && anyProtectedInInventory(bazaar)) blocked = true;
+                }
+            }
+            if (blocked) {
                 say(Component.literal("★ ").withStyle(ChatFormatting.GOLD)
-                    .append(Component.literal("That item is protected and cannot be sold or traded here. Use /s2 protect to unprotect it.").withStyle(ChatFormatting.RED)));
+                    .append(Component.literal("That item is protected. Use /s2 protect to unprotect it.").withStyle(ChatFormatting.RED)));
                 return true;
             }
         }

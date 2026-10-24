@@ -36,8 +36,16 @@ import java.util.Map;
  * made in place on the existing settings objects, so features and the /s2 settings see them straight away.
  */
 public final class Sky2MSetup {
-    /** An area of the mod: its name, the Sky2MConfig field it is, and what's in it. */
-    record Area(String key, String label, String description) {}
+    /**
+     * An area of the mod: its name, what's in it, and the settings it covers: the Sky2MConfig field named
+     * {@code key}, or the dotted {@code paths} when it is spread over several sections (setup.json keeps them under
+     * the last part of each path).
+     */
+    record Area(String key, String label, String description, List<String> paths) {
+        Area(String key, String label, String description) {
+            this(key, label, description, List.of(key));
+        }
+    }
 
     static final List<Area> AREAS = List.of(
         new Area("dungeons", "Dungeons", "Map, puzzle solvers, secrets, terminals, splits, timers and Party Finder stats."),
@@ -47,7 +55,8 @@ public final class Sky2MSetup {
         new Area("fishing", "Fishing", "Sea creature and rare drop alerts, catch messages and highlights."),
         new Area("foraging", "Foraging", "Sweep display and foraging helpers."),
         new Area("hunting", "Hunting", "Shard tracker, hunting profit, lasso, fusion and Galatea mobs."),
-        new Area("mayors", "Diana & Mayors", "Diana burrows, rare mob sharing and mayor features."));
+        // Diana and Mayor & Election are in Events now; the key stays "mayors" so setup.json keeps its saved state.
+        new Area("mayors", "Diana & Mayors", "Diana burrows, rare mob sharing and mayor features.", List.of("events.diana", "events.mayor")));
 
     private static final Gson GSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
     private static final int JOIN_DELAY_TICKS = 80;
@@ -135,20 +144,32 @@ public final class Sky2MSetup {
     }
 
     private static boolean change(Area area, boolean on) {
-        Object section = section(area);
-        if (section == null) return false;
+        List<Object> sections = sections(area);
+        if (sections == null) return false;
         JsonObject state = state();
         JsonObject off = off(state);
         if (on) {
             JsonElement kept = off.remove(area.key());
             if (kept != null) {
-                Object restored = GSON.fromJson(kept, section.getClass());
-                if (restored != null) copyInto(section, restored, 0);
+                for (int i = 0; i < sections.size(); i++) {
+                    JsonElement saved = sections.size() == 1 ? kept
+                        : kept.isJsonObject() ? kept.getAsJsonObject().get(lastPart(area.paths().get(i))) : null;
+                    if (saved == null) continue;
+                    Object section = sections.get(i);
+                    Object restored = GSON.fromJson(saved, section.getClass());
+                    if (restored != null) copyInto(section, restored, 0);
+                }
             }
         } else {
             if (off.has(area.key())) return true;
-            off.add(area.key(), GSON.toJsonTree(section));
-            switchOff(section, 0);
+            if (sections.size() == 1) {
+                off.add(area.key(), GSON.toJsonTree(sections.get(0)));
+            } else {
+                JsonObject kept = new JsonObject();
+                for (int i = 0; i < sections.size(); i++) kept.add(lastPart(area.paths().get(i)), GSON.toJsonTree(sections.get(i)));
+                off.add(area.key(), kept);
+            }
+            for (Object section : sections) switchOff(section, 0);
         }
         save(state);
         Sky2MConfig.saveCurrent(Sky2MConfig.current());
@@ -157,12 +178,14 @@ public final class Sky2MSetup {
 
     /** Puts the area back to Sky2M's defaults (and on). */
     static boolean reset(Area area) {
-        Object section = section(area);
-        if (section == null) return false;
+        List<Object> sections = sections(area);
+        if (sections == null) return false;
         try {
-            var constructor = section.getClass().getDeclaredConstructor();
-            constructor.setAccessible(true);
-            copyInto(section, constructor.newInstance(), 0);
+            for (Object section : sections) {
+                var constructor = section.getClass().getDeclaredConstructor();
+                constructor.setAccessible(true);
+                copyInto(section, constructor.newInstance(), 0);
+            }
         } catch (Exception e) {
             System.err.println("[Sky2M] Couldn't reset " + area.label() + ": " + e.getMessage());
             return false;
@@ -174,16 +197,27 @@ public final class Sky2MSetup {
         return true;
     }
 
-    private static Object section(Area area) {
+    /** The settings objects the area covers (one per path), or null if any can't be found. */
+    private static List<Object> sections(Area area) {
         Sky2MConfig config = Sky2MConfig.current();
         if (config == null) return null;
-        try {
-            Field field = Sky2MConfig.class.getField(area.key());
-            return field.get(config);
-        } catch (Exception e) {
-            System.err.println("[Sky2M] Setup: no settings section " + area.key());
-            return null;
+        List<Object> out = new java.util.ArrayList<>();
+        for (String path : area.paths()) {
+            try {
+                Object at = config;
+                for (String part : path.split("\\.")) at = at.getClass().getField(part).get(at);
+                if (at == null) return null;
+                out.add(at);
+            } catch (Exception e) {
+                System.err.println("[Sky2M] Setup: no settings section " + path);
+                return null;
+            }
         }
+        return out;
+    }
+
+    private static String lastPart(String path) {
+        return path.substring(path.lastIndexOf('.') + 1);
     }
 
     // ---------------------------------------------------------------- reflection

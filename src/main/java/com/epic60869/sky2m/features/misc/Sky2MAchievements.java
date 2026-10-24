@@ -37,7 +37,11 @@ public final class Sky2MAchievements {
         DUNGEON_RUNS("Dungeon runs"), S_PLUS_RUNS("S+ runs"), M7_RUNS("M7 runs"), DUNGEON_DEATHS("Deaths in dungeons"), DEATHS("Deaths"),
         SLAYER_BOSSES("Slayer bosses"), KILLS("Melee kills"), SCATHAS("Scathas"), WORMS("Worms"), SCATHA_PETS("Scatha pets"),
         CARRIES("Carries done"), DRAGONS("M7 dragons killed"), HIDDEN_MESSAGES("Spam hidden"), CLOSE_CALLS("Close calls"),
-        NETWORTH("Best networth"), MINUTES_PLAYED("Minutes on SkyBlock"), DAYS_PLAYED("Days played");
+        NETWORTH("Best networth"), MINUTES_PLAYED("Minutes on SkyBlock"), DAYS_PLAYED("Days played"),
+        SKILL_FARMING("Farming level"), SKILL_MINING("Mining level"), SKILL_COMBAT("Combat level"), SKILL_FORAGING("Foraging level"),
+        SKILL_FISHING("Fishing level"), SKILL_ENCHANTING("Enchanting level"), SKILL_ALCHEMY("Alchemy level"),
+        SKILL_CARPENTRY("Carpentry level"), SKILL_RUNECRAFTING("Runecrafting level"), SKILL_SOCIAL("Social level"),
+        SKILL_TAMING("Taming level");
 
         public final String label;
 
@@ -46,7 +50,7 @@ public final class Sky2MAchievements {
         }
     }
 
-    public record Achievement(String id, String category, String name, String description, Stat stat, long goal, Rarity rarity) {}
+    public record Achievement(String id, String category, String name, String description, Stat stat, long goal, Rarity rarity, String symbol) {}
 
     private static final class Saved {
         Map<Stat, Long> stats = new EnumMap<>(Stat.class);
@@ -69,8 +73,22 @@ public final class Sky2MAchievements {
     }
 
     private static void add(String id, String category, String name, String description, Stat stat, long goal, Rarity rarity) {
-        ALL.add(new Achievement(id, category, name, description, stat, goal, rarity));
+        ALL.add(new Achievement(id, category, name, description, stat, goal, rarity, ""));
     }
+
+    /** The rarity of each skill tier, lowest first. */
+    private static final Rarity[] TIER_RARITY = {Rarity.COMMON, Rarity.UNCOMMON, Rarity.RARE, Rarity.EPIC, Rarity.LEGENDARY, Rarity.MYTHIC};
+
+    /** One achievement per skill tier ("Skills: Farming"), unlocked by reaching that skill level; the symbol is its emblem character. */
+    private static void skill(String skill, Stat stat, String symbol, int[] levels, String... names) {
+        for (int i = 0; i < levels.length; i++) {
+            ALL.add(new Achievement("skill_" + skill.toLowerCase(java.util.Locale.ROOT) + "_" + levels[i], SKILLS_PREFIX + skill, names[i],
+                "Reach " + skill + " level " + levels[i], stat, levels[i], TIER_RARITY[Math.min(TIER_RARITY.length - 1, i + TIER_RARITY.length - levels.length)], symbol));
+        }
+    }
+
+    public static final String SKILLS_PREFIX = "Skills: ";
+    private static final int[] L6 = {10, 20, 30, 40, 50, 60}, L5 = {10, 20, 30, 40, 50}, L5_LOW = {5, 10, 15, 20, 25}, L6_FORAGING = {10, 20, 30, 40, 50, 55};
 
     static {
         add("runs_1", "Dungeons", "Into the Catacombs", "Finish a dungeon run", Stat.DUNGEON_RUNS, 1, Rarity.COMMON);
@@ -121,6 +139,27 @@ public final class Sky2MAchievements {
         add("days_7", "Sky2M", "Week One", "Play on 7 different days", Stat.DAYS_PLAYED, 7, Rarity.COMMON);
         add("days_100", "Sky2M", "Dedicated", "Play on 100 different days", Stat.DAYS_PLAYED, 100, Rarity.RARE);
         add("days_365", "Sky2M", "A Year Of Sky2M", "Play on 365 different days", Stat.DAYS_PLAYED, 365, Rarity.LEGENDARY);
+
+        skill("Farming", Stat.SKILL_FARMING, "✿", L6, "Seedling", "Green Thumb", "Harvest Hand", "Field Marshal", "Crop Baron", "Lord of the Harvest");
+        skill("Mining", Stat.SKILL_MINING, "♦", L6, "Pebble Picker", "Deep Delver", "Vein Hunter", "Gemstone Gatherer", "Core Breaker", "Mountain Heart");
+        skill("Combat", Stat.SKILL_COMBAT, "⚔", L6, "Scrapper", "Sellsword", "Battle-Tested", "Warlord", "Bane of Beasts", "Unbroken");
+        skill("Foraging", Stat.SKILL_FORAGING, "♣", L6_FORAGING, "Twig Gatherer", "Woodcutter", "Canopy Climber", "Grove Keeper", "Timberlord", "Heart of the Forest");
+        skill("Fishing", Stat.SKILL_FISHING, "⚓", L5, "Bobber Watcher", "Line Caster", "Tide Reader", "Deep Angler", "Leviathan's Rival");
+        skill("Enchanting", Stat.SKILL_ENCHANTING, "✦", L6, "Spark Apprentice", "Rune Scribbler", "Glyph Weaver", "Arcane Adept", "Spellforger", "Archmage");
+        skill("Alchemy", Stat.SKILL_ALCHEMY, "⚗", L5, "Potion Novice", "Cauldron Tender", "Brew Master", "Elixir Sage", "Philosopher's Heir");
+        skill("Carpentry", Stat.SKILL_CARPENTRY, "⚒", L5, "Splinter Hands", "Hammer and Nails", "Joiner", "Master Builder", "Architect of Worlds");
+        skill("Runecrafting", Stat.SKILL_RUNECRAFTING, "ᛉ", L5_LOW, "Rune Scratcher", "Glyph Carver", "Sigil Smith", "Rune Weaver", "Runebound");
+        skill("Social", Stat.SKILL_SOCIAL, "☺", L5_LOW, "Newcomer", "Chatterbox", "Party Starter", "Friend of Many", "Island Socialite");
+        skill("Taming", Stat.SKILL_TAMING, "♞", L6, "Pet Sitter", "Beast Whisperer", "Kennel Keeper", "Pack Leader", "Beastmaster", "Wild Sovereign");
+    }
+
+    /** Called by the skill reader with a skill's current level (any skill name; unknown ones are ignored). Unlocks its tiers. */
+    public static void skillLevel(String skillName, int level) {
+        if (level <= 0 || skillName == null) return;
+        try {
+            max(Stat.valueOf("SKILL_" + skillName.toUpperCase(java.util.Locale.ROOT)), level);
+        } catch (IllegalArgumentException ignored) {
+        }
     }
 
     public static List<Achievement> all() {

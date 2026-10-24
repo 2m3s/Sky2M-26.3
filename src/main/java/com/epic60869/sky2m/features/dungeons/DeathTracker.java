@@ -127,7 +127,7 @@ public final class DeathTracker {
 
     private static void printLifetime() {
         if (lifetime.isEmpty()) {
-            Sky2MAlerts.chat(Component.literal("No deaths saved yet. Turn on Count Across Runs in Dungeons > Death Tracker.").withStyle(ChatFormatting.GRAY));
+            Sky2MAlerts.chat(Component.literal("No deaths saved yet. Turn on Count Across Runs in Dungeon > Death Tracker.").withStyle(ChatFormatting.GRAY));
             return;
         }
         Sky2MAlerts.chat(Component.literal("Most deaths in your runs:").withStyle(ChatFormatting.GOLD));

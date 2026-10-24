@@ -261,9 +261,16 @@ public class Waypoint implements Renderable {
 			return name().toLowerCase(Locale.ENGLISH);
 		}
 
+		// Plain labels, not I18n: MoulConfig reads dropdown labels once, which can be before the game's language has loaded.
 		@Override
 		public String toString() {
-			return I18n.get("skyblocker.waypoints.type." + name());
+			return switch (this) {
+				case WAYPOINT -> "Waypoint";
+				case OUTLINED_WAYPOINT -> "Waypoint+";
+				case HIGHLIGHT -> "Highlight";
+				case OUTLINED_HIGHLIGHT -> "Highlight+";
+				case OUTLINE -> "Outline";
+			};
 		}
 
 		public Type withoutBeacon() {

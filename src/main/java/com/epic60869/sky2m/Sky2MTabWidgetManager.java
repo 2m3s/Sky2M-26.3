@@ -39,13 +39,35 @@ public final class Sky2MTabWidgetManager {
         if (mc.getConnection() == null) {
             widgets.clear();
             players = List.of();
+            lastSignature = 0;
+            lastFullUpdate = 0;
             return;
         }
 
         long now = System.currentTimeMillis();
         if (now - lastUpdate < 100L) return;
         lastUpdate = now;
+        // Re-parse the whole tab list only when an entry or its text was replaced (Hypixel changes a few rows a second),
+        // and at least once a second anyway (the order can change with teams without any row changing).
+        long signature = signature(mc);
+        if (signature == lastSignature && now - lastFullUpdate < 1000L) return;
+        lastSignature = signature;
+        lastFullUpdate = now;
         update(mc);
+    }
+
+    private static long lastSignature;
+    private static long lastFullUpdate;
+
+    /** Order-independent fingerprint of the tab entries and their (immutable) display texts. */
+    private static long signature(Minecraft mc) {
+        long sum = 0;
+        int count = 0;
+        for (PlayerInfo info : mc.getConnection().getOnlinePlayers()) {
+            sum += (long) System.identityHashCode(info) * 31 + System.identityHashCode(com.epic60869.sky2m.custom.util.Compat.rawTabName(info));
+            count++;
+        }
+        return sum * 31 + count;
     }
 
     public static Widget get(String name) {

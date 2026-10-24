@@ -53,8 +53,11 @@ import java.util.stream.Collectors;
 public final class AccessoryTooltip {
     private static final String ACCESSORIES_URL = "https://hysky.de/api/accessories";
     static final Pattern ACCESSORY_BAG_TITLE = Pattern.compile("Accessory Bag(?: \\((?<page>\\d+)/\\d+\\))?");
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))
-        .followRedirects(HttpClient.Redirect.NORMAL).build();
+    /** Built on first use (on the repo thread), not while the mod starts. */
+    private static final class Http {
+        static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))
+            .followRedirects(HttpClient.Redirect.NORMAL).build();
+    }
     private static final Gson GSON = new Gson();
     private static final Set<String> EMPTY = Set.of();
     private static final Predicate<String> NON_EMPTY = s -> !s.isEmpty();
@@ -102,7 +105,7 @@ public final class AccessoryTooltip {
 
     private static boolean enabled() {
         Sky2MConfig config = Sky2MConfig.current();
-        return config != null && config.misc.collectionTooltips.accessories;
+        return config != null && config.inventory.collectionTooltips.accessories;
     }
 
     private static String profileId() {
@@ -238,7 +241,7 @@ public final class AccessoryTooltip {
         try {
             HttpRequest request = HttpRequest.newBuilder(URI.create(ACCESSORIES_URL)).timeout(Duration.ofSeconds(15))
                 .header("User-Agent", "Sky2M/1.0").GET().build();
-            HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = Http.CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
                 System.err.println("[Sky2M] Accessory list download failed: HTTP " + response.statusCode());
                 return;

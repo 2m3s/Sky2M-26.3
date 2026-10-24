@@ -91,7 +91,7 @@ public final class ItemNotification {
 
     private static FeatureConfigs.ItemNotification config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.itemNotification;
+        return c == null ? null : c.inventory.itemNotification;
     }
 
     private static boolean enabled() {
@@ -377,7 +377,7 @@ public final class ItemNotification {
     private static void save(Set<String> list) {
         Sky2MConfig c = Sky2MConfig.current();
         if (c == null) return;
-        c.misc.itemNotification.items = String.join("\n", list);
+        c.inventory.itemNotification.items = String.join("\n", list);
         Sky2MConfig.saveCurrent(c);
     }
 

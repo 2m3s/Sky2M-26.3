@@ -75,7 +75,7 @@ public final class ItemPickupLog {
 
     private static FeatureConfigs.ItemPickupLog config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.itemPickupLog;
+        return c == null ? null : c.inventory.itemPickupLog;
     }
 
     public static void init() {

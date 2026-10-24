@@ -17,7 +17,7 @@ import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.mixin.Sky2MBossOverlayAccessor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import com.epic60869.sky2m.features.core.Sky2MHuds;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -29,7 +29,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -78,7 +77,7 @@ public final class WitherDragons {
             new AABB(26.0, 15.5, 61.5, 28.0, 17.5, 67.5),
             new AABB(29.5, 16.0, 57.0, 33.5, 18.0, 61.0),
             new AABB(20.5, 16.0, 57.0, 24.5, 18.0, 61.0)),
-        new AABB(14.5, 5, 45.5, 39.5, 28, 70.5));
+        new AABB(14.5, 5, 45.5, 39.5, 28, 70.5)).stack(50, 28, 58);
     private static final Dragon ORANGE = new Dragon("Orange", "ORANGE_KING_RELIC", 0xFFAA00,
         AABB.ofSize(new Vec3(85.0, 14.0, 56.0), 1, 1, 1),
         List.of(
@@ -87,7 +86,7 @@ public final class WitherDragons {
             new AABB(84.0, 15.5, 58.5, 86.0, 17.5, 64.5),
             new AABB(87.5, 16.0, 54.0, 91.5, 18.0, 58.0),
             new AABB(78.5, 16.0, 54.0, 82.5, 18.0, 58.0)),
-        new AABB(72, 5, 47, 102, 28, 77));
+        new AABB(72, 5, 47, 102, 28, 77)).stack(62, 85, 56);
     private static final Dragon BLUE = new Dragon("Blue", "BLUE_KING_RELIC", 0x55FFFF,
         AABB.ofSize(new Vec3(84.0, 14.0, 94.0), 1, 1, 1),
         List.of(
@@ -96,7 +95,7 @@ public final class WitherDragons {
             new AABB(83.0, 15.5, 96.5, 85.0, 17.5, 102.5),
             new AABB(86.5, 16.0, 92.0, 90.5, 18.0, 96.0),
             new AABB(77.5, 16.0, 92.0, 81.5, 18.0, 96.0)),
-        new AABB(71.5, 5, 82.5, 96.5, 26, 107.5));
+        new AABB(71.5, 5, 82.5, 96.5, 26, 107.5)).stack(47, 84, 97);
     private static final Dragon PURPLE = new Dragon("Purple", "PURPLE_KING_RELIC", 0xAA00AA,
         AABB.ofSize(new Vec3(56.0, 14.0, 125.0), 1, 1, 1),
         List.of(
@@ -105,7 +104,7 @@ public final class WitherDragons {
             new AABB(55.0, 15.5, 127.5, 57.0, 17.5, 133.5),
             new AABB(58.5, 16.0, 123.0, 62.5, 18.0, 127.0),
             new AABB(49.5, 16.0, 123.0, 53.5, 18.0, 127.0)),
-        new AABB(45.5, 6, 113.5, 68.5, 23, 136.5));
+        new AABB(45.5, 6, 113.5, 68.5, 23, 136.5)).stack(38, 56, 125);
     private static final Dragon GREEN = new Dragon("Green", "GREEN_KING_RELIC", 0x00FF00,
         AABB.ofSize(new Vec3(27.0, 14.0, 94.0), 1, 1, 1),
         List.of(
@@ -114,13 +113,12 @@ public final class WitherDragons {
             new AABB(26.0, 15.5, 96.5, 28.0, 17.5, 102.5),
             new AABB(29.5, 16.0, 92.0, 33.5, 18.0, 96.0),
             new AABB(20.5, 16.0, 92.0, 24.5, 18.0, 96.0)),
-        new AABB(7, 5, 80, 37, 28, 110));
+        new AABB(7, 5, 80, 37, 28, 110)).stack(52, 27, 90);
     /** NoammAddons' order, which breaks ties between dragons that start spawning on the same tick. */
     private static final List<Dragon> DRAGONS = List.of(RED, ORANGE, GREEN, BLUE, PURPLE);
     /** The M7 boss room; the dragon phase is the part of it below y 50. */
     private static final AABB BOSS_ROOM = new AABB(-8, 0, -8, 134, 254, 147);
 
-    private static final Identifier HUD_ID = Identifier.fromNamespaceAndPath("sky2m", "dragon_timer");
     private static final Pattern RELIC_PICKUP = Pattern.compile("^(\\w{3,16}) picked the Corrupted (\\w{3,6}) Relic!$");
 
     /** Dragons that have started spawning this run (Solo Priority's First Dragon Only). */
@@ -144,7 +142,8 @@ public final class WitherDragons {
         ServerTickCallback.EVENT.register(WitherDragons::onServerTick);
         ClientTickEvents.END_CLIENT_TICK.register(WitherDragons::onClientTick);
         Sky2MChat.onChat(WitherDragons::onChat);
-        HudElementRegistry.addLast(HUD_ID, (graphics, delta) -> renderHud(graphics));
+        Sky2MHuds.setting("dragon_spawn_timer", () -> config() != null && config().timer);
+        Sky2MHuds.registerCustom("dragon_spawn_timer", "Dragon Spawn Timer", () -> config() != null && config().timer, new TimerHud(), 450, 200);
         Sky2MWorldRender.register(WitherDragons::render);
     }
 
@@ -236,6 +235,10 @@ public final class WitherDragons {
     private static void onServerTick() {
         serverTicks++;
         if (!inDragonPhase()) return;
+        // Remember which dragon was your priority as it spawns, for Arrows Hit.
+        FeatureConfigs.WitherDragons config = config();
+        Dragon priority = config == null ? null : priority(config);
+        if (priority != null && priority.spawnTicks == 1) priority.wasPriority = true;
         for (Dragon dragon : DRAGONS) dragon.tick();
         tickCounter++;
     }
@@ -350,12 +353,16 @@ public final class WitherDragons {
         FeatureConfigs.WitherDragons config = config();
         if (config == null || !inDragonPhase()) return;
         Minecraft mc = Minecraft.getInstance();
-        if (config.relicHighlight && mc.player != null) {
+        if ((config.relicHighlight || config.relicBeacon || config.relicTracer) && mc.player != null) {
             ItemStack stack = mc.player.getInventory().getItem(8);
             if (stack.is(Items.PLAYER_HEAD)) {
                 String name = ChatFormatting.stripFormatting(stack.getHoverName().getString());
                 for (Relic relic : RELICS) {
-                    if (relic.name.equals(name)) collector.submitFilledBox(relic.pos, rgb(relic.colour), 0.5f, false);
+                    if (!relic.name.equals(name)) continue;
+                    // Odin's King Relic beacon and NoammAddons' Box Relics tracer.
+                    if (config.relicBeacon) collector.submitFilledBoxWithBeaconBeam(relic.pos, rgb(relic.colour), 0.5f, false);
+                    else if (config.relicHighlight) collector.submitFilledBox(relic.pos, rgb(relic.colour), 0.5f, false);
+                    if (config.relicTracer) collector.submitLineFromCursor(Vec3.atCenterOf(relic.pos), rgb(relic.colour), 1f, 2f);
                 }
             }
         }
@@ -372,6 +379,13 @@ public final class WitherDragons {
             if (config.hitboxes && dragon.hasEntity()) {
                 for (EnderDragonPart part : dragon.entity.getSubEntities()) {
                     collector.submitOutlinedBox(part.getBoundingBox(), colour, 1f, 2f, false);
+                }
+            }
+            if (config.arrowStack && dragon.isSpawning() && mc.player != null) {
+                Vec3 lead = arrowLead(mc.player.getEyePosition(), dragon.stackTarget());
+                if (lead != null) {
+                    double size = 0.6 * Math.max(0.5, Math.sqrt(mc.player.getEyePosition().distanceTo(lead) / 50.0));
+                    collector.submitOutlinedBox(AABB.ofSize(lead, size, size, size), new float[]{0f, 1f, 1f}, 1f, 3f, true);
                 }
             }
             if (dragon.isSpawning()) {
@@ -395,19 +409,76 @@ public final class WitherDragons {
         }
     }
 
-    /** Spawn Timer: your priority dragon's timer, big in the middle of the screen (as in NoammAddons). */
-    private static void renderHud(GuiGraphicsExtractor graphics) {
+    /**
+     * NoammAddons' arrow stack lead: walks an arrow's flight (3 blocks a tick, slowing by 1% and falling 0.05 a tick)
+     * until it has gone as far as the target, and aims that much higher. Null when it never gets there.
+     */
+    private static Vec3 arrowLead(Vec3 eye, Vec3 target) {
+        double distanceSq = target.distanceToSqr(eye);
+        double travelled = 0, speed = 3, yVelocity = 0, drop = 0;
+        for (int tick = 0; tick < 160; tick++) {
+            travelled += speed;
+            speed *= 0.99;
+            drop += yVelocity;
+            yVelocity -= 0.05;
+            yVelocity *= 0.99;
+            if (travelled * travelled >= distanceSq) return target.subtract(0, drop, 0);
+        }
+        return null;
+    }
+
+    /** Arrow hit sound (Sky2MFloor7PacketsMixin): counts for your priority dragon in its skip window. */
+    static void onArrowHit() {
         FeatureConfigs.WitherDragons config = config();
-        if (config == null || !config.timer || !inDragonPhase()) return;
+        if (config == null || !config.arrowsHit || !inDragonPhase()) return;
+        for (Dragon dragon : DRAGONS) {
+            if (dragon.wasPriority && dragon.hasEntity() && tickCounter - dragon.spawnedAt <= dragon.skipTicks) dragon.arrows++;
+        }
+    }
+
+    /** Spawn Timer: your priority dragon's timer, big on screen (as in NoammAddons); move it in /s2 gui. */
+    private static Component timerText() {
+        FeatureConfigs.WitherDragons config = config();
+        if (config == null || !config.timer || !inDragonPhase()) return null;
         Dragon dragon = priority(config);
-        if (dragon == null) return;
-        Minecraft mc = Minecraft.getInstance();
-        String text = String.format(Locale.ROOT, "%.2fs", dragon.spawnTicks / 20f);
-        graphics.pose().pushMatrix();
-        graphics.pose().translate(graphics.guiWidth() / 2f, graphics.guiHeight() * 0.4f);
-        graphics.pose().scale(3f, 3f);
-        graphics.text(mc.font, text, -mc.font.width(text) / 2, -mc.font.lineHeight / 2, 0xFF000000 | dragon.colour, true);
-        graphics.pose().popMatrix();
+        if (dragon == null) return null;
+        return Component.literal(String.format(Locale.ROOT, "%.2fs", dragon.spawnTicks / 20f)).withColor(dragon.colour);
+    }
+
+    private static final Component TIMER_PREVIEW = Component.literal("4.25s").withColor(0xAA00AA);
+
+    private static final class TimerHud implements Sky2MHuds.CustomHud {
+        private static final float SCALE = 3f;
+
+        private Component shown() {
+            Component live = timerText();
+            return live == null ? TIMER_PREVIEW : live;
+        }
+
+        @Override
+        public int width() {
+            return Math.round(Minecraft.getInstance().font.width(shown()) * SCALE);
+        }
+
+        @Override
+        public int height() {
+            return Math.round(Minecraft.getInstance().font.lineHeight * SCALE);
+        }
+
+        @Override
+        public boolean visible() {
+            return timerText() != null;
+        }
+
+        @Override
+        public void render(GuiGraphicsExtractor graphics, boolean preview) {
+            Component text = preview ? TIMER_PREVIEW : timerText();
+            if (text == null) return;
+            graphics.pose().pushMatrix();
+            graphics.pose().scale(SCALE, SCALE);
+            graphics.text(Minecraft.getInstance().font, text, 0, 0, 0xFFFFFFFF, true);
+            graphics.pose().popMatrix();
+        }
     }
 
     /** Green when full, through yellow, to red when empty. */
@@ -484,6 +555,24 @@ public final class WitherDragons {
         boolean iceSprayed;
         /** Times this dragon has spawned and died this run, for the Cross-Mod Bridge's events. */
         int spawns, deaths;
+        /** NoammAddons' skip window (server ticks after spawning) and arrow stack spot (x, z). */
+        int skipTicks;
+        double stackX, stackZ;
+        /** Whether it was your priority dragon when it spawned, and your arrows that hit it in its skip window. */
+        boolean wasPriority;
+        int arrows;
+
+        Dragon stack(int skipTicks, double x, double z) {
+            this.skipTicks = skipTicks;
+            this.stackX = x;
+            this.stackZ = z;
+            return this;
+        }
+
+        /** Where to aim to stack arrows while it spawns (NoammAddons: the stack spot, 3.5 above the spawn height). */
+        Vec3 stackTarget() {
+            return new Vec3(stackX + 0.5, pos.getCenter().y + 3.5, stackZ + 0.5);
+        }
 
         Dragon(String name, String relicId, int colour, AABB pos, List<AABB> parts, AABB area) {
             this.name = name;
@@ -518,6 +607,14 @@ public final class WitherDragons {
                 if (entity != null) {
                     deaths++;
                     if (spawnedAt > 0) DragonSplits.onDragonDeath(name, colour, tickCounter - spawnedAt);
+                    FeatureConfigs.WitherDragons config = config();
+                    if (wasPriority && config != null && config.arrowsHit) {
+                        Sky2MAlerts.chat(Component.literal(name).withColor(colour)
+                            .append(Component.literal(": Arrows: ").withStyle(ChatFormatting.WHITE))
+                            .append(Component.literal(String.valueOf(arrows)).withStyle(ChatFormatting.GOLD)));
+                    }
+                    wasPriority = false;
+                    arrows = 0;
                 }
                 entity = null;
                 iceSprayed = false;
@@ -534,6 +631,8 @@ public final class WitherDragons {
             spawnedAt = 0;
             spawns = 0;
             deaths = 0;
+            wasPriority = false;
+            arrows = 0;
         }
     }
 }

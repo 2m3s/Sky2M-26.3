@@ -34,6 +34,12 @@ fabricApi {
     }
 }
 
+// In the game tests, an injector that matches nothing in this Minecraft version is an error instead of being skipped
+// silently (sky2m.mixins.json isn't "required"), so Sky2MOfflineScreensGameTest's Mixin audit reports it.
+loom.runs.matching { it.name == 'clientGameTest' }.configureEach {
+    vmArg '-Dmixin.debug.countInjections=true'
+}
+
 repositories {
     mavenCentral()
     maven { url = uri('https://maven.notenoughupdates.org/releases/') }

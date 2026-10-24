@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -57,7 +58,7 @@ public final class DragonSplits {
         load();
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> splits.clear());
         Sky2MLocation.onAreaChange(area -> splits.clear());
-        HudElementRegistry.addLast(ARROWS_ID, (graphics, delta) -> renderArrows(graphics));
+        HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST, ARROWS_ID, (graphics, delta) -> renderArrows(graphics));
         Sky2MHuds.register("dragon_splits", "Dragon Splits", () -> config() != null && config().hud && Sky2MLocation.inDungeon(),
             DragonSplits::lines,
             List.of(line("Red", 0xFF0000, 98, 90), line("Orange", 0xFFAA00, 74, 74), line("Purple", 0xAA00AA, 120, 101)),

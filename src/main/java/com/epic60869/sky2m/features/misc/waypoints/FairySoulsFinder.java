@@ -55,24 +55,24 @@ public final class FairySoulsFinder {
     private static final String HUD_ID = "fairy_souls_finder";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Pattern SOUL_PICKUP = Pattern.compile("fairy soul", Pattern.CASE_INSENSITIVE);
-    /** NEU key → the names Sky2MLocation.area() reports for that island, matched case-insensitively. */
+    /** NEU key → the names Sky2MLocation.area() reports for that island, matched case-insensitively (NEU's constants/misc.json names them). */
     private static final Map<String, List<String>> ISLANDS = Map.ofEntries(
         Map.entry("hub", List.of("Hub", "Dark Auction")),
         Map.entry("combat_1", List.of("Spider's Den")),
         Map.entry("combat_3", List.of("The End")),
         Map.entry("crimson_isle", List.of("Crimson Isle")),
-        Map.entry("foraging_1", List.of("The Park", "Birch Park")),
-        Map.entry("foraging_2", List.of("The Park", "Spruce Woods", "Dark Taiga")),
-        Map.entry("foraging_3", List.of("The Park", "Savanna Woods")),
+        Map.entry("foraging_1", List.of("The Park")),
+        Map.entry("foraging_2", List.of("Galatea", "Moonglade Marsh")),
+        Map.entry("foraging_3", List.of("Torrhus Canyon")),
         Map.entry("farming_1", List.of("The Farming Islands")),
         Map.entry("mining_1", List.of("Gold Mine")),
         Map.entry("mining_2", List.of("Deep Caverns")),
-        Map.entry("mining_3", List.of("Deep Caverns")),
+        Map.entry("mining_3", List.of("Dwarven Mines")),
         Map.entry("winter", List.of("Jerry's Workshop")),
         Map.entry("dungeon_hub", List.of("Dungeon Hub")),
-        Map.entry("fishing_1", List.of("Hub")),
-        Map.entry("lotus_atoll", List.of("Backwater Bayou")),
-        Map.entry("safari", List.of("Galatea")));
+        Map.entry("fishing_1", List.of("Backwater Bayou")),
+        Map.entry("lotus_atoll", List.of("Lotus Atoll")),
+        Map.entry("safari", List.of("Safari")));
     /// The island's usual name for statuses, chat and the list (at most one per NEU key).
     private static final Map<String, String> NAMES = Map.ofEntries(
         Map.entry("hub", "Hub"),
@@ -80,17 +80,17 @@ public final class FairySoulsFinder {
         Map.entry("combat_3", "The End"),
         Map.entry("crimson_isle", "Crimson Isle"),
         Map.entry("foraging_1", "The Park"),
-        Map.entry("foraging_2", "The Park"),
-        Map.entry("foraging_3", "The Park"),
+        Map.entry("foraging_2", "Galatea"),
+        Map.entry("foraging_3", "Torrhus Canyon"),
         Map.entry("farming_1", "The Farming Islands"),
         Map.entry("mining_1", "Gold Mine"),
         Map.entry("mining_2", "Deep Caverns"),
-        Map.entry("mining_3", "Deep Caverns"),
+        Map.entry("mining_3", "Dwarven Mines"),
         Map.entry("winter", "Jerry's Workshop"),
         Map.entry("dungeon_hub", "Dungeon Hub"),
-        Map.entry("fishing_1", "Hub"),
-        Map.entry("lotus_atoll", "Backwater Bayou"),
-        Map.entry("safari", "Galatea"));
+        Map.entry("fishing_1", "Backwater Bayou"),
+        Map.entry("lotus_atoll", "Lotus Atoll"),
+        Map.entry("safari", "Safari"));
 
     /** The souls of one island: where each soul is, in the order of NEU's file. */
     public static final class Souls {

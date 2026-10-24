@@ -70,16 +70,16 @@ public final class Sky2MItemBackgrounds {
 
     public static void draw(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y) {
         Sky2MConfig config = Sky2MConfig.current();
-        if (config == null || !config.misc.itemRarity.enabled || stack == null || stack.isEmpty()) return;
+        if (config == null || !config.inventory.itemRarity.enabled || stack == null || stack.isEmpty()) return;
         if (!Compat.isOnSkyblock()) return;
 
         Sky2MItemRarity rarity = CACHE.computeIfAbsent(stack, Sky2MItemBackgrounds::rarity);
         if (rarity == Sky2MItemRarity.UNKNOWN) return;
 
-        Style style = config.misc.itemRarity.style == null ? Style.SQUARE : config.misc.itemRarity.style;
+        Style style = config.inventory.itemRarity.style == null ? Style.SQUARE : config.inventory.itemRarity.style;
         var sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.GUI).getSprite(style.sprite);
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, 16, 16,
-            ARGB.color(config.misc.itemRarity.opacity, rarity.color));
+            ARGB.color(config.inventory.itemRarity.opacity, rarity.color));
     }
 
     public static Sky2MItemRarity rarity(ItemStack stack) {

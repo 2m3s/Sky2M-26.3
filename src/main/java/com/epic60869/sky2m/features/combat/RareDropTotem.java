@@ -48,6 +48,11 @@ public final class RareDropTotem {
 
     private RareDropTotem() {}
 
+    /** The known RNG drops: name in chat -> item id (for /s2 rng). */
+    static Map<String, String> rngDrops() {
+        return RNG_DROPS;
+    }
+
     private static boolean enabled() {
         Sky2MConfig c = Sky2MConfig.current();
         return c != null && c.combat.rareDrops.totemAnimation;

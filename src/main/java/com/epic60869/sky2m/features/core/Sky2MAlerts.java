@@ -2,6 +2,7 @@ package com.epic60869.sky2m.features.core;
 
 import com.epic60869.sky2m.custom.util.Compat;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -24,7 +25,7 @@ public final class Sky2MAlerts {
     private Sky2MAlerts() {}
 
     public static void init() {
-        HudElementRegistry.addLast(ANIMATION_ID, (graphics, delta) -> renderAnimation(graphics));
+        HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST, ANIMATION_ID, (graphics, delta) -> renderAnimation(graphics));
     }
 
     /** Shows a title and subtitle in the middle of the screen and plays a ding. */

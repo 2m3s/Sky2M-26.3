@@ -48,7 +48,7 @@ public final class SignAutofill {
 
     private static FeatureConfigs.SignAutofill config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.signAutofill;
+        return c == null ? null : c.inventory.signAutofill;
     }
 
     /** From the sign screen's constructor, while the menu that opened it is still the current screen. */

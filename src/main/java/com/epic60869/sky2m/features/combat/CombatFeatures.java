@@ -307,6 +307,23 @@ public final class CombatFeatures {
                 com.epic60869.sky2m.features.misc.CopyChat.showPreview("Drop copied", text);
             });
         }
+        if (config.dropMessage || (config.rngTitle && rng)) {
+            int count = Math.max(1, amount);
+            ItemPriceResolver.valueByNameAsync(item).thenAccept(value -> {
+                boolean priced = value != null && value > 0;
+                String worth = priced ? formatCoins(value * count) : null;
+                if (config.dropMessage) {
+                    Sky2MAlerts.chat(Component.literal("+Drop: ").withStyle(ChatFormatting.GREEN)
+                        .append(Component.literal(item + (count > 1 ? " x" + count : "")).withStyle(ChatFormatting.AQUA))
+                        .append(priced ? Component.literal(" (" + worth + ")").withStyle(ChatFormatting.GOLD) : Component.empty()));
+                }
+                if (config.rngTitle && rng) {
+                    Sky2MAlerts.title(Component.literal(item + (count > 1 ? " x" + count : "")).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
+                        Component.literal("RNG DROP").withStyle(ChatFormatting.GOLD)
+                            .append(priced ? Component.literal("  " + worth + " coins").withStyle(ChatFormatting.YELLOW) : Component.empty()));
+                }
+            });
+        }
         if (config.animation) {
             int count = Math.max(1, amount);
             ItemPriceResolver.valueByNameAsync(item).thenAccept(value -> {

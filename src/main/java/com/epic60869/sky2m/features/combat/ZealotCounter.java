@@ -76,6 +76,7 @@ public final class ZealotCounter {
     private static final Pattern SPECIAL_ZEALOTS_TAB = Pattern.compile("special\\s+zealots\\s*:\\s*([\\d,]+)\\s*/\\s*400", Pattern.CASE_INSENSITIVE);
     /** True while Hypixel's authoritative tab-list pity counter is available. */
     private static boolean tabPityDetected;
+    private static int tabPityTicks;
     /** Last observed Hypixel Special Zealots counter, used to reconcile TAB updates with local detections. */
     private static int lastObservedTabPity = -1;
     /** Previous TAB count captured when Hypixel resets the counter after spawning a Special Zealot. */
@@ -180,7 +181,7 @@ public final class ZealotCounter {
         });
         ClientTickEvents.END_CLIENT_TICK.register(ZealotCounter::tick);
         Sky2MChat.onActionBar(message -> {
-            if (COMBAT_XP.matcher(message.text()).find()) lastCombatXp = System.currentTimeMillis();
+            if (enabled() && COMBAT_XP.matcher(message.text()).find()) lastCombatXp = System.currentTimeMillis();
         });
         // Implosion reports how many enemies the blast actually hit. In the End's Zealot
         // areas, keep that count as a fallback for Zealots that die/despawn before the entity
@@ -302,7 +303,11 @@ public final class ZealotCounter {
 
     private static void tick(Minecraft mc) {
         updateUptime(System.currentTimeMillis());
-        updateTabPity(mc);
+        // The tab list is walked three times per read: only with the counter on, and a few times a second (the row
+        // changes about once a second).
+        Sky2MConfig tabConfig = Sky2MConfig.current();
+        if (tabConfig == null || !tabConfig.combat.zealotCounter) tabPityDetected = false;
+        else if (++tabPityTicks % 5 == 0) updateTabPity(mc);
         if (mc.player == null || mc.level == null || !enabled()) {
             HIT_BY_YOU.clear();
             COUNTED.clear();

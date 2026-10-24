@@ -59,6 +59,8 @@ public final class Sky2MKeyMappings {
         );
 
         com.epic60869.sky2m.features.misc.ToggleSprint.registerKey();
+        com.epic60869.sky2m.features.qol.ChatPeek.registerKey();
+        com.epic60869.sky2m.features.core.GlobalSearchScreen.registerKey();
 
         DIANA_GUESS_WARP = KeyMappingHelper.registerKeyMapping(
             new KeyMapping("key.sky2m.diana_guess_warp", InputConstants.Type.KEYBOARD, InputConstants.UNKNOWN.getValue(), CATEGORY));

@@ -225,21 +225,30 @@ public class DungeonMapUtils {
 		};
 	}
 
+	/**
+	 * Sky2M: the Dungeon Sim builds each floor shifted up or down (SimAltitude) so it fits its world, while the room data and
+	 * the waypoints are in Hypixel's heights. This is that shift (0 outside the sim), added to heights going from the room
+	 * to the world and taken off coming back.
+	 */
+	public static int yShift() {
+		return com.epic60869.sky2m.sim.roomsim.SimState.isActive() ? com.epic60869.sky2m.sim.roomsim.SimAltitude.offset() : 0;
+	}
+
 	public static BlockPos actualToRelative(Room.Direction direction, Vector2ic physicalCornerPos, BlockPos pos) {
 		return switch (direction) {
-			case NW -> new BlockPos(pos.getX() - physicalCornerPos.x(), pos.getY(), pos.getZ() - physicalCornerPos.y());
-			case NE -> new BlockPos(pos.getZ() - physicalCornerPos.y(), pos.getY(), -pos.getX() + physicalCornerPos.x());
-			case SW -> new BlockPos(-pos.getZ() + physicalCornerPos.y(), pos.getY(), pos.getX() - physicalCornerPos.x());
-			case SE -> new BlockPos(-pos.getX() + physicalCornerPos.x(), pos.getY(), -pos.getZ() + physicalCornerPos.y());
+			case NW -> new BlockPos(pos.getX() - physicalCornerPos.x(), pos.getY() - yShift(), pos.getZ() - physicalCornerPos.y());
+			case NE -> new BlockPos(pos.getZ() - physicalCornerPos.y(), pos.getY() - yShift(), -pos.getX() + physicalCornerPos.x());
+			case SW -> new BlockPos(-pos.getZ() + physicalCornerPos.y(), pos.getY() - yShift(), pos.getX() - physicalCornerPos.x());
+			case SE -> new BlockPos(-pos.getX() + physicalCornerPos.x(), pos.getY() - yShift(), -pos.getZ() + physicalCornerPos.y());
 		};
 	}
 
 	public static Vec3 actualToRelative(Room.Direction direction, Vector2ic physicalCornerPos, Vec3 pos) {
 		return switch (direction) {
-			case NW -> new Vec3(pos.x() - physicalCornerPos.x(), pos.y(), pos.z() - physicalCornerPos.y());
-			case NE -> new Vec3(pos.z() - physicalCornerPos.y(), pos.y(), -pos.x() + physicalCornerPos.x());
-			case SW -> new Vec3(-pos.z() + physicalCornerPos.y(), pos.y(), pos.x() - physicalCornerPos.x());
-			case SE -> new Vec3(-pos.x() + physicalCornerPos.x(), pos.y(), -pos.z() + physicalCornerPos.y());
+			case NW -> new Vec3(pos.x() - physicalCornerPos.x(), pos.y() - yShift(), pos.z() - physicalCornerPos.y());
+			case NE -> new Vec3(pos.z() - physicalCornerPos.y(), pos.y() - yShift(), -pos.x() + physicalCornerPos.x());
+			case SW -> new Vec3(-pos.z() + physicalCornerPos.y(), pos.y() - yShift(), pos.x() - physicalCornerPos.x());
+			case SE -> new Vec3(-pos.x() + physicalCornerPos.x(), pos.y() - yShift(), -pos.z() + physicalCornerPos.y());
 		};
 	}
 
@@ -249,19 +258,19 @@ public class DungeonMapUtils {
 
 	public static BlockPos relativeToActual(Room.Direction direction, Vector2ic physicalCornerPos, BlockPos pos) {
 		return switch (direction) {
-			case NW -> new BlockPos(pos.getX() + physicalCornerPos.x(), pos.getY(), pos.getZ() + physicalCornerPos.y());
-			case NE -> new BlockPos(-pos.getZ() + physicalCornerPos.x(), pos.getY(), pos.getX() + physicalCornerPos.y());
-			case SW -> new BlockPos(pos.getZ() + physicalCornerPos.x(), pos.getY(), -pos.getX() + physicalCornerPos.y());
-			case SE -> new BlockPos(-pos.getX() + physicalCornerPos.x(), pos.getY(), -pos.getZ() + physicalCornerPos.y());
+			case NW -> new BlockPos(pos.getX() + physicalCornerPos.x(), pos.getY() + yShift(), pos.getZ() + physicalCornerPos.y());
+			case NE -> new BlockPos(-pos.getZ() + physicalCornerPos.x(), pos.getY() + yShift(), pos.getX() + physicalCornerPos.y());
+			case SW -> new BlockPos(pos.getZ() + physicalCornerPos.x(), pos.getY() + yShift(), -pos.getX() + physicalCornerPos.y());
+			case SE -> new BlockPos(-pos.getX() + physicalCornerPos.x(), pos.getY() + yShift(), -pos.getZ() + physicalCornerPos.y());
 		};
 	}
 
 	public static Vec3 relativeToActual(Room.Direction direction, Vector2ic physicalCornerPos, Vec3 pos) {
 		return switch (direction) {
-			case NW -> new Vec3(pos.x() + physicalCornerPos.x(), pos.y(), pos.z() + physicalCornerPos.y());
-			case NE -> new Vec3(-pos.z() + physicalCornerPos.x(), pos.y(), pos.x() + physicalCornerPos.y());
-			case SW -> new Vec3(pos.z() + physicalCornerPos.x(), pos.y(), -pos.x() + physicalCornerPos.y());
-			case SE -> new Vec3(-pos.x() + physicalCornerPos.x(), pos.y(), -pos.z() + physicalCornerPos.y());
+			case NW -> new Vec3(pos.x() + physicalCornerPos.x(), pos.y() + yShift(), pos.z() + physicalCornerPos.y());
+			case NE -> new Vec3(-pos.z() + physicalCornerPos.x(), pos.y() + yShift(), pos.x() + physicalCornerPos.y());
+			case SW -> new Vec3(pos.z() + physicalCornerPos.x(), pos.y() + yShift(), -pos.x() + physicalCornerPos.y());
+			case SE -> new Vec3(-pos.x() + physicalCornerPos.x(), pos.y() + yShift(), -pos.z() + physicalCornerPos.y());
 		};
 	}
 

@@ -49,7 +49,10 @@ public final class BoulderSolverFeature {
     private record BoxPosition(AABB render, BlockPos click) {
     }
 
-    private static final Map<String, List<List<Integer>>> SOLUTIONS = loadSolutions();
+    /** Loaded on first use, not at start-up. */
+    private static final class LazyData {
+        static final Map<String, List<List<Integer>>> SOLUTIONS = loadSolutions();
+    }
     private static List<BoxPosition> currentPositions = new ArrayList<>();
     private static RoomEntry lastRoomEntry = null;
     private static boolean scannedThisRoom = false;
@@ -153,7 +156,7 @@ public final class BoulderSolverFeature {
                 key.append(level.getBlockState(PuzzleCoords.real(x, 66, z, cr)).isAir() ? '0' : '1');
             }
         }
-        List<List<Integer>> solution = SOLUTIONS.get(key.toString());
+        List<List<Integer>> solution = LazyData.SOLUTIONS.get(key.toString());
         if (solution == null) {
             currentPositions = new ArrayList<>();
             return false;

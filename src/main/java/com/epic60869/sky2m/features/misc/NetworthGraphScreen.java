@@ -102,7 +102,7 @@ public final class NetworthGraphScreen extends Screen {
         g.outline(panelX, panelY, panelW, panelH, PANEL_BORDER);
         List<NetworthHistory.Snapshot> points = points();
         if (points.isEmpty()) {
-            String empty = sacks ? "No values yet. Turn on Misc > Sacks Value and open your sacks."
+            String empty = sacks ? "No values yet. Turn on Inventory > Sacks Value and open your sacks."
                 : "No snapshots yet. Turn on Misc > Networth History, or press Save Now.";
             g.centeredText(font, Component.literal(empty).withStyle(ChatFormatting.GRAY),
                 width / 2, panelY + panelH / 2 - 4, LABEL);

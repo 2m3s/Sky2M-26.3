@@ -74,8 +74,7 @@ public final class Sky2MCustom {
                 hypixelConnection = connection;
                 hypixelBrand = brand;
                 hypixelServer = (brand != null && brand.toLowerCase(Locale.ROOT).contains("hypixel"))
-                    || (mc.getCurrentServer() != null && mc.getCurrentServer().ip != null
-                        && mc.getCurrentServer().ip.toLowerCase(Locale.ROOT).contains("hypixel"));
+                    || (mc.getCurrentServer() != null && com.epic60869.sky2m.custom.util.Compat.isHypixelAddress(mc.getCurrentServer().ip));
             }
             if (hypixelServer) return true;
             return com.epic60869.sky2m.features.core.Sky2MLocation.onSkyblock();

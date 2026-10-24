@@ -269,7 +269,7 @@ public final class SbcConfig {
         @Expose
         @ConfigOption(name = "Reminders", desc = "Popups and a sound before the events turned on below.")
         @ConfigEditorBoolean
-        public boolean reminders = false;
+        public boolean reminders = true;
 
         @Expose
         @ConfigOption(name = "Reminder Sound", desc = "Play a sound with each reminder.")
@@ -277,26 +277,16 @@ public final class SbcConfig {
         public boolean sound = true;
 
         @Expose @ConfigOption(name = "Jacob's Contest", desc = "Remind before Jacob's Farming Contests (with the crops).") @ConfigEditorBoolean public boolean jacob = true;
-        @Expose @ConfigOption(name = "Jacob's: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int jacobMinutes = 2;
         @Expose @ConfigOption(name = "Jacob's: Only These Crops", desc = "Only remind for contests with one of these crops (comma separated, e.g. \"Wheat, Nether Wart\"). Empty = every contest.") @ConfigEditorText public String jacobCrops = "";
         @Expose @ConfigOption(name = "Dark Auction", desc = "") @ConfigEditorBoolean public boolean darkAuction = true;
-        @Expose @ConfigOption(name = "Dark Auction: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int darkAuctionMinutes = 2;
-        @Expose @ConfigOption(name = "Cult of the Fallen Star", desc = "") @ConfigEditorBoolean public boolean fallenStar = false;
-        @Expose @ConfigOption(name = "Fallen Star: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int fallenStarMinutes = 1;
+        @Expose @ConfigOption(name = "Cult of the Fallen Star", desc = "") @ConfigEditorBoolean public boolean fallenStar = true;
         @Expose @ConfigOption(name = "Spooky Festival", desc = "") @ConfigEditorBoolean public boolean spooky = true;
-        @Expose @ConfigOption(name = "Spooky: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int spookyMinutes = 5;
         @Expose @ConfigOption(name = "New Year Celebration", desc = "") @ConfigEditorBoolean public boolean newYear = true;
-        @Expose @ConfigOption(name = "New Year: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int newYearMinutes = 5;
         @Expose @ConfigOption(name = "Season of Jerry", desc = "") @ConfigEditorBoolean public boolean jerry = true;
-        @Expose @ConfigOption(name = "Jerry: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int jerryMinutes = 5;
         @Expose @ConfigOption(name = "Traveling Zoo", desc = "") @ConfigEditorBoolean public boolean zoo = true;
-        @Expose @ConfigOption(name = "Zoo: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int zooMinutes = 5;
         @Expose @ConfigOption(name = "Hoppity's Hunt", desc = "") @ConfigEditorBoolean public boolean hoppity = true;
-        @Expose @ConfigOption(name = "Hoppity: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int hoppityMinutes = 5;
         @Expose @ConfigOption(name = "Elections", desc = "When the mayor election opens and closes.") @ConfigEditorBoolean public boolean elections = true;
-        @Expose @ConfigOption(name = "Elections: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int electionsMinutes = 5;
         @Expose @ConfigOption(name = "Mayor Events", desc = "Marina's Fishing Festival and Diana's Mythological Ritual.") @ConfigEditorBoolean public boolean mayorEvents = true;
-        @Expose @ConfigOption(name = "Mayor Events: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int mayorEventsMinutes = 5;
     }
 
     public static final class PestHighlight {

@@ -57,8 +57,8 @@ public final class InventoryButtons {
             BUTTONS.remove(screen);
             if (!(screen instanceof AbstractContainerScreen<?>) || client.player == null || client.player.isCreative()) return;
             Sky2MConfig config = Sky2MConfig.current();
-            if (config == null || !config.misc.inventoryButtons.enabled || !Sky2MLocation.onSkyblock()) return;
-            List<QuickNavButton> buttons = create(config.misc.inventoryButtons, screen.getTitle().getString().trim());
+            if (config == null || !config.inventory.inventoryButtons.enabled || !Sky2MLocation.onSkyblock()) return;
+            List<QuickNavButton> buttons = create(config.inventory.inventoryButtons, screen.getTitle().getString().trim());
             for (QuickNavButton button : buttons) ((Sky2MScreenWidgetsInvoker) screen).sky2m$addWidget(button);
             BUTTONS.put(screen, buttons);
         });

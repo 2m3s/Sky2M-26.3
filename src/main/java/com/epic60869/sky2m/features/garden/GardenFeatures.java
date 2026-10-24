@@ -41,9 +41,12 @@ public final class GardenFeatures {
         });
         Sky2MChat.onChat(GardenFeatures::onChat);
         PestTimer.init();
+        GardenReminders.init();
         PestFinder.init();
         GardenPlotPanel.init();
+        GreenhousePreview.init();
         OverflowDropSound.init();
+        com.epic60869.sky2m.features.garden.skyhanni.SkyHanniGarden.init();
 
         com.epic60869.sky2m.features.core.Sky2MHuds.setting("yaw_pitch", () -> config() != null && config().yawPitch);
         Sky2MHuds.register("yaw_pitch", "Yaw and Pitch",

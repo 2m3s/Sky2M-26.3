@@ -37,11 +37,18 @@ public final class Sky2MDateCalculator {
         // particular container screen class or its hovered slot, so it also works when another
         // mod replaces or wraps Hypixel's menus.
         ItemTooltipCallback.EVENT.register((stack, context, flag, lines) -> {
+            if (!datesEnabled()) return;
             Screen screen = Minecraft.getInstance().gui.screen();
             if (screen == null) return;
             currentTimer = timerFor(screen);
             addToTooltip(stack, lines);
         });
+    }
+
+    /** Checked first: tooltips are built every frame an item is hovered. */
+    private static boolean datesEnabled() {
+        Sky2MConfig config = Sky2MConfig.current();
+        return config != null && config.inventory.calendarTimeToRealTime && Compat.isOnSkyblock();
     }
 
     private static TimeProvider timerFor(Screen screen) {
@@ -58,6 +65,7 @@ public final class Sky2MDateCalculator {
      * fails before ours runs; the date is only added once.
      */
     public static List<Component> addDates(ItemStack stack, List<Component> lines) {
+        if (!datesEnabled()) return lines;
         Screen screen = Minecraft.getInstance().gui.screen();
         if (screen == null) return lines;
         for (Component line : lines) {
@@ -73,7 +81,7 @@ public final class Sky2MDateCalculator {
 
     private static void addToTooltip(ItemStack stack, List<Component> lines) {
         Sky2MConfig config = Sky2MConfig.current();
-        if (config == null || !config.misc.calendarTimeToRealTime || !Compat.isOnSkyblock()) return;
+        if (config == null || !config.inventory.calendarTimeToRealTime || !Compat.isOnSkyblock()) return;
 
         boolean added = false;
         if (currentTimer != null) {

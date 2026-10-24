@@ -131,7 +131,8 @@ public final class OdinDevices {
             }
             if (config.ssAnnounce && !clickOrder.isEmpty() && lantern.equals(clickOrder.getLast())) {
                 var connection = Minecraft.getInstance().getConnection();
-                if (connection != null) connection.sendCommand("pc SS " + clickOrder.size() + "/5");
+                // Simon Says has 4 rounds since Hypixel's 2026 dungeon update (Odin 0.3.6).
+                if (connection != null) connection.sendCommand("pc SS " + clickOrder.size() + "/4");
             }
             // Move on to the next button straight away: waiting for the server to show the press blocked a quick
             // correct click on the next button.

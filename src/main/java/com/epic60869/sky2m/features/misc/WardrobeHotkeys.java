@@ -33,17 +33,17 @@ public final class WardrobeHotkeys {
         String title = ChatFormatting.stripFormatting(screen.getTitle().getString());
         if (title == null) return false;
 
-        if (WARDROBE_TITLE.matcher(title).matches() && config.misc.wardrobeHotkeys.enabled) {
+        if (WARDROBE_TITLE.matcher(title).matches() && config.inventory.wardrobeHotkeys.enabled) {
             int[] keys = {
-                config.misc.wardrobeHotkeys.slot1Key,
-                config.misc.wardrobeHotkeys.slot2Key,
-                config.misc.wardrobeHotkeys.slot3Key,
-                config.misc.wardrobeHotkeys.slot4Key,
-                config.misc.wardrobeHotkeys.slot5Key,
-                config.misc.wardrobeHotkeys.slot6Key,
-                config.misc.wardrobeHotkeys.slot7Key,
-                config.misc.wardrobeHotkeys.slot8Key,
-                config.misc.wardrobeHotkeys.slot9Key
+                config.inventory.wardrobeHotkeys.slot1Key,
+                config.inventory.wardrobeHotkeys.slot2Key,
+                config.inventory.wardrobeHotkeys.slot3Key,
+                config.inventory.wardrobeHotkeys.slot4Key,
+                config.inventory.wardrobeHotkeys.slot5Key,
+                config.inventory.wardrobeHotkeys.slot6Key,
+                config.inventory.wardrobeHotkeys.slot7Key,
+                config.inventory.wardrobeHotkeys.slot8Key,
+                config.inventory.wardrobeHotkeys.slot9Key
             };
             for (int i = 0; i < keys.length; i++) {
                 if (key != keys[i] || key == InputConstants.UNKNOWN.getValue()) continue;
@@ -52,20 +52,20 @@ public final class WardrobeHotkeys {
             }
         }
 
-        if (LOADOUT_TITLE.matcher(title).matches() && config.misc.wardrobeHotkeys.loadoutEnabled) {
+        if (LOADOUT_TITLE.matcher(title).matches() && config.inventory.wardrobeHotkeys.loadoutEnabled) {
             int[] keys = {
-                config.misc.wardrobeHotkeys.loadoutSlot1Key,
-                config.misc.wardrobeHotkeys.loadoutSlot2Key,
-                config.misc.wardrobeHotkeys.loadoutSlot3Key,
-                config.misc.wardrobeHotkeys.loadoutSlot4Key,
-                config.misc.wardrobeHotkeys.loadoutSlot5Key,
-                config.misc.wardrobeHotkeys.loadoutSlot6Key,
-                config.misc.wardrobeHotkeys.loadoutSlot7Key,
-                config.misc.wardrobeHotkeys.loadoutSlot8Key,
-                config.misc.wardrobeHotkeys.loadoutSlot9Key,
-                config.misc.wardrobeHotkeys.loadoutSlot10Key,
-                config.misc.wardrobeHotkeys.loadoutSlot11Key,
-                config.misc.wardrobeHotkeys.loadoutSlot12Key
+                config.inventory.wardrobeHotkeys.loadoutSlot1Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot2Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot3Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot4Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot5Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot6Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot7Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot8Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot9Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot10Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot11Key,
+                config.inventory.wardrobeHotkeys.loadoutSlot12Key
             };
             for (int i = 0; i < keys.length; i++) {
                 if (key != keys[i] || key == InputConstants.UNKNOWN.getValue()) continue;

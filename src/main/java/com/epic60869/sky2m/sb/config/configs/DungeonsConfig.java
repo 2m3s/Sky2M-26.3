@@ -295,9 +295,14 @@ public class DungeonsConfig {
 			OUTLINED_HIGHLIGHT,
 			OUTLINE;
 
+			// Plain labels, not I18n: MoulConfig reads dropdown labels once, which can be before the game's language has loaded.
 			@Override
 			public String toString() {
-				return I18n.get("skyblocker.config.dungeons.doorHighlight.doorHighlightType.type." + name());
+				return switch (this) {
+					case HIGHLIGHT -> "Highlight";
+					case OUTLINED_HIGHLIGHT -> "Highlight+";
+					case OUTLINE -> "Outline";
+				};
 			}
 		}
 	}

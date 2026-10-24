@@ -28,6 +28,7 @@ public abstract class ContainerSolverScreenMixin {
 	@Inject(method = "extractSlots", at = @At("TAIL"))
 	private void sky2m$drawSolverHighlights(GuiGraphicsExtractor graphics, int mouseX, int mouseY, CallbackInfo ci) {
 		AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+		com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.renderPanel(graphics);
 		if (com.epic60869.sky2m.features.dungeons.OdinTerminals.active()) {
 			com.epic60869.sky2m.features.dungeons.OdinTerminals.render(graphics, screen);
 			return;
@@ -52,11 +53,21 @@ public abstract class ContainerSolverScreenMixin {
 			ci.cancel();
 			return;
 		}
+		// Sky2M: Moonglade Beacon solver (middle click, over-click prevention).
+		if (com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot, input, button)) {
+			ci.cancel();
+			return;
+		}
 		com.epic60869.sky2m.features.misc.PricePaid.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot);
 		// Sky2M: Party Finder Stats remembers the floor of the group you join or create.
 		com.epic60869.sky2m.features.dungeons.PartyFinderStats.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot);
 		// Sky2M: visitor reward warning (blocked offer buttons) and the Supercraft button.
 		if (com.epic60869.sky2m.features.garden.visitor.GardenVisitors.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot, input)) {
+			ci.cancel();
+			return;
+		}
+		// Sky2M: Jacob's Contest > Zorro's Cape Protection blocks claiming rewards without the cape.
+		if (com.epic60869.sky2m.features.garden.skyhanni.JacobContest.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot)) {
 			ci.cancel();
 			return;
 		}

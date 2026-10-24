@@ -11,16 +11,56 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Feature flags from the mod server: {@code flags {flags: {"cosmetics.capes": {enabled: false, message: "..."}}}}, sent
  * after hello and on every change. A flag the server hasn't mentioned is on, so the mod keeps working when the server
- * is down. Flag names used by the mod: chat.replies, chat.reactions, chat.items,
- * friends, cosmetics, cosmetics.capes, calendar, pestHighlight, itemCooldowns, settingsSync,
- * crashReports, reportThreads.
+ * is down. Flag names used by the mod (the server's flag-catalog.js and docs/MOD-PROTOCOL.md list them with
+ * descriptions): chat, chat.replies, chat.reactions, chat.items, chat.rooms, nicknames, friends, who, cosmetics,
+ * cosmetics.emblems, cosmetics.capes, cosmetics.models, leaderboards, leaderboards.slayerPbs, partyFinder,
+ * partyFinder.stats, calendar, pestHighlight, itemCooldowns, museumTooltip, screenshots, settingsSync, crashReports,
+ * reportThreads.
  */
 public final class Flags {
     private record Flag(boolean enabled, String message) {}
 
     private static final Map<String, Flag> FLAGS = new ConcurrentHashMap<>();
 
+    /**
+     * The flag that switches off each server packet type, so one kill switch covers a whole online feature without
+     * a check at every call site. Staff, login and flag packets are never listed (staff must always get through).
+     */
+    private static final Map<String, String> PACKET_FLAGS = Map.ofEntries(
+        Map.entry("react", "chat.reactions"), Map.entry("reactions", "chat.reactions"), Map.entry("reactionError", "chat.reactions"),
+        Map.entry("roomJoin", "chat.rooms"), Map.entry("roomLeave", "chat.rooms"), Map.entry("roomList", "chat.rooms"),
+        Map.entry("roomResult", "chat.rooms"), Map.entry("roomEvent", "chat.rooms"), Map.entry("rooms", "chat.rooms"),
+        Map.entry("nickSet", "nicknames"), Map.entry("nameTagGet", "nicknames"), Map.entry("nameTagPublish", "nicknames"),
+        Map.entry("nameTagTable", "nicknames"), Map.entry("nameTagUpdate", "nicknames"),
+        Map.entry("who", "who"), Map.entry("whoResult", "who"), Map.entry("online", "who"),
+        Map.entry("cosmeticsGet", "cosmetics"), Map.entry("cosmeticsSelect", "cosmetics"),
+        Map.entry("leaderboardGet", "leaderboards"), Map.entry("leaderboardProgress", "leaderboards"),
+        Map.entry("statLeaderboardGet", "leaderboards"),
+        Map.entry("slayerPb", "leaderboards.slayerPbs"), Map.entry("slayerPbSync", "leaderboards.slayerPbs"),
+        Map.entry("slayerPbSummary", "leaderboards.slayerPbs"), Map.entry("slayerPbGet", "leaderboards.slayerPbs"),
+        Map.entry("partyData", "partyFinder.stats"), Map.entry("partyDataJoin", "partyFinder.stats"),
+        Map.entry("partyDataLeave", "partyFinder.stats"),
+        Map.entry("museum", "museumTooltip"), Map.entry("museumResult", "museumTooltip"),
+        Map.entry("uploadToken", "screenshots"),
+        Map.entry("runSummaryPost", "chat.runSummary"), Map.entry("runSummaryGet", "chat.runSummary"),
+        Map.entry("runSummary", "chat.runSummary"), Map.entry("runSummaryMissing", "chat.runSummary"),
+        Map.entry("runSummaryPosted", "chat.runSummary"), Map.entry("runSummaryError", "chat.runSummary"));
+
     private Flags() {}
+
+    /** The flag that switches this packet type off, or null when none does. Packets pf* belong to the party finder. */
+    public static String flagForPacket(String type) {
+        if (type == null) return null;
+        String flag = PACKET_FLAGS.get(type);
+        if (flag != null) return flag;
+        return type.startsWith("pf") && type.length() > 2 && Character.isUpperCase(type.charAt(2)) ? "partyFinder" : null;
+    }
+
+    /** Whether a packet of this type may be sent or handled (its feature's flag is on, or it has none). */
+    public static boolean allowsPacket(String type) {
+        String flag = flagForPacket(type);
+        return flag == null || isEnabled(flag);
+    }
 
     /** Whether the feature is on (a missing flag means on). A disabled "cosmetics" also turns off "cosmetics.capes". */
     public static boolean isEnabled(String name) {

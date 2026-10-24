@@ -78,6 +78,16 @@ public final class SlayerRngMeterDisplay {
 
     private SlayerRngMeterDisplay() {}
 
+    /** One slayer's known meter, for {@link SlayerRngAdvisor}. {@code required} and {@code current} are -1 when not read yet. */
+    record MeterInfo(String slayer, String item, long current, long required, long gainPerBoss) {}
+
+    /** The meters this class has read from the menus and chat (the same data its HUD uses). */
+    static List<MeterInfo> meters() {
+        List<MeterInfo> out = new ArrayList<>();
+        METERS.forEach((slayer, m) -> out.add(new MeterInfo(slayer, m.item, m.current, m.required, m.gainPerBoss)));
+        return out;
+    }
+
     private static FeatureConfigs.SlayerRngMeterDisplay config() {
         Sky2MConfig c = Sky2MConfig.current();
         return c == null ? null : c.slayers.rngMeterDisplay;

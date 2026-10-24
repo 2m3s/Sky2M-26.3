@@ -16,5 +16,6 @@ public abstract class Sky2MItemCooldownMixin {
     private void sky2m$cooldown(Font font, ItemStack stack, int x, int y, String text, CallbackInfo ci) {
         ItemCooldowns.drawOverlay((GuiGraphicsExtractor) (Object) this, stack, x, y);
         com.epic60869.sky2m.features.misc.EnchantedBookLabels.drawOverlay((GuiGraphicsExtractor) (Object) this, stack, x, y);
+        com.epic60869.sky2m.features.qol.SlotLabels.drawOverlay((GuiGraphicsExtractor) (Object) this, stack, x, y);
     }
 }

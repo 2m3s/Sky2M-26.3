@@ -49,7 +49,10 @@ public final class FarmingRngTracker {
     public void register() {
         ItemPriceResolver.warmup();
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> handle(message));
-        com.epic60869.sky2m.features.core.Sky2MChat.onGameMessage((message, overlay) -> handle(message));
+        com.epic60869.sky2m.features.core.Sky2MChat.onGameMessage((message, overlay) -> {
+            // Drops are chat lines; the action bar changes many times a second and never holds one.
+            if (!overlay) handle(message);
+        });
     }
 
     /** Returns every currently displayed RNG drop, removing entries idle for 3 seconds. */
@@ -221,6 +224,7 @@ public final class FarmingRngTracker {
         return found[0] == -1 ? 0xFFFFFFFF : found[0];
     }
 
+    private static final Pattern LEGACY_CODE = Pattern.compile("§[0-9a-fk-or]");
     private static final Pattern DROP_WORD = Pattern.compile("(?i)RARE CROP|RARE DROP|PET DROP|PRAY TO RNGESUS|RNGESUS INCARNATE|you (?:found|dropped|got|received)");
 
     /**
@@ -236,7 +240,7 @@ public final class FarmingRngTracker {
     private void handle(Component message) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        String raw = message.getString().replaceAll("§[0-9a-fk-or]", "").trim();
+        String raw = LEGACY_CODE.matcher(message.getString()).replaceAll("").trim();
         if (fromAPlayer(raw)) return;
         if (handleSlug(message, raw)) return;
         Parsed parsed = parse(raw);

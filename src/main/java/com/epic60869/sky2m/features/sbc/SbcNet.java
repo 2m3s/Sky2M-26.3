@@ -18,8 +18,15 @@ public final class SbcNet {
         return Sky2MGlobalChat.currentConnection() != null;
     }
 
+    /** False (after telling the player why) when staff switched this packet's feature off. */
+    private static boolean allowed(JsonObject packet) {
+        String flag = packet.has("type") && packet.get("type").isJsonPrimitive() ? Flags.flagForPacket(packet.get("type").getAsString()) : null;
+        return flag == null || Flags.check(flag);
+    }
+
     /** Sends now if connected; otherwise says "S2C offline" and returns false. */
     public static boolean send(JsonObject packet) {
+        if (!allowed(packet)) return false;
         if (Sky2MGlobalChat.send(packet)) return true;
         Sbc.error(OFFLINE);
         return false;
@@ -35,6 +42,7 @@ public final class SbcNet {
      * needed. Returns false (after saying why) when the server can't be reached.
      */
     public static boolean sendAuthed(JsonObject packet) {
+        if (!allowed(packet)) return false;
         if (!online()) {
             Sky2MGlobalChat.ensureConnected();
             Sbc.error(OFFLINE);

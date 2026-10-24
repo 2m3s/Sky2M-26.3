@@ -199,8 +199,20 @@ final class ItemListCard {
             item(g, font, c.stack(), c.amount(), cx + 1, cy + 1);
             if (over) {
                 hoveredId = c.id();
-                List<Component> tip = new ArrayList<>(Screen.getTooltipFromItem(Minecraft.getInstance(), c.stack()));
-                if (c.amount() > 1) tip.add(Component.literal("Amount: " + String.format(Locale.ROOT, "%,.0f", c.amount())).withStyle(ChatFormatting.DARK_GRAY));
+                // Shift prices all of an ingredient needed more than once (32 Wheat: the price of 32, then each).
+                long amount = Math.round(c.amount());
+                boolean all = amount > 1 && Minecraft.getInstance().hasShiftDown();
+                ItemStack priced = c.stack();
+                if (all) {
+                    priced = c.stack().copy();
+                    priced.setCount((int) Math.min(amount, Integer.MAX_VALUE));
+                }
+                List<Component> tip = new ArrayList<>(com.epic60869.sky2m.Sky2MPriceTooltip.itemListTooltip(priced));
+                if (c.amount() > 1) {
+                    tip.add(Component.literal("Amount: " + String.format(Locale.ROOT, "%,.0f", c.amount())).withStyle(ChatFormatting.DARK_GRAY)
+                        .append(Component.literal(all ? "" : "  (Shift: price for all " + String.format(Locale.ROOT, "%,d", amount) + ")")
+                            .withStyle(ChatFormatting.DARK_GRAY)));
+                }
                 tip.addAll(c.extra());
                 g.setComponentTooltipForNextFrame(font, tip, mouseX, mouseY);
             }

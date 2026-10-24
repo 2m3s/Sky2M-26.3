@@ -70,7 +70,9 @@ public final class ScreenshotShare {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("screenshot")
                     .then(ClientCommands.literal("upload").then(ClientCommands.argument("file", StringArgumentType.greedyString())
-                        .executes(c -> upload(StringArgumentType.getString(c, "file")))))));
+                        .executes(c -> upload(StringArgumentType.getString(c, "file")))))
+                    .then(ClientCommands.literal("website").then(ClientCommands.argument("link", StringArgumentType.greedyString())
+                        .executes(c -> publish(StringArgumentType.getString(c, "link")))))));
             }
         });
     }
@@ -88,7 +90,56 @@ public final class ScreenshotShare {
         return message.copy().append(Component.literal("  [Upload]").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
             .withClickEvent(new ClickEvent.RunCommand("/s2 screenshot upload " + name))
             .withHoverEvent(new HoverEvent.ShowText(Component.literal("Upload it and get a link to share in /s2c.\n").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal("Uploads publicly to " + host + ": anyone with the link can see it.").withStyle(ChatFormatting.YELLOW))))));
+                .append(Component.literal("Uploads to " + host + ": anyone with the link can see it. It only goes on the website's Screenshots page if you click [Upload to Website] afterwards.").withStyle(ChatFormatting.YELLOW))))));
+    }
+
+    private static final java.util.regex.Pattern SKY2M_LINK = java.util.regex.Pattern.compile("^https://shadowisabot\\.com/mod-api/screenshots/([a-f0-9]{24}\\.(?:png|jpg))$");
+
+    /** Whether {@code link} is a Sky2M-hosted screenshot, which can be put on the website. */
+    static boolean onSky2MHost(String link) {
+        return link != null && SKY2M_LINK.matcher(link).matches();
+    }
+
+    /** [Upload to Website]: lists an uploaded Sky2M screenshot on shadowisabot.com/screenshots with your name and head. */
+    private static int publish(String link) {
+        java.util.regex.Matcher m = SKY2M_LINK.matcher(link.trim());
+        if (!m.matches()) return say(Component.literal("Only screenshots uploaded to the Sky2M host can go on the website.").withStyle(ChatFormatting.RED));
+        if (!com.epic60869.sky2m.features.sbc.Flags.isEnabled("screenshots")) {
+            return say(Component.literal(com.epic60869.sky2m.features.sbc.Flags.message("screenshots")).withStyle(ChatFormatting.RED));
+        }
+        String file = m.group(1);
+        say(Component.literal("Putting it on the website...").withStyle(ChatFormatting.GRAY));
+        java.util.concurrent.CompletableFuture<String> token = requestUploadToken();
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                String proof = "";
+                try {
+                    proof = token.get(6, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (Exception ignored) {}
+                if (proof == null || proof.isEmpty()) throw new IllegalStateException("couldn't log in to the Sky2M server");
+                HttpRequest request = HttpRequest.newBuilder(URI.create("https://shadowisabot.com/mod-api/screenshots/" + file + "/publish"))
+                    .timeout(Duration.ofSeconds(20))
+                    .header("User-Agent", "Sky2M/" + com.epic60869.sky2m.features.sbc.SbcInfo.modVersion())
+                    .header("X-Sky2M-Upload-Token", proof)
+                    .POST(HttpRequest.BodyPublishers.noBody()).build();
+                HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+                com.google.gson.JsonObject json = null;
+                try {
+                    json = com.google.gson.JsonParser.parseString(response.body()).getAsJsonObject();
+                } catch (Exception ignored) {}
+                if (response.statusCode() != 200 || json == null || !json.has("page")) {
+                    String error = json != null && json.has("error") ? json.get("error").getAsString() : "HTTP " + response.statusCode();
+                    throw new IllegalStateException(error);
+                }
+                String page = json.get("page").getAsString();
+                say(Component.literal("On the website: ").withStyle(ChatFormatting.GREEN)
+                    .append(Component.literal(page).withStyle(s -> s.withColor(ChatFormatting.AQUA).withUnderlined(true)
+                        .withClickEvent(new ClickEvent.OpenUrl(URI.create(page))))));
+            } catch (Exception e) {
+                say(Component.literal("Couldn't put it on the website: " + reason(e, Host.SKY2M)).withStyle(ChatFormatting.RED));
+            }
+        });
+        return 1;
     }
 
     /** The one-time token for the upload in progress ("" if none came). */
@@ -126,6 +177,9 @@ public final class ScreenshotShare {
             return say(Component.literal("Couldn't find that screenshot.").withStyle(ChatFormatting.RED));
         }
         Host host = host(config());
+        if (host == Host.SKY2M && !com.epic60869.sky2m.features.sbc.Flags.isEnabled("screenshots")) {
+            return say(Component.literal(com.epic60869.sky2m.features.sbc.Flags.message("screenshots")).withStyle(ChatFormatting.RED));
+        }
         say(Component.literal("Uploading " + name + "...").withStyle(ChatFormatting.GRAY));
         // On the Sky2M host, the website's Screenshots page shows it with your name and head: the logged-in Sky2M
         // connection gets a one-time token that goes with the upload (waiting up to 6 seconds; it uploads anyway).
@@ -149,6 +203,9 @@ public final class ScreenshotShare {
                     .append(Component.literal("  [Copy Link]").withStyle(s -> s.withColor(ChatFormatting.YELLOW).withBold(true)
                         .withClickEvent(new ClickEvent.CopyToClipboard(link))
                         .withHoverEvent(new HoverEvent.ShowText(Component.literal("Copy the link")))));
+                if (onSky2MHost(link)) message.append(Component.literal("  [Upload to Website]").withStyle(s -> s.withColor(ChatFormatting.LIGHT_PURPLE).withBold(true)
+                    .withClickEvent(new ClickEvent.RunCommand("/s2 screenshot website " + link))
+                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("Show it on shadowisabot.com/screenshots with your name and head")))));
                 say(message);
             } catch (Exception e) {
                 say(Component.literal("Couldn't upload the screenshot: " + reason(e, host)).withStyle(ChatFormatting.RED)

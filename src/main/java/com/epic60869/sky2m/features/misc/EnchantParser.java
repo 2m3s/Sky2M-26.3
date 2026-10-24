@@ -51,11 +51,11 @@ public final class EnchantParser {
 
     private static EnchantParsingConfig config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.enchantParsing;
+        return c == null ? null : c.inventory.enchantParsing;
     }
 
     public static void init() {
-        SkyHanniRepo.load("Enchants", json -> repo = Repo.read(json));
+        SkyHanniRepo.loadAsync("Enchants", json -> repo = Repo.read(json));
         ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> {
             EnchantParsingConfig config = config();
             if (config == null || (!config.colorParsing && !config.hideEnchantDescriptions)) return;

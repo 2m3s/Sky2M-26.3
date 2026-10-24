@@ -67,7 +67,7 @@ public final class ItemEmojis {
     private static final String ICON_URL = "https://sky.coflnet.com/static/icon/";
 
     /** Emoji name ("summoning_eye") -> SkyBlock item id ("SUMMONING_EYE"). */
-    private static final Map<String, String> ITEMS = new HashMap<>();
+    private static volatile Map<String, String> ITEMS = new HashMap<>();
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
     /** Every emoji shortcode (":name:"), sorted; built once, rebuilt when the item list loads. */
     private static List<String> allSuggestions;
@@ -86,15 +86,16 @@ public final class ItemEmojis {
 
     public static void init(Path configDir) {
         iconDir = configDir.resolve("sky2m").resolve("item-icons");
-        RepoItems.runAfterItemsLoaded(() -> Minecraft.getInstance().execute(ItemEmojis::loadItems));
+        RepoItems.runAfterItemsLoaded(ItemEmojis::loadItems); // built off the render thread, then swapped in
     }
 
     private static void loadItems() {
-        ITEMS.clear();
+        Map<String, String> built = new HashMap<>();
         for (String id : RepoItems.allIds()) {
             String name = id.toLowerCase(Locale.ROOT);
-            if (NAME.matcher(name).matches()) ITEMS.put(name, id);
+            if (NAME.matcher(name).matches()) built.put(name, id);
         }
+        ITEMS = built;
         allSuggestions = null;
     }
 
@@ -150,6 +151,15 @@ public final class ItemEmojis {
     /** Draws the icons into a chat line's emoji gaps (Sky2MChatLineMixin, after vanilla drew the line at x 0). */
     public static void drawChatIcons(GuiGraphicsExtractor graphics, FormattedCharSequence content, int textTop, float opacity) {
         if (ITEMS.isEmpty()) return;
+        // Every visible chat line, every frame: nearly none holds an emoji gap, so find that out without measuring text.
+        int gapCodepoint = GAP.codePointAt(0);
+        boolean[] hasGap = {false};
+        content.accept((index, style, codepoint) -> {
+            if (codepoint != gapCodepoint) return true;
+            hasGap[0] = true;
+            return false;
+        });
+        if (!hasGap[0]) return;
         Font font = Minecraft.getInstance().font;
         List<int[]> spots = new ArrayList<>();
         List<String> names = new ArrayList<>();
@@ -194,7 +204,7 @@ public final class ItemEmojis {
         if (iconDir == null || ICONS.containsKey(name) || !REQUESTED.add(name)) return;
         String id = ITEMS.get(name);
         if (id == null) return;
-        RepoItems.runAsync(() -> {
+        RepoItems.runIconAsync(() -> {
             try {
                 Path file = iconDir.resolve(id.replace(':', '-') + ".png");
                 byte[] bytes;

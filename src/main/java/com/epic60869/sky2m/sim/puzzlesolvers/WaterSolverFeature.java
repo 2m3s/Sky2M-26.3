@@ -140,7 +140,10 @@ public final class WaterSolverFeature {
     private static final Type SOLUTIONS_TYPE =
             new TypeToken<Map<String, Map<String, Map<String, Map<String, List<Double>>>>>>() {
             }.getType();
-    private static final Map<String, Map<String, Map<String, Map<String, List<Double>>>>> SOLUTIONS = loadSolutions();
+    /** Loaded on first use, not at start-up. */
+    private static final class LazyData {
+        static final Map<String, Map<String, Map<String, Map<String, List<Double>>>>> SOLUTIONS = loadSolutions();
+    }
 
     private static final Map<LeverBlock, List<Double>> solutions = new EnumMap<>(LeverBlock.class);
     private static int patternIdentifier = -1;
@@ -273,7 +276,7 @@ public final class WaterSolverFeature {
      */
     public static Map<String, List<Double>> bundledSolution(boolean optimizedPath, int identifier,
                                                             String extendedSlots) {
-        return SOLUTIONS
+        return LazyData.SOLUTIONS
                 .getOrDefault(String.valueOf(optimizedPath), Map.of())
                 .getOrDefault(String.valueOf(identifier), Map.of())
                 .get(extendedSlots);

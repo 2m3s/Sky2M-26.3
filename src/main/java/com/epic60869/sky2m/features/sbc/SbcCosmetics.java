@@ -34,7 +34,8 @@ import java.util.function.Consumer;
 
 /**
  * Cosmetics from the Sky2M server: each player's supporter tier symbol and shown emblem ("badge" in the protocol;
- * drawn before their name in chat and nametags, after it in the tab list) and cape. The table ({@code cosmetics}) is
+ * drawn before their name in chat and nametags, after it in the tab list), cape and look (a mob or a 3D model staff gave
+ * them, drawn by Play as Mob). The table ({@code cosmetics}) is
  * sent after hello and on every change. Capes and image emblems are downloaded once per URL (the URL changes when the
  * picture does) and kept in config/sky2m/capes and config/sky2m/emblems.
  */
@@ -46,7 +47,14 @@ public final class SbcCosmetics {
         }
     }
 
-    public record Entry(Symbol tier, Symbol badge, String capeName, String capeUrl) {}
+    /**
+     * A model from the server: where to download it, its version and SHA-256 (so a copy is kept until it changes), and
+     * how it is placed (set per model on the website).
+     */
+    public record ModelRef(String id, String name, String url, String ext, int version, String hash, float scale, float turn, boolean fit) {}
+
+    /** {@code mob}: a mob id or ""; {@code model}: a model or null. At most one is set. */
+    public record Entry(Symbol tier, Symbol badge, String capeName, String capeUrl, String mob, ModelRef model) {}
 
     public record Cape(Identifier texture, int width, int height) {}
 
@@ -73,8 +81,9 @@ public final class SbcCosmetics {
                     UUID uuid = Sbc.uuid(Sbc.str(o, "minecraftUuid"));
                     if (uuid == null) continue;
                     JsonObject cape = Sbc.obj(o, "cape");
+                    JsonObject look = Sbc.obj(o, "look");
                     parsed.put(uuid, new Entry(symbol(Sbc.obj(o, "tier")), symbol(Sbc.obj(o, "badge")),
-                        Sbc.str(cape, "name"), Sbc.str(cape, "url")));
+                        Sbc.str(cape, "name"), Sbc.str(cape, "url"), Sbc.str(look, "mob"), modelRef(Sbc.obj(look, "model"))));
                 }
                 if (!parsed.equals(table)) com.epic60869.sky2m.Sky2MNick.invalidateCache();
                 table = Map.copyOf(parsed);
@@ -99,6 +108,26 @@ public final class SbcCosmetics {
             }
             default -> {}
         }
+    }
+
+    static ModelRef modelRef(JsonObject o) {
+        if (o == null || Sbc.str(o, "id").isBlank() || Sbc.str(o, "url").isBlank()) return null;
+        return new ModelRef(Sbc.str(o, "id"), Sbc.str(o, "name"), Sbc.str(o, "url"), Sbc.str(o, "ext"),
+            o.has("version") ? o.get("version").getAsInt() : 1, Sbc.str(o, "hash"),
+            o.has("scale") ? o.get("scale").getAsFloat() : 1f, o.has("turn") ? o.get("turn").getAsFloat() : 0f,
+            !o.has("fit") || o.get("fit").getAsBoolean());
+    }
+
+    /** The mob the player plays as ("" for none), when models are on. */
+    public static String mobFor(UUID uuid) {
+        Entry entry = entry(uuid);
+        return entry == null || entry.mob() == null || !Flags.isEnabled("cosmetics.models") ? "" : entry.mob();
+    }
+
+    /** The model the player looks like, or null, when models are on. */
+    public static ModelRef modelFor(UUID uuid) {
+        Entry entry = entry(uuid);
+        return entry == null || !Flags.isEnabled("cosmetics.models") ? null : entry.model();
     }
 
     static Symbol symbol(JsonObject o) {
@@ -133,7 +162,7 @@ public final class SbcCosmetics {
      * compact tab rebuilds lines from legacy colour codes and prints an RGB colour as "<#55CCFF>" text instead.
      */
     private static Component bare(UUID uuid, boolean legacy) {
-        if (!Sbc.config().cosmetics.symbols || !Flags.isEnabled("cosmetics")) return null;
+        if (!Sbc.config().cosmetics.symbols || !Flags.isEnabled("cosmetics.emblems")) return null;
         Entry entry = entry(uuid);
         if (entry == null || (entry.tier() == null && entry.badge() == null)) return null;
         MutableComponent out = Component.empty();
@@ -227,7 +256,7 @@ public final class SbcCosmetics {
         Path dir = Minecraft.getInstance().gameDirectory.toPath().resolve("config").resolve("sky2m").resolve(folder);
         String hash = hash(url);
         Path file = dir.resolve(hash + ".png");
-        Thread thread = new Thread(() -> {
+        IMAGE_POOL.execute(() -> {
             try {
                 byte[] bytes;
                 if (Files.exists(file)) {
@@ -254,10 +283,15 @@ public final class SbcCosmetics {
                 LOADING.remove(url);
                 System.err.println("[Sky2M] " + what + " download failed (" + url + "): " + e.getMessage());
             }
-        }, "Sky2M " + what.toLowerCase(java.util.Locale.ROOT) + " download");
-        thread.setDaemon(true);
-        thread.start();
+        });
     }
+
+    /** Cape and emblem downloads share two threads instead of one thread each. */
+    private static final java.util.concurrent.ExecutorService IMAGE_POOL = java.util.concurrent.Executors.newFixedThreadPool(2, r -> {
+        Thread thread = new Thread(r, "Sky2M cosmetic image download");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     static String hash(String url) {
         try {
@@ -281,9 +315,21 @@ public final class SbcCosmetics {
     }
 
     public static void openScreen() {
+        openScreen("");
+    }
+
+    /** /s2 cosmetics, or straight on one page ("model": /s2 playasmob and the Play as Mob settings). */
+    public static void openScreen(String page) {
         if (!Flags.check("cosmetics")) return;
         SbcNet.sendAuthed(Sbc.packet("cosmeticsGet"));
-        Compat.queueOpenScreen(new SbcCosmeticsScreen());
+        Compat.queueOpenScreen(new SbcCosmeticsScreen(page));
+    }
+
+    /** Your look: "" (normal), a mob id or "model:<id>". Leaves your emblem and cape alone. */
+    static void selectLook(String look) {
+        JsonObject p = Sbc.packet("cosmeticsSelect");
+        p.addProperty("look", look == null ? "" : look);
+        SbcNet.sendAuthed(p);
     }
 
     static void select(String badge, String cape) {

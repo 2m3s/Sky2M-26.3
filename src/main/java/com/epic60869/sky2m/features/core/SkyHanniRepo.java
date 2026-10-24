@@ -35,6 +35,23 @@ public final class SkyHanniRepo {
         });
     }
 
+    /**
+     * Like {@link #load}, but the bundled copy is also read on the repo thread (so startup doesn't wait for it). Only for
+     * consumers that cope with the data not being there yet; the bundled copy is still delivered before the live one.
+     */
+    public static void loadAsync(String name, Consumer<JsonObject> consumer) {
+        RepoItems.runAsync(() -> {
+            JsonObject bundled = bundled(name);
+            if (bundled != null) accept(name, bundled, consumer);
+            try {
+                JsonObject live = JsonParser.parseString(RepoItems.skyHanniRepoFile("constants/" + name + ".json")).getAsJsonObject();
+                accept(name, live, consumer);
+            } catch (Exception e) {
+                LOGGER.warn("[Sky2M] Couldn't download SkyHanni's {}.json, using the bundled copy: {}", name, e.toString());
+            }
+        });
+    }
+
     private static void accept(String name, JsonObject json, Consumer<JsonObject> consumer) {
         try {
             consumer.accept(json);

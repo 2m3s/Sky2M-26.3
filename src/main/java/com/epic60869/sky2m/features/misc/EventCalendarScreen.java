@@ -53,7 +53,7 @@ public final class EventCalendarScreen extends Screen {
             g.text(font, e.name() + crops, left + 6, y, 0xFF000000 | EventCalendar.colour(e.id()), false);
             String when = EventCalendar.countdown(e, now);
             g.text(font, when, left + w - 6 - font.width(when), y, now >= e.start() ? 0xFF55FF55 : 0xFFF3F6FF, false);
-            if (config != null && config.reminders && EventCalendar.reminderMinutes(config, e) >= 0) {
+            if (config != null && config.reminders && EventCalendar.remindersEnabled(config, e)) {
                 g.text(font, "•", left + w - 12 - font.width(when), y, 0xFFFFD35A, false);
             }
             y += 12;

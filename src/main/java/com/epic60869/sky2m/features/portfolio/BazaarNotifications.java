@@ -68,7 +68,7 @@ public final class BazaarNotifications {
 
     private static Sky2MConfig.BazaarNotificationsSettings config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.bazaar;
+        return c == null ? null : c.inventory.bazaar;
     }
 
     public static void init() {

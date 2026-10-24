@@ -1,6 +1,7 @@
 package com.epic60869.sky2m;
 
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -92,7 +93,7 @@ public final class Sky2MFoxyScare {
     private Sky2MFoxyScare() {}
 
     public static void init() {
-        HudElementRegistry.addLast(HUD_ID, (graphics, delta) -> {
+        HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST, HUD_ID, (graphics, delta) -> {
             // The HUD is drawn under menus; with one open it's drawn after the menu instead.
             if (Minecraft.getInstance().gui.screen() == null) render(graphics);
         });

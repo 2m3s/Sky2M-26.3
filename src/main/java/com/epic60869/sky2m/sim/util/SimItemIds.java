@@ -50,7 +50,7 @@ public final class SimItemIds {
             return false;
         }
         ServerData server = client.getCurrentServer();
-        return server != null && server.ip != null && server.ip.toLowerCase(Locale.ROOT).contains("hypixel");
+        return server != null && com.epic60869.sky2m.custom.util.Compat.isHypixelAddress(server.ip);
     }
 
     public static ResolvableProfile skullProfile(String textureValue) {

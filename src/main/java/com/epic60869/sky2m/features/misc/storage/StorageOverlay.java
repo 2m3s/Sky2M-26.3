@@ -38,13 +38,13 @@ public final class StorageOverlay {
     /** Firmament's StorageOverlay.TConfig. */
     public static Sky2MConfig.StorageOverlaySettings config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null || c.misc.storageOverlaySettings == null ? DEFAULTS : c.misc.storageOverlaySettings;
+        return c == null || c.inventory.storageOverlaySettings == null ? DEFAULTS : c.inventory.storageOverlaySettings;
     }
 
     /** "Always Open Overlay": replace the storage menus without /s2 storage. */
     public static boolean alwaysReplace() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null || c.misc.storageOverlaySettings.enabled;
+        return c == null || c.inventory.storageOverlaySettings.enabled;
     }
 
     public static int colour(String special) {

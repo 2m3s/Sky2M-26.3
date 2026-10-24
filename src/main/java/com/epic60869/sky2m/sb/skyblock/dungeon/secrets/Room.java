@@ -374,7 +374,8 @@ public class Room implements Tickable, Renderable {
 	}
 
 	private static boolean notInDoorway(BlockPos pos) {
-		if (pos.getY() < 66 || pos.getY() > 73) {
+		int y = pos.getY() - DungeonMapUtils.yShift();
+		if (y < 66 || y > 73) {
 			return true;
 		}
 		int x = Math.floorMod(pos.getX() - 8, 32);
@@ -529,6 +530,96 @@ public class Room implements Tickable, Renderable {
 
 		// Calculate max secrets based off room id, surely this isn't going to be wrong for some rooms
 		this.maxSecrets = Utils.parseInt(name.replaceAll("\\D", "")).orElse(-1);
+	}
+
+	private long simForceRetryAt;
+	private String simFailure = "";
+
+	/** Why the last {@link #matchBySimName} did not match (empty before the first attempt). */
+	public String simFailure() {
+		return simFailure;
+	}
+
+	/** Room names as compared between the Dungeon Sim's rooms and the room data: lower case letters only, without the secret count suffix. */
+	private static String simKey(String name) {
+		String n = name.toLowerCase(Locale.ROOT).replaceAll("-\\d+$", "").replaceAll("[^a-z]", "");
+		return switch (n) {
+			case "withermancer" -> "withermancers";
+			case "dinosite" -> "dinodigsite";
+			case "silversword" -> "silverssword";
+			case "mines" -> "mithrilcave";
+			case "rails" -> "railtrack";
+			case "pipes" -> "sewer";
+			case "staircase" -> "doublestair";
+			default -> n;
+		};
+	}
+
+	/**
+	 * Sky2M: matches this room by name for the Dungeon Sim, which knows what room it placed. Instead of narrowing the room
+	 * down by the blocks around the player, the sim's name picks the room data and the direction is the one whose blocks
+	 * agree most with the world. Waypoints load exactly as for a normal match.
+	 *
+	 * @return whether the room is matched afterwards
+	 */
+	public boolean matchBySimName(ClientLevel world, String simName) {
+		if (isMatched()) return true;
+		Map<String, int[]> data = roomsData;
+		List<MutableTriple<Direction, Vector2ic, List<String>>> possible = possibleRooms;
+		if (data == null || possible == null || possible.isEmpty()) {
+			simFailure = "room data not loaded for this shape (" + shape + ", " + (data == null ? 0 : data.size()) + " rooms)";
+			return false;
+		}
+		if (findRoom != null && !findRoom.isDone()) return false;
+		long now = System.currentTimeMillis();
+		if (now < simForceRetryAt) return false;
+		simForceRetryAt = now + 2000;
+		String wanted = simKey(simName);
+		String roomName = null;
+		for (String candidate : data.keySet()) {
+			if (simKey(candidate).equals(wanted)) {
+				roomName = candidate;
+				break;
+			}
+		}
+		if (roomName == null) {
+			simFailure = "name '" + simName + "' (" + wanted + ") not among the " + data.size() + " " + shape + " rooms, e.g. " + data.keySet().stream().limit(4).toList();
+			return false;
+		}
+		int[] blocks = data.get(roomName);
+		int stride = Math.max(1, blocks.length / 800);
+		Direction bestDirection = null;
+		Vector2ic bestCorner = null;
+		int bestHits = 0;
+		for (MutableTriple<Direction, Vector2ic, List<String>> candidate : possible) {
+			int hits = 0;
+			for (int i = 0; i < blocks.length; i += stride) {
+				int block = blocks[i];
+				BlockPos relative = new BlockPos(block >>> 24, block >> 16 & 0xFF, block >> 8 & 0xFF);
+				BlockPos actual = DungeonMapUtils.relativeToActual(candidate.getLeft(), candidate.getMiddle(), relative);
+				byte id = DungeonManager.NUMERIC_ID.getByte(BuiltInRegistries.BLOCK.getKey(world.getBlockState(actual).getBlock()).toString());
+				if (id == (byte) block) hits++;
+			}
+			if (hits > bestHits) {
+				bestHits = hits;
+				bestDirection = candidate.getLeft();
+				bestCorner = candidate.getMiddle();
+			}
+		}
+		if (bestDirection == null) {
+			simFailure = "found " + roomName + " but 0 of " + ((blocks.length + stride - 1) / stride) + " sampled blocks agree in any direction (y shift " + DungeonMapUtils.yShift() + ")";
+			return false;
+		}
+		simFailure = "";
+		name = roomName;
+		direction = bestDirection;
+		physicalCornerPos = bestCorner;
+		DungeonManager.LOGGER.info("[Skyblocker Dungeon Secrets] Sim room {} matched by name as {} facing {} ({} of {} sampled blocks agree)", simName, roomName, bestDirection, bestHits, (blocks.length + stride - 1) / stride);
+		roomMatched();
+		matchState = MatchState.MATCHED;
+		DungeonEvents.ROOM_MATCHED.invoker().onRoomMatched(this);
+		discard();
+		return true;
 	}
 
 	/**

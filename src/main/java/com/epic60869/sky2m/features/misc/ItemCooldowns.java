@@ -83,7 +83,7 @@ public final class ItemCooldowns {
 
     private static SbcConfig.ItemCooldowns config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? new SbcConfig.ItemCooldowns() : c.misc.itemCooldowns;
+        return c == null ? new SbcConfig.ItemCooldowns() : c.inventory.itemCooldowns;
     }
 
     private static boolean enabled() {

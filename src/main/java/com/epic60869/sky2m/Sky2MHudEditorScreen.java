@@ -15,15 +15,24 @@ public final class Sky2MHudEditorScreen extends Screen {
     /** GLFW key code for the keypad minus key. */
     private static final int KEYPAD_MINUS = 333;
     private static final int TOP_MARGIN = 6, BUTTON_HEIGHT = 20, BUTTON_GAP = 4;
-    private static final String HELP = "Drag to move • Scroll to resize • Right-click opens its settings • Middle-click toggles background • Arrow keys move";
+    private static final String HELP = "Drag to move • Scroll to resize • Right-click opens its settings • Middle-click toggles background • Arrow keys move • Hold Alt to drag without snapping";
     /** Where the top button rows end; the title and help text go under them. */
     private int buttonsBottom;
     private final Screen parent;
     private final List<EditableHud> elements = new ArrayList<>();
     private EditableHud selected;
     private String categoryFilter = "All";
+    /**
+     * Like SkyHanni's editor, only HUDs that were on screen in the last 10 seconds are listed, measured from when this
+     * screen opened (nothing draws while it is up). "Show All" lists every HUD that is turned on.
+     */
+    private final long openedAt = com.epic60869.sky2m.features.core.Sky2MHuds.lastLive();
+    private boolean showAll;
     private int dragOffsetX;
     private int dragOffsetY;
+    /** Snap guide lines shown while dragging (screen coordinates, -1 for none). */
+    private int guideX = -1, guideY = -1;
+    private static final int SNAP_DISTANCE = 4;
 
     public Sky2MHudEditorScreen(Screen parent) {
         super(Component.literal("Sky2M Position Editor"));
@@ -43,6 +52,11 @@ public final class Sky2MHudEditorScreen extends Screen {
                 init();
             }).size(buttonWidth, BUTTON_HEIGHT).build());
         }
+        buttons.add(Button.builder(Component.literal(showAll ? "Show: All" : "Show: On screen"), b -> {
+            showAll = !showAll;
+            selected = null;
+            init();
+        }).size(96, BUTTON_HEIGHT).build());
         buttons.add(Button.builder(Component.literal("Done"), b -> onClose()).size(70, BUTTON_HEIGHT).build());
         buttonsBottom = layoutTopCentre(buttons);
         for (Button button : buttons) addRenderableWidget(button);
@@ -122,14 +136,14 @@ public final class Sky2MHudEditorScreen extends Screen {
                 (x, y) -> { config.misc.pets.display.x = Math.max(0, x); config.misc.pets.display.y = Math.max(0, y); },
                 Sky2MNopoFeatures::petHudWidth, Sky2MNopoFeatures::petHudHeight, Sky2MNopoFeatures::renderPetHudPreview, "pet"));
         }
-        if (config != null && config.dungeons.map.enabled) {
+        if (config != null && (config.dungeons.map.enabled || com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.inSim())) {
             var map = config.dungeons.map;
             elements.add(new EditableHud("Dungeon Map", () -> map.x, () -> map.y,
                 (x, y) -> { map.x = Math.max(0, x); map.y = Math.max(0, y); },
-                () -> Math.round(128 * map.scale), () -> Math.round(128 * map.scale),
+                () -> Math.round(com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.width() * map.scale), () -> Math.round(com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.height() * map.scale),
                 (g, x, y) -> {
-                    int size = Math.round(128 * map.scale);
-                    g.fill(x, y, x + size, y + size, 0x80202020);
+                    int size = Math.round(com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.width() * map.scale);
+                    g.fill(x, y, x + size, y + Math.round(com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.height() * map.scale), 0x80202020);
                     g.centeredText(font, Component.literal("Dungeon Map"), x + size / 2, y + size / 2 - 4, 0xFFFFFFFF);
                 }, "dmap"));
         }
@@ -137,6 +151,7 @@ public final class Sky2MHudEditorScreen extends Screen {
         for (var hud : com.epic60869.sky2m.features.core.Sky2MHuds.elements()) {
             // Only HUDs whose feature is turned on; turn one on in /s2 to place it.
             if (!com.epic60869.sky2m.features.core.Sky2MHuds.turnedOn(hud)) continue;
+            if (!showAll && !com.epic60869.sky2m.features.core.Sky2MHuds.drawnRecently(hud.id(), openedAt)) continue;
             var placement = com.epic60869.sky2m.features.core.Sky2MHuds.placement(hud.id());
             elements.add(new EditableHud(hud.name(), () -> placement.x, () -> placement.y,
                 (x, y) -> { placement.x = Math.max(0, x); placement.y = Math.max(0, y); },
@@ -173,10 +188,13 @@ public final class Sky2MHudEditorScreen extends Screen {
             textY += 10;
         }
         if (elements.isEmpty()) {
-            g.centeredText(font, Component.literal("No HUDs are turned on. Turn one on in /s2 to place it here."), width / 2, height / 2 - 20, 0xFFB8BEC9);
+            g.centeredText(font, Component.literal(showAll ? "No HUDs are turned on. Turn one on in /s2 to place it here." : "No HUDs were on screen just now. Press Show to list every HUD that is turned on."), width / 2, height / 2 - 20, 0xFFB8BEC9);
         } else if (visibleElements().isEmpty()) {
             g.centeredText(font, Component.literal("No enabled HUDs in " + categoryFilter + ". Choose All or enable a feature."), width / 2, height / 2 - 20, 0xFFB8BEC9);
         }
+
+        if (guideX >= 0) g.fill(guideX, 0, guideX + 1, height, 0xAA55FFFF);
+        if (guideY >= 0) g.fill(0, guideY, width, guideY + 1, 0xAA55FFFF);
 
         EditableHud hovered = null;
         boolean onButton = overButton(mouseX, mouseY);
@@ -206,14 +224,15 @@ public final class Sky2MHudEditorScreen extends Screen {
 
         if (hovered != null) {
             int tx = Math.min(mouseX + 12, width - 235);
-            int ty = Math.min(mouseY + 12, height - 96);
-            g.fill(tx, ty, tx + 225, ty + 94, 0xF0101115);
+            int ty = Math.min(mouseY + 12, height - 110);
+            g.fill(tx, ty, tx + 225, ty + 108, 0xF0101115);
             g.text(font, Component.literal(hovered.name()), tx + 8, ty + 8, 0xFFFFFFFF, true);
             g.text(font, Component.literal("x: " + hovered.x() + ", y: " + hovered.y()), tx + 8, ty + 23, 0xFFD0D5DC, false);
             g.text(font, Component.literal("Left-click + drag to move"), tx + 8, ty + 37, 0xFF9EA5B1, false);
             g.text(font, Component.literal("Scroll to resize"), tx + 8, ty + 51, 0xFF9EA5B1, false);
             g.text(font, Component.literal("Right-click to open its settings"), tx + 8, ty + 65, 0xFF9EA5B1, false);
             g.text(font, Component.literal("Middle-click: background " + (hovered.background() ? "ON" : "OFF")), tx + 8, ty + 79, 0xFF9EA5B1, false);
+            g.text(font, Component.literal("Anchor: " + anchorName(hovered)), tx + 8, ty + 93, 0xFF9EA5B1, false);
         } else if (selected == null) {
             g.text(font, Component.literal("Sky2M Position Editor"), 18, height - 42, 0xFF9097A3, true);
             g.text(font, Component.literal("Select a HUD element to edit its position and scale."), 18, height - 26, 0xFF707783, false);
@@ -266,13 +285,51 @@ public final class Sky2MHudEditorScreen extends Screen {
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
         if (selected == null || event.button() != com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) return super.mouseDragged(event, dx, dy);
 
-        selected.setClamped((int) event.x() - dragOffsetX, (int) event.y() - dragOffsetY);
+        int nx = (int) event.x() - dragOffsetX, ny = (int) event.y() - dragOffsetY;
+        guideX = -1;
+        guideY = -1;
+        if (!event.hasAltDown()) {
+            int w = selected.width(), h = selected.height();
+            // Candidate lines on each axis: screen edges and centre, then every other HUD's edges and centre.
+            List<int[]> xs = new ArrayList<>(), ys = new ArrayList<>();
+            xs.add(new int[]{0}); xs.add(new int[]{width - w}); xs.add(new int[]{(width - w) / 2});
+            ys.add(new int[]{0}); ys.add(new int[]{height - h}); ys.add(new int[]{(height - h) / 2});
+            for (EditableHud o : visibleElements()) {
+                if (o == selected) continue;
+                xs.add(new int[]{o.x() - w, o.x()});
+                xs.add(new int[]{o.x(), o.x()});
+                xs.add(new int[]{o.x() + o.width() - w, o.x() + o.width()});
+                xs.add(new int[]{o.x() + o.width(), o.x() + o.width()});
+                xs.add(new int[]{o.x() + (o.width() - w) / 2, o.x() + o.width() / 2});
+                ys.add(new int[]{o.y() - h, o.y()});
+                ys.add(new int[]{o.y(), o.y()});
+                ys.add(new int[]{o.y() + o.height() - h, o.y() + o.height()});
+                ys.add(new int[]{o.y() + o.height(), o.y() + o.height()});
+                ys.add(new int[]{o.y() + (o.height() - h) / 2, o.y() + o.height() / 2});
+            }
+            int bestX = SNAP_DISTANCE + 1, bestY = SNAP_DISTANCE + 1, rawX = nx, rawY = ny;
+            for (int[] c : xs) {
+                int dist = Math.abs(c[0] - rawX);
+                if (dist < bestX) { bestX = dist; nx = c[0]; guideX = c.length > 1 ? c[1] : (c[0] == 0 ? 0 : c[0] == width - w ? width - 1 : width / 2); }
+            }
+            for (int[] c : ys) {
+                int dist = Math.abs(c[0] - rawY);
+                if (dist < bestY) { bestY = dist; ny = c[0]; guideY = c.length > 1 ? c[1] : (c[0] == 0 ? 0 : c[0] == height - h ? height - 1 : height / 2); }
+            }
+            if (bestX > SNAP_DISTANCE) guideX = -1;
+            if (bestY > SNAP_DISTANCE) guideY = -1;
+        }
+        selected.setClamped(nx, ny);
         return true;
     }
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) save();
+        if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) {
+            guideX = -1;
+            guideY = -1;
+            save();
+        }
         return super.mouseReleased(event);
     }
 
@@ -334,6 +391,15 @@ public final class Sky2MHudEditorScreen extends Screen {
             if (inside(mx, my, e.x(), e.y(), e.width(), e.height())) return e;
         }
         return null;
+    }
+
+    /** Which part of the screen the HUD is nearest to, e.g. "Top Left" or "Centre"; HUDs are stored as screen fractions. */
+    private String anchorName(EditableHud e) {
+        double cx = (e.x() + e.width() / 2.0) / Math.max(1, width), cy = (e.y() + e.height() / 2.0) / Math.max(1, height);
+        String v = cy < 0.34 ? "Top" : cy > 0.66 ? "Bottom" : "Middle";
+        String h = cx < 0.34 ? "Left" : cx > 0.66 ? "Right" : "Centre";
+        if (v.equals("Middle") && h.equals("Centre")) return "Centre";
+        return v + " " + h;
     }
 
     private static boolean inside(int x, int y, int l, int t, int w, int h) {

@@ -182,6 +182,17 @@ public final class OdinTerminals {
         handler.resolve(menu.slots, slot);
     }
 
+    /**
+     * The whole menu arrived at once (the opening contents, or a resync after a rejected click): the server's state
+     * replaces any clicks still waiting for an answer, and the terminal is solved again from every slot.
+     */
+    public static void onContents(AbstractContainerMenu menu) {
+        Handler handler = current;
+        if (handler == null || menu != handler.menu) return;
+        handler.clicked.clear();
+        handler.resolve(menu.slots, -1);
+    }
+
     /** @return true to cancel the vanilla click. */
     public static boolean onSlotClicked(int slot, int button) {
         Handler handler = current;
@@ -227,13 +238,19 @@ public final class OdinTerminals {
         int rows = handler.type().windowSize / 9;
         graphics.fill(7, 17, 7 + 9 * 18, 17 + rows * 18, colour(config.backgroundColor, 0x80262626));
         if (handler.type() == Type.MELODY) {
-            // Like Odin's Melody GUI: every lane (columns 1-5) and button (column 7) in rows 1-4 gets a background cell,
-            // so the board and buttons show even though the menu's own items are hidden.
+            // Like Odin's Melody GUI: every lane (columns 1-5) and button (column 7) in rows 1-3 gets a background cell,
+            // so the board and buttons show even though the menu's own items are hidden. Melody has 3 rows since
+            // Hypixel's 2026 dungeon update; row 4 holds the bottom of the purple column, drawn like the top (Odin).
             int background = colour(config.melodyBackgroundColor, 0xFF262626);
+            int magenta = handler.solution.size() > 1 ? handler.solution.get(1) : -1;
             for (Slot slot : screen.getMenu().slots) {
                 int row = slot.index / 9;
                 int col = slot.index % 9;
-                if (slot.index >= handler.type().windowSize || row < 1 || row > 4 || !(col >= 1 && col <= 5 || col == 7)) continue;
+                if (magenta >= 0 && slot.index == magenta + 36) {
+                    graphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, colour(config.melodyColumnColor, 0xFFAA00AA));
+                    continue;
+                }
+                if (slot.index >= handler.type().windowSize || row < 1 || row > 3 || !(col >= 1 && col <= 5 || col == 7)) continue;
                 graphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, background);
             }
         }
@@ -360,7 +377,7 @@ public final class OdinTerminals {
             if (column != null) noammSlot(g, config, column[0] * NOAMM_CELL, 0, NOAMM_CELL, height, NOAMM_MELODY_COLUMN);
             int[] cell = pane < 0 ? null : noammCell(type, pane);
             if (cell != null) noammSlot(g, config, cell[0] * NOAMM_CELL, cell[1] * NOAMM_CELL, NOAMM_CELL, NOAMM_CELL, NOAMM_MELODY_INDICATOR);
-            for (int slot : new int[]{16, 25, 34, 43}) {
+            for (int slot : MELODY_BUTTONS) {
                 int[] button = noammCell(type, slot);
                 if (button == null) continue;
                 int colour = press < 0 ? 0x40FFFFFF : slot == press ? NOAMM_SOLUTION : NOAMM_WRONG;
@@ -447,7 +464,7 @@ public final class OdinTerminals {
                 button = rubix.rightClick.contains(slot) ? 1 : 0;
             }
             case MELODY -> {
-                if (slot != 16 && slot != 25 && slot != 34 && slot != 43) return;
+                if (!isMelodyButton(slot)) return;
             }
             default -> {
                 if (!handler.solution.contains(slot)) return;
@@ -510,6 +527,7 @@ public final class OdinTerminals {
             boolean blockWrong = config == null || config.blockMisclicks;
             if (protect()) return;
             if (blockWrong && !canClick(slot, button)) return;
+            if (canClick(slot, button)) F7Extras.onTerminalClick();
             int mouse = button == 1 && type() == Type.RUBIX ? 1 : 2;
             clicked.add(new int[]{slot, mouse});
             lastClick = System.currentTimeMillis();
@@ -725,6 +743,19 @@ public final class OdinTerminals {
         }
     }
 
+    /** Whether a terminal is open and being solved. */
+    static boolean terminalOpen() {
+        return current != null;
+    }
+
+    /** Melody's buttons (column 7 of rows 1-3): Melody has had 3 rows since Hypixel's 2026 dungeon update (Odin 0.3.6). */
+    private static final int[] MELODY_BUTTONS = {16, 25, 34};
+
+    private static boolean isMelodyButton(int slot) {
+        for (int button : MELODY_BUTTONS) if (button == slot) return true;
+        return false;
+    }
+
     static final class Melody extends Handler {
         Type type() { return Type.MELODY; }
 
@@ -747,7 +778,7 @@ public final class OdinTerminals {
 
         @Override
         boolean canClick(int slot, int button) {
-            return slot == 16 || slot == 25 || slot == 34 || slot == 43;
+            return isMelodyButton(slot);
         }
 
         @Override

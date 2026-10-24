@@ -74,6 +74,8 @@ public final class ScoreCalculator {
     private static int puzzlesDone;
     private static int score;
     private static int ticks;
+    private static int simTotalRooms;
+    private static int simTotalSecrets;
 
     private ScoreCalculator() {}
 
@@ -110,6 +112,8 @@ public final class ScoreCalculator {
         maxPuzzles = 0;
         puzzlesDone = 0;
         score = 0;
+        simTotalRooms = 0;
+        simTotalSecrets = 0;
     }
 
     public static boolean started() { return started; }
@@ -119,7 +123,7 @@ public final class ScoreCalculator {
     public static int deaths() { return deathCount; }
     public static double secretPercentage() { return secretPercentage; }
     public static int secondsElapsed() { return secondsElapsed; }
-    public static boolean mimicKilled() { return mimicKilled || DungeonScore.wasMimicKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.MIMIC_KILLED); }
+    public static boolean mimicKilled() { return mimicKilled || (simActive() && com.epic60869.sky2m.sim.roomsim.SimScore.isMimicKilled()) || DungeonScore.wasMimicKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.MIMIC_KILLED); }
     /** Like {@link #mimicKilled()}, but only when someone saw it die, not guessed from all the secrets being found. */
     public static boolean mimicSeenKilled() { return mimicKilled || DungeonScore.wasMimicSeenKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.MIMIC_KILLED); }
     public static boolean princeKilled() { return princeKilled || DungeonScore.wasPrinceKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.PRINCE_KILLED); }
@@ -200,10 +204,39 @@ public final class ScoreCalculator {
                 if (secondsElapsed > 0) started = true;
             }
         }
+        if (simActive()) feedSim();
         recalculate();
     }
 
+    private static boolean simActive() {
+        return com.epic60869.sky2m.sim.roomsim.SimState.isActive();
+    }
+
+    /** Dungeon Sim: its sidebar has no clock or Cleared line, so the run clock, deaths and room total come from the sim itself. */
+    private static void feedSim() {
+        if (!com.epic60869.sky2m.sim.roomsim.SimRun.isRunning()) return;
+        started = true;
+        secondsElapsed = (int) (com.epic60869.sky2m.sim.roomsim.SimRun.elapsedMs() / 1000L);
+        deathCount = com.epic60869.sky2m.sim.roomsim.SimScore.deaths();
+        simTotalRooms = com.epic60869.sky2m.sim.roomsim.SimScore.roomsTotal();
+        simTotalSecrets = com.epic60869.sky2m.sim.roomsim.SimScore.secretsTotal();
+        bloodDone = true;
+    }
+
+    /** Total secrets in the dungeon: the sim's count, or worked out from the found count and the tab list's percentage. 0 until known. */
+    public static int totalSecrets() {
+        if (simActive() && simTotalSecrets > 0) return simTotalSecrets;
+        return secretPercentage > 0 ? (int) Math.round(foundSecrets * 100.0 / secretPercentage) : 0;
+    }
+
+    /** Secrets the floor asks for to fill the secrets part of the score (NoammAddons' required fraction of the total). */
+    public static int secretsNeeded() {
+        int total = totalSecrets();
+        return total <= 0 ? 0 : (int) Math.ceil(total * REQUIRED_SECRETS.getOrDefault(floorKey(), 1.0));
+    }
+
     private static int totalRooms() {
+        if (simActive() && simTotalRooms > 0) return simTotalRooms;
         return completedRooms > 0 && clearedPercentage > 0 ? (int) Math.floor(completedRooms / (clearedPercentage / 100.0) + 0.4) : 36;
     }
 
@@ -273,7 +306,7 @@ public final class ScoreCalculator {
         boolean party = milestone == 300 ? config.party300 : config.party270;
         String message = (milestone == 300 ? config.message300 : config.message270).replace("[score]", String.valueOf(milestone));
         Minecraft mc = Minecraft.getInstance();
-        if (party && mc.getConnection() != null) mc.getConnection().sendCommand("pc [S2M] " + message);
+        if (party && mc.getConnection() != null && !simActive()) mc.getConnection().sendCommand("pc [S2M] " + message);
         // NoammAddons' chat line: "270 score reached in 5m 12s || M7."
         if (config.timeMessage) {
             String floor = Sky2MLocation.dungeonFloor();

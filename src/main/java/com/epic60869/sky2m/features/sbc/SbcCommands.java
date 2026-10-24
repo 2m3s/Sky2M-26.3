@@ -44,6 +44,10 @@ public final class SbcCommands {
             new Help("/s2 react <id> <emoji>", "React to a message (or hover it with chat open)"),
             new Help("/s2 ignore <player> | discord <name> | list", "Stop seeing someone's messages"),
             new Help("/s2 unignore <player> | discord <name>", "See their messages again"),
+            new Help("/s2c join|create|leave <room>", "Join (or make) a private chat room, or leave it"),
+            new Help("/s2c rooms | use [room] | room <room> <msg>", "List your rooms, send plain /s2c messages to a room, or send to one"),
+            new Help("/s2c mute|unmute <player> | mutes", "Hide a player's Sky2M chat on your screen"),
+            new Help("/s2c block|unblock <player>", "Same as /s2 ignore / unignore"),
             new Help("/s2 nick", "Your nickname"))),
         new Section("Players", List.of(
             new Help("/s2 who", "Who's online with Sky2M"),
@@ -78,6 +82,7 @@ public final class SbcCommands {
         return ClientCommands.literal(root)
             .then(ClientCommands.literal("help").executes(c -> help()))
             .then(ClientCommands.literal("cosmetics").executes(c -> run(SbcCosmetics::openScreen)))
+            .then(ClientCommands.literal("playasmob").executes(c -> run(() -> SbcCosmetics.openScreen("model"))))
             .then(ClientCommands.literal("settings")
                 .executes(c -> {
                     SbcSettingsSync.list();

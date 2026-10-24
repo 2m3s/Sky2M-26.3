@@ -276,7 +276,7 @@ public final class GardenVisitors {
     public static void init(Path configDir) {
         file = configDir.resolve("sky2m").resolve("garden-visitors.json");
         load();
-        SkyHanniRepo.load("Garden", GardenVisitors::readRepo);
+        SkyHanniRepo.loadAsync("Garden", GardenVisitors::readRepo);
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> {
             visitors.clear();
@@ -709,7 +709,7 @@ public final class GardenVisitors {
         Player player = Minecraft.getInstance().player;
         if (player != null && player.isShiftKeyDown()) return InteractionResult.PASS;
         if (isVisitorOutside(entity) || (entity instanceof ArmorStand && visitorNearby(entity))) {
-            Sky2MAlerts.chat(Component.literal("Blocked you from interacting with a visitor. Sneak to bypass or change it in /s2 (Farming > Visitors).").withStyle(ChatFormatting.YELLOW));
+            Sky2MAlerts.chat(Component.literal("Blocked you from interacting with a visitor. Sneak to bypass or change it in /s2 (Garden > Visitors).").withStyle(ChatFormatting.YELLOW));
             return InteractionResult.FAIL;
         }
         return InteractionResult.PASS;
@@ -1323,11 +1323,16 @@ public final class GardenVisitors {
     private static boolean blockMessage(Component component) {
         VisitorConfig config = config();
         if (config == null) return false;
+        // Every chat line comes through here: the text is only read when one of the three options can use it.
+        boolean inGarden = Sky2MLocation.inGarden();
+        boolean gardenChat = inGarden && (config.hideChat || config.compactRewardChat);
+        if (!config.hypixelArrivedMessage && !gardenChat) return false;
         String text = ChatFormatting.stripFormatting(component.getString());
         if (config.hypixelArrivedMessage && ARRIVED.matcher(text).matches()) return true;
+        if (!gardenChat) return false;
         String legacy = SbcItems.legacy(component);
-        if (Sky2MLocation.inGarden() && config.hideChat && hideVisitorMessage(legacy)) return true;
-        return Sky2MLocation.inGarden() && config.compactRewardChat && compactChat(component, legacy.replace("§r", ""));
+        if (config.hideChat && hideVisitorMessage(legacy)) return true;
+        return config.compactRewardChat && compactChat(component, legacy.replace("§r", ""));
     }
 
     private static boolean hideVisitorMessage(String legacy) {
@@ -1669,7 +1674,7 @@ public final class GardenVisitors {
     }
 
     private static String keyName(int key) {
-        return InputConstants.Type.KEYBOARD.getOrCreate(key).getDisplayName().getString();
+        return com.epic60869.sky2m.custom.util.Input.bindName(key);
     }
 
     private static void clickSlot(AbstractContainerScreen<?> screen, int slot) {

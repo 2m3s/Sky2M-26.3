@@ -57,8 +57,9 @@ public class DungeonMap {
 
 	private static void extract(GuiGraphicsExtractor graphics) {
 		DungeonsConfig.DungeonMap dungeonMap = SkyblockerConfigManager.get().dungeons.dungeonMap;
-		if (shouldProcess() && dungeonMap.enableMap) {
-			extract(graphics, dungeonMap.mapX, dungeonMap.mapY, dungeonMap.mapScaling, dungeonMap.fancyMap);
+		// Sky2M: Dungeons > Dungeon Map > Map Style picks the look (Skyblocker, Stella, Devonian); the Dungeon Sim always draws it.
+		if (com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.inSim() || (shouldProcess() && dungeonMap.enableMap)) {
+			com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.render(graphics, dungeonMap.mapX, dungeonMap.mapY, dungeonMap.mapScaling);
 		}
 	}
 
@@ -157,7 +158,14 @@ public class DungeonMap {
 		return hovered;
 	}
 
+	/** When each decoration's error was last logged: it is hit every frame while the tab list's party is missing. */
+	private static final Map<String, Long> lastPlayerErrorLog = new java.util.HashMap<>();
+
 	private static void dungeonPlayerError(String decorationId, String reason, int i, DungeonPlayerManager.DungeonPlayer[] dungeonPlayers, Map<String, MapDecoration> mapDecorations) {
+		// Sky2M: at most once every 30 seconds per decoration and reason; per frame it wrote thousands of lines a minute.
+		long now = System.currentTimeMillis();
+		Long last = lastPlayerErrorLog.put(decorationId + "|" + reason, now);
+		if (last != null && now - last < 30_000L) return;
 		LOGGER.error("[Skyblocker Dungeon Map] Dungeon player for map decoration '{}' {}. Player list index (zero-indexed): {}. Player list: {}. Map decorations: {}", decorationId, reason, i, Arrays.toString(dungeonPlayers), mapDecorations);
 	}
 

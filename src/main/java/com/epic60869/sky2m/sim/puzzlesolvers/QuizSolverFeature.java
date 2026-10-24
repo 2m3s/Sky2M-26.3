@@ -36,7 +36,10 @@ import java.util.Map;
  */
 public final class QuizSolverFeature {
 
-    private static final Map<String, List<String>> ANSWERS = loadAnswers();
+    /** Loaded on first use, not at start-up. */
+    private static final class LazyData {
+        static final Map<String, List<String>> ANSWERS = loadAnswers();
+    }
 
     private static final class TriviaOption {
         BlockPos blockPos;
@@ -161,7 +164,7 @@ public final class QuizSolverFeature {
         // line always starts with its channel, rank or "name: " prefix, so requiring the question at the very
         // start keeps anyone quoting a question from overwriting the answers. startsWith rather than equals:
         // some keys are only the first line of a question Hypixel wraps ("...who sells stained").
-        for (Map.Entry<String, List<String>> entry : ANSWERS.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : LazyData.ANSWERS.entrySet()) {
             if (trimmed.startsWith(entry.getKey())) {
                 triviaAnswers = entry.getValue();
                 return;

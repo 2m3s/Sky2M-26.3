@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 public final class SpamFilters {
     /** What happens to a message a filter matches. */
     public enum Mode {
-        SHOW("Show"), HIDE("Hide"), SIDE_CHAT("Move to Side Chat");
+        SHOW("Show"), HIDE("Hide"), SIDE_CHAT("Side Chat");
 
         private final String label;
 

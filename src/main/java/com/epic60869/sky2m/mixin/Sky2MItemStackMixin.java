@@ -14,7 +14,9 @@ public abstract class Sky2MItemStackMixin {
     @ModifyReturnValue(method = "getHoverName", at = @At("RETURN"))
     private Component sky2m$customItemNames(Component original) {
         if (Compat.isOnSkyblock() && !Compat.bypassCustomNames) {
-            Component custom = CustomConfigManager.get().general.customItemNames.get(Compat.uuid((ItemStack) (Object) this));
+            // getHoverName is asked for all the time (every slot, tooltip and tick feature): nothing renamed, no lookup.
+            var names = CustomConfigManager.get().general.customItemNames;
+            Component custom = names.isEmpty() ? null : names.get(Compat.uuid((ItemStack) (Object) this));
             return custom != null ? custom : com.epic60869.sky2m.features.misc.RevertMasterStars.apply(original);
         }
 

@@ -27,7 +27,7 @@ public final class RevertMasterStars {
     public static Component apply(Component name) {
         if (name == null) return null;
         Sky2MConfig config = Sky2MConfig.current();
-        if (config == null || !config.misc.revertMasterStars) return name;
+        if (config == null || !config.inventory.revertMasterStars) return name;
         Component cached = CACHE.get(name);
         if (cached != null) return cached;
         Component result = revert(name);

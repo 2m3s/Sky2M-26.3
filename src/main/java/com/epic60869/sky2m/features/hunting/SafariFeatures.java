@@ -228,27 +228,33 @@ public final class SafariFeatures {
             }
             case ONLY_CURRENT -> biome == null ? List.of() : List.of(biome);
         };
+        boolean critters = c.checklist.style != HuntingConfig.Checklist.ChecklistStyle.SKYHANNI;
         List<Row> out = new ArrayList<>();
+        if (critters) out.add(new Row(Component.literal("§e§lUnique Critters"), null));
         for (Biome b : detailed) {
-            out.add(header(b));
+            out.add(header(b, critters));
             for (String name : SHARDS.get(b)) {
                 boolean got = caught.getOrDefault(name, 0) > 0;
                 if (got && c.checklist.hideCaught) continue;
                 AttributeShards.Shard shard = AttributeShards.byName(name);
                 String colour = shard == null ? "§f" : shard.rarityColour();
-                out.add(new Row(Component.literal("§7- (" + (got ? "§a✔" : "§c✖") + "§7) " + colour + name), shard));
+                String text = critters ? " " + (got ? "§a✔ " : "§c✖ ") + colour + name
+                    : "§7- (" + (got ? "§a✔" : "§c✖") + "§7) " + colour + name;
+                out.add(new Row(Component.literal(text), shard));
             }
         }
         if (c.checklist.runDisplay == HuntingConfig.Checklist.ChecklistDisplay.ONLY_CURRENT) {
-            for (Biome b : Biome.values()) if (!detailed.contains(b)) out.add(header(b));
+            for (Biome b : Biome.values()) if (!detailed.contains(b)) out.add(header(b, critters));
         }
         rows = out;
     }
 
-    private static Row header(Biome b) {
+    /** "Cavern - 3/9" (SkyHanni), or "Cavern: 3/9" in the Unique Critters style (green once the biome is done). */
+    private static Row header(Biome b, boolean critters) {
         List<String> shards = SHARDS.get(b);
         long got = shards.stream().filter(name -> caught.getOrDefault(name, 0) > 0).count();
         String colour = got == shards.size() ? "§a" : "§c";
+        if (critters) return new Row(Component.literal(b.formatted + "§7: " + colour + got + "/" + shards.size()), null);
         return new Row(Component.literal(b.formatted + " §7- " + colour + got + "/" + shards.size()), null);
     }
 

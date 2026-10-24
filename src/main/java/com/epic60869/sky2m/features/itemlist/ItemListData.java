@@ -57,10 +57,24 @@ public final class ItemListData {
         }
     }
 
-    /** One entry of the list. Names and lore keep their § colour codes; {@code search} is the lower-case plain text. */
+    /** Rarities from lowest to highest; an entry's {@code rarity} is its index here, or -1 when it has none. */
+    public static final List<String> RARITIES = List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC",
+        "DIVINE", "SPECIAL", "VERY SPECIAL", "ULTIMATE", "ADMIN");
+    /** The rarity line at the end of the lore: "LEGENDARY DUNGEON HELMET", "a MYTHIC SWORD a" (obfuscated edges). */
+    private static final Pattern RARITY_LINE = Pattern.compile("\\b(VERY SPECIAL|UNCOMMON|COMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|SPECIAL|ULTIMATE|ADMIN)\\b(.*)");
+
+    /**
+     * One entry of the list. Names and lore keep their § colour codes; {@code search} is the lower-case plain text.
+     * {@code rarity} indexes {@link #RARITIES} (-1: none); {@code type} is what the rarity line calls it ("HELMET",
+     * "SWORD", "PET"), or "" when it says nothing.
+     */
     public record Entry(String id, String name, List<String> lore, Category category, String itemId, int damage,
                         String texture, String itemModel, boolean glint, String parent, String wiki, String searchName,
-                        String searchLore, boolean vanilla) {}
+                        String searchLore, boolean vanilla, int rarity, String type) {
+        public boolean isArmor() {
+            return type.endsWith("HELMET") || type.endsWith("CHESTPLATE") || type.endsWith("LEGGINGS") || type.endsWith("BOOTS");
+        }
+    }
 
     public record Ingredient(String id, double amount) {}
 
@@ -252,6 +266,7 @@ public final class ItemListData {
         Map<String, Entry> byId = new LinkedHashMap<>();
         Map<String, List<Recipe>> recipes = new HashMap<>();
         Map<String, List<Recipe>> usages = new HashMap<>();
+        JsonObject petNums = null;
         try (ZipInputStream zip = new ZipInputStream(Files.newInputStream(ZIP))) {
             ZipEntry e;
             ByteArrayOutputStream buffer = new ByteArrayOutputStream(64 * 1024);
@@ -259,6 +274,14 @@ public final class ItemListData {
                 String name = e.getName();
                 int slash = name.indexOf('/');
                 String path = slash >= 0 ? name.substring(slash + 1) : name;
+                if (path.equals("constants/petnums.json")) {
+                    buffer.reset();
+                    zip.transferTo(buffer);
+                    try {
+                        petNums = JsonParser.parseString(buffer.toString(StandardCharsets.UTF_8)).getAsJsonObject();
+                    } catch (Exception ignored) {}
+                    continue;
+                }
                 if (!path.startsWith("items/") || !path.endsWith(".json")) continue;
                 buffer.reset();
                 zip.transferTo(buffer);
@@ -279,6 +302,9 @@ public final class ItemListData {
                 }
             }
         }
+        if (petNums != null) {
+            for (Map.Entry<String, Entry> pet : byId.entrySet()) pet.setValue(fillPet(pet.getValue(), petNums));
+        }
         List<Entry> entries = new ArrayList<>(byId.values());
         entries.sort((a, b) -> {
             int c = a.category().compareTo(b.category());
@@ -287,6 +313,63 @@ public final class ItemListData {
         recipes.values().forEach(list -> deduplicate(list));
         usages.values().forEach(list -> deduplicate(list));
         return new Data(Collections.unmodifiableList(entries), byId, recipes, usages);
+    }
+
+    private static final Pattern PET_ID = Pattern.compile("(.+);(\\d)");
+    private static final Pattern PET_PLACEHOLDER = Pattern.compile("\\{([A-Z_]+|\\d+)}");
+
+    /**
+     * A pet as Hypixel shows it at max level: the repo writes its stats as "{HEALTH}" and ability numbers as "{0}",
+     * filled from petnums.json ("REINDEER" -> "LEGENDARY" -> "100" -> statNums / otherNums), and "[Lvl {LVL}]".
+     */
+    private static Entry fillPet(Entry entry, JsonObject petNums) {
+        Matcher id = PET_ID.matcher(entry.id());
+        if (!id.matches() || !entry.name().contains("{LVL}")) return entry;
+        int tier = Integer.parseInt(id.group(2));
+        if (tier >= RARITIES.size() || !petNums.has(id.group(1)) || !petNums.get(id.group(1)).isJsonObject()) return entry;
+        JsonObject rarities = petNums.getAsJsonObject(id.group(1));
+        JsonObject levels = rarities.has(RARITIES.get(tier)) && rarities.get(RARITIES.get(tier)).isJsonObject()
+            ? rarities.getAsJsonObject(RARITIES.get(tier)) : null;
+        if (levels == null) return entry;
+        // Most pets cap at 100, some (Golden Dragon) at 200: use the highest level the file lists.
+        int max = -1;
+        for (String level : levels.keySet()) {
+            if (level.chars().allMatch(Character::isDigit)) max = Math.max(max, Integer.parseInt(level));
+        }
+        if (max < 0 || !levels.get(String.valueOf(max)).isJsonObject()) return entry;
+        JsonObject nums = levels.getAsJsonObject(String.valueOf(max));
+        Map<String, String> values = new HashMap<>();
+        values.put("LVL", String.valueOf(max));
+        if (nums.has("statNums") && nums.get("statNums").isJsonObject()) {
+            for (var stat : nums.getAsJsonObject("statNums").entrySet()) values.put(stat.getKey(), petNumber(stat.getValue()));
+        }
+        if (nums.has("otherNums") && nums.get("otherNums").isJsonArray()) {
+            JsonArray other = nums.getAsJsonArray("otherNums");
+            for (int i = 0; i < other.size(); i++) values.put(String.valueOf(i), petNumber(other.get(i)));
+        }
+        List<String> lore = new ArrayList<>(entry.lore().size());
+        for (String line : entry.lore()) lore.add(fillPlaceholders(line, values));
+        return new Entry(entry.id(), fillPlaceholders(entry.name(), values), lore, entry.category(), entry.itemId(), entry.damage(),
+            entry.texture(), entry.itemModel(), entry.glint(), entry.parent(), entry.wiki(), entry.searchName(), entry.searchLore(),
+            entry.vanilla(), entry.rarity(), entry.type());
+    }
+
+    private static String fillPlaceholders(String text, Map<String, String> values) {
+        Matcher m = PET_PLACEHOLDER.matcher(text);
+        StringBuilder out = new StringBuilder();
+        while (m.find()) m.appendReplacement(out, Matcher.quoteReplacement(values.getOrDefault(m.group(1), m.group())));
+        m.appendTail(out);
+        return out.toString();
+    }
+
+    /** 25.0 -> "25", 255.56 -> "255.56", 0.5 -> "0.5". */
+    private static String petNumber(JsonElement value) {
+        try {
+            java.math.BigDecimal number = java.math.BigDecimal.valueOf(value.getAsDouble()).setScale(2, java.math.RoundingMode.HALF_UP);
+            return number.stripTrailingZeros().toPlainString();
+        } catch (Exception bad) {
+            return value.toString();
+        }
     }
 
     private static void add(Map<String, List<Recipe>> map, String id, Recipe recipe) {
@@ -338,8 +421,27 @@ public final class ItemListData {
         Category category = category(id, itemId, name, item);
         // Vanilla items: plain Minecraft things with no SkyBlock look (no skin, no Hypixel model, no SkyBlock lore).
         boolean vanilla = texture == null && model == null && lore.isEmpty();
+        int rarity = -1;
+        String type = "";
+        for (int i = lore.size() - 1; i >= 0 && rarity < 0; i--) {
+            // "a MYTHIC DUNGEON HELMET a": the obfuscated letters at the edges aren't part of it.
+            String line = strip(lore.get(i)).trim().replaceAll("^[a-z]\\s+|\\s+[a-z]$", "");
+            if (line.isEmpty() || !line.equals(line.toUpperCase(Locale.ROOT))) continue;
+            Matcher r = RARITY_LINE.matcher(line);
+            if (!r.find()) continue;
+            rarity = RARITIES.indexOf(r.group(1));
+            type = r.group(2).replaceFirst("^\\s*DUNGEON\\s*", "").trim();
+        }
+        if (category == Category.PET) {
+            // Pets keep their rarity in the id: WOLF;4 is a Legendary Wolf.
+            try {
+                int tier = Integer.parseInt(id.substring(id.lastIndexOf(';') + 1));
+                if (tier >= 0 && tier < RARITIES.size()) rarity = tier;
+            } catch (NumberFormatException ignored) {}
+            type = "PET";
+        }
         return new Entry(id, name, List.copyOf(lore), category, itemId == null ? "minecraft:barrier" : itemId, damage,
-            texture, model, glint, str(item, "parent"), wiki, plainName, plainLore.toString(), vanilla);
+            texture, model, glint, str(item, "parent"), wiki, plainName, plainLore.toString(), vanilla, rarity, type);
     }
 
     private static Category category(String id, String itemId, String name, JsonObject item) {

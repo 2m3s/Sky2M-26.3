@@ -48,7 +48,7 @@ public final class SackValueHistory {
 
     private static FeatureConfigs.SacksValue config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.sacksValue;
+        return c == null ? null : c.inventory.sacksValue;
     }
 
     public static void init(Path configDir) {
@@ -92,7 +92,7 @@ public final class SackValueHistory {
     /** The graph's Save Now: writes the latest value now, or says why there is none. */
     static void saveNow() {
         if (latestProfile == null || latestTotal <= 0) {
-            Sky2MAlerts.chat(Component.literal("Your sacks' value isn't known yet: turn on Misc > Sacks Value and open your sacks.").withStyle(ChatFormatting.RED));
+            Sky2MAlerts.chat(Component.literal("Your sacks' value isn't known yet: turn on Inventory > Sacks Value and open your sacks.").withStyle(ChatFormatting.RED));
             return;
         }
         put(latestProfile, latestTotal, true);

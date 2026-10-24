@@ -44,7 +44,7 @@ public final class UltrasequencerSolver extends ExperimentSolver {
 	private @Nullable DyeColor lastColor;
 
 	private UltrasequencerSolver() {
-		super("^Ultrasequencer \\(\\w+\\)$");
+		super("(?i)^Ultrasequencer\\s*\\([\\w ]+\\)$");
 	}
 
 	@Override
@@ -164,7 +164,7 @@ public final class UltrasequencerSolver extends ExperimentSolver {
 	/** Draws each remaining slot's place in the order; the next one is yellow. (Sky2M addition.) */
 	private void renderNumbers(AbstractContainerScreen<?> screen, GuiGraphicsExtractor graphics) {
 		var config = com.epic60869.sky2m.Sky2MConfig.current();
-		if (config == null || !config.misc.experimentalTable.ultrasequencerNumbers || getState() != State.SHOW) return;
+		if (config == null || !config.inventory.experimentalTable.ultrasequencerNumbers || getState() != State.SHOW) return;
 		ItemStack next = getSlots().get(ultrasequencerNextSlot);
 		if (next == null) return;
 		int nextNumber = next.getCount();

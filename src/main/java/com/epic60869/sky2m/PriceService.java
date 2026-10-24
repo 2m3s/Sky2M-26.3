@@ -236,8 +236,49 @@ public final class PriceService {
             Collections.unmodifiableMap(sellCounts), Collections.unmodifiableMap(buyCounts));
     }
 
+    /** The item list changes rarely, so the last download is kept on disk and reused for this long. */
+    private static final long ITEMS_CACHE_MS = 6L * 60 * 60 * 1000;
+
+    /** The item list from the disk copy when it is fresh, else downloaded (and saved); the old copy if offline. */
+    private static JsonObject fetchItemsCached() {
+        java.nio.file.Path file = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("sky2m").resolve("hypixel-items.json");
+        JsonObject old = null;
+        try {
+            if (java.nio.file.Files.isRegularFile(file)) {
+                long age = System.currentTimeMillis() - java.nio.file.Files.getLastModifiedTime(file).toMillis();
+                if (age >= 0 && age < ITEMS_CACHE_MS) {
+                    JsonObject cached = JsonParser.parseString(java.nio.file.Files.readString(file)).getAsJsonObject();
+                    if (cached.has("items")) return cached;
+                }
+            }
+        } catch (Exception ignored) {}
+        try {
+            HttpRequest request = HttpRequest.newBuilder(URI.create(ITEMS_URL)).timeout(Duration.ofSeconds(30))
+                .header("User-Agent", "Sky2M/1.0").GET().build();
+            HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                JsonObject parsed = JsonParser.parseString(response.body()).getAsJsonObject();
+                if (parsed.has("items")) {
+                    try {
+                        java.nio.file.Files.createDirectories(file.getParent());
+                        java.nio.file.Files.writeString(file, response.body());
+                    } catch (Exception ignored) {}
+                    return parsed;
+                }
+            } else {
+                System.err.println("[Sky2M] Price download failed for " + ITEMS_URL + ": HTTP " + response.statusCode());
+            }
+        } catch (Exception e) {
+            System.err.println("[Sky2M] Price download failed for " + ITEMS_URL + ": " + e.getMessage());
+        }
+        try {
+            if (java.nio.file.Files.isRegularFile(file)) old = JsonParser.parseString(java.nio.file.Files.readString(file)).getAsJsonObject();
+        } catch (Exception ignored) {}
+        return old;
+    }
+
     private static Map<String, JsonObject> downloadItems() {
-        JsonObject root = fetch(ITEMS_URL);
+        JsonObject root = fetchItemsCached();
         if (root == null || !root.has("items") || !root.get("items").isJsonArray()) {
             throw new IllegalStateException("no item list");
         }

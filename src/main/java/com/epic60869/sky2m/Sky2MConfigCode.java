@@ -48,7 +48,7 @@ public final class Sky2MConfigCode {
     /** Paths (category.key...) that are this player's state, not settings to share. */
     private static final List<String> PERSONAL = List.of(
         "general.lastSeenVersion", "general.whatsNewSince", "general.firstBootAcknowledged",
-        "general.perfWarningMuted", "online.settingsSync.slot");
+        "general.perfWarningMuted", "general.overlapNoticeShown", "online.settingsSync.slot");
     /** Key names that would hold a secret; none exist in the config today, this guards future ones. */
     private static final Pattern SECRET_KEY = Pattern.compile("(?i).*(token|api_?key|password|webhook|discord_?id|uuid).*");
 
@@ -220,6 +220,27 @@ public final class Sky2MConfigCode {
         } else {
             error("Those settings couldn't be loaded; nothing was changed.");
         }
+    }
+
+    /** The settings with this player's own state removed, for saving as a profile. */
+    static JsonObject shareable(JsonObject current) {
+        JsonObject copy = current.deepCopy();
+        for (String path : PERSONAL) remove(copy, path);
+        stripSecrets(copy);
+        return copy;
+    }
+
+    /** {@code incoming} with this player's own state and secrets from {@code current} put in, ready for importJson. */
+    static JsonObject keepPersonal(JsonObject incoming, JsonObject current) {
+        JsonObject settings = incoming.deepCopy();
+        stripSecrets(settings);
+        for (String path : PERSONAL) {
+            remove(settings, path);
+            JsonElement mine = get(current, path);
+            if (mine != null) put(settings, path, mine.deepCopy());
+        }
+        restoreSecrets(current, settings);
+        return settings;
     }
 
     /** Writes the current settings to config/sky2m/config-backups/<time>.json and keeps the newest 10. */

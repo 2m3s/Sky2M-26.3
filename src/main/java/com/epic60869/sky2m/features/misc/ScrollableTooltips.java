@@ -39,7 +39,7 @@ public final class ScrollableTooltips {
 
     private static Sky2MConfig.TooltipScroll config() {
         Sky2MConfig config = Sky2MConfig.current();
-        return config == null ? null : config.misc.tooltipScroll;
+        return config == null ? null : config.inventory.tooltipScroll;
     }
 
     private static boolean enabled(Sky2MConfig.TooltipScroll settings) {

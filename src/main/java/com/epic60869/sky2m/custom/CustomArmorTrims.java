@@ -37,13 +37,28 @@ import net.minecraft.world.item.equipment.trim.TrimPattern;
 public class CustomArmorTrims {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CustomArmorTrims.class);
 	public static final Object2ObjectOpenHashMap<ArmorTrimId, ArmorTrim> TRIMS_CACHE = new Object2ObjectOpenHashMap<>();
-	private static boolean trimsInitialized = false;
+	private static volatile boolean trimsInitialized = false;
+	private static boolean trimErrorLogged = false;
 	public static void init() {
-		ClientPlayConnectionEvents.JOIN.register((_, _, _) -> initializeTrimCache());
+		// Built on first use (a custom trim being shown, or /s2 custom armorTrim), not on every world join.
+		ClientPlayConnectionEvents.JOIN.register((_, _, _) -> invalidateTrimCache());
 		ClientCommandRegistrationCallback.EVENT.register(CustomArmorTrims::registerCommand);
 	}
 
-	private static void initializeTrimCache() {
+	private static synchronized void invalidateTrimCache() {
+		trimsInitialized = false;
+		TRIMS_CACHE.clear();
+	}
+
+	/** The cached trim for {@code id}, building the cache the first time it is needed. */
+	public static ArmorTrim getTrim(ArmorTrimId id, ArmorTrim fallback) {
+		initializeTrimCache();
+		synchronized (CustomArmorTrims.class) {
+			return TRIMS_CACHE.getOrDefault(id, fallback);
+		}
+	}
+
+	private static synchronized void initializeTrimCache() {
 		Minecraft client = Minecraft.getInstance();
 		if (trimsInitialized || (client == null && !false)) {
 			return;
@@ -62,7 +77,10 @@ public class CustomArmorTrims {
 			LOGGER.info("[Sky2M] Successfully cached all armor trims!");
 			trimsInitialized = true;
 		} catch (Exception e) {
-			LOGGER.error("[Sky2M] Encountered an exception while caching armor trims", e);
+			if (!trimErrorLogged) {
+				trimErrorLogged = true;
+				LOGGER.error("[Sky2M] Encountered an exception while caching armor trims", e);
+			}
 		}
 	}
 
@@ -104,7 +122,7 @@ public class CustomArmorTrims {
 					} else {
 						// Ensure that the material & trim are valid
 						ArmorTrimId trimId = new ArmorTrimId(material, pattern);
-						if (TRIMS_CACHE.get(trimId) == null) {
+						if (getTrim(trimId, null) == null) {
 							source.sendError(Compat.PREFIX.get().append(Component.translatable("sky2m.customArmorTrims.invalidMaterialOrPattern")));
 
 							return Command.SINGLE_SUCCESS;

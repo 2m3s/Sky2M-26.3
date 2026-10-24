@@ -65,6 +65,9 @@ public final class FishingFeatures {
     private static final Pattern PARTY_CAUGHT = Pattern.compile("^--> (?:A|An) (.+) has spawned (?:.*)?<--$");
     private static final Pattern PARTY_DOUBLE_HOOK = Pattern.compile("^--> DOUBLE HOOK! Two (.+)s have spawned (?:.*)?<--$");
     private static final Pattern PARTY_COCOONED = Pattern.compile("^--> (?:A|An) (.+) was cocooned (?:.*)?<--$");
+    // Riccio Fishing Utils: "WOAH! An Alligator just surfaced! Catch #245 after 18d 17h!" (also "The Loch Emperor", and a double hook text).
+    private static final Pattern RFU_CAUGHT = Pattern.compile("^WOAH! (?:An? )?(.+?) just surfaced!(?: (.*))?$");
+    private static final Pattern RFU_COCOONED = Pattern.compile("^WOAH! (?:An? )?(.+?) was cocooned!(?: .*)?$");
     private static final Pattern SKYHANNI_CAUGHT = Pattern.compile("^(DOUBLE HOOK: )?I caught (?:a|an) (.+)!$");
     private static final Pattern SKYHANNI_COCOONED = Pattern.compile("^My (.+) has been cocooned!$");
     private static final Pattern PARTY_DROP = Pattern.compile("^--> (?:A|An) (.+?) has dropped(?: \\([^)]*\\))? <--$");
@@ -118,10 +121,15 @@ public final class FishingFeatures {
     public static void init() {
         for (String shark : SHARKS) sharks.put(shark, 0);
         FishingRecords.load();
+        FishingStreak.init();
+        RareSc.init();
+        FishingExtras.init();
+        FishingMore.init();
+        FishingVisuals.init();
         Sky2MChat.onChat(FishingFeatures::onChat);
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> overlay || !hideMessage(message));
         ClientTickEvents.END_CLIENT_TICK.register(FishingFeatures::tick);
-        EntityGlow.register(entity -> visible.contains(entity.getId()) ? highlighted.getOrDefault(entity.getId(), -1) : -1);
+        EntityGlow.register(entity -> !visible.isEmpty() && visible.contains(entity.getId()) ? highlighted.getOrDefault(entity.getId(), -1) : -1);
         UseItemCallback.EVENT.register((player, level, hand) -> {
             if (level.isClientSide()) Deployables.onUse(player.getItemInHand(hand));
             return InteractionResult.PASS;
@@ -205,13 +213,20 @@ public final class FishingFeatures {
     // ------------------------------------------------------------------------------------------------ sea creatures
 
     private static void onOwnCatch(FeatureConfigs.Fishing c, FishingData.SeaCreature creature, boolean dh) {
+        FishingStreak.onCatch(creature.name(), dh);
+        FishingMore.onCatch(creature, dh);
+        java.util.Map<String, String> rareVars = RareSc.onCatch(creature, dh);
+        FishingExtras.onCatch(creature, dh);
         if (c.catchMessages.compact) chat(catchMessage(c.catchMessages, creature, dh), false);
+        else FishingExtras.sendSinceLine(creature);
         if (c.seaCreatures.alert && listed(c.seaCreatures.alertList, creature.name())) {
             showCaught(creature, dh, ownName());
         }
         if (c.seaCreatures.share && listed(c.seaCreatures.shareList, creature.name())) {
             String upper = creature.name().toUpperCase(Locale.ROOT);
-            FishingParty.send(dh ? "--> DOUBLE HOOK! Two " + upper + "s have spawned <--"
+            String custom = RareSc.catchMessage(rareVars);
+            if (custom != null) FishingParty.send(custom);
+            else FishingParty.send(dh ? "--> DOUBLE HOOK! Two " + upper + "s have spawned <--"
                 : "--> " + FishingData.article(creature.name(), false) + " " + upper + " has spawned <--");
         }
         if (SHARKS.contains(creature.name()) && (c.alerts.festivalEnded || c.alerts.festivalPersonalBest)) {
@@ -228,8 +243,11 @@ public final class FishingFeatures {
         if (c.seaCreatures.alert && c.seaCreatures.alertCocooned && listed(c.seaCreatures.alertList, creature.name())) {
             showCocooned(creature, ownName());
         }
+        RareSc.onOwnCocoon(creature);
         if (c.seaCreatures.share && c.seaCreatures.shareCocooned && listed(c.seaCreatures.shareList, creature.name())) {
-            FishingParty.send("--> " + FishingData.article(creature.name(), false) + " " + creature.name().toUpperCase(Locale.ROOT) + " was cocooned <--");
+            String custom = RareSc.cocoonMessage(creature);
+            if (custom != null) FishingParty.send(custom);
+            else FishingParty.send("--> " + FishingData.article(creature.name(), false) + " " + creature.name().toUpperCase(Locale.ROOT) + " was cocooned <--");
         }
     }
 
@@ -259,6 +277,8 @@ public final class FishingFeatures {
         if ((m = PARTY_DOUBLE_HOOK.matcher(body)).matches()) partyCaught(c, m.group(1), true, name);
         else if ((m = PARTY_CAUGHT.matcher(body)).matches()) partyCaught(c, m.group(1), false, name);
         else if ((m = PARTY_COCOONED.matcher(body)).matches()) partyCocooned(c, m.group(1), name);
+        else if ((m = RFU_CAUGHT.matcher(body)).matches()) partyCaught(c, m.group(1), m.group(2) != null && m.group(2).toLowerCase(Locale.ROOT).contains("double hook"), name);
+        else if ((m = RFU_COCOONED.matcher(body)).matches()) partyCocooned(c, m.group(1), name);
         else if ((m = SKYHANNI_CAUGHT.matcher(body)).matches()) partyCaught(c, skyHanniName(m.group(2)), m.group(1) != null, name);
         else if ((m = SKYHANNI_COCOONED.matcher(body)).matches()) partyCocooned(c, skyHanniName(m.group(1)), name);
     }
@@ -295,7 +315,7 @@ public final class FishingFeatures {
     }
 
     private static void showCaught(FishingData.SeaCreature creature, boolean dh, Component player) {
-        Sky2MAlerts.title(creatureTitle(creature, dh), player);
+        if (!creature.rare() || !RareSc.alert(creature, dh, player)) Sky2MAlerts.title(creatureTitle(creature, dh), player);
         if (creature.name().equals("Nessie")) chatWithCommand("Click to warp to Murkwater Loch!", "/warp murk");
         else if (creature.name().equals("Giant Isopod")) chatWithCommand("Click to warp to Torrhus Springs!", "/warp springs");
     }
@@ -321,15 +341,19 @@ public final class FishingFeatures {
         template = colours(template.replace("{Article}", FishingData.article(creature.name(), false))
             .replace("{article}", FishingData.article(creature.name(), true)));
         MutableComponent line = Component.empty();
-        if (dh) {
-            String dhTemplate = c.doubleHookTemplate == null || c.doubleHookTemplate.isBlank() ? "&b&lDOUBLE HOOK!" : c.doubleHookTemplate;
-            line.append(SbcItems.parseLegacy(colours(dhTemplate) + " "));
-        }
+        String dhTemplate = c.doubleHookTemplate == null || c.doubleHookTemplate.isBlank() ? "&b&lDOUBLE HOOK!" : c.doubleHookTemplate;
+        boolean dhPlaced = template.contains("{dh}");
+        boolean sincePlaced = template.contains("{time}") || template.contains("{count}");
+        // {dh}: where the double hook text goes (otherwise before the message); {time}/{count}: since the last one.
+        template = template.replace("{dh}", dh ? colours(dhTemplate) : "")
+            .replace("{time}", FishingExtras.sinceTime()).replace("{count}", FishingExtras.sinceCount());
+        if (dh && !dhPlaced) line.append(SbcItems.parseLegacy(colours(dhTemplate) + " "));
         String[] parts = template.split("\\{sc}", -1);
         for (int i = 0; i < parts.length; i++) {
             if (i > 0) line.append(creatureName(c, creature));
             line.append(SbcItems.parseLegacy(parts[i]));
         }
+        if (!sincePlaced) line.append(SbcItems.parseLegacy(FishingExtras.sinceSuffix()));
         return line;
     }
 
@@ -372,6 +396,7 @@ public final class FishingFeatures {
     public static void sendTestCatchMessages() {
         FeatureConfigs.Fishing c = config();
         if (c == null) return;
+        FishingExtras.useSample();
         FishingData.SeaCreature jawbus = FishingData.creature("Lord Jawbus");
         FishingData.SeaCreature thunder = FishingData.creature("Thunder");
         if (jawbus != null) chat(catchMessage(c.catchMessages, jawbus, false), false);

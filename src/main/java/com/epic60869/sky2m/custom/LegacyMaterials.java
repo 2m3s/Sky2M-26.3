@@ -79,7 +79,8 @@ public final class LegacyMaterials {
 			return tier + "_" + (parts[1].equals("spade") ? "shovel" : parts[1]);
 		}
 		return switch (m) {
-			case "ink_sack" -> DYES[colour];
+			// "dye" is 1.8's registry name for ink_sack (the NEU repo's Alligator Skin is minecraft:dye 2).
+			case "ink_sack", "dye" -> DYES[colour];
 			case "raw_fish" -> switch (data) {
 				case 1 -> "salmon";
 				case 2 -> "tropical_fish";

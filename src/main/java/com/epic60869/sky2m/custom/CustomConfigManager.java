@@ -54,24 +54,35 @@ public final class CustomConfigManager {
 		public Object2ObjectOpenHashMap<String, String> customAnimatedHelmetTextures = new Object2ObjectOpenHashMap<>();
 	}
 
+	/** The file is read off the render thread at startup; everything that touches CONFIG waits for it first. */
+	private static volatile java.util.concurrent.CompletableFuture<Void> loaded;
+
+	private static void awaitLoaded() {
+		java.util.concurrent.CompletableFuture<Void> f = loaded;
+		if (f != null && !f.isDone()) f.join();
+	}
+
 	public static CustomConfig get() {
+		awaitLoaded();
 		return CONFIG;
 	}
 
 	/** Executes the given {@code action} to update fields in the config, then saves the changes. */
 	public static void update(Consumer<CustomConfig> action) {
+		awaitLoaded();
 		action.accept(CONFIG);
 		save();
 	}
 
 	/** Executes the given {@code action} to update fields in the config, without saving the changes. */
 	public static void updateOnly(Consumer<CustomConfig> action) {
+		awaitLoaded();
 		action.accept(CONFIG);
 	}
 
 	public static void init(Path dir) {
 		configDir = dir;
-		load();
+		loaded = java.util.concurrent.CompletableFuture.runAsync(CustomConfigManager::load);
 	}
 
 	private static void load() {
@@ -144,8 +155,11 @@ public final class CustomConfigManager {
 				o.get("cycleBack").getAsBoolean(), o.get("delay").getAsFloat(), o.get("duration").getAsFloat());
 	}
 
+	private static String lastSaved;
+
 	private static void save() {
 		if (configDir == null) return;
+		awaitLoaded();
 		GeneralConfig general = CONFIG.general;
 		JsonObject root = new JsonObject();
 
@@ -205,8 +219,12 @@ public final class CustomConfigManager {
 		root.add("customAnimatedHelmetTextures", animatedHelmets);
 
 		try {
+			String json = GSON.toJson(root);
+			// Several repo loads call update() at every launch; skip the disk write when nothing changed.
+			if (json.equals(lastSaved)) return;
 			Files.createDirectories(configDir);
-			Files.writeString(configDir.resolve(FILE_NAME), GSON.toJson(root), StandardCharsets.UTF_8);
+			Files.writeString(configDir.resolve(FILE_NAME), json, StandardCharsets.UTF_8);
+			lastSaved = json;
 		} catch (IOException e) {
 			LOGGER.error("[Sky2M] Failed to save custom item config", e);
 		}

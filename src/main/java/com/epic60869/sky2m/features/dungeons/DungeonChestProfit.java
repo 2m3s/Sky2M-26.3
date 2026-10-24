@@ -64,8 +64,28 @@ public final class DungeonChestProfit {
     /** Slot index -> the chest's value minus its cost, in a run's chest menu. */
     private static Map<Integer, Double> chestValues = Map.of();
     private static int ticks;
+    /** Labels at a slot's bottom right and green checks at its top left from Dungeons > Dungeon Extras (Croesus Overlay). */
+    private static Map<Integer, String> extraLabels = Map.of();
+    private static java.util.Set<Integer> extraChecks = java.util.Set.of();
 
     private DungeonChestProfit() {}
+
+    /** Croesus Overlay: Kismet Feather counts on the Reroll Chest and checks on runs a Kismet Feather was used on. */
+    public static void setExtras(Map<Integer, String> labels, java.util.Set<Integer> checks) {
+        extraLabels = labels;
+        extraChecks = checks;
+    }
+
+    /** Whether the item's lore has the Kismet Feather line crossed out (a reroll was used). */
+    public static boolean kismetUsed(ItemStack stack) {
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore == null) return false;
+        for (Component other : lore.lines()) {
+            Optional<Style> style = styleOf(other, s -> s.endsWith("Kismet Feather"));
+            if (style.isPresent() && style.get().isStrikethrough()) return true;
+        }
+        return false;
+    }
 
     private static FeatureConfigs.ChestProfit config() {
         Sky2MConfig config = Sky2MConfig.current();
@@ -140,7 +160,7 @@ public final class DungeonChestProfit {
 
     // ------------------------------------------------------------------------------------------------ chest value
 
-    static boolean isChest(String title) {
+    public static boolean isChest(String title) {
         for (String name : CHEST_NAMES) {
             if (title.equals(name) || (title.startsWith(name) && title.endsWith("Chest"))) return true;
         }
@@ -239,11 +259,12 @@ public final class DungeonChestProfit {
             if (stack.isEmpty()) continue;
             String name = ChatFormatting.stripFormatting(stack.getHoverName().getString());
             if (!name.endsWith("The Catacombs")) continue;
+            boolean shStyle = com.epic60869.sky2m.features.dungeons.extras.CroesusOverlay.skyHanniStyle();
             String colour = switch (lootState(stack)) {
-                case UNOPENED -> config.unopenedColor;
-                case REROLLED -> config.rerolledColor;
-                case OPENED -> config.openedColor;
-                case OPENED_KEY -> config.openedKeyColor;
+                case UNOPENED -> shStyle ? com.epic60869.sky2m.features.dungeons.extras.CroesusOverlay.unopenedColour() : config.unopenedColor;
+                case REROLLED -> shStyle ? com.epic60869.sky2m.features.dungeons.extras.CroesusOverlay.unopenedColour() : config.rerolledColor;
+                case OPENED -> shStyle ? com.epic60869.sky2m.features.dungeons.extras.CroesusOverlay.openedColour() : config.openedColor;
+                case OPENED_KEY -> shStyle ? null : config.openedKeyColor;
                 case UNKNOWN -> null;
             };
             if (colour == null) continue;
@@ -326,11 +347,12 @@ public final class DungeonChestProfit {
 
     /** Over the slot's item, like a stack count (Sky2MSlotBackgroundMixin). */
     public static void renderSlotLabel(GuiGraphicsExtractor graphics, Slot slot) {
-        if (labels.isEmpty() || slot.container instanceof Inventory) return;
-        String label = labels.get(slot.index);
-        if (label == null) return;
+        if ((labels.isEmpty() && extraLabels.isEmpty() && extraChecks.isEmpty()) || slot.container instanceof Inventory) return;
         var font = Minecraft.getInstance().font;
-        graphics.text(font, label, slot.x + 17 - font.width(label), slot.y + 9, 0xFFFFFFFF, true);
+        String label = labels.get(slot.index);
+        if (label == null) label = extraLabels.get(slot.index);
+        if (label != null) graphics.text(font, label, slot.x + 17 - font.width(label), slot.y + 9, 0xFFFFFFFF, true);
+        if (extraChecks.contains(slot.index)) graphics.text(font, "✔", slot.x - 1, slot.y - 1, 0xFF55FF55, true);
     }
 
     // ------------------------------------------------------------------------------------------------ item names
@@ -434,7 +456,7 @@ public final class DungeonChestProfit {
         }
     }
 
-    static int roman(String numeral) {
+    public static int roman(String numeral) {
         int total = 0, previous = 0;
         for (int i = numeral.length() - 1; i >= 0; i--) {
             int value = switch (numeral.charAt(i)) {

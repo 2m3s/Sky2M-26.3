@@ -109,19 +109,6 @@ public final class TermismScreen extends Screen {
         super(Component.literal("Termism"));
     }
 
-    /** /s2 termism opens the practice menu. */
-    public static void registerCommand() {
-        net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
-            for (String root : com.epic60869.sky2m.custom.util.Compat.COMMAND_ROOTS) {
-                dispatcher.register(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal(root)
-                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal("termism").executes(c -> {
-                        com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(new TermismScreen());
-                        return 1;
-                    })));
-            }
-        });
-    }
-
     // ------------------------------------------------------------------------------------------------ boards
 
     private void start(Type t) {

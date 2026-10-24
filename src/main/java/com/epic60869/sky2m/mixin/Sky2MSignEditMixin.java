@@ -14,10 +14,12 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Misc > Sign Calculator ({@link SignCalculator}): the value above SkyBlock's number signs, and sending it.
  * Misc > Sign Autofill ({@link SignAutofill}): the suggested bazaar/auction price or amount, filled in and selected.
+ * Misc > Enter Confirms Signs: Enter sends the sign like Done instead of moving to the next line.
  */
 @Mixin(AbstractSignEditScreen.class)
 public abstract class Sky2MSignEditMixin extends Screen {
@@ -26,6 +28,9 @@ public abstract class Sky2MSignEditMixin extends Screen {
 
     @Shadow
     private void setMessage(String message) {}
+
+    @Shadow
+    private void onDone() {}
 
     protected Sky2MSignEditMixin(Component title) {
         super(title);
@@ -56,6 +61,14 @@ public abstract class Sky2MSignEditMixin extends Screen {
         if (suggestion == null || !messages[0].isBlank() || signField == null) return;
         setMessage(suggestion);
         signField.selectAll();
+    }
+
+    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
+    private void sky2m$enterConfirms(net.minecraft.client.input.KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+        com.epic60869.sky2m.Sky2MConfig c = com.epic60869.sky2m.Sky2MConfig.current();
+        if (c == null || !c.inventory.signEnterConfirms || !event.isConfirmation() || !com.epic60869.sky2m.custom.util.Compat.isOnSkyblock()) return;
+        onDone();
+        cir.setReturnValue(true);
     }
 
     // After sky2m$sendValue, so a typed sum is already worked out.

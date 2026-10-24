@@ -198,7 +198,7 @@ public final class ServerInfo {
 
     private static FeatureConfigs.ServerInfoDisplay serverInfo() {
         Sky2MConfig c = config();
-        return c == null ? null : c.misc.serverInfoDisplay;
+        return c == null ? null : c.gui.serverInfoDisplay;
     }
 
 

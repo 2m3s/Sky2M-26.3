@@ -64,7 +64,7 @@ public final class DianaLobbyCompromised {
 
     private static FeatureConfigs.DianaLobbyCompromised config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.mayors.diana.lobbyCompromised;
+        return c == null ? null : c.events.diana.lobbyCompromised;
     }
 
     public static void init() {

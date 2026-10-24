@@ -34,7 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * /s2 screenshots: your screenshots folder as a gallery, newest first, with small previews. Pick one to upload it,
  * copy or re-send its link (uploads are remembered in config/sky2m/screenshot-links.json), or open the folder.
- * Screenshots uploaded to the Sky2M host also show on shadowisabot.com/screenshots with your name and head.
+ * Screenshots uploaded to the Sky2M host can be put on shadowisabot.com/screenshots with your name and head (Upload to
+ * Website).
  */
 public final class ScreenshotGallery extends Screen {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -145,7 +146,7 @@ public final class ScreenshotGallery extends Screen {
 
     private void rebuild() {
         clearWidgets();
-        int y = height - 26, x = width / 2 - 260;
+        int y = height - 26, x = width / 2 - 305;
         String link = selected == null ? null : link(selected);
         addRenderableWidget(Button.builder(Component.literal(link == null ? "Upload" : "Upload Again"), b -> {
             if (selected != null) minecraft.player.connection.sendCommand("s2 screenshot upload " + selected);
@@ -159,12 +160,17 @@ public final class ScreenshotGallery extends Screen {
             minecraft.player.connection.sendCommand("s2c " + link);
             onClose();
         }).bounds(x + 184, y, 90, 20).build()).active = link != null;
+        // Only Sky2M-hosted uploads can be listed on the website's Screenshots page.
+        addRenderableWidget(Button.builder(Component.literal("Upload to Website"), b -> {
+            minecraft.player.connection.sendCommand("s2 screenshot website " + link);
+            onClose();
+        }).bounds(x + 278, y, 106, 20).build()).active = ScreenshotShare.onSky2MHost(link);
         addRenderableWidget(Button.builder(Component.literal("Open Folder"), b -> com.mojang.blaze3d.Blaze3D.openPath(folder()))
-            .bounds(x + 278, y, 86, 20).build());
+            .bounds(x + 388, y, 86, 20).build());
         addRenderableWidget(Button.builder(Component.literal("Website"), b -> com.mojang.blaze3d.Blaze3D
                 .openUri(java.net.URI.create("https://shadowisabot.com/screenshots")))
-            .bounds(x + 368, y, 70, 20).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(x + 442, y, 78, 20).build());
+            .bounds(x + 478, y, 70, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(x + 552, y, 58, 20).build());
     }
 
     // ---------------------------------------------------------------- previews

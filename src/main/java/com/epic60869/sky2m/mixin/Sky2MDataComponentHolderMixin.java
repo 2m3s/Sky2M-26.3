@@ -29,17 +29,24 @@ public interface Sky2MDataComponentHolderMixin {
                 && dataComponentType != DataComponents.ENCHANTMENT_GLINT_OVERRIDE && dataComponentType != DataComponents.ITEM_MODEL) {
             return original;
         }
+        // This runs for every item model/glint/profile read, every frame: nothing is customised for most players.
+        CustomConfigManager.GeneralConfig general = CustomConfigManager.get().general;
+        if (dataComponentType == DataComponents.TRIM ? general.customArmorTrims.isEmpty()
+            : dataComponentType == DataComponents.PROFILE ? general.customHelmetTextures.isEmpty() && general.customAnimatedHelmetTextures.isEmpty()
+            : dataComponentType == DataComponents.ENCHANTMENT_GLINT_OVERRIDE ? general.customGlint.isEmpty()
+            : general.customItemModel.isEmpty()) {
+            return original;
+        }
         if (!((Object) this instanceof ItemStack stack) || !Compat.isOnSkyblock()) return original;
 
         String itemUuid = Compat.uuid(stack);
         if (itemUuid.isEmpty()) return original;
-        CustomConfigManager.GeneralConfig general = CustomConfigManager.get().general;
 
         if (dataComponentType == DataComponents.TRIM) {
             CustomArmorTrims.ArmorTrimId trimKey = general.customArmorTrims.get(itemUuid);
 
             if (trimKey != null) {
-                return (T) CustomArmorTrims.TRIMS_CACHE.getOrDefault(trimKey, (ArmorTrim) original);
+                return (T) CustomArmorTrims.getTrim(trimKey, (ArmorTrim) original);
             }
         } else if (dataComponentType == DataComponents.PROFILE && stack.is(Items.PLAYER_HEAD)) {
             // Normal head textures

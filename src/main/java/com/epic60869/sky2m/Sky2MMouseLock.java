@@ -30,19 +30,25 @@ public final class Sky2MMouseLock {
         "BASIC_GARDENING_HOE", "ADVANCED_GARDENING_HOE", "BASIC_GARDENING_AXE", "ADVANCED_GARDENING_AXE", "BINGHOE"
     );
 
-    private static Sky2MConfig config;
+    /** The settings passed at startup; {@link #config()} prefers the current ones (they are replaced when settings are imported). */
+    private static Sky2MConfig registered;
+
+    private static Sky2MConfig config() {
+        Sky2MConfig current = Sky2MConfig.current();
+        return current != null ? current : registered;
+    }
     private static boolean locked;
 
     private Sky2MMouseLock() {}
 
     public static void init(Sky2MConfig cfg) {
-        config = cfg;
+        registered = cfg;
     }
 
     public static void tick(Minecraft mc) {
-        locked = config != null && config.farming.mouseLock.enabled && mc.player != null && mc.gui.screen() == null
-            && (!config.farming.mouseLock.groundOnly || mc.player.onGround())
-            && (!config.farming.mouseLock.gardenOnly || com.epic60869.sky2m.features.core.Sky2MLocation.inGarden())
+        locked = config() != null && config().farming.mouseLock.enabled && mc.player != null && mc.gui.screen() == null
+            && (!config().farming.mouseLock.groundOnly || mc.player.onGround())
+            && (!config().farming.mouseLock.gardenOnly || com.epic60869.sky2m.features.core.Sky2MLocation.inGarden())
             && !(com.epic60869.sky2m.features.core.Sky2MLocation.inGarden() && isInBarn(mc.player))
             && isFarmingTool(mc.player.getMainHandItem());
     }

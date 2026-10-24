@@ -19,7 +19,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
  */
 public final class HuntingConfig {
     @Expose
-    @Category(name = "Safari", desc = "Settings for the Critter Safari.")
+    @Category(name = "Safari", desc = "The Critter Safari.")
     public Safari safari = new Safari();
 
     @Expose
@@ -33,7 +33,7 @@ public final class HuntingConfig {
     public ProfitTracker huntingProfitTracker = new ProfitTracker();
 
     @Expose
-    @Category(name = "Galatea Mob Highlights", desc = "Settings for Galatea mob highlights.")
+    @Category(name = "Galatea Mob Highlights", desc = "Galatea mob highlights.")
     public MobHighlights mobHighlight = new MobHighlights();
 
     @Expose
@@ -109,8 +109,28 @@ public final class HuntingConfig {
         @ConfigEditorBoolean
         public boolean showIcons = true;
 
+        @Expose
+        @ConfigOption(name = "Checklist Style", desc = "§eUnique Critters§7: a \"Unique Critters\" title, \"Cavern:\" headers and a green ✔ or red ✖ before each critter.\n§eSkyHanni§7: SkyHanni's \"Cavern - 3/9\" headers and \"- (✔) Name\" rows.")
+        @ConfigEditorDropdown
+        public ChecklistStyle style = ChecklistStyle.UNIQUE_CRITTERS;
+
+        public enum ChecklistStyle {
+            UNIQUE_CRITTERS("Uniques"), SKYHANNI("SkyHanni");
+
+            private final String label;
+
+            ChecklistStyle(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
         public enum ChecklistDisplay {
-            ALL("All"), CURRENT_ON_TOP("Current on Top"), ONLY_CURRENT("Only Current");
+            ALL("All"), CURRENT_ON_TOP("Current First"), ONLY_CURRENT("Only Current");
 
             private final String label;
 

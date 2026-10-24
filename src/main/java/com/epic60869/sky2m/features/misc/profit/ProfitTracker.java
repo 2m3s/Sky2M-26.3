@@ -55,7 +55,10 @@ import java.util.regex.Pattern;
 
 /**
  * Profit Trackers, ported from Skysoft's Profit Tracker (https://github.com/Akinsoft/Skysoft, features/profit/,
- * config/ProfitTrackerConfig.kt and data/profit_tracker_presets.json, LGPL-3.0). One tracker per activity: Farming,
+ * config/ProfitTrackerConfig.kt and data/profit_tracker_presets.json, LGPL-3.0). What Fishing, Foraging and the
+ * Mythological Ritual count follows SkyHanni instead (FishingProfitTracker with SkyHanni-REPO's FishingProfitItems and
+ * coins from catch messages, ForagingTracker's logs and TreeGiftBonusDrops, DianaProfitTracker's drops); Farming and
+ * Mining stay Skysoft's. One tracker per activity: Farming,
  * Fishing, Foraging, Mining, the Mythological Ritual and the six slayers, each shown while you're doing it (where the
  * preset's islands and areas say, with a fishing rod cast or a spade in your hotbar).
  * The six slayer trackers follow SkyHanni's SlayerProfitTracker (https://github.com/hannibal002/SkyHanni, LGPL-2.1)
@@ -93,7 +96,7 @@ public final class ProfitTracker {
         BLAZE("Blaze Slayer", "Mob Kill Coins", "Bosses Killed", true),
         VAMPIRE("Vampire Slayer", "Mob Kill Coins", "Bosses Killed", true),
         FARMING("Farming", "Bountiful Coins", "Pests Vacuumed", false),
-        FISHING("Fishing", "Coins", "Catches", true),
+        FISHING("Fishing", "Fished Coins", "Catches", true),
         FORAGING("Foraging", "Mob Kill Coins", "Bosses Killed", false),
         MINING("Mining", "Mob Kill Coins", "Bosses Killed", false),
         MYTHOLOGICAL_RITUAL("Mythological Ritual", "Coins", "Burrows Dug", true);
@@ -154,6 +157,7 @@ public final class ProfitTracker {
     private static final Pattern PEST_KILL = Pattern.compile("^You received (\\d+)x (.+) for killing an? (.+)!$");
     private static final String KERNEL_DONATION = "[NPC] Feast Chef Ted: Thanks for the donation! I've added a Kernel to your purse.";
     private static final Pattern TREASURE_CATCH = Pattern.compile("^. (?:GOOD|GREAT|OUTSTANDING|MUSICAL) CATCH!|^. (?:GOOD|GREAT|OUTSTANDING) JUNK CATCH!|^. TROPHY (?:FISH|FROG)!");
+    private static final Pattern FISHED_COINS = Pattern.compile("CATCH! You caught ([\\d,]+) Coins!");
     private static final long BOUNTIFUL_WINDOW_MS = 2_000L;
     private static final long COMPACTION_WINDOW_MS = 60_000L;
     private static final long SACK_WINDOW_MS = 60_000L;
@@ -194,7 +198,7 @@ public final class ProfitTracker {
     static FeatureConfigs.ProfitTrackerSettings config(Preset preset) {
         Sky2MConfig c = Sky2MConfig.current();
         if (c == null) return null;
-        FeatureConfigs.ProfitTrackers t = c.profitTrackers;
+        FeatureConfigs.ProfitTrackers t = c.misc.profitTrackers;
         return switch (preset) {
             case FARMING -> t.farming;
             case FISHING -> t.fishing;
@@ -228,6 +232,7 @@ public final class ProfitTracker {
     public static void init(Path configDir) {
         file = configDir.resolve("sky2m").resolve("profit-trackers.json");
         loadPresets();
+        loadSkyHanniItems();
         SlayerArea.init();
         SlayerQuestCost.init();
         SlayerQuestCost.onCharge(ProfitTracker::onQuestCharge);
@@ -270,6 +275,29 @@ public final class ProfitTracker {
             }
         } catch (Exception e) {
             System.err.println("[Sky2M] Couldn't read the profit tracker presets: " + e.getMessage());
+        }
+    }
+
+    /** SkyHanni-REPO's FishingProfitItems (every category) and foraging/TreeGiftBonusDrops item lists. */
+    private static final Set<String> SKYHANNI_FISHING = new HashSet<>(), SKYHANNI_FORAGING = new HashSet<>();
+
+    private static void loadSkyHanniItems() {
+        try (var fishing = ProfitTracker.class.getResourceAsStream("/assets/sky2m/skyhanni/FishingProfitItems.json");
+             var foraging = ProfitTracker.class.getResourceAsStream("/assets/sky2m/skyhanni/foraging/TreeGiftBonusDrops.json")) {
+            if (fishing != null) {
+                JsonObject root = JsonParser.parseReader(new InputStreamReader(fishing, StandardCharsets.UTF_8)).getAsJsonObject();
+                for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("categories").entrySet()) {
+                    for (String item : strings(e.getValue().getAsJsonArray())) SKYHANNI_FISHING.add(item.replace('-', ':'));
+                }
+            }
+            if (foraging != null) {
+                JsonObject root = JsonParser.parseReader(new InputStreamReader(foraging, StandardCharsets.UTF_8)).getAsJsonObject();
+                for (String key : List.of("uncommon_drops", "enchanted_books", "boosters", "shards", "runes", "misc_drops")) {
+                    if (root.has(key)) SKYHANNI_FORAGING.addAll(strings(root.getAsJsonArray(key)));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[Sky2M] Couldn't read SkyHanni's profit tracker items: " + e.getMessage());
         }
     }
 
@@ -397,6 +425,22 @@ public final class ProfitTracker {
         if (id == null || isBait(id)) return false;
         // SkyHanni's SlayerProfitTracker.isAllowedItem: only that slayer's own drop list counts.
         if (preset.slayer()) return SlayerBossProfit.isDropOf(preset.slayerName(), id);
+        // SkyHanni's trackers for everything but Farming (and Mining, which SkyHanni has no profit tracker for).
+        switch (preset) {
+            case FISHING -> {
+                // FishingProfitTracker.isAllowedItem: only items in one of SkyHanni-REPO's FishingProfitItems categories.
+                return SKYHANNI_FISHING.contains(id);
+            }
+            case FORAGING -> {
+                // ForagingTracker: logs (its "(ENCHANTED_)<TREE>_LOG" pattern) and the tree gift bonus drops.
+                return id.endsWith("_LOG") || SKYHANNI_FORAGING.contains(id);
+            }
+            case MYTHOLOGICAL_RITUAL -> {
+                // DianaProfitTracker: SkyHanni-REPO's Diana drops.
+                return com.epic60869.sky2m.features.combat.DianaProfitTracker.isDrop(id);
+            }
+            default -> { }
+        }
         return trackedItems(preset).contains(id) || conversions.containsKey(id) && trackedItems(preset).contains(conversions.get(id).input());
     }
 
@@ -576,7 +620,13 @@ public final class ProfitTracker {
             // A catch means you're fishing, wherever you are.
             activity(Preset.FISHING);
             if (currentPreset() == Preset.FISHING) {
-                for (Stats stats : targets(Preset.FISHING)) stats.actions++;
+                // SkyHanni's FishingProfitTracker: fished coins come from "GOOD CATCH! You caught 36,064 Coins!".
+                Matcher coins = FISHED_COINS.matcher(text);
+                double fished = coins.find() ? Double.parseDouble(coins.group(1).replace(",", "")) : 0;
+                for (Stats stats : targets(Preset.FISHING)) {
+                    stats.actions++;
+                    stats.coins += fished;
+                }
                 dirty = true;
             }
             return;
@@ -728,7 +778,8 @@ public final class ProfitTracker {
         if (gained <= 1 || gained >= 100_000) return;
         // SkyHanni's PurseApi: a gain within 2 seconds of closing a menu is a sale or similar, not a mob kill.
         if (preset.slayer() && now - lastScreenAt < 2_000L) return;
-        boolean counts = preset.slayer() || preset == Preset.FISHING || preset == Preset.MYTHOLOGICAL_RITUAL;
+        // Fishing's coins come from its catch messages instead (SkyHanni), so sea creature kill coins don't count.
+        boolean counts = preset.slayer() || preset == Preset.MYTHOLOGICAL_RITUAL;
         if (preset == Preset.FARMING) {
             String modifier = Compat.getCustomData(mc.player.getMainHandItem()).getStringOr("modifier", "");
             counts = Sky2MLocation.inGarden() && now - lastFarmed <= BOUNTIFUL_WINDOW_MS && modifier.equals("bountiful");

@@ -1,6 +1,7 @@
 package com.epic60869.sky2m;
 
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
@@ -24,14 +25,20 @@ public final class Sky2MCommissionHud {
         Pattern.compile("(?<name>.+?):\\s*(?<progress>DONE|[0-9,.]+\\s*/\\s*[0-9,.]+|[0-9]+(?:\\.[0-9]+)?%?)",
             Pattern.CASE_INSENSITIVE);
 
-    private static Sky2MConfig config;
+    /** The settings passed at startup; {@link #config()} prefers the current ones (they are replaced when settings are imported). */
+    private static Sky2MConfig registered;
+
+    private static Sky2MConfig config() {
+        Sky2MConfig current = Sky2MConfig.current();
+        return current != null ? current : registered;
+    }
     private static List<Commission> commissions = List.of();
 
     private Sky2MCommissionHud() {}
 
     public static void register(Sky2MConfig cfg) {
-        config = cfg;
-        HudElementRegistry.addLast(ID, Sky2MCommissionHud::extract);
+        registered = cfg;
+        HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST, ID, Sky2MCommissionHud::extract);
         // Scanning the TAB list is expensive (copy + sort + regex ~80 entries), so do it
         // every 10 ticks instead of every frame; extract only draws the stored result.
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -44,14 +51,14 @@ public final class Sky2MCommissionHud {
     private static int tickCounter;
 
     private static boolean visible(Minecraft mc) {
-        if (config == null || !config.mining.commissions.enabled || mc.player == null) return false;
-        return !config.mining.features.commissionsAreaOnly
+        if (config() == null || !config().mining.commissions.enabled || mc.player == null) return false;
+        return !config().mining.features.commissionsAreaOnly
             || com.epic60869.sky2m.features.core.Sky2MLocation.inMiningIsland();
     }
 
-    public static int x() { return config == null ? 8 : config.mining.commissions.x; }
-    public static int y() { return config == null ? 80 : config.mining.commissions.y; }
-    public static float scale() { return config == null ? 1.0f : config.mining.commissions.scale; }
+    public static int x() { return config() == null ? 8 : config().mining.commissions.x; }
+    public static int y() { return config() == null ? 80 : config().mining.commissions.y; }
+    public static float scale() { return config() == null ? 1.0f : config().mining.commissions.scale; }
     /** Scaled on-screen width of the HUD, matching exactly what is drawn. */
     public static int width() { return Math.round(frameWidth(shown()) * scale()); }
     /** Scaled on-screen height of the HUD, matching exactly what is drawn. */
@@ -62,9 +69,9 @@ public final class Sky2MCommissionHud {
     }
 
     public static void setPosition(int x, int y) {
-        if (config == null) return;
-        config.mining.commissions.x = Math.max(0, x);
-        config.mining.commissions.y = Math.max(0, y);
+        if (config() == null) return;
+        config().mining.commissions.x = Math.max(0, x);
+        config().mining.commissions.y = Math.max(0, y);
         save();
     }
 
@@ -92,10 +99,8 @@ public final class Sky2MCommissionHud {
             return;
         }
 
-        List<PlayerInfo> entries = new ArrayList<>(mc.getConnection().getOnlinePlayers());
-        try {
-            entries.sort(Sky2MPlayerTabOverlayAccessor.getOrdering());
-        } catch (Throwable ignored) {}
+        // Already ordered by the tab manager, which rebuilds it only when the tab list changes.
+        List<PlayerInfo> entries = Sky2MTabWidgetManager.players();
 
         /*
          * Do not infer commissions from the generic TAB widget names. Hypixel's
@@ -230,7 +235,7 @@ public final class Sky2MCommissionHud {
         g.pose().translate((float) x, (float) y);
         g.pose().scale(scale, scale);
 
-        if (config == null || config.mining.commissions.background) {
+        if (config() == null || config().mining.commissions.background) {
             int bg = Minecraft.getInstance().options.getBackgroundColor(ARGB.black(0.75f));
             // Rounded corners
             g.fill(1, 0, w - 1, h, bg);
@@ -297,8 +302,8 @@ public final class Sky2MCommissionHud {
     }
 
     private static void save() {
-        if (config != null) {
-            config.save(Minecraft.getInstance().gameDirectory.toPath()
+        if (config() != null) {
+            config().save(Minecraft.getInstance().gameDirectory.toPath()
                 .resolve("config").resolve("sky2m-mod.json"));
         }
     }

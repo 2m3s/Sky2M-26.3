@@ -120,11 +120,11 @@ public final class DungeonRoutes {
     /** Room corner (x, z) and rotation in degrees, Stella's scheme. */
     private record Frame(int x, int z, int rotation) {
         BlockPos toRoom(BlockPos pos) {
-            return rotate(new BlockPos(pos.getX() - x, pos.getY(), pos.getZ() - z), rotation);
+            return rotate(new BlockPos(pos.getX() - x, pos.getY() - com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonMapUtils.yShift(), pos.getZ() - z), rotation);
         }
 
         BlockPos toWorld(BlockPos local) {
-            return rotate(local, 360 - rotation).offset(x, 0, z);
+            return rotate(local, 360 - rotation).offset(x, com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonMapUtils.yShift(), z);
         }
     }
 
@@ -133,7 +133,7 @@ public final class DungeonRoutes {
     /** Routes from the files in the "dungeon route" folder. */
     private static final Map<String, List<Step>> FOLDER = new LinkedHashMap<>();
     private static Path routeFolder;
-    private static long folderStamp = Long.MIN_VALUE;
+    private static volatile long folderStamp = Long.MIN_VALUE;
     private static int folderCheckTicks;
     private static final Map<Room, Frame> FRAMES = new WeakHashMap<>();
     private static Path customFile;
@@ -164,9 +164,16 @@ public final class DungeonRoutes {
         routeFolder = configDir.resolve("sky2m").resolve("dungeon route");
         createRouteFolder();
         load(customFile, CUSTOM);
-        load(stellaFile, STELLA);
-        reloadFolder(false);
-        CompletableFuture.runAsync(DungeonRoutes::downloadStella);
+        // Stella's cached routes and the route folder can be big: read them off the render thread (lookups already lock).
+        CompletableFuture.runAsync(() -> {
+            Map<String, List<Step>> cached = new LinkedHashMap<>();
+            load(stellaFile, cached);
+            synchronized (STELLA) {
+                if (STELLA.isEmpty()) STELLA.putAll(cached);
+            }
+            reloadFolder(false);
+            downloadStella();
+        });
 
         ClientTickEvents.END_CLIENT_TICK.register(DungeonRoutes::tick);
         Sky2MWorldRender.register(DungeonRoutes::render);
@@ -193,6 +200,11 @@ public final class DungeonRoutes {
 
     private static void downloadStella() {
         try {
+            // The saved copy was just loaded: only download again when it is over 12 hours old.
+            synchronized (STELLA) {
+                if (!STELLA.isEmpty() && Files.isRegularFile(stellaFile)
+                    && System.currentTimeMillis() - Files.getLastModifiedTime(stellaFile).toMillis() < 12L * 60 * 60 * 1000) return;
+            }
             HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
             HttpRequest request = HttpRequest.newBuilder(URI.create(STELLA_URL))
                 .timeout(Duration.ofSeconds(15)).header("User-Agent", "Sky2M/1.0").GET().build();
@@ -400,6 +412,11 @@ public final class DungeonRoutes {
         if (cached != null) return cached;
         var level = Minecraft.getInstance().level;
         if (level == null) return null;
+        Frame sim = simFrame(room);
+        if (sim != null) {
+            FRAMES.put(room, sim);
+            return sim;
+        }
         int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
         for (Vector2ic s : room.getSegments()) {
             minX = Math.min(minX, s.x());
@@ -424,6 +441,22 @@ public final class DungeonRoutes {
                     FRAMES.put(room, found);
                     return found;
                 }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Dungeon Sim: the sim placed the room, so it knows its clay corner and rotation (the same corner and the same 0/90/180/270
+     * turn as Stella's), and no roof has to be searched for the blue terracotta.
+     */
+    private static Frame simFrame(Room room) {
+        if (!com.epic60869.sky2m.sim.roomsim.SimState.isActive()) return null;
+        for (Vector2ic s : room.getSegments()) {
+            int cell = (s.x() + HALF_ROOM - com.epic60869.sky2m.sim.livemap.LiveMapFeature.START_X) / 16
+                + (s.y() + HALF_ROOM - com.epic60869.sky2m.sim.livemap.LiveMapFeature.START_Z) / 16 * 11;
+            for (var placed : com.epic60869.sky2m.sim.roomsim.SimRoomIndex.placed()) {
+                for (int c : placed.cells()) if (c == cell) return new Frame(placed.clayX(), placed.clayZ(), placed.rotation());
             }
         }
         return null;

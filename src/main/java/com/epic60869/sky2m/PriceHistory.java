@@ -43,13 +43,27 @@ public final class PriceHistory {
     }
 
     /** Remembers every price in a freshly fetched lowest BIN list. Call off the render thread. */
-    public static synchronized void record(Map<String, Double> lowestBins) {
+    public static void record(Map<String, Double> lowestBins) {
         load();
         if (lowestBins.isEmpty()) return;
         long now = System.currentTimeMillis();
         lowestBins.forEach((id, price) -> {
             if (price != null && price > 0) SEEN.put(id, new Seen(price, now));
         });
+        // The file holds every item ever seen: write it at most every 5 minutes, and never while holding the class
+        // lock (get() takes that lock, and is called from rendering).
+        synchronized (SAVE_LOCK) {
+            if (now - lastSave < SAVE_EVERY_MS) return;
+            lastSave = now;
+            save();
+        }
+    }
+
+    private static final Object SAVE_LOCK = new Object();
+    private static final long SAVE_EVERY_MS = 5 * 60_000L;
+    private static long lastSave;
+
+    private static void save() {
         try {
             JsonObject root = new JsonObject();
             SEEN.forEach((id, seen) -> {

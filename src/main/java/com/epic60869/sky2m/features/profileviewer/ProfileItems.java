@@ -32,6 +32,8 @@ public final class ProfileItems {
     public record PvItem(ItemStack stack, List<Component> tooltip) {}
 
     private static final Map<String, List<PvItem>> DECODED = new ConcurrentHashMap<>();
+    private static final java.util.regex.Pattern RUNE_TIER = java.util.regex.Pattern.compile("(.+_RUNE)_(I{1,3})");
+    private static final java.util.regex.Pattern SACK_RUNE = java.util.regex.Pattern.compile("RUNE_(.+)_([1-3])");
 
     private ProfileItems() {}
 
@@ -96,10 +98,45 @@ public final class ProfileItems {
      */
     public static ItemStack icon(String id) {
         if (id == null || id.isEmpty()) return new ItemStack(Items.BARRIER);
+        // Runes come as "RUNE_HEARTS_1" (sacks) or "BITE_RUNE_I"; the NEU repo calls them "HEARTS_RUNE;1".
+        String runeBase = null;
+        java.util.regex.Matcher m = SACK_RUNE.matcher(id);
+        if (m.matches()) {
+            runeBase = m.group(1) + "_RUNE";
+            id = runeBase + ";" + m.group(2);
+        } else if ((m = RUNE_TIER.matcher(id)).matches()) {
+            runeBase = m.group(1);
+            id = runeBase + ";" + m.group(2).length();
+        }
         var entry = com.epic60869.sky2m.features.itemlist.ItemListData.entry(id.replace(':', '-'));
         if (entry == null) entry = com.epic60869.sky2m.features.itemlist.ItemListData.entry(id);
+        // Some runes are only in the repo at one tier: any tier's head is the same.
+        for (int tier = 3; entry == null && runeBase != null && tier >= 1; tier--)
+            entry = com.epic60869.sky2m.features.itemlist.ItemListData.entry(runeBase + ";" + tier);
         if (entry != null) return com.epic60869.sky2m.features.itemlist.ItemListStacks.stack(entry);
-        return RepoItems.itemStack(id);
+        ItemStack stack = RepoItems.itemStack(id);
+        if (stack.is(Items.BARRIER) && runeBase != null) stack = RepoItems.itemStack(runeBase);
+        // A rune neither list knows (Pestilence): another rune's head, named after its own id below.
+        if (stack.is(Items.BARRIER) && runeBase != null) {
+            for (var any : com.epic60869.sky2m.features.itemlist.ItemListData.entries()) {
+                if (!any.id().endsWith("_RUNE;1") || any.texture() == null) continue;
+                stack = com.epic60869.sky2m.features.itemlist.ItemListStacks.stack(any).copy();
+                stack.remove(net.minecraft.core.component.DataComponents.CUSTOM_NAME);
+                stack.remove(net.minecraft.core.component.DataComponents.LORE);
+                break;
+            }
+        }
+        // Unknown to both lists: at least name it after its id ("MANTIS_SHRIMP_SHARD" -> "Mantis Shrimp Shard").
+        if ((stack.is(Items.BARRIER) || runeBase != null) && !stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME)) {
+            StringBuilder name = new StringBuilder();
+            for (String word : id.split("[_:;-]")) {
+                if (word.isEmpty() || word.chars().allMatch(Character::isDigit)) continue;
+                if (!name.isEmpty()) name.append(' ');
+                name.append(word.charAt(0)).append(word.substring(1).toLowerCase(java.util.Locale.ROOT));
+            }
+            stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal(name.toString()));
+        }
+        return stack;
     }
 
     /** The item list's stack for a SkyBlock id, or null if it doesn't know the id. */

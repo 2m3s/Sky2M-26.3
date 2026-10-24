@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
@@ -71,7 +72,8 @@ public final class Sky2MHuds {
         // New players start from Sky2M's default HUD layout; an existing file is never replaced.
         com.epic60869.sky2m.Sky2MConfig.copyBundledDefault(file, "sky2m-huds.json");
         load();
-        HudElementRegistry.addLast(ID, (graphics, delta) -> renderAll(graphics));
+        // Drawn before the tab list, so holding Tab shows the list over the HUDs (like every Sky2M HUD layer).
+        HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST, ID, (graphics, delta) -> renderAll(graphics));
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> clientTicks++);
     }
 
@@ -172,12 +174,18 @@ public final class Sky2MHuds {
         // Positions saved before the reference size existed were placed on this screen size.
         if (refWidth <= 0 || refHeight <= 0) setReferenceToScreen();
         Sky2MPerf.frame();
+        boolean stamp = !(mc.gui.screen() instanceof com.epic60869.sky2m.Sky2MHudEditorScreen);
+        long now = System.currentTimeMillis();
+        if (stamp) lastLiveMs = now;
         for (Element element : ELEMENTS.values()) {
             if (!safe(element, element.enabled())) continue;
             long started = Sky2MPerf.start();
             if (element.custom() != null) {
                 try {
-                    if (customVisible(element)) renderCustom(graphics, element, false);
+                    if (customVisible(element)) {
+                        if (stamp) LAST_DRAWN.put(element.id(), now);
+                        renderCustom(graphics, element, false);
+                    }
                 } catch (Exception e) {
                     Sky2MErrors.caught(element.name(), e, "HUD " + element.id());
                 }
@@ -186,11 +194,31 @@ public final class Sky2MHuds {
             }
             List<Component> lines = tickLines(element);
             if (!lines.isEmpty()) {
+                if (stamp) LAST_DRAWN.put(element.id(), now);
                 Placement p = placement(element.id());
                 render(graphics, lines, mapX(p.x, width(lines, p.scale)), mapY(p.y, height(lines, p.scale)), p.scale, p.background);
             }
             Sky2MPerf.end(Sky2MPerf.Kind.HUD, element.name(), started);
         }
+    }
+
+    /** When each HUD last actually drew, for /s2 gui to list only what is on screen (like SkyHanni's editor). */
+    private static final Map<String, Long> LAST_DRAWN = new java.util.HashMap<>();
+    private static long lastLiveMs;
+    private static final long SEEN_GRACE_MS = 10_000L;
+
+    /**
+     * The moment the HUD layer last drew. Nothing draws while a screen hides it, so /s2 gui measures its grace window
+     * from here rather than from the clock.
+     */
+    public static long lastLive() {
+        return lastLiveMs == 0L ? System.currentTimeMillis() : lastLiveMs;
+    }
+
+    /** Whether the HUD drew within 10 seconds of {@code asOfMs}. */
+    public static boolean drawnRecently(String id, long asOfMs) {
+        Long at = LAST_DRAWN.get(id);
+        return at != null && asOfMs - at <= SEEN_GRACE_MS;
     }
 
     private static boolean safe(Element element, BooleanSupplier supplier) {
@@ -368,12 +396,14 @@ public final class Sky2MHuds {
         var font = Minecraft.getInstance().font;
         int w = textWidth(lines);
         int h = lines.size() * LINE_HEIGHT + PADDING * 2 - 2;
+        // HUD theme (colour-blind palettes, high contrast); the same lines when the theme is Default.
+        List<Component> themed = Sky2MTheme.lines(lines);
         graphics.pose().pushMatrix();
         graphics.pose().translate((float) x, (float) y);
         graphics.pose().scale(scale, scale);
-        if (background) graphics.fill(0, 0, w + PADDING * 2, h, 0x80000000);
-        for (int i = 0; i < lines.size(); i++) {
-            graphics.text(font, lines.get(i), PADDING, PADDING + i * LINE_HEIGHT, 0xFFFFFFFF, true);
+        if (background) graphics.fill(0, 0, w + PADDING * 2, h, Sky2MTheme.background(0x80000000));
+        for (int i = 0; i < themed.size(); i++) {
+            graphics.text(font, themed.get(i), PADDING, PADDING + i * LINE_HEIGHT, Sky2MTheme.argb(0xFFFFFFFF), true);
         }
         graphics.pose().popMatrix();
     }

@@ -198,7 +198,8 @@ public final class LiveMapFeature {
         ClientTickEvents.END_CLIENT_TICK.register(FeatureGuard.end("LiveMapFeature", client -> tick()));
         InteractiveMapFeature.register();
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
-            if (overlay) {
+            // The action bar comes many times a second: read it only in a dungeon, where onActionBar looks at it.
+            if (overlay && DungeonState.isInDungeon()) {
                 onActionBar(message.getString());
             }
         });

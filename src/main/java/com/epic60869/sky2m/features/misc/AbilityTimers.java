@@ -36,7 +36,7 @@ public final class AbilityTimers {
 
     private static FeatureConfigs.AbilityTimers config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.abilityTimers;
+        return c == null ? null : c.inventory.abilityTimers;
     }
 
     public static void init() {

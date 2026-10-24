@@ -11,6 +11,7 @@ import java.util.Locale;
  *   <li>{@code wise | hyperion}: either.</li>
  *   <li>{@code dragon & helmet}: both.</li>
  *   <li>{@code #ENCHANTED_}: items whose SkyBlock id starts with that.</li>
+ *   <li>{@code type:helmet}, {@code type:armor}, {@code rarity:legendary}: by the item's rarity line.</li>
  *   <li>Otherwise the words are found in the name or the lore, optionally allowing small typos.</li>
  * </ul>
  */
@@ -65,12 +66,22 @@ public final class ItemListSearch {
     }
 
     public static boolean matches(ItemListData.Entry e, Query q, boolean fuzzy) {
-        if (q.category() != null && e.category() != q.category()) return false;
+        return matches(q, e.id(), e.category(), e.searchName(), e.searchLore(), fuzzy, e);
+    }
+
+    /**
+     * The search against any item: its SkyBlock id and category (either may be null when it isn't a known item), and its
+     * name and lore, lower case without colour codes, and its list entry (null when it isn't a known item) for
+     * {@code type:} and {@code rarity:}. Used for the list and for highlighting items in menus.
+     */
+    public static boolean matches(Query q, String id, ItemListData.Category category, String name, String lore, boolean fuzzy,
+                                  ItemListData.Entry entry) {
+        if (q.category() != null && category != q.category()) return false;
         if (q.groups().isEmpty()) return true;
         for (List<String> group : q.groups()) {
             boolean all = true;
             for (String term : group) {
-                if (!term(e, term, fuzzy)) {
+                if (!term(id, name, lore, term, fuzzy, entry)) {
                     all = false;
                     break;
                 }
@@ -80,10 +91,24 @@ public final class ItemListSearch {
         return false;
     }
 
-    private static boolean term(ItemListData.Entry e, String term, boolean fuzzy) {
-        if (term.startsWith("#")) return e.id().toLowerCase(Locale.ROOT).startsWith(term.substring(1));
-        if (e.searchName().contains(term) || e.searchLore().contains(term)) return true;
-        return fuzzy && (fuzzy(term, e.searchName()));
+    private static boolean term(String id, String name, String lore, String term, boolean fuzzy, ItemListData.Entry entry) {
+        if (term.startsWith("#")) return id != null && id.toLowerCase(Locale.ROOT).startsWith(term.substring(1));
+        // type:helmet, type:armor, rarity:legendary
+        if (term.startsWith("type:")) return entry != null && type(entry, term.substring(5).trim());
+        if (term.startsWith("rarity:")) {
+            String want = term.substring(7).trim().replace('_', ' ');
+            return entry != null && entry.rarity() >= 0 && ItemListData.RARITIES.get(entry.rarity()).toLowerCase(Locale.ROOT).equals(want);
+        }
+        if (name.contains(term) || lore.contains(term)) return true;
+        // "armor" finds every helmet, chestplate, leggings and boots even when the lore never says armor.
+        if (entry != null && term.equals("armor") && entry.isArmor()) return true;
+        return fuzzy && (fuzzy(term, name));
+    }
+
+    private static boolean type(ItemListData.Entry entry, String want) {
+        if (want.isEmpty()) return !entry.type().isEmpty();
+        if (want.equals("armor") || want.equals("armour")) return entry.isArmor();
+        return entry.type().toLowerCase(Locale.ROOT).contains(want);
     }
 
     /** Whether the name starts with the search (those are listed first). */

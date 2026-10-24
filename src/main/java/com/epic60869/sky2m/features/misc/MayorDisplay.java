@@ -57,7 +57,7 @@ public final class MayorDisplay {
 
     private static FeatureConfigs.MayorDisplay config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.mayors.mayor;
+        return c == null ? null : c.events.mayor;
     }
 
     public static void init() {

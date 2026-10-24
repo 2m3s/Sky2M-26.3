@@ -62,7 +62,10 @@ public final class BeamsSolverFeature {
             {0.5f, 0.0f, 0.5f}, // dark purple
     };
 
-    private static final List<CandidatePair> CANDIDATES = loadCandidates();
+    /** Loaded on first use, not at start-up. */
+    private static final class LazyData {
+        static final List<CandidatePair> CANDIDATES = loadCandidates();
+    }
     private static List<ActivePair> activePairs = new ArrayList<>();
     private static RoomEntry lastRoomEntry = null;
 
@@ -145,8 +148,8 @@ public final class BeamsSolverFeature {
 
     private static void rescan(Level level, int[] clayAndRotation) {
         List<ActivePair> found = new ArrayList<>();
-        for (int i = 0; i < CANDIDATES.size(); i++) {
-            CandidatePair candidate = CANDIDATES.get(i);
+        for (int i = 0; i < LazyData.CANDIDATES.size(); i++) {
+            CandidatePair candidate = LazyData.CANDIDATES.get(i);
             BlockPos a = realPos(candidate.x1(), candidate.y1(), candidate.z1(), clayAndRotation);
             BlockPos b = realPos(candidate.x2(), candidate.y2(), candidate.z2(), clayAndRotation);
             boolean litA = level.getBlockState(a).is(Blocks.SEA_LANTERN);

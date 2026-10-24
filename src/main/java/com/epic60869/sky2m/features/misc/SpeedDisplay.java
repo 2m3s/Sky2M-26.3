@@ -19,7 +19,7 @@ public final class SpeedDisplay {
 
     private static boolean turnedOn() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c != null && c.misc.speedDisplay.enabled;
+        return c != null && c.gui.speedDisplay.enabled;
     }
 
     public static void init() {

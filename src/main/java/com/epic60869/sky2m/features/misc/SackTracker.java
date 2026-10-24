@@ -52,7 +52,8 @@ public final class SackTracker {
 
     public static void init(Path configDir) {
         file = configDir.resolve("sky2m").resolve("sacks.json");
-        load();
+        // Read sacks.json off the render thread; profile() and save() wait for it only when they need it.
+        LOADED = java.util.concurrent.CompletableFuture.runAsync(SackTracker::load);
         Sky2MChat.onChat(message -> onChat(message.component()));
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 10 == 0 && mc.gui.screen() instanceof AbstractContainerScreen<?> screen) scanMenu(screen);
@@ -79,7 +80,15 @@ public final class SackTracker {
         return amount == null ? -1 : amount;
     }
 
+    private static volatile java.util.concurrent.CompletableFuture<Void> LOADED;
+
+    private static void awaitLoaded() {
+        java.util.concurrent.CompletableFuture<Void> f = LOADED;
+        if (f != null) f.join();
+    }
+
     private static Map<String, Long> profile() {
+        awaitLoaded();
         String id = Sky2MStorageSearch.currentProfile();
         return PROFILES.computeIfAbsent(id.isEmpty() ? "default" : id, k -> new ConcurrentHashMap<>());
     }
@@ -247,6 +256,7 @@ public final class SackTracker {
 
     private static void save() {
         if (!dirty || file == null) return;
+        awaitLoaded();
         dirty = false;
         try {
             Files.createDirectories(file.getParent());

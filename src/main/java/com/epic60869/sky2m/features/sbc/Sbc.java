@@ -29,9 +29,12 @@ public final class Sbc {
         SbcCommands.init();
         SbcItems.init();
         SbcChat.init();
+        SbcDyeSync.init();
+        SbcRooms.init();
         SbcChatOverlay.init();
         SbcSocial.init();
         SbcStaff.init();
+        SbcLink.init();
         SbcLobby.init();
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>)) return;
@@ -60,6 +63,8 @@ public final class Sbc {
     /** A packet the older handlers don't know; returns false when nobody took it. Called on the game thread. */
     public static boolean handle(String type, JsonObject packet) {
         try {
+            // A feature staff switched off remotely ignores what the server still sends for it.
+            if (!Flags.allowsPacket(type)) return true;
             switch (type) {
                 case "flags" -> Flags.update(packet);
                 // Errors nothing else asked for (a message the server refused...) were dropped silently; say them.
@@ -70,12 +75,15 @@ public final class Sbc {
                 case "museumResult" -> com.epic60869.sky2m.features.misc.MuseumTooltip.handle(packet);
                 case "partyData" -> com.epic60869.sky2m.features.dungeons.party.PartyDungeonData.handle(packet);
                 case "updateAvailable", "announcement", "motd" -> SbcServer.handle(type, packet);
+                case "roomResult", "roomEvent", "rooms", "roomInvite", "roomKicked", "roomBrowse" -> SbcRooms.handle(type, packet);
+                case "runSummary", "runSummaryMissing", "runSummaryPosted", "runSummaryError" -> com.epic60869.sky2m.features.dungeons.RunSummary.handle(type, packet);
                 case "reactions", "reactionError", "chatBlocked", "muted", "unmuted" -> SbcChat.handle(type, packet);
                 case "cosmetics", "cosmeticsProfile", "cosmeticsError", "badgeEarned" -> SbcCosmetics.handle(type, packet);
                 case "nameTagTable", "nameTagUpdate" -> SbcNameTags.handle(type, packet);
                 case "online", "whoResult", "friends", "friendEvent", "socialSettings", "ignoreResult", "ignoreList", "socialError" -> SbcSocial.handle(type, packet);
+                case "linkCodeResult", "linkStatus", "linkDeleteResult", "trackerSessionsResult", "linkError" -> SbcLink.handle(type, packet);
                 case "settingsSaved", "settings", "settingsSlots", "settingsDeleted", "settingsError" -> SbcSettingsSync.handle(type, packet);
-                case "staffLoginResult", "staffLoggedOut", "staffMutes", "staffFlags", "staffResult", "staffError" -> SbcStaff.handle(type, packet);
+                case "staffLoginResult", "staffLoggedOut", "staffMutes", "staffFlags", "staffResult", "staffError", "staffAudit", "staffLookup", "staffOnline", "staffCounts" -> SbcStaff.handle(type, packet);
                 default -> {
                     return false;
                 }
@@ -89,6 +97,7 @@ public final class Sbc {
     /** Called by Sky2MGlobalChat on the game thread whenever a new connection is open (after hello). */
     public static void onConnected() {
         SbcSocial.onConnected();
+        SbcRooms.onConnected();
         SbcCosmetics.onConnected();
         SbcNameTags.onConnected();
     }

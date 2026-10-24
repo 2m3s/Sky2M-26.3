@@ -27,7 +27,10 @@ public final class SbcCrashReports {
     private static final String URL = "https://shadowisabot.com/mod-api/crash-reports";
     private static final int MAX_TRACE = 32_000;
     private static final int PER_HOUR = 10;
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+    /** Built on the first report, not at startup. */
+    private static final class Http {
+        static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+    }
     private static final Set<String> SENT = ConcurrentHashMap.newKeySet();
     private static final Deque<Long> RECENT = new ArrayDeque<>();
 
@@ -92,6 +95,6 @@ public final class SbcCrashReports {
         HttpRequest request = HttpRequest.newBuilder(URI.create(URL)).timeout(Duration.ofSeconds(15))
             .header("Content-Type", "application/json").header("User-Agent", "Sky2M/" + SbcInfo.modVersion())
             .POST(HttpRequest.BodyPublishers.ofString(body.toString())).build();
-        HTTP.sendAsync(request, HttpResponse.BodyHandlers.discarding()).exceptionally(e -> null);
+        Http.CLIENT.sendAsync(request, HttpResponse.BodyHandlers.discarding()).exceptionally(e -> null);
     }
 }

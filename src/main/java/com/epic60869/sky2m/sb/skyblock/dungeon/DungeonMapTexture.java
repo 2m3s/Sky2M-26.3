@@ -66,6 +66,8 @@ public class DungeonMapTexture {
 	public static void onMapItemDataUpdate(MapId mapId, boolean updateMapTexture) {
 		if (Utils.isInDungeons() && !DungeonManager.isInBoss() && mapId.equals(DungeonMap.getMapIdComponent(null))) {
 			MapItemSavedData state = MapItem.getSavedData(mapId, Minecraft.getInstance().level);
+			// The Dungeon Sim has no map item, so there is nothing to copy.
+			if (state == null) return;
 
 			// Only update the map texture when it changes (Hypixel only updates the texture when absolutely needed)
 			if (updateMapTexture) {

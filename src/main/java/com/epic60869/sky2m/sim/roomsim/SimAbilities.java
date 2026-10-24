@@ -455,6 +455,8 @@ public final class SimAbilities {
         // Once the look has driven the travel into something it stays at the height it settled at for the rest
         // of the walk. Null until that happens.
         Double lockedY = null;
+        var simCfg = com.epic60869.sky2m.Sky2MConfig.current();
+        boolean eyeLine = simCfg == null || simCfg.dungeons.dungeonSim.aotvEyeLine;
         // HOW FAR A SETTLED WALK MAY RUN: to where the EYE's look meets a block, and no further. QUOI's Auto Ice
         // Fill hops one tile at a time by aiming from the eye at the next tile's feet position, which on Hypixel
         // lands exactly there (killer560, 2026-10-02: "auto ice fill tends to start working but then it'll stop
@@ -469,6 +471,11 @@ public final class SimAbilities {
                 break;
             }
             Vec3 full = from.add(look.scale(d));
+            if (eyeLine) {
+                // 1.8.9 EYE LINE: the line starts at the eye (feet + 1.62) and the eye lands in the block it reaches,
+                // so the feet are one block below that block (a standing player's eye sits in the block above his feet).
+                full = new Vec3(full.x, from.y + 1.62 - 1.0 + look.y * d, full.z);
+            }
             Vec3 candidate = snap(lockedY == null ? full : new Vec3(full.x, lockedY, full.z));
             if (candidate.equals(best)) {
                 continue;   // the same block as the last step - nothing new to test

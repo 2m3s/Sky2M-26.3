@@ -346,7 +346,8 @@ public final class LiveMapConfig {
     // ---------------------------------------------------------------- HUD live map
 
     public boolean isEnabled() {
-        return com.epic60869.sky2m.sim.roomsim.SimState.isActive(); // Sky2M: only inside the Dungeon Sim
+        // Sky2M: inside the Dungeon Sim, or when Dungeons > Dungeon Map uses a style drawn from the scanner (Stella, Devonian).
+        return com.epic60869.sky2m.sim.roomsim.SimState.isActive() || com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.needsScan();
     }
 
     public boolean isEnabledRaw() {

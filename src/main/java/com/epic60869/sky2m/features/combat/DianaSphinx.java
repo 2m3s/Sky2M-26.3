@@ -52,7 +52,7 @@ public final class DianaSphinx {
 
     private static boolean enabled() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c != null && c.mayors.diana.sphinxSolver && Sky2MLocation.onSkyblock();
+        return c != null && c.events.diana.sphinxSolver && Sky2MLocation.onSkyblock();
     }
 
     public static void init() {

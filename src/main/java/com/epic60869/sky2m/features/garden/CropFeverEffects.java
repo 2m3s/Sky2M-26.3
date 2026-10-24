@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.Holder;
@@ -98,7 +99,7 @@ public final class CropFeverEffects {
             if (!"Garden".equals(area)) stop();
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> tick());
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("sky2m", "crop_fever_coins"), (g, delta) -> renderCoins(g));
+        HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST, Identifier.fromNamespaceAndPath("sky2m", "crop_fever_coins"), (g, delta) -> renderCoins(g));
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("cropfever")
@@ -122,7 +123,7 @@ public final class CropFeverEffects {
     private static void start(boolean preview) {
         FeatureConfigs.CropFever c = config();
         if (c == null || !c.enabled || active) {
-            if (preview && (c == null || !c.enabled)) Sky2MAlerts.chat(net.minecraft.network.chat.Component.literal("Turn on Farming > Crop Fever Effects first."));
+            if (preview && (c == null || !c.enabled)) Sky2MAlerts.chat(net.minecraft.network.chat.Component.literal("Turn on Garden > Crop Fever Effects first."));
             return;
         }
         active = true;

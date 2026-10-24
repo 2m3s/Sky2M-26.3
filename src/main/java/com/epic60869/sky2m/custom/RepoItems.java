@@ -51,7 +51,31 @@ public final class RepoItems {
 	/** A SkyBlock player head, without creating an item stack. */
 	public record Head(String id, String name, String texture) {}
 
+	/** Repo loads run here (not the shared common pool), at low priority so they don't compete with the first frames. */
+	private static final java.util.concurrent.ExecutorService REPO_POOL = java.util.concurrent.Executors.newFixedThreadPool(4, r -> {
+		Thread thread = new Thread(r, "Sky2M repo load");
+		thread.setDaemon(true);
+		thread.setPriority(Thread.MIN_PRIORITY + 1);
+		return thread;
+	});
+
+	/** Item icon downloads (many small images) get their own threads so they can't hold up the data loads. */
+	private static final java.util.concurrent.ExecutorService ICON_POOL = java.util.concurrent.Executors.newFixedThreadPool(3, r -> {
+		Thread thread = new Thread(r, "Sky2M icon load");
+		thread.setDaemon(true);
+		thread.setPriority(Thread.MIN_PRIORITY + 1);
+		return thread;
+	});
+
 	private RepoItems() {}
+
+	/** Like {@link #runAsync}, for item icon downloads. */
+	public static void runIconAsync(Runnable runnable) {
+		CompletableFuture.runAsync(runnable, ICON_POOL).exceptionally(e -> {
+			LOGGER.error("[Sky2M] Icon task failed", e);
+			return null;
+		});
+	}
 
 	public static void init() {
 		// The item list is downloaded once, by PriceService, and shared with the price features.
@@ -59,7 +83,7 @@ public final class RepoItems {
 	}
 
 	public static void runAsync(Runnable runnable) {
-		CompletableFuture.runAsync(runnable).exceptionally(e -> {
+		CompletableFuture.runAsync(runnable, REPO_POOL).exceptionally(e -> {
 			LOGGER.error("[Sky2M] Repo task failed", e);
 			return null;
 		});
@@ -260,9 +284,11 @@ public final class RepoItems {
 	}
 
 	private static ItemStack createStack(RepoItem repoItem) {
-		ItemStack stack = repoItem.texture() != null ? Compat.createSkull(repoItem.texture()) : new ItemStack(repoItem.item());
-		// Newer items are paper with Hypixel's model on top; use the model when it's loaded (Hypixel's pack, or vanilla).
 		Identifier model = repoItem.itemModel() == null ? null : Identifier.tryParse(repoItem.itemModel());
+		// Newer items have no vanilla material, only Hypixel's model: draw them as paper rather than a barrier.
+		Item base = repoItem.item() == net.minecraft.world.item.Items.BARRIER && model != null ? net.minecraft.world.item.Items.PAPER : repoItem.item();
+		ItemStack stack = repoItem.texture() != null ? Compat.createSkull(repoItem.texture()) : new ItemStack(base);
+		// Newer items are paper with Hypixel's model on top; use the model when it's loaded (Hypixel's pack, or vanilla).
 		if (model != null && repoItem.texture() == null && hasItemModel(model)) stack.set(DataComponents.ITEM_MODEL, model);
 		stack.set(DataComponents.CUSTOM_NAME, Component.literal(repoItem.name()));
 		CompoundTag tag = new CompoundTag();
@@ -324,13 +350,74 @@ public final class RepoItems {
 		return id == null ? Items.BARRIER : BuiltInRegistries.ITEM.getOptional(id).orElse(Items.BARRIER);
 	}
 
+	/** Repo files are cached on disk (config/sky2m/repo-cache) and only re-checked (by ETag) after this long. */
+	private static final long CACHE_FRESH_MS = 12L * 60 * 60 * 1000;
+	private static final java.nio.file.Path CACHE_DIR = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("sky2m").resolve("repo-cache");
+	/** At most this many repo requests run at once, so a launch doesn't fire dozens of downloads together. */
+	private static final java.util.concurrent.Semaphore FETCH_SLOTS = new java.util.concurrent.Semaphore(3);
+
+	private static String cacheName(String url) {
+		try {
+			byte[] hash = java.security.MessageDigest.getInstance("SHA-1").digest(url.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < 10; i++) sb.append(String.format("%02x", hash[i]));
+			return sb.toString();
+		} catch (Exception e) {
+			return Integer.toHexString(url.hashCode());
+		}
+	}
+
 	private static String fetch(String url) throws IOException, InterruptedException {
-		HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-				.timeout(Duration.ofSeconds(15))
-				.header("User-Agent", "Sky2M/1.0")
-				.GET().build();
-		HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-		if (response.statusCode() != 200) throw new IOException("HTTP " + response.statusCode() + " for " + url);
-		return response.body();
+		String name = cacheName(url);
+		java.nio.file.Path body = CACHE_DIR.resolve(name + ".json");
+		java.nio.file.Path tagFile = CACHE_DIR.resolve(name + ".etag");
+		boolean cached = java.nio.file.Files.isRegularFile(body);
+		if (cached) {
+			try {
+				long age = System.currentTimeMillis() - java.nio.file.Files.getLastModifiedTime(body).toMillis();
+				if (age >= 0 && age < CACHE_FRESH_MS) return java.nio.file.Files.readString(body);
+			} catch (Exception ignored) {
+				cached = false;
+			}
+		}
+		FETCH_SLOTS.acquire();
+		try {
+			HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url))
+					.timeout(Duration.ofSeconds(15))
+					.header("User-Agent", "Sky2M/1.0")
+					.GET();
+			if (cached) {
+				try {
+					if (java.nio.file.Files.isRegularFile(tagFile)) builder.header("If-None-Match", java.nio.file.Files.readString(tagFile).trim());
+				} catch (Exception ignored) {}
+			}
+			HttpResponse<String> response;
+			try {
+				response = CLIENT.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+			} catch (IOException e) {
+				if (cached) return java.nio.file.Files.readString(body); // offline: the saved copy still works
+				throw e;
+			}
+			if (response.statusCode() == 304 && cached) {
+				try {
+					java.nio.file.Files.setLastModifiedTime(body, java.nio.file.attribute.FileTime.fromMillis(System.currentTimeMillis()));
+				} catch (Exception ignored) {}
+				return java.nio.file.Files.readString(body);
+			}
+			if (response.statusCode() != 200) {
+				if (cached) return java.nio.file.Files.readString(body);
+				throw new IOException("HTTP " + response.statusCode() + " for " + url);
+			}
+			try {
+				java.nio.file.Files.createDirectories(CACHE_DIR);
+				java.nio.file.Files.writeString(body, response.body());
+				java.util.Optional<String> tag = response.headers().firstValue("ETag");
+				if (tag.isPresent()) java.nio.file.Files.writeString(tagFile, tag.get());
+				else java.nio.file.Files.deleteIfExists(tagFile);
+			} catch (Exception ignored) {}
+			return response.body();
+		} finally {
+			FETCH_SLOTS.release();
+		}
 	}
 }

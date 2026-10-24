@@ -45,7 +45,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class BestFriends {
     private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("sky2m").resolve("best-friends.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
+    /** Built on first use, not at startup. */
+    private static final class Http {
+        static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
+    }
     private static final long SAVE_MS = 30_000;
 
     /** One player: what they were last called, the time partied, when, and runs together by floor. */
@@ -176,7 +179,7 @@ public final class BestFriends {
         if (LOOKING_UP.add(key)) {
             HttpRequest request = HttpRequest.newBuilder(URI.create("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + name))
                 .timeout(Duration.ofSeconds(10)).header("User-Agent", "Sky2M").GET().build();
-            HTTP.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenAccept(r -> {
+            Http.CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenAccept(r -> {
                 if (r.statusCode() != 200) return;
                 JsonObject o = JsonParser.parseString(r.body()).getAsJsonObject();
                 if (!o.has("id")) return;

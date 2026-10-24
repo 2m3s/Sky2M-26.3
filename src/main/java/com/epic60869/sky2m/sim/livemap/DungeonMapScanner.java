@@ -84,6 +84,18 @@ final class DungeonMapScanner {
         nextCalibrationAttemptMs = 0;
     }
 
+    static int mapRoomSize() {
+        return mapRoomSize;
+    }
+
+    static int startCornerX() {
+        return startCornerX;
+    }
+
+    static int startCornerZ() {
+        return startCornerZ;
+    }
+
     static boolean isCalibrated() {
         return calibrated;
     }

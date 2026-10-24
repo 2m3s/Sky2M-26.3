@@ -196,6 +196,9 @@ public final class Sky2MNick {
      * is not limited to Sky2M's separate global-chat channel.
      */
     /** Replaces synced nicknames for other Sky2M users in normal Hypixel chat. */
+    /** Lowercase forms of usernames, so a chat line is not matched by lowercasing every known name again. */
+    private static final Map<String, String> LOWERCASE_NAMES = new ConcurrentHashMap<>();
+
     public static Component replaceOtherNamesInChat(Component message) {
         if (message == null) return message;
 
@@ -212,7 +215,7 @@ public final class Sky2MNick {
         for (RemoteNick remote : REMOTE_NICKS.values()) {
             if (!remote.shown() || remote.name.isBlank() || remote.username.isBlank()) continue;
             if (isLocalUuid(remote.uuid)) continue;
-            if (!plain.contains(remote.username.toLowerCase(java.util.Locale.ROOT))) continue;
+            if (!plain.contains(LOWERCASE_NAMES.computeIfAbsent(remote.username, u -> u.toLowerCase(java.util.Locale.ROOT)))) continue;
             result = replaceExactName(result, remote.username, styled(remote));
         }
         result = insertSymbols(result);
@@ -229,7 +232,7 @@ public final class Sky2MNick {
             if (!remote.username.equals(actualName)) {
                 REMOTE_NICKS.put(uuid, remote.withUsername(actualName));
             }
-            if (!plain.contains(actualName.toLowerCase(java.util.Locale.ROOT))) continue;
+            if (!plain.contains(LOWERCASE_NAMES.computeIfAbsent(actualName, u -> u.toLowerCase(java.util.Locale.ROOT)))) continue;
             result = replaceExactName(result, actualName, styled(remote));
         }
         return result;
@@ -353,6 +356,8 @@ public final class Sky2MNick {
 
         String actualName = Minecraft.getInstance().getUser().getName();
         if (actualName == null || actualName.isBlank()) return message;
+        // Most lines do not hold your name: a plain read is cheaper than splitting the line into styled runs.
+        if (!message.getString().contains(actualName)) return message;
 
         return replaceExactName(message, actualName, styled(local));
     }
@@ -390,7 +395,18 @@ public final class Sky2MNick {
     public static String username(UUID uuid) {
         RemoteNick nick = uuid == null ? null : REMOTE_NICKS.get(uuid);
         if (nick != null && !nick.username.isBlank()) return nick.username;
-        return uuid == null ? "" : USERNAMES.getOrDefault(uuid, "");
+        if (uuid == null) return "";
+        String known = USERNAMES.get(uuid);
+        if (known != null) return known;
+        // The cosmetics table only has UUIDs. Fall back to your own account and the players Minecraft knows,
+        // so symbols show in normal chat even when no S2C packet has named them.
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.getUser() != null && uuid.equals(mc.getUser().getProfileId())) return cleanUsername(mc.getUser().getName());
+        if (mc.getConnection() != null) {
+            PlayerInfo info = mc.getConnection().getPlayerInfo(uuid);
+            if (info != null && info.getProfile() != null && info.getProfile().name() != null) return cleanUsername(info.getProfile().name());
+        }
+        return "";
     }
 
     /** Puts the player's supporter symbol and badge in front of their name, where their name appears as is. */

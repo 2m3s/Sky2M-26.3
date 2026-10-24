@@ -2,7 +2,160 @@
 
 All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. The 26.3 build has its own version numbers, starting again at 1.0; the 26.2 build keeps its own changelog.
 
-## Unreleased
+## 1.0.3
+
+### Added
+- Item List recipes: hold Shift over an ingredient needed more than once (like 32 Wheat) to see its prices for the whole amount, with the price each.
+- Enter Confirms Signs (Inventory, on by default): press Enter in a SkyBlock sign (an auction price like 1m, a bazaar amount) to send it, like clicking Done.
+- Item List sorting, like NEU's: a sort button beside the search bar (and Sort By / Reverse Sort settings) orders items by Price (most expensive first), Rarity, Type or Name; right click reverses it. Search `type:armor`, `type:sword` or `rarity:legendary` to narrow the list, and `armor` now finds every helmet, chestplate, leggings and boots.
+- Live chat calculator: typing `/s2 calc 8*9`, or just `8*9`, shows "= 72" at the end of the chat box as you type, without pressing Enter.
+- [Upload to Website] after uploading a screenshot (and an "Upload to Website" button in `/s2 screenshots`): puts it on shadowisabot.com/screenshots with your name and head.
+- Armor Stack Display (Combat > HUDs & Counters, from SkyHanni): your Crimson, Terror, Aurora or Fervor armor stacks in a movable HUD, with the time until the next stack decays.
+- `-Dsky2m.hypixelHosts=<address,...>` launch option for testing on a local Hypixel-style server: the listed addresses count as Hypixel for Discord Rich Presence, the self-test and other address checks. It does nothing unless set, and the cross-mod bridge to Odin, NoammAddons and Devonian still only connects on the real hypixel.net.
+- Coins Per Hour HUD (Misc): graphs your purse per minute, with optional last slayer boss profit and powder goal ETA lines.
+- Skill achievements for Farming, Mining, Combat, Foraging, Fishing, Enchanting, Alchemy, Carpentry, Runecrafting, Social and Taming, with named tiers and symbols, plus a Skills tab in `/s2 achievements`.
+- Settings profiles: `/s2 profile save|load|list|delete <name>` keeps named copies of your settings.
+- One-time warning when other installed mods (SkyHanni, Skyblocker and others) overlap Sky2M features, with a setting to turn it off.
+- `/s2 import skyhanni` and `/s2 import skyblocker` carry over a few matching settings.
+- `/s2 health`: Sky2M version, startup time, Sky2M chat connection, related mods and this session's error count.
+- HUD Theme setting (GUI) with High contrast, Deuteranopia, Protanopia and Tritanopia palettes for text HUDs.
+- RNG Meter Advisor HUD and `/s2 rngadvice`: the slayer RNG meter closest to dropping.
+- Trophy Fish tracker (Fishing): counts each trophy fish by tier, with a HUD and `/s2 trophyfish`.
+- Mineshaft Stats HUD (Mining): time in the shaft and blocks broken, with an optional summary when you leave.
+- Mentions (Chat): highlight your name and keywords in chat with a colour and sound.
+- Recipe Cost line in price tooltips (Inventory > Price Tooltips): the cost to craft the item from its recipe, with how much it saves or costs versus buying, Shift for the ingredient list, and an option to include cheaper sub-crafts.
+- Remove All Fog (Misc > Visual > Random): removes every kind of fog, including the fog in water, lava, powder snow, darkness and blindness, on your own screen.
+- Dungeons > Run Recap: a Death Recap (who died, to what, in which room and when; `/s2 deathrecap`, also saved in Run History), a Class Cooldowns HUD for Bonzo's Mask, Spirit Mask, Phoenix Pet and your class ultimate, a Run Summary card (`/s2 runsummary` opens it; with "Post Run Summary to /s2c" on, one /s2c message with a clickable [View] opens the full summary for anyone who clicks it; nothing goes to party or guild chat) and editable Boss Phase Notes per floor.
+- Route Replay (Dungeon > Run History): your path through each run is recorded and can be replayed on the dungeon map with your head, a trail through the rooms, play/pause, 1x-8x speed and a scrub bar. Use the Replay button in a run's details in `/s2 runs` or `/s2 replay` (also works for Dungeon Sim runs). New "Record Route" option.
+- `/s2 rng` is now a screen with tabs (All, Combat, Slayers, Fishing, Mining, Farming, Foraging, Pets, Other) and collapsible groups: enter Magic Find, Pet Luck, Overbloom, Looting and Luck, search every drop those stats affect (M, P and O badges and filters) and see the real chance and average tries per drop (one compact row per item; the formula is in the tooltip). Dungeon and gift drops are left out, pets show their rarity colour without the level, and the End dragon pets are one "Dragon Pets" dropdown. Farming shows only the rare pest drops and Harvest Feast drops.
+- Winter and Jerry tools (Events > Winter, from SkyHanni): Highlight Jerries and Line to Jerries, a Unique Gift Counter, Unique Gifting Opportunities, a Gift Profit Tracker (`/s2 resetgifttracker`), Gift Clean Display, a Frozen Treasure highlighter and a New Year Cake reminder.
+- Chat rooms can have passwords or be invite-only: `/s2c create <room> [password]`, `/s2c join <room> [password]`, `/s2c room <room> invite|uninvite|kick|password|invite-only|public|private`, `/s2c rooms public`, and a clickable [Join] message when you are invited.
+- Global search (`/s2 find`, `/s2 search <text>`, or an unbound key) that finds settings, HUDs and commands, shows their values and lets you toggle switches inline.
+- `/s2 link` links your Minecraft account to shadowisabot.com (new Link page). With "Share Sessions to Website" on (off by default) your tracker sessions can be public on your player page; `/s2 link delete` removes everything stored.
+- `/s2 staff` has new Audit, Player, Online and Announce tabs and a Features tab that lists every remote feature switch; `/s2 staff audit [n]` prints the staff audit log. New remote switches cover Sky2M chat, chat rooms, nicknames, who, emblems, leaderboards, slayer PBs, party finder stats, museum tooltips and screenshot sharing.
+- Party Message Style (Fishing > Rare Sea Creatures): choose Sky2M Classic, Riccio Fishing Utils or a custom template. The Riccio style sends and understands "WOAH! An Alligator just surfaced! Catch #245 after 18d 17h!" party messages, and other players' messages in that style now trigger your sea creature alerts.
+- Dungeon Map styles (Dungeon > Dungeon Map > Map Style): choose the Skyblocker, Stella or Devonian map. Stella's (from Stella's StellaNav, LGPL-3.0) has its room and door colours, checkmarks, room names and secrets, player markers and Secrets / Score / Deaths / Crypts lines; Devonian's (from Devonian's dungeon map, GPL-3.0) has its room colours, doors, room names with secret counts, ticks and player markers. All three draw from one shared model of the floor, so they work on Hypixel and in the Dungeon Sim.
+- The Dungeon Map, its score and the secret waypoints and secret routes now work inside the Dungeon Sim, read from the sim's own floor.
+- Kuudra suite (Crimson Isle > Kuudra, from Odin): supply pick-up and drop-off waypoints with spot labels and supply times, pre-spot and missing-crate alerts with crate priority, unfinished-pile waypoints, a build helper HUD with a stun alert, a Fresh Tools timer, phase splits (HUD and chat) with personal bests per tier, chest profit with key cost in the Free and Paid chest menus, Kuudra's hitbox and health, and a Perk Menu cleaner that hides unused perks.
+- Dungeon Extras (Dungeon > Dungeon Extras): secret waypoint type toggles, door room labels, a Spring Boots jump-height HUD, a dungeon creation cooldown timer (can block `/joininstance`), Hide Dungeon Clutter (healer orbs, blessings, Superboom TNT, Revive Stones, skulls, Journal Entries), Clean End, a solo class message hider, a Milestones Display, Quick Close (close dungeon chests with a movement key) and a Shard Score Message. "Quality As Stack Size" draws dungeon item quality like a stack count (Inventory > Item Quality).
+- Croesus overlay now follows SkyHanni's: a "Chests: n/60" HUD, unopened runs dark purple, opened runs dark aqua, a check on runs that used a Kismet Feather, the Feather count on the Reroll Chest and a warning at 55 waiting runs ("SkyHanni Style" option).
+- Mining: Glacite Mineshaft corpse finder with corpse loot profit, entrance and ladder waypoints, a cave-in timer and a pity HUD; a Powder Tracker HUD; a Fossil Excavator solver and excavation profit tracker; Fetchur, Puzzler and Metal Detector solvers; a Crystal Nucleus run tracker; a Glacite cold overlay and Ascension Rope reminder; Precision Mining highlight and a Flowstate helper with personal best; Heart of the Mountain and Heart of the Forest overlays; a mining events HUD with alerts; and red Dwarven Mines carpets.
+- Farming (Garden > SkyHanni Farming, from SkyHanni): a Crop Milestone HUD (crops per minute, coins per hour, blocks per second, time to the next tier), a Garden Level HUD, Jacob's Contest timer, notification, medal cut-offs and stats summary with Zorro's Cape protection, a true Farming Fortune HUD, optimal angle and speed HUDs with a wrong-speed warning, garden plot borders, a pest trap HUD with warnings, a Pest Profit Tracker and a plot spray display.
+- Garden Helpers (Garden > Garden Helpers): a Composter overlay with cost and profit per hour and upgrade previews, a Stereo Harmony display and vinyl helper, an Atmospheric Filter display, DNA Analyzer and Phantomleaf solvers, Anita shop helpers and a Farming Weight HUD with time to a goal weight.
+- Fishing: a Totem of Corruption overlay with its range, a Sea Creature Tracker, a Golden Fish timer, a sea creature health list, a Barn Fishing Timer, a Shark Fish Counter, an Odger waypoint with trophy totals in Odger's menu, lava drawn as water, an option to hide other players' bobbers and a lava bobber fix.
+- Foraging: a Foraging Tracker for tree gifts, a Tree Progress display, Clean Tree View, a tutorial quest helper, Birries and Hideonleaf highlights, Mute Phantoms, Agatha and Miria coupon profit tooltips and a Honeyhive reminder.
+- Combat (from SkyHanni and Skyblocker): a boss damage indicator HUD with DPS and heal messages, Vampire Slayer helpers, Ashfang helpers, a Ghost counter and profit tracker, a dragon profit tracker with a weight display and Superior Dragon notification, an Ender Node tracker and area boss highlights with kill timers.
+- Economy (Inventory > Items & Tooltips > Economy): a Value Breakdown (Shift tooltip section and a J-key window), Bazaar best sell method and a daily sales counter, a Trade Value overlay, a Bits Gained message with Community Shop coins per bit, Reforge Helper with rare reforge blocking and an Anvil combine helper.
+- Events (new Events category): Hoppity's Hunt egg waypoints, Chocolate Factory upgrade advice with a Time Tower and Stray Rabbit timers, Carnival helpers, Great Spook helpers and winter tools (Refined Jyrre timer, Frozen Treasure tracker, Reindrake warp).
+- Misc: movable health, mana, defense, XP and speed status bars; a compact tab list and a Tab Widgets HUD; more slot labels (pet, attribute shard, minion tier, collection, bestiary); a hold-key Radial Menu; Fullbright, fog and cloud/lightning/fire hiding, an Armor Hider, dead and far entity hiding and a Particle Hider (Misc > Visual Tweaks); a Disconnect Fix that skips a corrupted entity packet instead of kicking you; and SkyBlock Level Guide highlights.
+- Chat: Chat Rules (hide, replace or notify by regex), Chat Peeking (hold a key to see the whole chat), party shortcuts (`/rp`, `/pa`, `/pback`, `/pkick`), clickable waypoints for coordinates in any chat with `/sendcoords`, and profile icons next to chat names.
+- Fishing > Rare Sea Creatures (from Riccio Fishing Utils): a custom rare sea creature alert title (preset, duration, preview, sound and volume), a lootshare range sphere (with a filled option), custom party and cocoon messages with `{name}`, `{total}`, `{count}`, `{time}`, `{dh}` and `{coords}` and a Double Hook Text, boss health bars for rare sea creatures (blue while shurikened), and a Rare SC Display HUD with count, average, total and time since each rare creature.
+- Fishing > Fishing Extras (from Riccio Fishing Utils): a failed cast alert, a no fishing armor alert, a Lord Jawbus death sound, a through-walls hotspot highlight, Time to Kill for rare sea creatures with a saved personal best for each, and the time and number of catches since your last catch of the same rare creature in the catch message. The catch message template also takes `{dh}`, `{time}` and `{count}`.
+- Private chat rooms in S2C: `/s2c join`, `create`, `leave`, `rooms`, `use` and `room <room> <message>`; rooms are rejoined after reconnecting. Also a local mute list (`/s2c mute`, `unmute`, `mutes`) and `/s2c block` / `unblock` as shortcuts for `/s2 ignore`.
+- "! Chat Commands" and "Calendar In Chat" settings (Chat): turn the Sky2M ! commands off so ! messages go out as normal chat, and hide or show calendar reminders in S2C (clicking one opens `/s2 calendar`).
+- `/s2 recap` prints a one-message session summary (playtime, profit, coins, drops and each activity), with an optional "Recap on Leaving" setting.
+- Beacon Ready alert (Foraging, off by default), from SkyHanni: a title and chat message when the Moonglade Beacon's cooldown is over.
+- Dungeon split timers show an estimated end of run (ETA) from your average split times for the floor (Dungeon > Timers and Alerts > Split ETA).
+- Auction House price tooltips show how a listing's price compares with the lowest BIN.
+- Moonglade Beacon solver (Foraging > Beacon Solver, off by default), from SkyHanni: in the Tune Frequency and Upgrade Signal Strength menus it highlights matching controls, labels how many clicks each other control is off, shows the reference colour, speed and pitch, and can middle-click and block over-clicks.
+- Catch Streak HUD (Fishing > Catch Streak, off by default, movable in `/s2 gui`), from Riccio's Fishing Utils: shows the time since your last sea creature catch and how many you've caught in a row within a set time window (5-600 seconds).
+- Composter reminder (Garden settings, off by default): warns you with a title and chat message when the composter runs out of Organic Matter or Fuel, or drops below an amount you set.
+- Safari ticket reminder (Garden settings, off by default): reminds you once every SkyBlock day to get your Safari ticket.
+- Greenhouse Preview (Garden settings): copy a layout link from SkyMutations and run `/s2 greenhouse paste` to preview the 10x10 greenhouse layout with crops labelled and mutation spots outlined; rotate or mirror it, and reopen it with `/s2 greenhouse`.
+- `/s2 rng [magicFind] [petLuck] [bonus] [filter]` (and `/s2 rng find <text>`) lists every known RNG drop with its base chance and your chance with Magic Find, Pet Luck and an Overbloom-style bonus.
+- Drop Chat Message option (Combat > Rare Drops, off by default): prints "+Drop: Item (value)" in chat for every rare drop, like SkyHanni's drop tracker.
+- RNG Drop Title option (Combat > Rare Drops, off by default): shows RNG drops as a big fading on-screen title with the item and its value.
+- Imported humanoid Blockbench models now walk with bent knees and elbows and swing the attacking arm with held items.
+- Item List highlighter: double-click the search bar to highlight every item in the open menu that matches your search (type `maxor` and all the Maxor items light up) and dim the rest. Double-click it again to turn it off; the bar has a yellow outline while it's on.
+- Clips (new Clips settings, off by default, Windows): press Save Clip (F8) or type `/s2 clip [name]` to save the last 10-120 seconds of the game as an MP4 in Videos\Sky2M Clips, with [Open] and [Folder] links in chat, and `/s2 clip status` shows what the recorder is doing. Choose the quality (720p, 1080p, 1440p or the window's size), frame rate, sound (everything your PC plays, or none) and microphone, with volumes. Recording is done by the Sky2M Clipping mod (based on Clipify by Vaguestan10), which goes in your mods folder next to Sky2M and adds an in-game clip browser and editor: the first time you open Sky2M after this update it asks once whether to download it (Yes downloads the JAR for your Minecraft version from its GitHub releases, checks it, turns Clips on and asks you to restart), and it can be downloaded later from the Clips settings or with `/s2 clip download`. Clips need Minecraft's OpenGL graphics backend.
+- Play as Mob, from Killer560's Mod: pick a look in `/s2 cosmetics` (Model), with `/s2 playasmob` or on shadowisabot.com, and every Sky2M player near you sees you as it: any mob (free for everyone, and works even when the Sky2M server is offline: your pick is saved in your settings), or a 3D model Sky2M staff gave you on the website (glTF/GLB, VRM, Blockbench or STL; downloaded once per version and checked). Models follow your head and walk with you: realistic models (glTF/VRM) walk like a person, with knees and elbows that bend (bones named shin, calf, forearm, lower leg/arm, or Mixamo and VRM rigs), a gentle swing and a slight bob, and smooth skinning so joints bend instead of splitting; Blockbench models swing their arms and legs like a player. The items you hold show in the model's hands (at a hand bone, or the end of its arms) and move with them. Settings in Misc > Visual > Play as Mob: Show My Look, Show Others' Looks, In Dungeons (off, so teammates aren't mistaken for mobs), Use Player Size and Animate Models. Staff can switch looks off for everyone.
+- F7 Extras (Dungeon > Floor 7 > F7 Extras, all off by default), from NoammAddons and Odin:
+  - Maxor's Crystals: a crystal respawn timer, how long you took to place your crystal (with your PB), and a "⚠ Crystal ⚠" reminder while you hold one in P1.
+  - Boss titles: "Crystal (1/2)" in place of Hypixel's crystal subtitles; titles when Maxor is stunned or dies, Storm is crushed or dies, Goldor dies, Necron dies, or Maxor or Storm is enraged.
+  - Storm Lightning Timer: replaces Storm's countdown titles with how long his lightning has left, then "Storm's Lightning Ended!".
+  - Gate Highlight: boxes your P3 section's gate until it's destroyed.
+  - Terminal Boxes: boxes the inactive terminals in your P3 section, and they flash when you click one.
+  - Leap Counter: on a leap spot (Simon Says, the early enters, the core, the relics), "2/4 Players Leaped" with an "Everyone Leaped!" alert.
+  - M7 Relic Spawn Timer: counts down from Necron's death to the relics spawning, in your class colour.
+- Tick Timers: Maxor Start, Storm Lightning and Goldor Start (time until terminals can be done) countdowns.
+- M7 Dragons and Relics: Relic Beacon, Relic Tracer, Arrow Stack Indicator (where to aim to stack arrows on a spawning dragon) and Arrows Hit (how many of your arrows hit your priority dragon in its skip window).
+- Terminals: Terminal Click Sound (mutes Hypixel's click) and Terminal Complete Sound.
+- Team Melody: Send Coords when you open Melody, and a Progress Alert title when a teammate's Melody progress comes in.
+- Terminal Progress: Replace Hypixel's Titles, Phase Done and Gate Titles options.
+
+### Changed
+- Inventory HUD restyled after Inventory HUD+: Dark or Vanilla style, see-through background option and items that bounce when picked up.
+- Event Calendar reminders now come 30, 5 and 1 minute before each event (no per-event minutes setting), mayor events only remind when the current mayor or minister has the perk, and the calendar refreshes every 30 seconds.
+- Reorganise the /s2 settings into SkyHanni's categories: About (What's New, update notifications, performance warnings, error reporter and tools), GUI (HUD theme and editor, Custom Scoreboard, Tab List Extras, status bars, server info, speed, inventory HUD, radial menu, custom crosshair, slot labels), Garden, Crimson Isle (Kuudra, Ashfang), Fishing, Mining, Foraging, Hunting, Combat, Slayer, Dungeon, Inventory (item tooltips, storage overlay, inventory buttons, item protection, wardrobe keys, item list, signs, sacks value, item pickup log, Bazaar), Events (now with Diana and Mayor & Election; the Mayors category is gone), Skill Progress, Chat, Sky2M Online and Misc (with Profit Trackers and Clips inside). Your saved settings move with them.
+- Make the Compact Tab List look like SkyHanni's: Hypixel's tab sections side by side without blank filler lines, each column's title once, the footer as an "Other" column, player heads, and Toggle Tab, Hide Hypixel Adverts, Hide Fire Sales, Hide Tab Background and Hide Player Heads options (GUI > Tab List Extras).
+- RNG HUD drops look like SkyHanni's RNG title: the item in its rarity colour (Lucky Clover Core in purple, not cyan) and its value as "(+851.0k)".
+- `/s2 rng` groups all start closed when the game launches, and stay as you left them (even after closing the menu) until you restart.
+- Sky2M HUDs now draw under the tab list: holding Tab shows the player list on top instead of HUDs covering it.
+- Remove the "Per hour" line (and its "Tracker: Per Hour" setting) from the Sea Creature Tracker.
+- Profit Trackers follow SkyHanni for everything but Farming (which stays Skysoft's) and Mining (SkyHanni has no mining profit tracker): Fishing counts only SkyHanni's fishing items, with "Fished Coins" from catch messages; Foraging counts logs and tree gift bonus drops; the Mythological Ritual counts SkyHanni's Diana drops.
+- The Sea Creature Tracker (SkyHanni's, Fishing > More) is now on by default and works like SkyHanni's: each sea creature in its group's chat colour (rare ones bold), a Category selector (All, Water, Lava, Spooky and the other groups you've caught from) and a Total / This Session display mode. With your inventory or a menu open, click the tracker's Category line (right click goes back) or its Display Mode line; the mode is also a setting.
+- Safari Shard Checklist: new "Unique Critters" style (on by default) with a "Unique Critters" title and a green ✔ or red ✖ before each critter caught this run; the checklist is now on by default. The SkyHanni style is still a choice.
+- Right-clicking the Item List search bar clears it and lets you type straight away.
+- `!dyes` lists only dyes with a drop chance, each with its chance, and no longer the Bucket of Dye or Dye Guide.
+- Uploaded screenshots no longer go on the website by themselves; only [Upload to Website] puts them there.
+- Remove the AFK auto-reply to private messages and `/s2 afk`.
+- Protected unique items (weapons, armor, pets) no longer block the Bazaar's "Sell Inventory Now" button, which never sells them. A protected stackable Bazaar item still blocks it.
+- Replies to `!` commands in /s2c now show as just "[S2M] <text>", without the sender label.
+- Remove the built-in positional waypoints (Py Stand Here, Mage Stop, Arch Stand Here, Healer Stand Here After Lighting, Tank Stand Here and SS with its automatic "At SS" party message). Your own `/s2 posmsg` positional messages are unchanged.
+- Cut start-up lag: storage, dungeon route and item emoji data load in the background, armor trims are only prepared when needed, repo data, Hypixel items, Stella routes and slayer drops are cached on disk instead of re-downloaded every launch (downloads are capped and low priority), and the Run History, Route Replay, `/s2 find` and `/s2 rng` screens no longer do heavy work on the game thread. A startup timing log now reports any setup step over 25 ms.
+- Reduce lag in play: the tab list, chat lines, the action bar, chat emoji icons, inventory slots, tooltips and the dungeon clutter filter do far less work per tick and per frame.
+- Remove the "[Floor Size]" chat message from the Dungeon Sim.
+- The Dungeon Sim's Aspect of the Void teleport now follows the 1.8.9 eye line (new "1.8.9 AOTV Eye Line" option, on by default).
+- `/s2 gui` snaps HUDs to the screen edges, the centre and other HUDs (hold Alt to drag without snapping) and shows each HUD's anchor.
+- Price tooltips now show in the Item List (including pets, enchanted books and runes) and price Bazaar, Auction House and Pets menu items that have no item data, by name and rarity (Inventory > Price Tooltips, new "Show in Item List" and "Bazaar, Auction House & Pets Menus" settings).
+- `/s2 gui` now only lists the HUDs that were on screen in the last 10 seconds, like SkyHanni's editor; the new Show button switches to every HUD that is turned on.
+- Screenshots shared in `/s2c` now show a clickable [View] button instead of the raw link.
+- `/s2 cosmetics` is now a page in the settings' look: your supporter tier and an Emblem, a Cape and a Model card, each opening a list of what you have (and what's locked, with how to get it when staff say). The cape page previews capes as you hover them, and the Model page has a search.
+- The M7 dragon spawn timer can now be moved and resized in /s2 gui.
+
+### Fixed
+- Fix keybind settings set to A, B, C, D, E or F not working on Minecraft 26.3 (they were read as mouse buttons, and showed as "Button 5" to "Button 10"): mouse binds are now saved separately, and binds saved before are moved over.
+- Fix the Taming skill showing a barrier icon in /pv (it's a Bone now).
+- Fix What's New's settings buttons for features listed under a category that has since been renamed or moved (Dungeons, Slayers, Farming, Mayors, Misc > Sacks Value, ...), and "Events" opening GUI > Custom Scoreboard instead of the Events category.
+- S2M chat: messages from Discord show as "[Discord] [Name]" with the name in blue, instead of "[Discord] [[Discord] Name]" or "[Discord] [DiscordName]" with a Minecraft hover and /msg click that didn't apply.
+- Fix the `/s2 keybinds` hover text showing a box symbol instead of starting "Click to open it in /s2" on its own line.
+- Fix a crash opening /s2 gui (with the RNG or Commission HUD on) after settings were replaced in-game (`/s2 profile load`, `/s2 import`, a settings code or settings sync); the RNG HUD, Commission HUD and Mouse Lock also kept using the old settings until a restart.
+- Fix Space not playing or pausing Route Replay on Minecraft 26.3 (the 3 key did instead).
+- Fix /s2 protect not stopping Q from dropping a protected item on Minecraft 26.3: the drop block was never applied.
+- Fix the Item List's click actions on Minecraft 26.3: a left click did what the Right Click setting says (wiki page by default) and a right click did nothing; a mouse button set as the recipe Back Key could also match the wrong button.
+- Fix unreadable text in the /s2 settings: every page's top line is short enough to show full size, option names use the box's full width, long descriptions make their box taller instead of shrinking, dropdown values are short enough to fit (e.g. Tritanopia, Side Chat, Hold Key), and the Waypoint Type, Door Highlight and Room Label dropdowns no longer show raw "skyblocker...." keys.
+- Make the Crystal Hollows map's structure labels bigger.
+- Fix pet overflow levels showing one level too high (a level 116 Bal showed 117), and false "Your pet leveled up" messages when Autopet swaps pets.
+- Fix pets in the Item List showing "{HEALTH}", "{0}" and "[Lvl {LVL}]": their stats and ability numbers now show at max level, like Hypixel's tooltip.
+- Fix the Item List calculator's answer being hidden behind the search bar: it now shows in green right after your sum ("5*5 =25") as you type, no Enter needed.
+- Fix Alligator Skin and runes showing as barriers in `/pv` (sacks and elsewhere).
+- Fix "Network Protocol Error" disconnects when a Sky2M dungeon, sound, teleport or map hook fails (for example after replacing the mod jar while the game is open): the error is now logged and you stay connected.
+- Fix the black and pink missing textures on the Assert/Send/Hold buttons in the command keybinds screen.
+- Fix sack items in `/pv` showing as barriers, some named "Barrier": items Hypixel lists with only a model now show properly, and unknown ones are named after their id.
+- Fairy Souls Finder put Backwater Bayou's souls on the Hub ("Fairy Souls: 0/5 — Hub" after the real 0/80) and Galatea's and two other islands' souls in The Park; each island now gets its own souls.
+- The update check kept asking GitHub every minute after hitting its rate limit (HTTP 403); it now waits until the limit resets.
+- Fix the dungeon map writing an error line to the game log every frame (thousands a minute) while it couldn't match a map marker to a party member from the tab list; it now logs it at most every 30 seconds.
+- Fix `/s2c` messages that start with a command word (for example `/s2c block hi nix`) not being sent: they now go to Sky2M chat, while `/s2c block nix` still blocks nix.
+- Fix the Chronomatron solver losing track from the second round: it missed the first item when the same item started the next round, so it stopped highlighting, misclick prevention blocked correct clicks and the game got stuck.
+- Fix Chronomatron disconnecting you with "Network Protocol Error" when a game ended, and the Chronomatron solver stopping for the rest of the menu after a round.
+- Fix the F7 terminal solvers showing nothing (and not solving) when the server sends the terminal's items all at once, or resends them after a rejected click.
+- Fix the Item List staying clickable while hidden during terminals (Terminals > Hide Menu) and Case Opening, which blocked clicks on the terminal slots underneath it.
+- Fix keybinds set to a mouse button: newer settings store them as the button number, so mouse-bound keys didn't work, the Key Conflicts check missed them and `/s2 keybinds` hit an "Invalid key" error. Affects the Copy Message Key (right click by default), shard and Item List keys, and every key using the shared bind check.
+- Fix Dwarven Mines fairy souls being listed as "Deep Caverns" in `/s2 souls`, so their waypoints didn't show in the Dwarven Mines.
+- Fix `!dyes` never finding your dyes: opening any page of Vincent's `/dyes` menu now syncs your dye list and shows "Synced N dyes for !dyes" in chat.
+- Fix the currently equipped loadout highlight in the Loadouts menu: Hypixel now shows "Left-click to equip!" on the equipped loadout too, so it is found from the last "You equipped X!" message, or else by matching its armor to what you are wearing. Opening a loadout menu also writes what the highlight saw to the game log.
+- Fix the Experimentation Table solvers (Chronomatron, Ultrasequencer, Superpairs) and their misclick prevention not working: they could be saved as off, so they are switched back on once, and the table titles are matched ignoring case and colour codes. The solvers only start in the actual game menu (for example "Ultrasequencer (Metaphysical)"), so with misclick prevention on you can still click the level buttons such as Metaphysical Experiment.
+- Fix protected items being sellable to NPC shops through number-key swaps, the Bazaar, Buy Back and auction-creation menus, or "Sell Inventory" and "Sell All" buttons, and in any menu that is not a known storage, equipment or crafting menu (NPC shops such as the Weaponsmith have many different titles).
+- Fix your cosmetics symbol and emblem not showing in guild, party, private and all chat.
+- Blockbench models load JPEG textures, respect a model-specific facing turn, attach held items to hand locator bones, and show their arms in first person.
+- Fix Auto Requeue still requeueing after someone left: Cancel If Someone Leaves now also counts teammates who leave, get kicked or disconnect during the run, not only in the seconds after it ends.
+- Fix Melody solver for the 3-row Melody: only the 3 real buttons can be clicked.
+- Fix Simon Says progress announcing "SS n/5": it's now "SS n/4", for the 4 rounds.
+- Fix the Storm PY timer counting 95 ticks: it's now 55, matching Hypixel's 2026 dungeon update.
+- Fix M7 splits, Boss Phases and area waypoints never starting the Wither King phase: they now start it on "[BOSS] Wither King: You... again?", since Necron's "All this, for nothing..." line is gone.
+- GitHub link for updates: the "New Sky2M Mod Version" message in chat now ends with a blue, underlined "GitHub Link" that opens Sky2M's GitHub page for your Minecraft version (2m3s/Sky2M-26.3), and General has a Sky2M GitHub button that opens it too.
+
+## 1.0.2 — 2026-10-16
 
 ### Added
 - Staff tools in game (for Sky2M staff): get a code on shadowisabot.com (Staff > Mod login) and type `/s2 stafflogin <code>`; you stay logged in on that computer for 30 days (`/s2 stafflogout` ends it). `/s2 staff` opens the tools: mute (for some minutes or permanently), ban (permanent, and they stop seeing Sky2M chat) and unmute players in Sky2M chat, with the list of who's muted and banned; admins and owners can also switch mod features off or on for everyone, with a message players see. The Sky2M server checks your staff role on every action.
@@ -49,6 +202,11 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Bug reports (`/s2 bugreport`) can attach game info: your Sky2M and Minecraft versions, where you are on SkyBlock and the latest warnings and errors from your game log (never chat, and without your user folder name). On by default for bug reports, with an Attach game info button to turn it off.
 - Leap Menu: left-clicking with Spirit Leap or Infinileap in a dungeon opens the leap menu too, like right-clicking.
 - Shared name tags (Misc > Visual > Own Name Tag): the line above your head is shared with other Sky2M users, who see it above you. Add your own Custom Text (up to 40 characters), and turn on Show Collection Leaderboard with a Collection ID to show that collection's amount and your placement.
+- Settings search and category filters: use `/s2 settings [filter]` or `/s2 gui <filter>` to find settings quickly. The HUD editor now has All, Mining, Dungeons, Combat, Pets, Trackers and Other filters, so you can focus on the HUDs you want to arrange.
+- Session Tracker (`/s2 session`): one section per day instead of one per game session, with a Total tab and a tab for every profit tracker (all six slayers, Farming, Fishing, Foraging, Mining and Mythological Ritual). The Days list shows each day's total; click a day for its tracker breakdown. Daily history records the built-in profit trackers in the background even when their HUDs are off, keeps the day across game restarts, and recalculates values using the latest prices.
+- Slayer Boss Profit: see the profit or loss after a slayer boss, with a breakdown of drops, their values, quest cost and net result, plus a HUD summary.
+- Command Autofill improvements: more helpful in-game suggestions for supported Bazaar and auction/item commands, with normalized matching for spaces, underscores and hyphens.
+- Permanent stat leaderboards: `/s2 leaderboard collection` browses collection rankings, `/s2 leaderboard collection <item>` shows a collection's top players, and `/s2 leaderboard slayer xp <boss>` shows slayer XP standings. Existing event leaderboards and slayer kill-time PB boards remain available.
 
 ### Changed
 - `/pv`: the Weight tab is now a Fishing tab. Overview has the Fishing skill, items fished (normal, treasure, large treasure, trophy fish), sea creatures killed Trophy Fish (hunter rank, total caught and each fish's best tier, hover for every tier) and Trophy Frogs (each frog's best tier, hover for every tier), each drawn with Hypixel's own item for that tier. Gear shows the fishing rods, fishing armour and fishing equipment found in their inventory, ender chest, backpacks, wardrobe and vault. Bestiary shows the fishing bestiary (Water, Lava, Spooky Festival, Fishing Festival, Winter, Backwater Bayou) with tiers and kills.
@@ -71,6 +229,10 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Party Finder Stats: the floor PBs follow the floor of the group you join or create in the Party Finder (F5/M5 when queued for M5), not F7/M7, and stats show sooner by asking both profile sources at once and taking the first answer.
 - `/pv` loads other players faster: when SkyBlockPV is slow, Sky2M's proxy is asked after 2.5 seconds (was 5) and whichever answers first is shown, instead of waiting for SkyBlockPV to finish. SkyBlockPV's fuller data still replaces it for your next look. The networth history keeps using SkyBlockPV first.
 - Chat Tabs are drawn under the command suggestions, like Current Chat Display, and clicks go to the suggestions while you type a command.
+- Zealot Tracker now prefers Hypixel's TAB-list pity counter for “Since last eye” when it is available, keeping the counter aligned with Hypixel's value even when local entity tracking misses kills.
+- Updated Zealot Tracker's eye-drop kill count handling so a Summoning Eye drop does not incorrectly reset the cumulative total-kills counter.
+- Improved Party Finder Stats and related party commands, including the player-stat display and kick-list handling.
+- Refined profit/session tracker presentation and tracking so session data is retained and displayed more consistently.
 
 ### Fixed
 - Items drawn with Hypixel's resource-pack textures (trophy fish and others) in the item list and `/pv` stayed plain paper for the rest of the session if they were first drawn before Hypixel's pack loaded. They now pick up the texture once the pack is there.
@@ -125,23 +287,6 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Slayer PBs: Tarantula personal bests are cleared once (on this update and on the Sky2M leaderboard), since times saved before the phase fix could be a single phase (a 3.1s "PB").
 - Leaderboard GUI: collections and slayer XP lists load again. The Sky2M server now answers the mod's board-list request (it used to reply "Choose collection or slayer."), so the grouping under Farming/Mining/Combat/Foraging/Fishing works in the GUI and the `/s2 leaderboard collection` and `/s2 leaderboard slayer xp` chat browsing shows the boards again, without that confusing reply. The GUI also no longer sits on a permanent Loading when the server is slow: event boards, slayer kill times, the timeout note and Refresh keep working while the collection list is unavailable.
 - Leaderboard GUI: when a standings answer doesn't come, the screen quietly asks the server again twice before falling back to the "hasn't answered" note, and the server now says so in its log when it receives and answers a stat leaderboard request. `/s2 lbdebug status` also shows what the GUI has actually received (board list, a collection/slayer standings answer and event standings, each with age).
-
-## 1.0.2 — 2026-10-16
-
-### Added
-- Settings search and category filters: use `/s2 settings [filter]` or `/s2 gui <filter>` to find settings quickly. The HUD editor now has All, Mining, Dungeons, Combat, Pets, Trackers and Other filters, so you can focus on the HUDs you want to arrange.
-- Session Tracker (`/s2 session`): one section per day instead of one per game session, with a Total tab and a tab for every profit tracker (all six slayers, Farming, Fishing, Foraging, Mining and Mythological Ritual). The Days list shows each day's total; click a day for its tracker breakdown. Daily history records the built-in profit trackers in the background even when their HUDs are off, keeps the day across game restarts, and recalculates values using the latest prices.
-- Slayer Boss Profit: see the profit or loss after a slayer boss, with a breakdown of drops, their values, quest cost and net result, plus a HUD summary.
-- Command Autofill improvements: more helpful in-game suggestions for supported Bazaar and auction/item commands, with normalized matching for spaces, underscores and hyphens.
-- Permanent stat leaderboards: `/s2 leaderboard collection` browses collection rankings, `/s2 leaderboard collection <item>` shows a collection's top players, and `/s2 leaderboard slayer xp <boss>` shows slayer XP standings. Existing event leaderboards and slayer kill-time PB boards remain available.
-
-### Changed
-- Zealot Tracker now prefers Hypixel's TAB-list pity counter for “Since last eye” when it is available, keeping the counter aligned with Hypixel's value even when local entity tracking misses kills.
-- Updated Zealot Tracker's eye-drop kill count handling so a Summoning Eye drop does not incorrectly reset the cumulative total-kills counter.
-- Improved Party Finder Stats and related party commands, including the player-stat display and kick-list handling.
-- Refined profit/session tracker presentation and tracking so session data is retained and displayed more consistently.
-
-### Fixed
 - Slayer timers/PBs: a missing boss nametag no longer counts as a kill. Phase summaries finish on Hypixel's confirmed boss-slain/cocoon message, and kill PB timing uses an observed 0-health line or the confirmed kill message. This prevents Tarantula's Conjoined Brood transition from recording a tiny false phase/PB; phase state resets when a new slayer quest starts or fails.
 - Copy RNG Drops: rare crops and other Garden drops are no longer copied by the RNG-only toggle; use Copy Garden Drops for those.
 - Item Pickup Log: sack entries use repository-matched item IDs for better icons and no longer have the `[Sack]` name prefix. Inventory changes are ignored while container menus are open, preventing false pickup/drop entries from menus such as the Experimentation Table.

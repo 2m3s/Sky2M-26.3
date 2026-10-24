@@ -270,6 +270,10 @@ public final class SkillApi {
         if (Sky2MLocation.onSkyblock()) {
             lastTabLines = tabLines();
             onSecondPassed();
+            // Sky2M's skill achievements follow the levels read from the tab list, action bar and Your Skills menu.
+            for (Map.Entry<SkillType, SkillInfo> e : storage().entrySet()) {
+                if (e.getValue() != null) com.epic60869.sky2m.features.misc.Sky2MAchievements.skillLevel(e.getKey().displayName, e.getValue().level);
+            }
             // ItemAddInInventoryEvent: a gift talisman picked up.
             List<ItemStack> items = new ArrayList<>();
             for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) items.add(mc.player.getInventory().getItem(i));
@@ -311,9 +315,12 @@ public final class SkillApi {
         };
     }
 
+    /** Compiled once: the action bar comes through here many times a second. */
+    private static final Pattern DOUBLE_SPACE = Pattern.compile(" {2}");
+
     private static void onActionBarUpdate(String actionBar) {
         if (SkillProgress.config() == null) return;
-        for (String component : actionBar.split(" {2}")) {
+        for (String component : DOUBLE_SPACE.split(actionBar)) {
             component = component.trim();
             if (component.isEmpty()) continue;
             Matcher matcher = SKILL_PERCENT.matcher(component);
@@ -440,8 +447,12 @@ public final class SkillApi {
             String cleanName = Sky2MLocation.strip(stack.getHoverName().getString());
             String[] split = cleanName.split(" ");
             SkillType skill = SkillType.getByNameOrNull(split[0]);
-            if (skill == null) continue;
             int skillLevel = split.length > 1 ? romanToDecimalIfNecessary(split[split.length - 1]) : 0;
+            if (skill == null) {
+                // Runecrafting and Social aren't tracked skills, but still count for Sky2M's skill achievements.
+                com.epic60869.sky2m.features.misc.Sky2MAchievements.skillLevel(split[0], skillLevel);
+                continue;
+            }
             SkillInfo skillInfo = storage().computeIfAbsent(skill, k -> new SkillInfo());
 
             for (int index = 0; index < lore.size(); index++) {

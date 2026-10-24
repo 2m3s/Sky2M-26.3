@@ -152,7 +152,7 @@ public final class CustomScoreboard {
 
     static FeatureConfigs.CustomScoreboard config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.customScoreboard;
+        return c == null ? null : c.gui.customScoreboard;
     }
 
     public static void init() {

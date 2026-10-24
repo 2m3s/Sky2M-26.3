@@ -103,7 +103,13 @@ public final class KeybindSheetScreen extends Screen {
             g.text(font, font.plainSubstrByWidth(r.name(), c[2] - c[1] - 6), c[1], ry, 0xFFFFFFFF, false);
             g.text(font, r.where(), c[2], ry, 0xFF7A8290, false);
             g.text(font, font.plainSubstrByWidth(clash ? r.clashesWith() : "-", left() + panelWidth() - 8 - c[3]), c[3], ry, clash ? 0xFFFF7777 : 0xFF555555, false);
-            if (over) g.setTooltipForNextFrame(font, Component.literal(r.path() + (r.where().equals("Settings") ? "\nClick to open it in /s2" : "")), mouseX, mouseY);
+            if (over) {
+                // One component per line: a "\n" inside a single-line tooltip shows as a box instead of a line break.
+                java.util.List<Component> tip = r.where().equals("Settings")
+                    ? java.util.List.of(Component.literal(r.path()), Component.literal("Click to open it in /s2"))
+                    : java.util.List.of(Component.literal(r.path()));
+                g.setComponentTooltipForNextFrame(font, tip, mouseX, mouseY);
+            }
         }
         super.extractRenderState(g, mouseX, mouseY, delta);
     }

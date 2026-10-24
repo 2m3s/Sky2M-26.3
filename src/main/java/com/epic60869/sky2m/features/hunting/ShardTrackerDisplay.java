@@ -88,8 +88,7 @@ public final class ShardTrackerDisplay {
     }
 
     private static String keyName(int key) {
-        if (key <= -100 + 8 && key >= -100) return "Mouse " + (key + 101);
-        return com.mojang.blaze3d.platform.InputConstants.Type.KEYBOARD.getOrCreate(key).getDisplayName().getString();
+        return com.epic60869.sky2m.custom.util.Input.bindName(key);
     }
 
     private static void tick(Minecraft mc) {

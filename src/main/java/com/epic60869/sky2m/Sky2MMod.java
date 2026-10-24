@@ -15,213 +15,258 @@ public final class Sky2MMod implements ClientModInitializer {
 
     private Sky2MConfig config;
 
+    private static long startupT0;
+    private static long lapT;
+    private static volatile long startupMs = -1;
+
+    /** How long startup took in ms, or -1 before it finished. */
+    public static long startupMillis() {
+        return startupMs;
+    }
+
+    /** Logs how long the init since the previous lap took, when it was 25ms or more. */
+    private static void lap(String name) {
+        long now = System.nanoTime();
+        long ms = (now - lapT) / 1_000_000L;
+        if (ms >= 25) System.out.println("[Sky2M] startup: " + name + " took " + ms + "ms");
+        lapT = System.nanoTime();
+    }
+
     @Override
     public void onInitializeClient() {
+        startupT0 = lapT = System.nanoTime();
         Minecraft minecraft = Minecraft.getInstance();
         Path configDir = minecraft.gameDirectory.toPath().resolve("config");
         config = Sky2MConfig.load(configDir.resolve("sky2m-mod.json"));
         // Register key mappings during client initialization, before GameOptions is initialized.
-        Sky2MKeyMappings.init();
-        Sky2MRecipeCommand.init();
-        Sky2MCraftHelper.init(configDir);
+        Sky2MKeyMappings.init(); lap("Sky2MKeyMappings.init");
+        Sky2MRecipeCommand.init(); lap("Sky2MRecipeCommand.init");
+        Sky2MCraftHelper.init(configDir); lap("Sky2MCraftHelper.init");
 
         FarmingRngTracker.get().register();
-        Sky2MRngHud.register(config);
-        Sky2MCommissionHud.register(config);
+        Sky2MRngHud.register(config); lap("Sky2MRngHud.register");
+        Sky2MCommissionHud.register(config); lap("Sky2MCommissionHud.register");
         // CommandKeys port: /s2 keys. Key mappings must be registered during client init.
-        com.epic60869.sky2m.commandkeys.CommandKeys.init();
-        com.epic60869.sky2m.commandkeys.Sky2MCommandKeysMigration.migrate(configDir);
+        com.epic60869.sky2m.commandkeys.CommandKeys.init(); lap("CommandKeys.init");
+        com.epic60869.sky2m.commandkeys.Sky2MCommandKeysMigration.migrate(configDir); lap("Sky2MCommandKeysMigration.migrate");
         com.epic60869.sky2m.commandkeys.CommandKeys.getKeybinds().forEach(net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper::registerKeyMapping);
         ClientCommandRegistrationCallback.EVENT.register(com.epic60869.sky2m.commandkeys.command.Commands::register);
-        ClientTickEvents.END_CLIENT_TICK.register(com.epic60869.sky2m.commandkeys.CommandKeys::afterClientTick);
-        Sky2MStorageSearch.init(configDir);
-        Sky2MCustom.init(configDir);
-        Sky2MDateCalculator.init();
+        ClientTickEvents.END_CLIENT_TICK.register(com.epic60869.sky2m.commandkeys.CommandKeys::afterClientTick); lap("END_CLIENT_TICK.register");
+        Sky2MStorageSearch.init(configDir); lap("Sky2MStorageSearch.init");
+        Sky2MCustom.init(configDir); lap("Sky2MCustom.init");
+        Sky2MDateCalculator.init(); lap("Sky2MDateCalculator.init");
 
         // Shared infrastructure for the skill features.
-        com.epic60869.sky2m.features.core.Sky2MLocation.init();
-        com.epic60869.sky2m.features.core.Sky2MChat.init();
-        com.epic60869.sky2m.features.core.Sky2MAlerts.init();
-        Sky2MFoxyScare.init();
-        Sky2MLeaderboards.init();
-        Sky2MPartyFinder.init();
-        com.epic60869.sky2m.features.core.Sky2MHuds.init(configDir);
-        com.epic60869.sky2m.features.core.Sky2MWorldRender.init();
+        com.epic60869.sky2m.features.core.Sky2MLocation.init(); lap("Sky2MLocation.init");
+        com.epic60869.sky2m.features.core.Sky2MChat.init(); lap("Sky2MChat.init");
+        com.epic60869.sky2m.features.core.Sky2MAlerts.init(); lap("Sky2MAlerts.init");
+        Sky2MFoxyScare.init(); lap("Sky2MFoxyScare.init");
+        Sky2MLeaderboards.init(); lap("Sky2MLeaderboards.init");
+        Sky2MPartyFinder.init(); lap("Sky2MPartyFinder.init");
+        com.epic60869.sky2m.features.core.Sky2MHuds.init(configDir); lap("Sky2MHuds.init");
+        com.epic60869.sky2m.features.core.Sky2MWorldRender.init(); lap("Sky2MWorldRender.init");
 
-        com.epic60869.sky2m.features.combat.CombatFeatures.init();
-        com.epic60869.sky2m.features.combat.BestiaryOverlay.init();
-        com.epic60869.sky2m.features.combat.ZealotCounter.init(configDir);
-        com.epic60869.sky2m.features.combat.DianaRareMobs.init();
-        com.epic60869.sky2m.features.combat.PartyCoordWaypoints.init();
-        com.epic60869.sky2m.features.combat.DianaBurrows.init();
-        com.epic60869.sky2m.features.combat.DianaSphinx.init();
-        com.epic60869.sky2m.features.combat.DianaProfitTracker.init(configDir);
-        com.epic60869.sky2m.features.combat.DianaTracker.init(configDir);
-        com.epic60869.sky2m.features.combat.DianaMobHealth.init();
-        com.epic60869.sky2m.features.combat.DianaAchievements.init(configDir);
-        com.epic60869.sky2m.features.combat.InquisitorGamble.init();
-        com.epic60869.sky2m.features.misc.profit.SessionTracker.init(configDir);
-        com.epic60869.sky2m.features.misc.profit.ProfitTracker.init(configDir);
-        com.epic60869.sky2m.features.combat.DianaLobbyCompromised.init();
-        com.epic60869.sky2m.features.slayer.SlayerFeatures.init();
-        com.epic60869.sky2m.features.slayer.EndermanSlayer.init();
-        com.epic60869.sky2m.features.slayer.BlazeSlayer.init();
-        com.epic60869.sky2m.features.slayer.RngMeterValue.init();
-        com.epic60869.sky2m.features.slayer.SlayerRngMeterDisplay.init(configDir);
-        com.epic60869.sky2m.features.slayer.SlayerTimes.init(configDir);
-        com.epic60869.sky2m.features.slayer.SlayerPbHud.init();
-        com.epic60869.sky2m.features.slayer.SlayerMinibossAlert.init();
-        com.epic60869.sky2m.features.slayer.SlayerBossSpawnAlert.init();
-        com.epic60869.sky2m.features.slayer.SlayerBossProfit.init(configDir);
-        com.epic60869.sky2m.features.garden.GardenFeatures.init();
-        com.epic60869.sky2m.features.fishing.FishingFeatures.init();
-        com.epic60869.sky2m.features.fishing.FishingHookTimer.init();
-        com.epic60869.sky2m.features.dungeons.SecretChime.init();
-        com.epic60869.sky2m.features.mining.MiningFeatures.init();
-        com.epic60869.sky2m.features.mining.CrystalHollowsWaypoints.init();
-        com.epic60869.sky2m.features.mining.MiningEventHighlight.init();
-        com.epic60869.sky2m.features.mining.PickaxeAbility.init();
-        com.epic60869.sky2m.features.mining.DrillFuel.init();
-        com.epic60869.sky2m.features.mining.PristineRecord.init(configDir);
-        com.epic60869.sky2m.features.portfolio.Portfolio.init(configDir);
-        com.epic60869.sky2m.features.portfolio.CollectionPortfolio.init(configDir);
-        com.epic60869.sky2m.features.portfolio.BazaarNotifications.init();
-        com.epic60869.sky2m.features.portfolio.BazaarBookmarks.init();
-        com.epic60869.sky2m.features.skills.SkillFeatures.init();
-        com.epic60869.sky2m.features.skills.SkillProgress.init();
+        com.epic60869.sky2m.features.combat.CombatFeatures.init(); lap("CombatFeatures.init");
+        com.epic60869.sky2m.features.combat.BestiaryOverlay.init(); lap("BestiaryOverlay.init");
+        com.epic60869.sky2m.features.combat.ZealotCounter.init(configDir); lap("ZealotCounter.init");
+        com.epic60869.sky2m.features.combat.DianaRareMobs.init(); lap("DianaRareMobs.init");
+        com.epic60869.sky2m.features.combat.PartyCoordWaypoints.init(); lap("PartyCoordWaypoints.init");
+        com.epic60869.sky2m.features.combat.DianaBurrows.init(); lap("DianaBurrows.init");
+        com.epic60869.sky2m.features.combat.DianaSphinx.init(); lap("DianaSphinx.init");
+        com.epic60869.sky2m.features.combat.DianaProfitTracker.init(configDir); lap("DianaProfitTracker.init");
+        com.epic60869.sky2m.features.combat.DianaTracker.init(configDir); lap("DianaTracker.init");
+        com.epic60869.sky2m.features.combat.DianaMobHealth.init(); lap("DianaMobHealth.init");
+        com.epic60869.sky2m.features.combat.kuudra.KuudraFeatures.init(configDir); lap("KuudraFeatures.init");
+        com.epic60869.sky2m.features.combat.DianaAchievements.init(configDir); lap("DianaAchievements.init");
+        com.epic60869.sky2m.features.combat.InquisitorGamble.init(); lap("InquisitorGamble.init");
+        com.epic60869.sky2m.features.misc.profit.SessionTracker.init(configDir); lap("SessionTracker.init");
+        com.epic60869.sky2m.features.misc.profit.ProfitTracker.init(configDir); lap("ProfitTracker.init");
+        com.epic60869.sky2m.features.combat.DianaLobbyCompromised.init(); lap("DianaLobbyCompromised.init");
+        com.epic60869.sky2m.features.slayer.SlayerFeatures.init(); lap("SlayerFeatures.init");
+        com.epic60869.sky2m.features.slayer.EndermanSlayer.init(); lap("EndermanSlayer.init");
+        com.epic60869.sky2m.features.slayer.BlazeSlayer.init(); lap("BlazeSlayer.init");
+        com.epic60869.sky2m.features.slayer.RngMeterValue.init(); lap("RngMeterValue.init");
+        com.epic60869.sky2m.features.slayer.SlayerRngMeterDisplay.init(configDir); lap("SlayerRngMeterDisplay.init");
+        com.epic60869.sky2m.features.slayer.SlayerTimes.init(configDir); lap("SlayerTimes.init");
+        com.epic60869.sky2m.features.slayer.SlayerPbHud.init(); lap("SlayerPbHud.init");
+        com.epic60869.sky2m.features.slayer.SlayerMinibossAlert.init(); lap("SlayerMinibossAlert.init");
+        com.epic60869.sky2m.features.slayer.SlayerBossSpawnAlert.init(); lap("SlayerBossSpawnAlert.init");
+        com.epic60869.sky2m.features.slayer.SlayerBossProfit.init(configDir); lap("SlayerBossProfit.init");
+        com.epic60869.sky2m.features.garden.GardenFeatures.init(); lap("GardenFeatures.init");
+        com.epic60869.sky2m.features.fishing.FishingFeatures.init(); lap("FishingFeatures.init");
+        com.epic60869.sky2m.features.fishing.FishingHookTimer.init(); lap("FishingHookTimer.init");
+        com.epic60869.sky2m.features.dungeons.SecretChime.init(); lap("SecretChime.init");
+        com.epic60869.sky2m.features.mining.MiningFeatures.init(); lap("MiningFeatures.init");
+        com.epic60869.sky2m.features.mining.CrystalHollowsWaypoints.init(); lap("CrystalHollowsWaypoints.init");
+        com.epic60869.sky2m.features.mining.MiningEventHighlight.init(); lap("MiningEventHighlight.init");
+        com.epic60869.sky2m.features.mining.PickaxeAbility.init(); lap("PickaxeAbility.init");
+        com.epic60869.sky2m.features.mining.DrillFuel.init(); lap("DrillFuel.init");
+        com.epic60869.sky2m.features.mining.PristineRecord.init(configDir); lap("PristineRecord.init");
+        com.epic60869.sky2m.features.portfolio.Portfolio.init(configDir); lap("Portfolio.init");
+        com.epic60869.sky2m.features.portfolio.CollectionPortfolio.init(configDir); lap("CollectionPortfolio.init");
+        com.epic60869.sky2m.features.portfolio.BazaarNotifications.init(); lap("BazaarNotifications.init");
+        com.epic60869.sky2m.features.portfolio.BazaarBookmarks.init(); lap("BazaarBookmarks.init");
+        com.epic60869.sky2m.features.skills.SkillFeatures.init(); lap("SkillFeatures.init");
+        com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.init(); lap("ForagingBeaconSolver.init");
+        com.epic60869.sky2m.features.foraging.ForagingExtras.init(); lap("ForagingExtras.init");
+        com.epic60869.sky2m.features.skills.SkillProgress.init(); lap("SkillProgress.init");
         // Hunting (SkyHanni's Hunting category).
-        com.epic60869.sky2m.features.hunting.IslandGraph.init();
-        com.epic60869.sky2m.features.hunting.AttributeShards.init(configDir);
-        com.epic60869.sky2m.features.hunting.ShardTrackerDisplay.init();
-        com.epic60869.sky2m.features.hunting.HuntingProfitTracker.init(configDir);
-        com.epic60869.sky2m.features.hunting.HuntingFeatures.init();
-        com.epic60869.sky2m.features.hunting.SafariFeatures.init();
-        com.epic60869.sky2m.features.dungeons.Sky2MDungeons.init();
-        com.epic60869.sky2m.features.dungeons.DungeonFeatures.init(configDir);
-        com.epic60869.sky2m.features.misc.PartyCommands.init();
-        com.epic60869.sky2m.features.misc.ItemNotification.init();
-        com.epic60869.sky2m.features.misc.DiscordPresence.init();
-        com.epic60869.sky2m.features.helditem.HeldItem.init(configDir);
-        com.epic60869.sky2m.features.misc.ScrollableTooltips.init();
-        com.epic60869.sky2m.features.misc.ToggleSprint.init();
-        com.epic60869.sky2m.features.misc.WarpShortcuts.init();
-        com.epic60869.sky2m.features.misc.PricePaid.init(configDir);
-        com.epic60869.sky2m.features.misc.CollectionTracker.init(configDir);
-        Sky2MStaff.init();
-        Sky2MUpdateChecker.init();
-        com.epic60869.sky2m.reports.Reports.init();
-        Sky2MToggleCommands.init();
-        com.epic60869.sky2m.features.misc.CopyChat.init();
-        com.epic60869.sky2m.features.misc.KeyConflicts.init();
-        com.epic60869.sky2m.features.misc.SlotLocking.init();
-        com.epic60869.sky2m.features.misc.WardrobeHotkeys.init();
-        com.epic60869.sky2m.features.misc.storage.StorageOverlay.init(configDir);
-        com.epic60869.sky2m.features.misc.ItemEmojis.init(configDir);
-        com.epic60869.sky2m.features.misc.HypixelButton.init();
-        com.epic60869.sky2m.features.misc.AutoJoinSkyblock.init();
-        com.epic60869.sky2m.features.misc.SmartDisconnect.init();
-        com.epic60869.sky2m.features.misc.ServerInfo.init();
-        com.epic60869.sky2m.features.misc.HideStatusEffects.init();
-        com.epic60869.sky2m.features.misc.KeepTerrainLoaded.init(configDir);
-        com.epic60869.sky2m.features.misc.Trail.init();
-        com.epic60869.sky2m.features.misc.gif.GifPlayer.init();
-        com.epic60869.sky2m.features.misc.gif.DvdScreensaver.init();
-        com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair.init();
-        com.epic60869.sky2m.features.misc.InventoryHud.init();
-        com.epic60869.sky2m.features.misc.ItemPickupLog.init();
-        com.epic60869.sky2m.features.misc.ChatTranslator.init();
-        com.epic60869.sky2m.features.profileviewer.ProfileViewer.init();
-        com.epic60869.sky2m.features.misc.SearchOverlay.register();
-        com.epic60869.sky2m.features.itemlist.ItemList.init();
-        com.epic60869.sky2m.features.slayer.SlayerTargetHighlight.init();
-        com.epic60869.sky2m.features.slayer.EggHitsDisplay.init();
-        com.epic60869.sky2m.features.misc.EtherwarpOverlay.init();
-        com.epic60869.sky2m.features.misc.ScreenshotShare.init();
-        com.epic60869.sky2m.features.misc.JoinCommands.init();
-        com.epic60869.sky2m.features.misc.InventoryButtons.init();
-        com.epic60869.sky2m.features.misc.SpeedDisplay.init();
-        com.epic60869.sky2m.features.dungeons.SecretsDisplay.init();
-        com.epic60869.sky2m.features.dungeons.CaseOpening.init();
-        com.epic60869.sky2m.features.dungeons.DungeonChestProfit.init();
-        com.epic60869.sky2m.features.dungeons.ChestHistory.init();
-        Sky2MChangelog.init();
-        Sky2MWhatsNew.init();
-        Sky2MSetup.init();
-        Sky2MRivals.init();
-        Sky2MPlayerNotes.init();
-        Sky2MAliases.init();
-        com.epic60869.sky2m.features.misc.KeybindSheetScreen.register();
-        com.epic60869.sky2m.features.misc.ScreenshotGallery.register();
-        com.epic60869.sky2m.features.core.Sky2MPerfScreen.register();
-        com.epic60869.sky2m.features.core.Sky2MPerfWarnings.register();
-        com.epic60869.sky2m.features.core.Sky2MErrors.register();
-        com.epic60869.sky2m.features.core.Sky2MHudOverviewScreen.register();
-        Sky2MConfigCode.init();
-        Sky2MSelfTest.init();
-        Sky2MNopoFeatures.init(configDir);
-        Sky2MNick.init(config);
-        Sky2MMouseLock.init(config);
-        com.epic60869.sky2m.features.sbc.Sbc.init();
-        com.epic60869.sky2m.features.sbc.BestFriends.init();
-        Sky2MGlobalChat.init();
-        Sky2MCurrentChat.init(configDir);
-        Sky2MPriceTooltip.init();
-        com.epic60869.sky2m.features.misc.MuseumTooltip.init(configDir);
-        com.epic60869.sky2m.features.misc.AccessoryTooltip.init(configDir);
-        com.epic60869.sky2m.features.misc.EnchantParser.init();
-        com.epic60869.sky2m.features.misc.SackTracker.init(configDir);
+        com.epic60869.sky2m.features.hunting.IslandGraph.init(); lap("IslandGraph.init");
+        com.epic60869.sky2m.features.hunting.AttributeShards.init(configDir); lap("AttributeShards.init");
+        com.epic60869.sky2m.features.hunting.ShardTrackerDisplay.init(); lap("ShardTrackerDisplay.init");
+        com.epic60869.sky2m.features.hunting.HuntingProfitTracker.init(configDir); lap("HuntingProfitTracker.init");
+        com.epic60869.sky2m.features.hunting.HuntingFeatures.init(); lap("HuntingFeatures.init");
+        com.epic60869.sky2m.features.hunting.SafariFeatures.init(); lap("SafariFeatures.init");
+        com.epic60869.sky2m.features.events.EventsFeatures.init(configDir); lap("EventsFeatures.init");
+        com.epic60869.sky2m.features.dungeons.Sky2MDungeons.init(); lap("Sky2MDungeons.init");
+        com.epic60869.sky2m.features.dungeons.DungeonFeatures.init(configDir); lap("DungeonFeatures.init");
+        com.epic60869.sky2m.features.misc.PartyCommands.init(); lap("PartyCommands.init");
+        com.epic60869.sky2m.features.misc.ItemNotification.init(); lap("ItemNotification.init");
+        com.epic60869.sky2m.features.misc.DiscordPresence.init(); lap("DiscordPresence.init");
+        com.epic60869.sky2m.features.helditem.HeldItem.init(configDir); lap("HeldItem.init");
+        com.epic60869.sky2m.features.misc.ScrollableTooltips.init(); lap("ScrollableTooltips.init");
+        com.epic60869.sky2m.features.misc.ToggleSprint.init(); lap("ToggleSprint.init");
+        com.epic60869.sky2m.features.misc.WarpShortcuts.init(); lap("WarpShortcuts.init");
+        com.epic60869.sky2m.features.misc.PricePaid.init(configDir); lap("PricePaid.init");
+        com.epic60869.sky2m.features.economy.Economy.init(configDir); lap("Economy.init");
+        com.epic60869.sky2m.features.misc.CollectionTracker.init(configDir); lap("CollectionTracker.init");
+        Sky2MStaff.init(); lap("Sky2MStaff.init");
+        Sky2MUpdateChecker.init(); lap("Sky2MUpdateChecker.init");
+        com.epic60869.sky2m.reports.Reports.init(); lap("Reports.init");
+        Sky2MToggleCommands.init(); lap("Sky2MToggleCommands.init");
+        com.epic60869.sky2m.features.misc.CopyChat.init(); lap("CopyChat.init");
+        com.epic60869.sky2m.features.misc.KeyConflicts.init(); lap("KeyConflicts.init");
+        com.epic60869.sky2m.features.misc.SlotLocking.init(); lap("SlotLocking.init");
+        com.epic60869.sky2m.features.misc.WardrobeHotkeys.init(); lap("WardrobeHotkeys.init");
+        com.epic60869.sky2m.features.misc.storage.StorageOverlay.init(configDir); lap("StorageOverlay.init");
+        com.epic60869.sky2m.features.misc.ItemEmojis.init(configDir); lap("ItemEmojis.init");
+        com.epic60869.sky2m.features.misc.HypixelButton.init(); lap("HypixelButton.init");
+        com.epic60869.sky2m.features.misc.AutoJoinSkyblock.init(); lap("AutoJoinSkyblock.init");
+        com.epic60869.sky2m.features.misc.SmartDisconnect.init(); lap("SmartDisconnect.init");
+        com.epic60869.sky2m.features.misc.ServerInfo.init(); lap("ServerInfo.init");
+        com.epic60869.sky2m.features.misc.HideStatusEffects.init(); lap("HideStatusEffects.init");
+        com.epic60869.sky2m.features.misc.KeepTerrainLoaded.init(configDir); lap("KeepTerrainLoaded.init");
+        com.epic60869.sky2m.features.misc.Trail.init(); lap("Trail.init");
+        com.epic60869.sky2m.features.misc.clips.Clips.init(); lap("Clips.init");
+        com.epic60869.sky2m.features.misc.gif.GifPlayer.init(); lap("GifPlayer.init");
+        com.epic60869.sky2m.features.misc.gif.DvdScreensaver.init(); lap("DvdScreensaver.init");
+        com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair.init(); lap("CustomCrosshair.init");
+        com.epic60869.sky2m.features.misc.InventoryHud.init(); lap("InventoryHud.init");
+        com.epic60869.sky2m.features.misc.ItemPickupLog.init(); lap("ItemPickupLog.init");
+        com.epic60869.sky2m.features.misc.ChatTranslator.init(); lap("ChatTranslator.init");
+        com.epic60869.sky2m.features.profileviewer.ProfileViewer.init(); lap("ProfileViewer.init");
+        com.epic60869.sky2m.features.misc.SearchOverlay.register(); lap("SearchOverlay.register");
+        com.epic60869.sky2m.features.itemlist.ItemList.init(); lap("ItemList.init");
+        com.epic60869.sky2m.features.slayer.SlayerTargetHighlight.init(); lap("SlayerTargetHighlight.init");
+        com.epic60869.sky2m.features.slayer.EggHitsDisplay.init(); lap("EggHitsDisplay.init");
+        com.epic60869.sky2m.features.misc.EtherwarpOverlay.init(); lap("EtherwarpOverlay.init");
+        com.epic60869.sky2m.features.misc.ScreenshotShare.init(); lap("ScreenshotShare.init");
+        com.epic60869.sky2m.features.misc.JoinCommands.init(); lap("JoinCommands.init");
+        com.epic60869.sky2m.features.misc.InventoryButtons.init(); lap("InventoryButtons.init");
+        com.epic60869.sky2m.features.misc.SpeedDisplay.init(); lap("SpeedDisplay.init");
+        com.epic60869.sky2m.features.economy.CoinsChart.init(); lap("CoinsChart.init");
+        com.epic60869.sky2m.features.qol.StatusBars.init(); lap("StatusBars.init");
+        com.epic60869.sky2m.features.qol.TabListExtras.init(); lap("TabListExtras.init");
+        com.epic60869.sky2m.features.qol.RadialMenu.init(); lap("RadialMenu.init");
+        com.epic60869.sky2m.features.dungeons.SecretsDisplay.init(); lap("SecretsDisplay.init");
+        com.epic60869.sky2m.features.dungeons.CaseOpening.init(); lap("CaseOpening.init");
+        com.epic60869.sky2m.features.dungeons.DungeonChestProfit.init(); lap("DungeonChestProfit.init");
+        com.epic60869.sky2m.features.dungeons.ChestHistory.init(); lap("ChestHistory.init");
+        Sky2MChangelog.init(); lap("Sky2MChangelog.init");
+        Sky2MWhatsNew.init(); lap("Sky2MWhatsNew.init");
+        Sky2MSetup.init(); lap("Sky2MSetup.init");
+        Sky2MRivals.init(); lap("Sky2MRivals.init");
+        Sky2MPlayerNotes.init(); lap("Sky2MPlayerNotes.init");
+        Sky2MAliases.init(); lap("Sky2MAliases.init");
+        com.epic60869.sky2m.features.combat.RngCommand.init(); lap("RngCommand.init");
+        com.epic60869.sky2m.features.misc.KeybindSheetScreen.register(); lap("KeybindSheetScreen.register");
+        com.epic60869.sky2m.features.misc.ScreenshotGallery.register(); lap("ScreenshotGallery.register");
+        com.epic60869.sky2m.features.core.Sky2MPerfScreen.register(); lap("Sky2MPerfScreen.register");
+        com.epic60869.sky2m.features.core.Sky2MPerfWarnings.register(); lap("Sky2MPerfWarnings.register");
+        com.epic60869.sky2m.features.core.Sky2MErrors.register(); lap("Sky2MErrors.register");
+        com.epic60869.sky2m.features.core.Sky2MHudOverviewScreen.register(); lap("Sky2MHudOverviewScreen.register");
+        Sky2MConfigCode.init(); lap("Sky2MConfigCode.init");
+        Sky2MProfiles.init(); lap("Sky2MProfiles.init");
+        Sky2MModOverlap.init(); lap("Sky2MModOverlap.init");
+        Sky2MHealth.init(); lap("Sky2MHealth.init");
+        Sky2MSelfTest.init(); lap("Sky2MSelfTest.init");
+        Sky2MNopoFeatures.init(configDir); lap("Sky2MNopoFeatures.init");
+        Sky2MNick.init(config); lap("Sky2MNick.init");
+        Sky2MMouseLock.init(config); lap("Sky2MMouseLock.init");
+        com.epic60869.sky2m.features.sbc.Sbc.init(); lap("Sbc.init");
+        com.epic60869.sky2m.features.sbc.BestFriends.init(); lap("BestFriends.init");
+        Sky2MGlobalChat.init(); lap("Sky2MGlobalChat.init");
+        Sky2MCurrentChat.init(configDir); lap("Sky2MCurrentChat.init");
+        Sky2MPriceTooltip.init(); lap("Sky2MPriceTooltip.init");
+        com.epic60869.sky2m.features.misc.MuseumTooltip.init(configDir); lap("MuseumTooltip.init");
+        com.epic60869.sky2m.features.misc.AccessoryTooltip.init(configDir); lap("AccessoryTooltip.init");
+        com.epic60869.sky2m.features.misc.EnchantParser.init(); lap("EnchantParser.init");
+        com.epic60869.sky2m.features.misc.SackTracker.init(configDir); lap("SackTracker.init");
         // Sacks Value HUD (after SackTracker, whose sack contents it prices).
-        com.epic60869.sky2m.features.misc.SacksValue.init();
-        com.epic60869.sky2m.features.misc.StashCompact.init();
-        com.epic60869.sky2m.features.garden.visitor.GardenVisitors.init(configDir);
-        com.epic60869.sky2m.features.misc.ItemCooldowns.init();
-        com.epic60869.sky2m.features.misc.AbilityTimers.init();
-        com.epic60869.sky2m.features.misc.CustomScoreboard.init();
-        com.epic60869.sky2m.features.dungeons.RagAxe.init();
-        com.epic60869.sky2m.features.dungeons.MageBeam.init();
-        com.epic60869.sky2m.features.dungeons.TerminalTimers.init();
-        com.epic60869.sky2m.features.dungeons.BossPhases.init();
-        com.epic60869.sky2m.features.dungeons.RunHistory.init();
-        com.epic60869.sky2m.features.dungeons.TermismScreen.registerCommand();
-        com.epic60869.sky2m.sim.Sky2MSim.init();
-        com.epic60869.sky2m.features.dungeons.party.PartyDungeonData.init();
-        com.epic60869.sky2m.features.dungeons.party.ModConflictWarnings.init();
-        com.epic60869.sky2m.features.dungeons.party.TeamMelody.init();
-        com.epic60869.sky2m.features.dungeons.bridge.BridgeFeature.register();
-        com.epic60869.sky2m.features.dungeons.bridge.BridgeFeature.registerCommand();
-        com.epic60869.sky2m.features.misc.EventCalendar.init();
-        com.epic60869.sky2m.features.garden.PestHighlight.init();
-        com.epic60869.sky2m.features.garden.CropFeverEffects.init();
-        com.epic60869.sky2m.features.dungeons.BonusKillAlerts.init();
-        com.epic60869.sky2m.features.dungeons.TerminalProgress.init();
-        com.epic60869.sky2m.features.dungeons.DeathTracker.init(configDir);
-        com.epic60869.sky2m.features.dungeons.ClassCounters.init();
-        com.epic60869.sky2m.features.dungeons.KeyAlerts.init();
-        com.epic60869.sky2m.features.dungeons.DragonSplits.init(configDir);
-        com.epic60869.sky2m.features.dungeons.CataCalculator.init(configDir);
-        com.epic60869.sky2m.features.dungeons.DupeClass.init();
-        com.epic60869.sky2m.features.mining.ScathaTracker.init(configDir);
-        com.epic60869.sky2m.features.mining.GemstoneTracker.init(configDir);
-        com.epic60869.sky2m.features.mining.OrderedWaypoints.init(configDir);
-        com.epic60869.sky2m.features.slayer.SlayerPhaseTimer.init();
-        com.epic60869.sky2m.features.slayer.VoidgloomLasers.init();
-        com.epic60869.sky2m.features.combat.DamageNumbers.init();
-        com.epic60869.sky2m.features.combat.LowStats.init();
-        com.epic60869.sky2m.features.misc.CustomSounds.init();
-        com.epic60869.sky2m.features.misc.CarryTracker.init(configDir);
-        com.epic60869.sky2m.features.misc.MayorDisplay.init();
-        com.epic60869.sky2m.features.misc.NetworthHistory.init(configDir);
-        com.epic60869.sky2m.features.misc.SackValueHistory.init(configDir);
-        com.epic60869.sky2m.features.misc.ItemQuality.init();
-        com.epic60869.sky2m.features.misc.ChatFilters.init();
-        com.epic60869.sky2m.features.misc.SpamFilters.init();
-        com.epic60869.sky2m.features.misc.SideChat.init();
-        com.epic60869.sky2m.features.misc.ChatNameLinks.init();
-        com.epic60869.sky2m.features.misc.Sky2MAchievements.init(configDir);
-        com.epic60869.sky2m.features.misc.waypoints.AreaWaypoints.init(configDir);
-        com.epic60869.sky2m.features.misc.waypoints.FairySoulsFinder.init(configDir);
-        com.epic60869.sky2m.features.misc.ShoppingList.init(configDir);
-        ClientTickEvents.END_CLIENT_TICK.register(this::tick);
+        com.epic60869.sky2m.features.misc.SacksValue.init(); lap("SacksValue.init");
+        com.epic60869.sky2m.features.misc.StashCompact.init(); lap("StashCompact.init");
+        com.epic60869.sky2m.features.garden.visitor.GardenVisitors.init(configDir); lap("GardenVisitors.init");
+        com.epic60869.sky2m.features.misc.ItemCooldowns.init(); lap("ItemCooldowns.init");
+        com.epic60869.sky2m.features.misc.AbilityTimers.init(); lap("AbilityTimers.init");
+        com.epic60869.sky2m.features.misc.CustomScoreboard.init(); lap("CustomScoreboard.init");
+        com.epic60869.sky2m.features.dungeons.RagAxe.init(); lap("RagAxe.init");
+        com.epic60869.sky2m.features.dungeons.MageBeam.init(); lap("MageBeam.init");
+        com.epic60869.sky2m.features.dungeons.TerminalTimers.init(); lap("TerminalTimers.init");
+        com.epic60869.sky2m.features.dungeons.BossPhases.init(); lap("BossPhases.init");
+        com.epic60869.sky2m.features.dungeons.RunHistory.init(); lap("RunHistory.init");
+        com.epic60869.sky2m.features.dungeons.TermismCommand.registerCommand(); lap("TermismScreen.registerCommand");
+        com.epic60869.sky2m.sim.Sky2MSim.init(); lap("Sky2MSim.init");
+        com.epic60869.sky2m.features.dungeons.party.PartyDungeonData.init(); lap("PartyDungeonData.init");
+        com.epic60869.sky2m.features.dungeons.party.ModConflictWarnings.init(); lap("ModConflictWarnings.init");
+        com.epic60869.sky2m.features.dungeons.party.TeamMelody.init(); lap("TeamMelody.init");
+        com.epic60869.sky2m.features.dungeons.bridge.BridgeFeature.register(); lap("BridgeFeature.register");
+        com.epic60869.sky2m.features.dungeons.bridge.BridgeFeature.registerCommand(); lap("BridgeFeature.registerCommand");
+        com.epic60869.sky2m.features.misc.EventCalendar.init(); lap("EventCalendar.init");
+        com.epic60869.sky2m.features.garden.PestHighlight.init(); lap("PestHighlight.init");
+        com.epic60869.sky2m.features.garden.CropFeverEffects.init(); lap("CropFeverEffects.init");
+        com.epic60869.sky2m.features.garden.helpers.GardenHelpers.init(); lap("GardenHelpers.init");
+        com.epic60869.sky2m.features.dungeons.BonusKillAlerts.init(); lap("BonusKillAlerts.init");
+        com.epic60869.sky2m.features.dungeons.TerminalProgress.init(); lap("TerminalProgress.init");
+        com.epic60869.sky2m.features.dungeons.DeathTracker.init(configDir); lap("DeathTracker.init");
+        com.epic60869.sky2m.features.dungeons.ClassCounters.init(); lap("ClassCounters.init");
+        com.epic60869.sky2m.features.dungeons.KeyAlerts.init(); lap("KeyAlerts.init");
+        com.epic60869.sky2m.features.dungeons.DragonSplits.init(configDir); lap("DragonSplits.init");
+        com.epic60869.sky2m.features.dungeons.CataCalculator.init(configDir); lap("CataCalculator.init");
+        com.epic60869.sky2m.features.dungeons.DupeClass.init(); lap("DupeClass.init");
+        com.epic60869.sky2m.features.mining.ScathaTracker.init(configDir); lap("ScathaTracker.init");
+        com.epic60869.sky2m.features.mining.GemstoneTracker.init(configDir); lap("GemstoneTracker.init");
+        com.epic60869.sky2m.features.mining.extras.MiningExtras.init(configDir); lap("MiningExtras.init");
+        com.epic60869.sky2m.features.mining.dwarven.DwarvenMining.init(configDir); lap("DwarvenMining.init");
+        com.epic60869.sky2m.features.mining.OrderedWaypoints.init(configDir); lap("OrderedWaypoints.init");
+        com.epic60869.sky2m.features.slayer.SlayerPhaseTimer.init(); lap("SlayerPhaseTimer.init");
+        com.epic60869.sky2m.features.slayer.VoidgloomLasers.init(); lap("VoidgloomLasers.init");
+        com.epic60869.sky2m.features.combat.DamageNumbers.init(); lap("DamageNumbers.init");
+        com.epic60869.sky2m.features.combat.extra.CombatExtras.init(configDir); lap("CombatExtras.init");
+        com.epic60869.sky2m.features.combat.LowStats.init(); lap("LowStats.init");
+        com.epic60869.sky2m.features.combat.ArmorStacks.init(); lap("ArmorStacks.init");
+        com.epic60869.sky2m.features.misc.CustomSounds.init(); lap("CustomSounds.init");
+        com.epic60869.sky2m.features.misc.CarryTracker.init(configDir); lap("CarryTracker.init");
+        com.epic60869.sky2m.features.misc.MayorDisplay.init(); lap("MayorDisplay.init");
+        com.epic60869.sky2m.features.misc.NetworthHistory.init(configDir); lap("NetworthHistory.init");
+        com.epic60869.sky2m.features.misc.SackValueHistory.init(configDir); lap("SackValueHistory.init");
+        com.epic60869.sky2m.features.misc.ItemQuality.init(); lap("ItemQuality.init");
+        com.epic60869.sky2m.features.misc.ChatFilters.init(); lap("ChatFilters.init");
+        com.epic60869.sky2m.features.misc.SpamFilters.init(); lap("SpamFilters.init");
+        com.epic60869.sky2m.features.misc.SideChat.init(); lap("SideChat.init");
+        com.epic60869.sky2m.features.qol.ChatRules.init(); lap("ChatRules.init");
+        com.epic60869.sky2m.features.qol.MentionAlerts.init(); lap("MentionAlerts.init");
+        com.epic60869.sky2m.features.slayer.SlayerRngAdvisor.init(); lap("SlayerRngAdvisor.init");
+        com.epic60869.sky2m.features.fishing.TrophyFishTracker.init(configDir); lap("TrophyFishTracker.init");
+        com.epic60869.sky2m.features.misc.LoadoutHighlight.init(); lap("LoadoutHighlight.init");
+        com.epic60869.sky2m.features.misc.ChatNameLinks.init(); lap("ChatNameLinks.init");
+        com.epic60869.sky2m.features.social.PartyTools.init(); lap("PartyTools.init");
+        com.epic60869.sky2m.features.social.ChatWaypoints.init(); lap("ChatWaypoints.init");
+        com.epic60869.sky2m.features.social.ChatProfileIcons.init(); lap("ChatProfileIcons.init");
+        com.epic60869.sky2m.features.misc.Sky2MAchievements.init(configDir); lap("Sky2MAchievements.init");
+        com.epic60869.sky2m.features.misc.waypoints.AreaWaypoints.init(configDir); lap("AreaWaypoints.init");
+        com.epic60869.sky2m.features.misc.waypoints.FairySoulsFinder.init(configDir); lap("FairySoulsFinder.init");
+        com.epic60869.sky2m.features.misc.ShoppingList.init(configDir); lap("ShoppingList.init");
+        ClientTickEvents.END_CLIENT_TICK.register(this::tick); lap("END_CLIENT_TICK.register");
         // On 26.3 typed text only arrives while SDL text input is on, which vanilla turns on for its own text boxes.
         // MoulConfig's (the settings search, text options) never do, so it's on for as long as its screen is open.
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
@@ -232,7 +277,10 @@ public final class Sky2MMod implements ClientModInitializer {
         });
 
         registerCommands();
+        lap("registerCommands");
 
+        startupMs = (System.nanoTime() - startupT0) / 1_000_000L;
+        System.out.println("[Sky2M] startup: total init took " + startupMs + "ms");
         System.out.println("[Sky2M] Core mod loaded.");
     }
 
@@ -266,6 +314,25 @@ public final class Sky2MMod implements ClientModInitializer {
                 .then(ClientCommands.argument("player", StringArgumentType.word())
                     .executes(context -> partyTransfer(StringArgumentType.getString(context, "player")))));
         });
+        // After every /s2c subcommand is registered (some come from other classes): a message that starts with a
+        // subcommand word ("/s2c block hi nix") matched that subcommand, didn't fit its arguments and wasn't sent.
+        // Each subcommand also takes the rest of the line as a message; its own arguments are tried first, so
+        // "/s2c block nix" still blocks nix.
+        net.minecraft.resources.Identifier s2cFallback = net.minecraft.resources.Identifier.fromNamespaceAndPath("sky2m", "s2c_message_fallback");
+        ClientCommandRegistrationCallback.EVENT.addPhaseOrdering(net.fabricmc.fabric.api.event.Event.DEFAULT_PHASE, s2cFallback);
+        ClientCommandRegistrationCallback.EVENT.register(s2cFallback, (dispatcher, registryAccess) -> {
+            var s2c = dispatcher.getRoot().getChild("s2c");
+            if (s2c == null) return;
+            for (var sub : new java.util.ArrayList<>(s2c.getChildren())) {
+                if (!(sub instanceof com.mojang.brigadier.tree.LiteralCommandNode<?>)) continue;
+                String word = sub.getName();
+                @SuppressWarnings("unchecked")
+                var node = (com.mojang.brigadier.tree.CommandNode<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource>) sub;
+                node.addChild(ClientCommands.argument("s2c_message", StringArgumentType.greedyString())
+                    .executes(context -> sendGlobalChat(word + " " + StringArgumentType.getString(context, "s2c_message")))
+                    .build());
+            }
+        });
     }
 
     private int partyTransfer(String player) {
@@ -281,9 +348,10 @@ public final class Sky2MMod implements ClientModInitializer {
                 .executes(context -> openMenu())
                 .then(ClientCommands.argument("filter", StringArgumentType.greedyString())
                     .suggests((context, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
-                        java.util.List.of("general", "chat", "combat", "diana", "mayors", "dungeons", "farming",
-                            "fishing", "mining", "foraging", "slayer", "profit trackers", "hunting", "safari",
-                            "skills", "pets", "misc", "storage", "waypoints", "hud", "alerts", "tracker", "enabled"),
+                        java.util.List.of("about", "gui", "garden", "crimson isle", "kuudra", "fishing", "mining", "foraging",
+                            "hunting", "safari", "combat", "slayer", "dungeon", "inventory", "events", "diana", "mayor",
+                            "skills", "chat", "misc", "profit trackers", "pets", "storage", "waypoints", "hud", "alerts",
+                            "tracker", "enabled"),
                         builder))
                     .executes(context -> openFilteredGui(StringArgumentType.getString(context, "filter"))))
                 )
@@ -304,9 +372,10 @@ public final class Sky2MMod implements ClientModInitializer {
                 .executes(context -> openHudEditor())
                 .then(ClientCommands.argument("filter", StringArgumentType.greedyString())
                     .suggests((context, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
-                        java.util.List.of("general", "chat", "combat", "diana", "mayors", "dungeons", "farming",
-                            "fishing", "mining", "foraging", "slayer", "profit trackers", "hunting", "safari",
-                            "skills", "pets", "misc", "storage", "waypoints", "hud", "alerts", "tracker", "enabled"),
+                        java.util.List.of("about", "gui", "garden", "crimson isle", "kuudra", "fishing", "mining", "foraging",
+                            "hunting", "safari", "combat", "slayer", "dungeon", "inventory", "events", "diana", "mayor",
+                            "skills", "chat", "misc", "profit trackers", "pets", "storage", "waypoints", "hud", "alerts",
+                            "tracker", "enabled"),
                         builder))
                     .executes(context -> openFilteredGui(StringArgumentType.getString(context, "filter")))))
             .then(ClientCommands.literal("debug").executes(context -> Sky2MDebug.run())

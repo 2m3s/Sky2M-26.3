@@ -30,6 +30,8 @@ public abstract class RegexContainerMatcher implements ContainerMatcher {
 
 	public boolean test(String title) {
 		if (titlePattern == null) return true;
+		// Strip formatting codes and surrounding whitespace so a styled title still matches.
+		title = title.replaceAll("§.", "").trim();
 		Matcher matcher = titlePattern.matcher(title);
 		if (matcher.matches()) {
 			int groupCount = matcher.groupCount();

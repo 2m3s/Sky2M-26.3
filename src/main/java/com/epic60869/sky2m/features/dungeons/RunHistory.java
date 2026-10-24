@@ -43,7 +43,10 @@ public final class RunHistory {
     private static final Pattern DEFEATED = Pattern.compile("^\\s*☠ Defeated (.+) in 0?([\\dhms ]+?)\\s*(\\(NEW RECORD!\\))?$");
     private static final Pattern TEAM_SCORE = Pattern.compile("^\\s*Team Score: ([\\d,]+) \\(([A-DS+]+)\\)");
     private static final Pattern DEVICE = Pattern.compile("^(\\w{1,16}) (activated|completed) a (terminal|lever|device)! \\((\\d)/(\\d)\\)(?:\\s.*)?$");
-    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm", Locale.ROOT);
+    /** Built on first use, not at start-up. */
+    private static final class DateFormat {
+        static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm", Locale.ROOT);
+    }
 
     /** One saved run. Counts are -1 when they weren't known. */
     public static final class Run {
@@ -61,6 +64,8 @@ public final class RunHistory {
         public List<Device> devices = new ArrayList<>();
         public List<Member> party = new ArrayList<>();
         public boolean bestTime, bestScore;
+        /** Who died, to what, where and when (Death Recap); null if it wasn't recorded. */
+        public List<DeathRecap.DeathEntry> deathLog;
 
         /** Hypixel's score if it was seen, otherwise Sky2M's estimate. */
         public int effectiveScore() {
@@ -72,7 +77,7 @@ public final class RunHistory {
         }
 
         public String date() {
-            return DATE.format(Instant.ofEpochMilli(endedAt > 0 ? endedAt : startedAt).atZone(ZoneId.systemDefault()));
+            return DateFormat.DATE.format(Instant.ofEpochMilli(endedAt > 0 ? endedAt : startedAt).atZone(ZoneId.systemDefault()));
         }
     }
 
@@ -96,6 +101,7 @@ public final class RunHistory {
     }
 
     public static void init() {
+        RouteReplay.init();
         Sky2MChat.onChat(message -> onChat(message.text()));
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (finishIn > 0 && --finishIn == 0) finish();
@@ -120,6 +126,8 @@ public final class RunHistory {
             current = new Run();
             current.startedAt = System.currentTimeMillis();
             current.floor = Sky2MLocation.dungeonFloor();
+            RouteReplay.begin(current.floor, current.startedAt);
+            java.util.concurrent.CompletableFuture.runAsync(RunHistory::runs); // read the saved runs off the client thread
             goldorStart = 0;
             finishIn = -1;
             return;
@@ -167,6 +175,7 @@ public final class RunHistory {
         if (run == null) return;
         if (run.endedAt == 0) run.endedAt = System.currentTimeMillis();
         run.totalMs = run.endedAt - run.startedAt;
+        RouteReplay.end();
         for (Object[] split : DungeonFeatures.finishedSplits()) run.splits.add(new Split((String) split[0], (long) split[1]));
         if (ScoreCalculator.started()) {
             run.score = ScoreCalculator.score();
@@ -208,6 +217,7 @@ public final class RunHistory {
             String what = run.bestTime && run.bestScore ? "time and score" : run.bestTime ? "time" : "score";
             Sky2MAlerts.chat(Component.literal("New " + run.floor + " personal best " + what + "!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
         }
+        DungeonRecapExtras.onRunFinished(run);
     }
 
     private static void summary(Run run) {
@@ -256,17 +266,34 @@ public final class RunHistory {
         return runs;
     }
 
+    private static final java.util.concurrent.ExecutorService WRITER = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "Sky2M run history save");
+        t.setDaemon(true);
+        return t;
+    });
+
+    /** Serialises the runs now and writes the file on a background thread, so ending a run doesn't hitch. */
     static synchronized void save() {
+        final String json;
         try {
-            Files.createDirectories(FILE.getParent());
-            Files.writeString(FILE, GSON.toJson(runs()));
+            json = GSON.toJson(runs());
         } catch (Exception e) {
             System.err.println("[Sky2M] Run History couldn't save its runs: " + e.getMessage());
+            return;
         }
+        WRITER.execute(() -> {
+            try {
+                Files.createDirectories(FILE.getParent());
+                Files.writeString(FILE, json);
+            } catch (Exception e) {
+                System.err.println("[Sky2M] Run History couldn't save its runs: " + e.getMessage());
+            }
+        });
     }
 
     static synchronized void delete(Run run) {
         runs().remove(run);
+        RouteReplay.delete(run.startedAt);
         save();
     }
 }

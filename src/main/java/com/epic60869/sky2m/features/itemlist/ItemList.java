@@ -25,14 +25,19 @@ import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemLore;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,6 +53,8 @@ import java.util.concurrent.Executors;
  *   <li>Click an item for its recipes, right-click for its wiki page (both can be changed); the Recipe, Usage and
  *   Favourite keys work over items in the list, in recipes and in any menu.</li>
  *   <li>Favourites on the other side: items and recipes, and a pinned recipe on top (Ctrl and click a recipe).</li>
+ *   <li>Double-click the search bar for highlighter mode: items in the menu that match the search are highlighted and the
+ *   rest dimmed, until you double-click it again.</li>
  *   <li>The items move out of the way of other things beside the menu (Sky2M's panels such as the Garden plot map,
  *   other mods' buttons, potion effects), and the list takes the Storage Overlay's size into account.</li>
  * </ul>
@@ -82,8 +89,18 @@ public final class ItemList {
     private static String calcResult;
     private static boolean calcOk;
 
+    // Highlighter mode (double-click the search bar): matching items in the menu are highlighted, the rest dimmed.
+    private static final long DOUBLE_CLICK_MS = 300;
+    private static final int HIGHLIGHT = 0x80FFFF55, DIM = 0xB0000000, HIGHLIGHT_EDGE = 0xFFFFFF55;
+    private static boolean highlighter;
+    private static long lastBoxClick;
+    private static String highlightFor;
+    private static ItemListSearch.Query highlightQuery;
+    /** Whether each item matches the current search, so lore isn't read every frame. Cleared when the search changes. */
+    private static final Map<ItemStack, Boolean> highlightCache = new IdentityHashMap<>();
+
     // This frame's layout.
-    private static Rect mainRect, favRect, boxRect, filterRect, settingsRect, prevRect, nextRect, favPrevRect, favNextRect, pinnedRect;
+    private static Rect mainRect, favRect, boxRect, filterRect, sortRect, settingsRect, prevRect, nextRect, favPrevRect, favNextRect, pinnedRect;
     private static final List<Rect> zones = new ArrayList<>();
     private static final List<Rect> mainCells = new ArrayList<>(), favCells = new ArrayList<>();
     private static String hoveredId;
@@ -94,7 +111,7 @@ public final class ItemList {
 
     public static FeatureConfigs.ItemList config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.itemList;
+        return c == null ? null : c.inventory.itemList;
     }
 
     public static void init() {
@@ -126,22 +143,23 @@ public final class ItemList {
         box = new EditBox(mc.font, 0, 0, 100, 16, Component.literal("Search"));
         box.setMaxLength(999);
         box.setValue(text == null ? "" : text);
-        box.setHint(Component.literal("Search or Calculate...").withStyle(ChatFormatting.DARK_GRAY));
+        updateHint();
         box.addFormatter(ItemList::highlight);
         box.setResponder(value -> {
             c.lastSearch = value;
-            box.setSuggestion(ItemListSearch.suggestion(value));
             mainPage = 0;
             refreshSearch();
+            box.setSuggestion(calcResult != null ? null : ItemListSearch.suggestion(value));
         });
         box.setSuggestion(ItemListSearch.suggestion(box.getValue()));
         refreshSearch();
 
         Screens.getWidgets(screen).add(new Renderer(screen));
         Screens.getWidgets(screen).add(box);
+        Screens.getWidgets(screen).add(new CalcResult());
 
         ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> !click(s, event));
-        ScreenMouseEvents.allowMouseScroll(screen).register((s, x, y, h, v) -> !scroll(x, y, v));
+        ScreenMouseEvents.allowMouseScroll(screen).register((s, x, y, h, v) -> menuHidden(s) || !scroll(x, y, v));
         ScreenKeyboardEvents.allowKeyPress(screen).register((s, event) -> !keyPressed(s, event));
     }
 
@@ -155,7 +173,10 @@ public final class ItemList {
         calcResult = calc;
         calcOk = calc != null && !calc.startsWith("ERR");
         List<ItemListData.Entry> entries = ItemListData.entries();
-        String key = raw + "\u0000" + filter + "\u0000" + (c != null && c.fuzzy) + (c != null && c.hideVanilla) + (c != null && c.prefixFirst);
+        FeatureConfigs.ItemList.Sort sort = c == null || c.sort == null ? FeatureConfigs.ItemList.Sort.DEFAULT : c.sort;
+        boolean reversed = c != null && c.sortReversed;
+        String key = raw + "\u0000" + filter + "\u0000" + (c != null && c.fuzzy) + (c != null && c.hideVanilla) + (c != null && c.prefixFirst)
+            + sort + reversed;
         if (key.equals(searchedFor) && entries == searchedEntries) return;
         searchedFor = key;
         searchedEntries = entries;
@@ -174,8 +195,65 @@ public final class ItemList {
                 else rest.add(e);
             }
             first.addAll(rest);
+            if (sort != FeatureConfigs.ItemList.Sort.DEFAULT) sort(first, sort, reversed);
             if (seq == searchSeq) results = first;
         });
+    }
+
+    /**
+     * NEU-style ordering. Price and rarity go high to low, type and name A to Z; reversed flips that. Items without a
+     * price, rarity or type always go last, so "most expensive armor" doesn't start with unpriced ones.
+     */
+    private static void sort(List<ItemListData.Entry> list, FeatureConfigs.ItemList.Sort sort, boolean reversed) {
+        java.util.Comparator<ItemListData.Entry> byName = java.util.Comparator.comparing(ItemListData.Entry::searchName);
+        switch (sort) {
+            case PRICE -> {
+                Map<ItemListData.Entry, Double> prices = new IdentityHashMap<>();
+                for (ItemListData.Entry e : list) prices.put(e, price(e.id()));
+                java.util.Comparator<ItemListData.Entry> order = java.util.Comparator.comparingDouble(e -> -prices.get(e));
+                if (reversed) order = order.reversed();
+                list.sort(java.util.Comparator.<ItemListData.Entry, Boolean>comparing(e -> prices.get(e) <= 0).thenComparing(order).thenComparing(byName));
+            }
+            case RARITY -> {
+                java.util.Comparator<ItemListData.Entry> order = java.util.Comparator.comparingInt(e -> -e.rarity());
+                if (reversed) order = order.reversed();
+                list.sort(java.util.Comparator.<ItemListData.Entry, Boolean>comparing(e -> e.rarity() < 0).thenComparing(order).thenComparing(byName));
+            }
+            case TYPE -> {
+                java.util.Comparator<ItemListData.Entry> order = java.util.Comparator.comparing(ItemListData.Entry::type);
+                if (reversed) order = order.reversed();
+                list.sort(java.util.Comparator.<ItemListData.Entry, Boolean>comparing(e -> e.type().isEmpty()).thenComparing(order)
+                    .thenComparing(java.util.Comparator.comparingInt(e -> -e.rarity())).thenComparing(byName));
+            }
+            case NAME -> list.sort(reversed ? byName.reversed() : byName);
+            case DEFAULT -> { }
+        }
+    }
+
+    /** What an item costs: its lowest BIN, else its bazaar buy price, else what an NPC pays; 0 when unknown. */
+    private static double price(String id) {
+        Double p = com.epic60869.sky2m.Sky2MPriceTooltip.lowestBinPrice(id);
+        if (p == null || p <= 0) p = com.epic60869.sky2m.Sky2MPriceTooltip.bazaarBuyPrice(id);
+        if (p == null || p <= 0) p = com.epic60869.sky2m.Sky2MPriceTooltip.npcSellPrice(id);
+        return p == null ? 0 : p;
+    }
+
+    /**
+     * Whether Sky2M draws over the whole menu right now (Terminals > Hide Menu, Case Opening): the menu's widgets,
+     * this list included, aren't drawn, so the list mustn't take clicks, scrolls, keys or focus either.
+     */
+    private static boolean menuHidden(Screen screen) {
+        if (!(screen instanceof AbstractContainerScreen<?> container)) return false;
+        boolean hidden = com.epic60869.sky2m.features.dungeons.OdinTerminals.hidesMenu(container)
+            || com.epic60869.sky2m.features.dungeons.CaseOpening.hidesMenu(container);
+        if (hidden && box != null) {
+            if (box.isFocused()) {
+                box.setFocused(false);
+                screen.setFocused(null);
+            }
+            box.visible = false;
+        }
+        return hidden;
     }
 
     /** Whether the items show: by default only once you've searched (like SkyBlock Item List). */
@@ -207,6 +285,56 @@ public final class ItemList {
             }
             return true;
         };
+    }
+
+    private static void updateHint() {
+        if (box == null) return;
+        box.setHint(Component.literal(highlighter ? "Highlight..." : "Search or Calculate...")
+            .withStyle(highlighter ? ChatFormatting.YELLOW : ChatFormatting.DARK_GRAY));
+    }
+
+    // ------------------------------------------------------------------------------------------------ highlighter
+
+    /** From the slot mixin, before the item is drawn: in highlighter mode, a highlight behind items matching the search. */
+    public static void renderSlot(GuiGraphicsExtractor g, Slot slot) {
+        if (highlightState(slot) == Boolean.TRUE) g.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, HIGHLIGHT);
+    }
+
+    /** From the slot mixin, after the item is drawn: in highlighter mode, items not matching the search are dimmed. */
+    public static void renderSlotDim(GuiGraphicsExtractor g, Slot slot) {
+        if (highlightState(slot) == Boolean.FALSE) g.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, DIM);
+    }
+
+    /** True: matches; false: dim it; null: highlighter is off here, or the slot is empty. */
+    private static Boolean highlightState(Slot slot) {
+        if (!highlighter || box == null || !slot.hasItem()) return null;
+        Minecraft mc = Minecraft.getInstance();
+        FeatureConfigs.ItemList c = config();
+        if (c == null || c.hidden || !shouldShow(mc.gui.screen())) return null;
+        String raw = box.getValue();
+        if (raw.isBlank() || calcResult != null) return null;
+        if (!raw.equals(highlightFor)) {
+            highlightFor = raw;
+            highlightQuery = ItemListSearch.parse(raw);
+            highlightCache.clear();
+        }
+        if (highlightQuery.isEmpty()) return null;
+        if (highlightCache.size() > 2048) highlightCache.clear();
+        return highlightCache.computeIfAbsent(slot.getItem(), stack -> highlightMatches(stack, c.fuzzy));
+    }
+
+    private static boolean highlightMatches(ItemStack stack, boolean fuzzy) {
+        String id = ItemListIds.of(stack);
+        ItemListData.Entry entry = id == null ? null : ItemListData.entry(id);
+        String name = ItemListData.strip(stack.getHoverName().getString()).toLowerCase(Locale.ROOT);
+        StringBuilder lore = new StringBuilder();
+        ItemLore itemLore = stack.get(DataComponents.LORE);
+        if (itemLore != null) {
+            for (Component line : itemLore.lines()) lore.append(ItemListData.strip(line.getString()).toLowerCase(Locale.ROOT)).append(' ');
+        }
+        if (entry != null) lore.append(entry.searchName()).append(' ').append(entry.searchLore());
+        return ItemListSearch.matches(highlightQuery, id != null ? id : Compat.neuName(stack), entry == null ? null : entry.category(),
+            name, lore.toString(), fuzzy, entry);
     }
 
     // ------------------------------------------------------------------------------------------------ layout
@@ -264,10 +392,11 @@ public final class ItemList {
         if (mainRect != null) {
             boxRect = new Rect(mainRect.x() + 2, mainRect.y() + mainRect.h() - 20, mainRect.w() - 22, 16);
             filterRect = new Rect(boxRect.x() + boxRect.w() - 16, boxRect.y(), 16, 16);
+            sortRect = new Rect(filterRect.x() - 17, boxRect.y(), 16, 16);
             settingsRect = new Rect(boxRect.x() + boxRect.w() + 2, boxRect.y(), 16, 16);
             box.setX(boxRect.x());
             box.setY(boxRect.y());
-            box.setWidth(boxRect.w() - 17);
+            box.setWidth(boxRect.w() - 34);
             box.visible = true;
             cells(mainCells, mainRect, mainRect.y() + TOP, c.itemSize);
         } else {
@@ -311,6 +440,31 @@ public final class ItemList {
     // ------------------------------------------------------------------------------------------------ drawing
 
     /** Draws both panels as part of the menu (so the menu's tooltips and carried item go over it). */
+    /**
+     * A sum's result right after what you typed ("5*5" then a green "=25"), live as you type. Added after the search
+     * box so the box doesn't draw over it; errors are red.
+     */
+    private static final class CalcResult extends AbstractWidget {
+        CalcResult() {
+            super(0, 0, 0, 0, Component.empty());
+            this.active = false;
+        }
+
+        @Override
+        protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+            if (box == null || !box.visible || calcResult == null) return;
+            Font font = Minecraft.getInstance().font;
+            String result = calcOk ? "=" + calcResult.substring(2) : calcResult;
+            int inner = box.getWidth() - 8;
+            // After the text while it fits; a long sum scrolls, so then it sits at the box's right edge.
+            int x = Math.min(box.getX() + 4 + font.width(box.getValue()) + 2, box.getX() + 4 + inner - font.width(result));
+            g.text(font, result, x, box.getY() + (box.getHeight() - 8) / 2, calcOk ? 0xFF55FF55 : 0xFFFF5555, true);
+        }
+
+        @Override
+        protected void updateWidgetNarration(NarrationElementOutput output) {}
+    }
+
     private static final class Renderer extends AbstractWidget {
         private final Screen screen;
 
@@ -322,12 +476,17 @@ public final class ItemList {
 
         @Override
         protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+            FeatureConfigs.ItemList c = config();
+            if (box != null && c != null) box.visible = !c.hidden;
             refreshSearch();
             layout(screen);
             hoveredId = null;
             hoveredRecipe = null;
             Font font = Minecraft.getInstance().font;
             if (mainRect != null) drawMain(g, font, mouseX, mouseY);
+            if (mainRect != null && highlighter && box.visible) {
+                g.outline(box.getX() - 1, box.getY() - 1, box.getWidth() + 2, box.getHeight() + 2, HIGHLIGHT_EDGE);
+            }
             if (favRect != null) drawFavourites(g, font, mouseX, mouseY);
         }
 
@@ -361,12 +520,33 @@ public final class ItemList {
             }
         }
 
-        // The search bar: red when nothing matches, the sum's result on the right.
+        // The search bar: red when nothing matches (a sum's result is drawn over the box by CalcResult).
         boolean nothing = listVisible() && ItemListData.loaded() && list.isEmpty() && calcResult == null;
         box.setTextColor(nothing ? 0xFFFF5555 : 0xFFE0E0E0);
-        if (calcResult != null) {
-            int colour = calcOk ? 0xFFFFFF55 : 0xFFFF5555;
-            g.text(font, calcResult, boxRect.x() + boxRect.w() - 18 - font.width(calcResult), boxRect.y() + 4, colour, true);
+        // Sort: white for the default order, green for another, with the order's letter.
+        if (c != null) {
+            FeatureConfigs.ItemList.Sort sort = c.sort == null ? FeatureConfigs.ItemList.Sort.DEFAULT : c.sort;
+            boolean overSort = sortRect.contains(mouseX, mouseY);
+            g.fill(sortRect.x(), sortRect.y(), sortRect.x() + 16, sortRect.y() + 16, overSort ? ItemListCard.BUTTON_HOVER : ItemListCard.BUTTON);
+            g.outline(sortRect.x(), sortRect.y(), 16, 16, ItemListCard.EDGE);
+            String icon = switch (sort) {
+                case DEFAULT -> "≡";
+                case PRICE -> "$";
+                case RARITY -> "★";
+                case TYPE -> "T";
+                case NAME -> "A";
+            };
+            g.centeredText(font, icon, sortRect.x() + 8, sortRect.y() + 4, sort == FeatureConfigs.ItemList.Sort.DEFAULT ? 0xFFFFFFFF : 0xFF55FF55);
+            if (overSort) {
+                List<Component> tip = new ArrayList<>();
+                tip.add(Component.literal("Sort: " + sort + (c.sortReversed ? " (reversed)" : "")).withStyle(ChatFormatting.GREEN));
+                for (FeatureConfigs.ItemList.Sort s : FeatureConfigs.ItemList.Sort.values()) {
+                    tip.add(Component.literal((s == sort ? "> " : "  ") + s).withStyle(s == sort ? ChatFormatting.WHITE : ChatFormatting.DARK_GRAY));
+                }
+                tip.add(Component.literal("Click: next  ·  Right click: reverse").withStyle(ChatFormatting.GRAY));
+                tip.add(Component.literal("Search type:armor or rarity:legendary to narrow it").withStyle(ChatFormatting.DARK_GRAY));
+                g.setComponentTooltipForNextFrame(font, tip, mouseX, mouseY);
+            }
         }
         // Filter: white for all, green for a category.
         boolean overFilter = filterRect.contains(mouseX, mouseY);
@@ -441,7 +621,7 @@ public final class ItemList {
         g.pose().popMatrix();
         if (over) {
             hoveredId = id;
-            List<Component> tip = new ArrayList<>(Screen.getTooltipFromItem(Minecraft.getInstance(), stack));
+            List<Component> tip = new ArrayList<>(com.epic60869.sky2m.Sky2MPriceTooltip.itemListTooltip(stack));
             if (recipeTile) tip.add(Component.literal("[Ctrl + Click to pin this recipe]").withStyle(ChatFormatting.GRAY));
             g.setComponentTooltipForNextFrame(font, tip, mouseX, mouseY);
         }
@@ -494,7 +674,7 @@ public final class ItemList {
 
     /** A click on the menu: handled (true) if it was on the Item List. */
     private static boolean click(Screen screen, MouseButtonEvent event) {
-        if (box == null || config() == null) return false;
+        if (box == null || config() == null || menuHidden(screen)) return false;
         double x = event.x(), y = event.y();
         // Clicking anywhere but the search bar stops typing into it.
         if (boxRect == null || !boxRect.contains(x, y) || mainRect == null) {
@@ -512,12 +692,40 @@ public final class ItemList {
                 refreshSearch();
                 return true;
             }
+            if (sortRect.contains(x, y)) {
+                FeatureConfigs.ItemList c = config();
+                if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT) {
+                    c.sortReversed = !c.sortReversed;
+                } else {
+                    FeatureConfigs.ItemList.Sort[] all = FeatureConfigs.ItemList.Sort.values();
+                    c.sort = all[((c.sort == null ? 0 : c.sort.ordinal()) + 1) % all.length];
+                }
+                mainPage = 0;
+                refreshSearch();
+                return true;
+            }
             if (settingsRect.contains(x, y)) {
                 Sky2MConfig.openGui("Item List");
                 return true;
             }
             if (boxRect.contains(x, y)) {
-                if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT) box.setValue("");
+                // Right click clears the search and starts typing in it straight away.
+                if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT) {
+                    box.setValue("");
+                    box.setFocused(true);
+                    screen.setFocused(box);
+                    return true;
+                }
+                if (event.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) {
+                    long now = System.currentTimeMillis();
+                    if (now - lastBoxClick <= DOUBLE_CLICK_MS) {
+                        highlighter = !highlighter;
+                        updateHint();
+                        lastBoxClick = 0;
+                    } else {
+                        lastBoxClick = now;
+                    }
+                }
                 return false;
             }
             if (prevRect != null && prevRect.contains(x, y)) {
@@ -602,7 +810,7 @@ public final class ItemList {
     /** A key on the menu: handled (true) if it was for the Item List. */
     private static boolean keyPressed(Screen screen, KeyEvent event) {
         FeatureConfigs.ItemList c = config();
-        if (c == null || box == null) return false;
+        if (c == null || box == null || menuHidden(screen)) return false;
         int key = event.key();
         if (key == c.hideKey && event.hasControlDown()) {
             c.hidden = !c.hidden;
@@ -666,9 +874,10 @@ public final class ItemList {
         return false;
     }
 
-    /** MoulConfig stores mouse buttons as keys below -1: button 0 is -100. */
+    /** Whether a MoulConfig bind is mouse {@code button} (see BindKeys.mouseButton for how they are stored). */
     static boolean matchesMouse(int key, int button) {
-        return key == -100 + button;
+        // button is SDL-numbered (1 left, 3 right); BindKeys.mouseButton converts the stored bind, including -100 + n.
+        return com.epic60869.sky2m.features.core.BindKeys.mouseButton(key) == button;
     }
 
     /** Clicking an item (in the list, a favourite, or on a recipe) with mouse {@code button}. */
@@ -676,9 +885,9 @@ public final class ItemList {
         FeatureConfigs.ItemList c = config();
         if (c == null) return;
         FeatureConfigs.ItemList.ClickAction action = switch (button) {
-            case 0 -> c.leftClick;
-            case 1 -> c.rightClick;
-            case 2 -> c.middleClick;
+            case com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT -> c.leftClick;
+            case com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT -> c.rightClick;
+            case com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_MIDDLE -> c.middleClick;
             default -> FeatureConfigs.ItemList.ClickAction.NOTHING;
         };
         switch (action) {

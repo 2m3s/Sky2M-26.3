@@ -4,6 +4,7 @@ import com.epic60869.sky2m.custom.util.Compat;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
@@ -39,6 +40,17 @@ public final class SbcStaff {
     private static String status = "";
     private static boolean statusOk = true;
     private static boolean resuming;
+    /** Every flag the server knows (id, group, name, description), for the Features tab. */
+    private static List<JsonObject> catalog = List.of();
+    private static List<JsonObject> auditEntries = List.of();
+    private static boolean auditMore;
+    private static int auditTotal;
+    private static List<String> auditKinds = List.of();
+    private static JsonObject lookup;
+    private static List<JsonObject> onlinePlayers = List.of();
+    private static JsonObject counts = new JsonObject();
+    /** /s2 staff audit [n]: how many entries to print in chat when the answer arrives (0 = none). */
+    private static int chatAudit;
 
     private SbcStaff() {}
 
@@ -62,7 +74,16 @@ public final class SbcStaff {
                     .then(ClientCommands.literal("staff").executes(c -> {
                         open();
                         return 1;
-                    })));
+                    })
+                        .then(ClientCommands.literal("audit")
+                            .executes(c -> {
+                                chatAudit(10);
+                                return 1;
+                            })
+                            .then(ClientCommands.argument("n", IntegerArgumentType.integer(1, 50)).executes(c -> {
+                                chatAudit(IntegerArgumentType.getInteger(c, "n"));
+                                return 1;
+                            })))));
             }
         });
     }
@@ -91,6 +112,39 @@ public final class SbcStaff {
 
     public static JsonObject flags() {
         return flags;
+    }
+
+    public static List<JsonObject> catalog() {
+        return catalog;
+    }
+
+    public static List<JsonObject> auditEntries() {
+        return auditEntries;
+    }
+
+    public static boolean auditMore() {
+        return auditMore;
+    }
+
+    public static int auditTotal() {
+        return auditTotal;
+    }
+
+    public static List<String> auditKinds() {
+        return auditKinds;
+    }
+
+    /** The last player lookup answer, or null. */
+    public static JsonObject lookup() {
+        return lookup;
+    }
+
+    public static List<JsonObject> onlinePlayers() {
+        return onlinePlayers;
+    }
+
+    public static JsonObject counts() {
+        return counts;
     }
 
     public static String status() {
@@ -143,6 +197,46 @@ public final class SbcStaff {
         SbcNet.sendQuietly(Sbc.packet("staffFlags"));
     }
 
+    /** Asks for one page of the audit log (newest first). before = the id of the last entry already seen, 0 for the first page. */
+    static void audit(String kind, String text, String staff, String target, long before, int limit) {
+        JsonObject packet = Sbc.packet("staffAudit");
+        if (kind != null && !kind.isBlank()) packet.addProperty("filter", kind);
+        if (text != null && !text.isBlank()) packet.addProperty("q", text.trim());
+        if (staff != null && !staff.isBlank()) packet.addProperty("by", staff.trim());
+        if (target != null && !target.isBlank()) packet.addProperty("target", target.trim());
+        if (before > 0) packet.addProperty("before", before);
+        packet.addProperty("limit", limit);
+        SbcNet.sendQuietly(packet);
+    }
+
+    /** /s2 staff audit [n]: prints the newest n audit entries in chat. */
+    private static void chatAudit(int n) {
+        if (!isStaff()) {
+            Sbc.error("You aren't logged in as staff. Use /s2 stafflogin <code>.");
+            return;
+        }
+        chatAudit = n;
+        audit("", "", "", "", 0, n);
+    }
+
+    static void lookup(String name) {
+        JsonObject packet = Sbc.packet("staffLookup");
+        packet.addProperty("username", name.trim());
+        SbcNet.sendQuietly(packet);
+    }
+
+    static void requestOnline() {
+        SbcNet.sendQuietly(Sbc.packet("staffOnline"));
+        SbcNet.sendQuietly(Sbc.packet("staffCounts"));
+    }
+
+    static void announce(String message, String style) {
+        JsonObject packet = Sbc.packet("staffAnnounce");
+        packet.addProperty("message", message.trim());
+        packet.addProperty("style", style);
+        SbcNet.send(packet);
+    }
+
     private static void resume() {
         String token = savedToken();
         if (token.isEmpty()) return;
@@ -186,6 +280,9 @@ public final class SbcStaff {
     public static void onDisconnected() {
         role = "";
         resuming = false;
+        lookup = null;
+        auditEntries = List.of();
+        onlinePlayers = List.of();
     }
 
     static boolean handles(String type) {
@@ -222,7 +319,23 @@ public final class SbcStaff {
             case "staffFlags" -> {
                 flags = Sbc.obj(packet, "flags");
                 canEditFlags = Sbc.bool(packet, "canEdit");
+                catalog = objects(packet, "catalog");
             }
+            case "staffAudit" -> {
+                auditEntries = objects(packet, "entries");
+                auditMore = Sbc.bool(packet, "more");
+                auditTotal = (int) Sbc.lng(packet, "total", 0);
+                List<String> kinds = new ArrayList<>();
+                for (JsonElement e : Sbc.arr(packet, "kinds")) kinds.add(e.getAsString());
+                auditKinds = List.copyOf(kinds);
+                if (chatAudit > 0) {
+                    chatAudit = 0;
+                    printAudit(auditEntries);
+                }
+            }
+            case "staffLookup" -> lookup = packet;
+            case "staffOnline" -> onlinePlayers = objects(packet, "players");
+            case "staffCounts" -> counts = Sbc.obj(packet, "counts");
             case "staffResult" -> {
                 statusOk = Sbc.bool(packet, "ok");
                 status = Sbc.str(packet, "message");
@@ -238,6 +351,32 @@ public final class SbcStaff {
             }
             default -> { }
         }
+    }
+
+    private static List<JsonObject> objects(JsonObject packet, String key) {
+        List<JsonObject> list = new ArrayList<>();
+        for (JsonElement e : Sbc.arr(packet, key)) if (e.isJsonObject()) list.add(e.getAsJsonObject());
+        return List.copyOf(list);
+    }
+
+    /** "10-23 14:05" in the player's time zone. */
+    static String time(long millis) {
+        if (millis <= 0) return "never";
+        return java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm")
+            .format(java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault()));
+    }
+
+    private static void printAudit(List<JsonObject> entries) {
+        net.minecraft.network.chat.MutableComponent out = Component.literal("Staff audit log (newest first)").withStyle(ChatFormatting.GOLD);
+        if (entries.isEmpty()) out.append(Component.literal("\n  Nothing logged yet.").withStyle(ChatFormatting.GRAY));
+        for (JsonObject e : entries) {
+            String target = Sbc.str(e, "target");
+            out.append(Component.literal("\n  " + time(Sbc.lng(e, "at", 0)) + " ").withStyle(ChatFormatting.DARK_GRAY))
+                .append(Component.literal("[" + Sbc.str(e, "kind") + "] ").withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(Sbc.str(e, "by") + (target.isEmpty() ? "" : " → " + target) + ": ").withStyle(ChatFormatting.WHITE))
+                .append(Component.literal(Sbc.str(e, "summary")).withStyle(ChatFormatting.GRAY));
+        }
+        Sbc.say(out);
     }
 
     // ------------------------------------------------------------------------------------------------ saved login

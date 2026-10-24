@@ -65,7 +65,10 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class SimQuizPuzzle {
 
-    private static final Map<String, List<String>> ANSWERS = loadAnswers();
+    /** Loaded on first use, not at start-up. */
+    private static final class LazyData {
+        static final Map<String, List<String>> ANSWERS = loadAnswers();
+    }
     /** Chests spaced 3 blocks apart along X at the given origin - not real Hypixel Quiz floor coordinates (those
      *  are room-relative capture data this sim has no captured room to anchor to; see QuizSolverFeature's own
      *  (20,70,6)/(15,70,9)/(10,70,6) for what the real layout actually is). */
@@ -230,7 +233,7 @@ public final class SimQuizPuzzle {
         quizButtons = null;
         weirdosRoom = false;
         boundRoom = null;
-        if (ANSWERS.isEmpty()) {
+        if (LazyData.ANSWERS.isEmpty()) {
             ModChat.send("Sim", ModChat.bad("No quiz data bundled - quiz-answers.json did not load."));
             return;
         }
@@ -334,7 +337,7 @@ public final class SimQuizPuzzle {
                 }
             }
         }
-        if (ANSWERS.isEmpty()) {
+        if (LazyData.ANSWERS.isEmpty()) {
             com.epic60869.sky2m.sim.util.ModLog.get("sky2m-roomsim")
                     .warn("Sim quiz: quiz-answers.json did not load - nothing to ask");
             return false;
@@ -464,7 +467,7 @@ public final class SimQuizPuzzle {
      */
     private static void newQuestion(ServerLevel level, BlockPos[] positions, boolean replaceLabels,
                                     boolean bound) {
-        if (ANSWERS.isEmpty()) {
+        if (LazyData.ANSWERS.isEmpty()) {
             return;
         }
         if (replaceLabels) {
@@ -477,9 +480,9 @@ public final class SimQuizPuzzle {
             LABELS.clear();
             CELL_INDEX.clear();
         }
-        List<String> questions = new ArrayList<>(ANSWERS.keySet());
+        List<String> questions = new ArrayList<>(LazyData.ANSWERS.keySet());
         String question = pickQuestion(questions);
-        List<String> correctAnswers = ANSWERS.get(question);
+        List<String> correctAnswers = LazyData.ANSWERS.get(question);
         String correct = correctAnswers.get(ThreadLocalRandom.current().nextInt(correctAnswers.size()));
         String[] text = new String[3];
         int correctSlot = ThreadLocalRandom.current().nextInt(3);
@@ -787,7 +790,7 @@ public final class SimQuizPuzzle {
     /** Whether {@code QuizSolverFeature}'s first-contained-key scan over {@code ANSWERS} lands on this
      *  question itself. Written as that scan rather than as a substring test, so the two cannot drift. */
     private static boolean solverResolves(String question) {
-        for (String key : ANSWERS.keySet()) {
+        for (String key : LazyData.ANSWERS.keySet()) {
             if (question.contains(key)) {
                 return key.equals(question);
             }
@@ -816,7 +819,7 @@ public final class SimQuizPuzzle {
             if (picked.size() >= 2) {
                 break;
             }
-            List<String> answers = ANSWERS.get(q);
+            List<String> answers = LazyData.ANSWERS.get(q);
             if (answers == null || answers.isEmpty()) {
                 continue;
             }

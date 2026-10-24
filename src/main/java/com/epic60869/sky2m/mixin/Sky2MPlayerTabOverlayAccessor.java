@@ -17,4 +17,7 @@ public interface Sky2MPlayerTabOverlayAccessor {
 
     @Accessor("footer")
     Component sky2m$getFooter();
+
+    @Accessor("header")
+    Component sky2m$getHeader();
 }

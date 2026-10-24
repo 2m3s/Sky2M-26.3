@@ -52,13 +52,22 @@ public final class StorageData {
 
     public static void init(Path configDir) {
         file = configDir.resolve("sky2m").resolve("storage-overlay.json");
-        load();
+        // The file can be several MB of item blobs: read it off the render thread. data() and save() wait for it.
+        loading = java.util.concurrent.CompletableFuture.runAsync(StorageData::load).exceptionally(e -> null);
+    }
+
+    private static volatile java.util.concurrent.CompletableFuture<Void> loading;
+
+    private static void awaitLoaded() {
+        java.util.concurrent.CompletableFuture<Void> f = loading;
+        if (f != null) f.join();
     }
 
     /** The current profile's storage (Firmament's StorageOverlay.Data.data). */
     public static StorageData data() {
         String profile = Sky2MStorageSearch.currentProfile();
         if (profile == null || profile.isEmpty()) return NO_PROFILE;
+        awaitLoaded();
         StorageData data = PROFILES.computeIfAbsent(profile, p -> new StorageData());
         if (data.storageInventories.isEmpty() && !data.imported) data.importFromStorageSearch();
         return data;
@@ -104,6 +113,7 @@ public final class StorageData {
 
     public static void save() {
         if (file == null || !dirty) return;
+        awaitLoaded();
         dirty = false;
         lastSave = System.currentTimeMillis();
         try {

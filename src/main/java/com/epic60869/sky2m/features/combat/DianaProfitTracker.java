@@ -72,7 +72,12 @@ public final class DianaProfitTracker {
         }
     }
 
-    private static final Pattern DUG_BURROW = Pattern.compile("^(?:You dug out a Griffin Burrow!|You finished the Griffin burrow chain!).*");
+    /** Whether {@code id} is one of SkyHanni's Diana drops (also the Mythological Ritual profit tracker's list). */
+    public static boolean isDrop(String id) {
+        return id != null && DROP_IDS.contains(id);
+    }
+
+    private static final Pattern DUG_BURROW =Pattern.compile("^(?:You dug out a Griffin Burrow!|You finished the Griffin burrow chain!).*");
     private static final Pattern DUG_COINS = Pattern.compile("^Wow! You dug out ([\\d,.]+) coins!");
     /** Idle for longer than this and the clock stops. */
     private static final long ACTIVE_WINDOW_MS = 90_000L;
@@ -119,7 +124,7 @@ public final class DianaProfitTracker {
 
     private static FeatureConfigs.DianaProfitTracker config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.mayors.diana.profitTracker;
+        return c == null ? null : c.events.diana.profitTracker;
     }
 
     private static boolean enabled() {
@@ -135,7 +140,7 @@ public final class DianaProfitTracker {
         if (enabled()) return true;
         Sky2MConfig c = Sky2MConfig.current();
         if (c == null) return false;
-        FeatureConfigs.Diana d = c.mayors.diana;
+        FeatureConfigs.Diana d = c.events.diana;
         return (d.mobTracker != null && d.mobTracker.enabled) || (d.achievements != null && d.achievements.enabled)
             || (c.misc.partyCommands.enabled && c.misc.partyCommands.diana);
     }

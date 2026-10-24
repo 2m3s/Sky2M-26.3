@@ -83,9 +83,33 @@ public final class TerminalProgress {
         FeatureConfigs.TerminalProgress c = config();
         if (c != null && c.title) {
             boolean finished = done.count() >= done.total();
+            if (finished && c.phaseDone) {
+                Sky2MAlerts.title(Component.empty(), Component.literal("Phase Done!").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD), false);
+                return;
+            }
             Sky2MAlerts.title(Component.empty(), Component.literal(done.name() + " " + done.count() + "/" + done.total())
                 .withStyle(finished ? ChatFormatting.GREEN : ChatFormatting.GOLD), false);
         }
+    }
+
+    /** Hypixel's P3 subtitles, as NoammAddons' F7 Titles matches them (the name may have a rank). */
+    private static final Pattern SUBTITLE = Pattern.compile("^.+ (?:activated|completed) a (?:terminal|lever|device)! \\(\\d/\\d\\)$");
+
+    /** A subtitle in P3 (from {@link F7Extras}): true hides Hypixel's, when Sky2M shows its own title instead. */
+    static boolean onSubtitle(String text) {
+        FeatureConfigs.TerminalProgress c = config();
+        if (c == null || !c.title) return false;
+        if (c.gateTitles) {
+            if (text.equals("The gate has been destroyed!")) {
+                Sky2MAlerts.title(Component.empty(), Component.literal("Gate Destroyed!").withStyle(ChatFormatting.RED), false);
+                return true;
+            }
+            if (text.equals("The gate will open in 5 seconds!")) {
+                Sky2MAlerts.title(Component.empty(), Component.literal("GATE!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD), false);
+                return true;
+            }
+        }
+        return c.replaceTitles && SUBTITLE.matcher(text).matches();
     }
 
     private static Component line(Done d, boolean showType) {

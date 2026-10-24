@@ -76,7 +76,10 @@ public final class SimCreeperPuzzle {
             {0, 6, 0, 0, 2, 0},
     };
 
-    private static final List<Pair> PAIRS = loadPairs();
+    /** Loaded on first use, not at start-up. */
+    private static final class LazyData {
+        static final List<Pair> PAIRS = loadPairs();
+    }
 
     /**
      * The current arena's lantern pairs in ABSOLUTE world positions, one entry per {@link #PAIRS} entry.
@@ -440,7 +443,7 @@ public final class SimCreeperPuzzle {
         if (server == null) {
             return;
         }
-        List<Pair> pairs = PAIRS;
+        List<Pair> pairs = LazyData.PAIRS;
         storedOrigin = origin;
         List<Pair> world = new ArrayList<>(pairs.size());
         for (Pair pair : pairs) {
@@ -483,7 +486,7 @@ public final class SimCreeperPuzzle {
      * @return whether the puzzle was armed
      */
     public static boolean bindAt(ServerLevel level, com.epic60869.sky2m.sim.roomsim.SimRoomPuzzles.Placement p) {
-        List<Pair> pairs = PAIRS;
+        List<Pair> pairs = LazyData.PAIRS;
         if (pairs.isEmpty()) {
             return false;
         }

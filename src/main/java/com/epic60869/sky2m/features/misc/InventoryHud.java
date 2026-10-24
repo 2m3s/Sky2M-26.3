@@ -13,11 +13,10 @@ import net.minecraft.world.item.ItemStack;
 
 /**
  * Inventory HUD: your 27 inventory slots (not the hotbar) as a HUD, moved and sized in /s2 gui, shown always, while a
- * key is held, or toggled with a key. Horizontal or vertical, normal or mini (half size), with a panel or slot
- * background.
+ * key is held, or toggled with a key. Horizontal or vertical, normal or mini (half size).
  * <p>
- * Ported from Killer560's Mod (inventoryhud/), MIT License, Copyright (c) 2026 Killer560 (which follows
- * briansemrau/InventoryHUD's slot order and Inventory HUD+'s options). Drawn in Sky2M' HUD style.
+ * Looks and behaves like Inventory HUD+ (dmitrylovin): an inventory panel and sunken slots (dark, or vanilla's
+ * light gray) with a see-through background, and items that bounce when picked up. Written from scratch, since Inventory HUD+ is All Rights Reserved.
  */
 public final class InventoryHud {
     private static final int FIRST = 9, ROWS = 3, COLS = 9;
@@ -28,7 +27,7 @@ public final class InventoryHud {
 
     private static FeatureConfigs.InventoryHud config() {
         Sky2MConfig config = Sky2MConfig.current();
-        return config == null ? null : config.misc.inventoryHud;
+        return config == null ? null : config.gui.inventoryHud;
     }
 
     public static void init() {
@@ -77,7 +76,7 @@ public final class InventoryHud {
     }
 
     private static int padding(FeatureConfigs.InventoryHud c) {
-        return c != null && c.mini ? 1 : 3;
+        return c != null && c.mini ? 3 : 4;
     }
 
     private static int size(FeatureConfigs.InventoryHud c, boolean width) {
@@ -94,17 +93,14 @@ public final class InventoryHud {
     private static void draw(GuiGraphicsExtractor graphics, FeatureConfigs.InventoryHud c) {
         int w = size(c, true), h = size(c, false);
         int cell = cell(c), pad = padding(c);
-        int alpha = Math.round(c.opacity * 255);
-        if (alpha <= 0) return;
-        if (c.background != FeatureConfigs.InventoryHud.Background.NONE) {
-            // Sky2M' HUD look: a dark translucent panel, with darker slots.
-            graphics.fill(0, 0, w, h, (Math.round(alpha * 0.5f) << 24));
+        int alpha = Math.round(c.opacity * 255) << 24;
+        if (c.background != FeatureConfigs.InventoryHud.Background.NONE && alpha != 0) {
+            boolean dark = c.style == FeatureConfigs.InventoryHud.Style.DARK;
+            panel(graphics, w, h, c.mini ? 1 : 2, alpha, dark);
             if (c.background == FeatureConfigs.InventoryHud.Background.SLOTS) {
-                int slot = (Math.round(alpha * 0.35f) << 24) | 0x202020;
                 for (int row = 0; row < ROWS; row++) {
                     for (int col = 0; col < COLS; col++) {
-                        int x = pad + (c.vertical ? row : col) * cell, y = pad + (c.vertical ? col : row) * cell;
-                        graphics.fill(x + 1, y + 1, x + cell - 1, y + cell - 1, slot);
+                        slot(graphics, pad + (c.vertical ? row : col) * cell, pad + (c.vertical ? col : row) * cell, cell, alpha, dark);
                     }
                 }
             }
@@ -112,25 +108,73 @@ public final class InventoryHud {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         Inventory inventory = mc.player.getInventory();
+        float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
                 ItemStack stack = inventory.getItem(FIRST + row * COLS + col);
                 if (stack.isEmpty()) continue;
-                int x = pad + (c.vertical ? row : col) * cell, y = pad + (c.vertical ? col : row) * cell;
+                int x = pad + (c.vertical ? row : col) * cell + 1, y = pad + (c.vertical ? col : row) * cell + 1;
+                graphics.pose().pushMatrix();
                 if (c.mini) {
-                    graphics.pose().pushMatrix();
-                    graphics.pose().translate(x + 0.5f, y + 0.5f);
+                    graphics.pose().translate(x - 0.5f, y - 0.5f);
                     graphics.pose().scale(0.5f, 0.5f);
-                    graphics.item(stack, 0, 0);
-                    if (c.showCounts) graphics.itemDecorations(mc.font, stack, 0, 0);
-                    graphics.pose().popMatrix();
-                } else {
-                    graphics.item(stack, x + 1, y + 1);
-                    if (c.showCounts) graphics.itemDecorations(mc.font, stack, x + 1, y + 1);
+                    x = y = 0;
                 }
+                item(graphics, stack, x, y, c.animation ? stack.getPopTime() - partial : 0);
+                if (c.showCounts) graphics.itemDecorations(mc.font, stack, x, y);
+                graphics.pose().popMatrix();
             }
         }
-        // Items can't be drawn see-through, so lower opacity dims everything with a dark layer on top.
-        if (alpha < 255) graphics.fill(0, 0, w, h, ((255 - alpha) * 3 / 4) << 24);
+    }
+
+    /** The hotbar's pickup bounce: squashed and stretched from the bottom middle while the pop time runs down. */
+    private static void item(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y, float pop) {
+        if (pop <= 0) {
+            graphics.item(stack, x, y);
+            return;
+        }
+        float scale = 1 + pop / 5;
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x + 8, y + 12);
+        graphics.pose().scale(1 / scale, (scale + 1) / 2);
+        graphics.pose().translate(-(x + 8), -(y + 12));
+        graphics.item(stack, x, y);
+        graphics.pose().popMatrix();
+    }
+
+    /**
+     * The container panel: a black outline with cut corners, a lit top-left bevel, a shaded bottom-right one and the
+     * middle. Vanilla's light gray, or a near-black dark version. The pieces don't overlap, so a see-through panel
+     * shades evenly.
+     */
+    private static void panel(GuiGraphicsExtractor graphics, int w, int h, int bevel, int alpha, boolean dark) {
+        int outline = alpha, light = alpha | (dark ? 0x2E2E2E : 0xFFFFFF), shadow = alpha | (dark ? 0x050505 : 0x555555),
+            base = alpha | (dark ? 0x141414 : 0xC6C6C6);
+        graphics.fill(1, 0, w - 1, 1, outline);
+        graphics.fill(1, h - 1, w - 1, h, outline);
+        graphics.fill(0, 1, 1, h - 1, outline);
+        graphics.fill(w - 1, 1, w, h - 1, outline);
+        int in = 1 + bevel;
+        graphics.fill(1, 1, w - in, in, light);
+        graphics.fill(1, in, in, h - in, light);
+        graphics.fill(in, h - in, w - 1, h - 1, shadow);
+        graphics.fill(w - in, in, w - 1, h - in, shadow);
+        graphics.fill(w - in, 1, w - 1, in, base);
+        graphics.fill(1, h - in, in, h - 1, base);
+        graphics.fill(in, in, w - in, h - in, base);
+    }
+
+    /** An inventory slot, sunk into the panel: shaded top-left edge, lit bottom-right edge, darker inside. */
+    private static void slot(GuiGraphicsExtractor graphics, int x, int y, int size, int alpha, boolean darkStyle) {
+        int dark = alpha | (darkStyle ? 0x000000 : 0x373737), light = alpha | (darkStyle ? 0x2A2A2A : 0xFFFFFF),
+            mid = alpha | (darkStyle ? 0x0A0A0A : 0x8B8B8B);
+        int end = size - 1;
+        graphics.fill(x, y, x + end, y + 1, dark);
+        graphics.fill(x, y + 1, x + 1, y + end, dark);
+        graphics.fill(x + 1, y + end, x + size, y + size, light);
+        graphics.fill(x + end, y + 1, x + size, y + end, light);
+        graphics.fill(x + end, y, x + size, y + 1, mid);
+        graphics.fill(x, y + end, x + 1, y + size, mid);
+        graphics.fill(x + 1, y + 1, x + end, y + end, mid);
     }
 }

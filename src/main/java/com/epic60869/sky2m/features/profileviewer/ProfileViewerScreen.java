@@ -99,6 +99,8 @@ public final class ProfileViewerScreen extends Screen {
         super(Component.literal(name + "'s Profile"));
         this.requested = name;
         ProfileApi.loadTables();
+        // The Item List's NEU data has icons for sack items Hypixel's item list only gives a model for.
+        com.epic60869.sky2m.features.itemlist.ItemListData.ensureLoaded();
         // NEU's items, for pet heads and every sack item's icon (already on disk when the Item List has been used).
         com.epic60869.sky2m.features.itemlist.ItemListData.ensureLoaded();
         // The networth's prices and item list, while the profile loads (usually already there from the game's start).

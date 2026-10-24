@@ -122,14 +122,23 @@ public final class SlayerBossProfit {
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             String json = null;
             try {
-                var client = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(10)).build();
-                var request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(DROPS_URL)).timeout(java.time.Duration.ofSeconds(15))
-                    .header("User-Agent", "Sky2M").GET().build();
-                var response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
-                if (response.statusCode() == 200) {
-                    json = response.body();
-                    java.nio.file.Files.createDirectories(cache.getParent());
-                    java.nio.file.Files.writeString(cache, json, java.nio.charset.StandardCharsets.UTF_8);
+                // A copy under 12 hours old is used as it is: no download at every launch.
+                if (java.nio.file.Files.isRegularFile(cache)
+                    && System.currentTimeMillis() - java.nio.file.Files.getLastModifiedTime(cache).toMillis() < 12L * 60 * 60 * 1000) {
+                    json = java.nio.file.Files.readString(cache, java.nio.charset.StandardCharsets.UTF_8);
+                }
+            } catch (Exception ignored) {}
+            try {
+                if (json == null) {
+                    var client = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(10)).build();
+                    var request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(DROPS_URL)).timeout(java.time.Duration.ofSeconds(15))
+                        .header("User-Agent", "Sky2M").GET().build();
+                    var response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+                    if (response.statusCode() == 200) {
+                        json = response.body();
+                        java.nio.file.Files.createDirectories(cache.getParent());
+                        java.nio.file.Files.writeString(cache, json, java.nio.charset.StandardCharsets.UTF_8);
+                    }
                 }
             } catch (Exception e) {
                 System.err.println("[Sky2M] Could not download slayer drops: " + e.getMessage());
@@ -399,6 +408,12 @@ public final class SlayerBossProfit {
             k.ground.merge(id, (long) stack.getCount(), Long::sum);
             if (k.groundAt == 0) k.groundAt = System.currentTimeMillis();
         }
+    }
+
+    /** The last boss's {drops value, quest cost (-1 if unknown), profit}, or null before any boss. */
+    public static double[] lastKill() {
+        Result r = last;
+        return r == null ? null : new double[]{r.drops(), r.cost(), r.total()};
     }
 
     /** Stops counting drops for the kill; its last result stays on the HUD. */

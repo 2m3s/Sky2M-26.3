@@ -20,15 +20,19 @@ public abstract class Sky2MPestSoundMixin {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         String name = packet.getSound().value().location().getPath();
+        com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.onSound(name, packet.getPitch());
+        com.epic60869.sky2m.features.garden.helpers.GreenhouseHelpers.onSound(name, packet.getVolume(), packet.getPitch());
         double distance = Math.sqrt(mc.player.distanceToSqr(packet.getX(), packet.getY(), packet.getZ()));
         if (PestTimer.onPlaySound(name, packet.getVolume(), packet.getPitch(), distance)) ci.cancel();
         else if (com.epic60869.sky2m.features.garden.OverflowDropSound.onPlaySound(name)) ci.cancel();
+        else if (com.epic60869.sky2m.features.foraging.ForagingExtras.muteSound(name)) ci.cancel();
     }
 
     /** Sounds played on an entity (you) rather than at a position. */
     @Inject(method = "handleSoundEntityEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V", shift = At.Shift.AFTER), cancellable = true)
     private void sky2m$onEntitySound(net.minecraft.network.protocol.game.ClientboundSoundEntityPacket packet, CallbackInfo ci) {
         String name = packet.getSound().value().location().getPath();
+        com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.onSound(name, packet.getPitch());
         if (com.epic60869.sky2m.features.garden.OverflowDropSound.onPlaySound(name)) ci.cancel();
     }
 }

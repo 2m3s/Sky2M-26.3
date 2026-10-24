@@ -46,6 +46,9 @@ public final class Sky2MGlobalChat {
     private static final Queue<JsonObject> PENDING_MESSAGES = new ArrayDeque<>();
     private static volatile boolean inSky2MChannel = false;
 
+    /** When this player last sent a ! command (its answer comes back as a private bot message). */
+    private static volatile long lastCommandAt = 0L;
+
     public static boolean isInSky2MChannel() { return inSky2MChannel; }
 
     public static void enterSky2MChannel() {
@@ -78,6 +81,13 @@ public final class Sky2MGlobalChat {
     public static void sendBotCommand(String command) {
         String clean = String.valueOf(command == null ? "" : command).trim();
         if (clean.isEmpty() || !clean.startsWith("!")) return;
+        Sky2MConfig commandConfig = Sky2MConfig.current();
+        if (commandConfig != null && !commandConfig.chat.customChat.botCommands) {
+            // ! commands are turned off: it goes out as a normal chat message.
+            send(clean);
+            return;
+        }
+        lastCommandAt = System.currentTimeMillis();
 
         WebSocket ws = socket;
         if (ws == null || ws.isInputClosed() || ws.isOutputClosed()) {
@@ -98,6 +108,7 @@ public final class Sky2MGlobalChat {
     public static void send(String message) {
         String clean = String.valueOf(message == null ? "" : message).trim();
         if (clean.isEmpty()) return;
+        if (!com.epic60869.sky2m.features.sbc.Flags.check("chat")) return;
         // The reply being written and an [item] in the text go with the message.
         java.util.List<String> expanded = com.epic60869.sky2m.features.sbc.SbcItems.expandBrag(clean);
         JsonObject packet = com.epic60869.sky2m.features.sbc.SbcChat.outgoing(expanded.getFirst());
@@ -107,6 +118,7 @@ public final class Sky2MGlobalChat {
 
     /** Sends a Sky2M chat "message" packet (text, reply, item), or queues it until connected. */
     public static void sendPacket(JsonObject packet) {
+        if (!com.epic60869.sky2m.features.sbc.Flags.check("chat")) return;
         packet.addProperty("type", "message");
         packet.addProperty("username", username);
         packet.addProperty("minecraftUuid", Minecraft.getInstance().getUser().getProfileId().toString());
@@ -226,6 +238,9 @@ public final class Sky2MGlobalChat {
 
     /** Sends a packet if connected (returns false and starts connecting otherwise). */
     public static boolean send(JsonObject packet) {
+        // A feature staff switched off remotely (Flags) sends nothing.
+        if (packet.has("type") && packet.get("type").isJsonPrimitive()
+            && !com.epic60869.sky2m.features.sbc.Flags.allowsPacket(packet.get("type").getAsString())) return false;
         WebSocket ws = socket;
         if (ws == null || ws.isInputClosed() || ws.isOutputClosed()) {
             connect();
@@ -321,6 +336,11 @@ public final class Sky2MGlobalChat {
 
     private static final java.util.regex.Pattern LINK = java.util.regex.Pattern.compile("https?://\\S+");
 
+    /** Direct image links from the screenshot hosts (ImgBB, Catbox, Uguu), or any link ending in an image extension. */
+    private static final java.util.regex.Pattern SCREENSHOT_LINK = java.util.regex.Pattern.compile(
+        "^https://(i\\.ibb\\.co|files\\.catbox\\.moe|[a-z]\\.uguu\\.se)/\\S+$|^https?://\\S+\\.(png|jpe?g|gif|webp)(\\?\\S*)?$",
+        java.util.regex.Pattern.CASE_INSENSITIVE);
+
     private static Component linkify(Component text) {
         java.util.regex.Pattern pattern = LINK;
         MutableComponent result = Component.empty();
@@ -341,6 +361,15 @@ public final class Sky2MGlobalChat {
                 }
 
                 try {
+                    if (SCREENSHOT_LINK.matcher(url).find()) {
+                        // A shared screenshot: a [View] button instead of the raw link.
+                        result.append(Component.literal("[View]").setStyle(style.withUnderlined(false).withBold(true)
+                            .withColor(0x55FFFF)
+                            .withClickEvent(new ClickEvent.OpenUrl(URI.create(url)))
+                            .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("Open the screenshot\n" + url)))));
+                        last = matcher.end();
+                        continue;
+                    }
                     result.append(Component.literal(url).setStyle(style.withUnderlined(true)
                         .withColor(0x55AAFF)
                         .withClickEvent(new ClickEvent.OpenUrl(URI.create(url)))
@@ -583,6 +612,7 @@ public final class Sky2MGlobalChat {
                     return;
                 }
 
+                if (!com.epic60869.sky2m.features.sbc.Flags.isEnabled("chat")) return;
                 String name = packetString(packet, "username");
                 if (name.isBlank()) name = "Unknown";
                 String displayName = packetString(packet, "nickname");
@@ -598,6 +628,46 @@ public final class Sky2MGlobalChat {
                 }
                 boolean hasItem = packet.has("item") && packet.get("item").isJsonObject();
                 if (message.isBlank() && !hasItem) return;
+                if (com.epic60869.sky2m.features.sbc.SbcRooms.isMuted(packetString(packet, "username"), packetString(packet, "minecraftUuid"))) return;
+
+                // ! commands and the calendar reminders have their own settings.
+                Sky2MConfig filterConfig = Sky2MConfig.current();
+                if (filterConfig != null) {
+                    boolean fromBot = "bot".equalsIgnoreCase(packetString(packet, "source"));
+                    String trimmed = message.trim();
+                    if (fromBot && trimmed.startsWith("[S2M] ")) {
+                        // A command answer (sent privately to whoever asked): hidden when commands are off, or when
+                        // this player didn't just ask.
+                        if (!filterConfig.chat.customChat.botCommands) return;
+                        if (filterConfig.chat.customChat.hideOtherCommands && System.currentTimeMillis() - lastCommandAt > 60_000L) return;
+                    } else if (fromBot && trimmed.startsWith("Reminder: ") && trimmed.contains(" starts in ")) {
+                        if (!filterConfig.chat.customChat.calendarInChat || !filterConfig.chat.customChat.showSjChat) return;
+                        final String reminder = "[S2M] " + trimmed;
+                        mcMessage(Component.literal(reminder).withStyle(Style.EMPTY.withColor(0xFFAA00)
+                            .withClickEvent(new ClickEvent.RunCommand("/s2 calendar"))
+                            .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("Click to open the calendar")))));
+                        return;
+                    } else if (!fromBot && trimmed.startsWith("!") && filterConfig.chat.customChat.hideOtherCommands) {
+                        // Someone else's ! command (from Discord or an older mod).
+                        String senderUuid = packetString(packet, "minecraftUuid");
+                        if (!senderUuid.equalsIgnoreCase(Minecraft.getInstance().getUser().getProfileId().toString())) return;
+                    }
+                }
+
+                if ("bot".equalsIgnoreCase(packetString(packet, "source")) && !hasItem) {
+                    // Bot replies read "[S2M] <text>": no sender label, one prefix.
+                    Sky2MConfig botConfig = Sky2MConfig.current();
+                    if (botConfig != null && !botConfig.chat.customChat.showSjChat) return;
+                    String botText = message.trim();
+                    while (botText.startsWith("[S2M]")) botText = botText.substring(5).trim();
+                    long botId = packet.has("id") && !packet.get("id").isJsonNull() ? packet.get("id").getAsLong() : 0;
+                    MutableComponent botLine = Component.empty()
+                        .append(com.epic60869.sky2m.features.sbc.SbcChat.prefix(botId))
+                        .append(Component.literal(" "))
+                        .append(linkify(Component.literal(botText)));
+                    mcMessage(com.epic60869.sky2m.features.sbc.SbcChat.decorate(packet, botLine, message));
+                    return;
+                }
 
                 UUID messageUuid = null;
                 try {
@@ -625,11 +695,18 @@ public final class Sky2MGlobalChat {
                     }
                 } catch (Exception ignored) {}
 
-                name = name.replaceAll("[^A-Za-z0-9_]", "");
-                if (name.isBlank()) name = "Unknown";
-
                 String source = packet.has("source") ? packet.get("source").getAsString() : "mod";
                 String prefix = "discord".equalsIgnoreCase(source) ? "[Discord]" : "[S2M]";
+                if ("discord".equalsIgnoreCase(source)) {
+                    // The server's own "[Discord] " name prefix: the brackets made the nickname filter reject the
+                    // name, so "[Discord] Bob" showed as "DiscordBob". The tag is shown separately.
+                    name = name.replaceFirst("^\\[Discord] ", "");
+                    displayName = displayName.replaceFirst("^\\[Discord] ", "");
+                }
+
+                name = name.replaceAll("[^A-Za-z0-9_]", "");
+                if (name.isBlank()) name = "Unknown";
+                if (displayName.isBlank()) displayName = name;
 
                 if (Sky2MNickFilter.isBlocked(displayName, messageUuid)) displayName = name;
                 Component shownName;
@@ -647,6 +724,10 @@ public final class Sky2MGlobalChat {
                 if (!"[S2M]".equals(prefix)) {
                     line.append(Component.literal(prefix).withStyle(net.minecraft.ChatFormatting.BLUE)).append(Component.literal(" "));
                 }
+                String room = packetString(packet, "room");
+                if (!room.isBlank()) {
+                    line.append(Component.literal("[#" + room + "]").withStyle(net.minecraft.ChatFormatting.AQUA)).append(Component.literal(" "));
+                }
                 // Rank prefix, by account UUID, only for messages sent from the mod (not Discord), if turned on.
                 Sky2MConfig rankConfig = Sky2MConfig.current();
                 boolean showRanks = rankConfig == null || rankConfig.chat.customChat.showRanks;
@@ -661,13 +742,21 @@ public final class Sky2MGlobalChat {
                     } catch (Exception ignored) {}
                     line.append(Component.literal("[" + level + "] ").withStyle(Style.EMPTY.withColor(levelColor)));
                 }
-                // Hovering the sender shows their real Minecraft name.
-                MutableComponent sender = Component.empty().withStyle(Style.EMPTY
-                    .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(
-                        Component.literal("Real name: ").withStyle(Style.EMPTY.withColor(0xAAAAAA))
-                            .append(Component.literal(name).withStyle(Style.EMPTY.withColor(0xFFFFFF)))))
-                    .withClickEvent(new net.minecraft.network.chat.ClickEvent.SuggestCommand("/msg " + name + " ")));
-                sender.append(shownName);
+                MutableComponent sender;
+                if ("discord".equalsIgnoreCase(source)) {
+                    // From Discord: the name in blue, without the server's own "[Discord] " (the tag is already shown),
+                    // and no Minecraft name to hover or /msg.
+                    String discordName = displayName.replaceFirst("^\\[Discord] ", "");
+                    sender = Component.literal(discordName).withStyle(net.minecraft.ChatFormatting.BLUE);
+                } else {
+                    // Hovering the sender shows their real Minecraft name.
+                    sender = Component.empty().withStyle(Style.EMPTY
+                        .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(
+                            Component.literal("Real name: ").withStyle(Style.EMPTY.withColor(0xAAAAAA))
+                                .append(Component.literal(name).withStyle(Style.EMPTY.withColor(0xFFFFFF)))))
+                        .withClickEvent(new net.minecraft.network.chat.ClickEvent.SuggestCommand("/msg " + name + " ")));
+                    sender.append(shownName);
+                }
                 line.append(Component.literal("["))
                     .append(sender)
                     .append(Component.literal("]: "))

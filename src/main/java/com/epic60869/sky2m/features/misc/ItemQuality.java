@@ -22,7 +22,7 @@ public final class ItemQuality {
 
     private static FeatureConfigs.ItemQuality config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.itemQuality;
+        return c == null ? null : c.inventory.itemQuality;
     }
 
     public static void init() {
@@ -70,10 +70,15 @@ public final class ItemQuality {
         int quality = quality(stack);
         if (quality < 0) return;
         Minecraft mc = Minecraft.getInstance();
+        if (c.slot && c.stackSize) {
+            String text = String.valueOf(quality);
+            graphics.text(mc.font, text, slot.x + 17 - mc.font.width(text), slot.y + 9,
+                0xFF000000 | net.minecraft.network.chat.TextColor.fromLegacyFormat(colour(quality)).getValue(), true);
+        }
         graphics.pose().pushMatrix();
         graphics.pose().translate(slot.x, slot.y);
         graphics.pose().scale(0.6f, 0.6f);
-        if (c.slot) {
+        if (c.slot && !c.stackSize) {
             ChatFormatting colour = colour(quality);
             graphics.text(mc.font, String.valueOf(quality), 0, 0, 0xFF000000 | net.minecraft.network.chat.TextColor.fromLegacyFormat(colour).getValue(), true);
         }

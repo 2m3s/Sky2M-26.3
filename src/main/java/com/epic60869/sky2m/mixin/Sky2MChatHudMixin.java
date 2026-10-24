@@ -24,20 +24,11 @@ public abstract class Sky2MChatHudMixin {
     @Shadow private void refreshTrimmedMessages() {}
 
     /*
-     * Hypixel/vanilla can reach ChatComponent through either addMessage
-     * overload. The previous mixin only covered the 4-argument path, which is
-     * why emojis appeared in Sky2M relay chat but not normal server chat.
+     * On 26.3 every chat path (addClientSystemMessage, addServerSystemMessage,
+     * addPlayerMessage) goes through the 4-argument addMessage, so one hook
+     * covers server chat and Sky2M relay chat alike. (26.2's 1-argument
+     * addMessage overload no longer exists.)
      */
-    @ModifyVariable(
-        method = "addMessage(Lnet/minecraft/network/chat/Component;)V",
-        at = @At("HEAD"),
-        argsOnly = true,
-        ordinal = 0
-    )
-    private Component sky2m$replaceSimpleChat(Component message) {
-        return com.epic60869.sky2m.features.misc.ItemEmojis.replace(Sky2MNopoFeatures.replaceChatEmojis(Sky2MNick.replaceOtherNamesInChat(Sky2MNick.replaceOwnNameInChat(com.epic60869.sky2m.features.misc.ScreenshotShare.decorate(com.epic60869.sky2m.features.sbc.SbcItems.decoratePublicItems(message))))));
-    }
-
     @ModifyVariable(
         method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V",
         at = @At("HEAD"),

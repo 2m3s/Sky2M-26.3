@@ -23,7 +23,7 @@ public final class SignCalculator {
 
     public static boolean enabled() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c != null && c.misc.signCalculator && Compat.isOnSkyblock();
+        return c != null && c.inventory.signCalculator && Compat.isOnSkyblock();
     }
 
     /** A number sign, not a search sign (/recipes, /bestiary) or a name sign. */

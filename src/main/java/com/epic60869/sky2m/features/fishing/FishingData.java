@@ -207,6 +207,62 @@ public final class FishingData {
         return null;
     }
 
+    /** SkyHanni's SeaCreature.displayName per name: its group's chat colour, bold when rare. Loaded on first use. */
+    private static java.util.Map<String, String> skyHanniNames;
+    /** SkyHanni's SeaCreatureManager.allVariants: each group ("Water", "Spooky", ...) and its sea creatures. */
+    private static java.util.Map<String, java.util.Set<String>> skyHanniVariants;
+
+    /** Reads SkyHanni-REPO's constants/SeaCreatures.json once. */
+    private static synchronized void loadSkyHanni() {
+        if (skyHanniNames != null) return;
+        skyHanniNames = new java.util.HashMap<>();
+        skyHanniVariants = new java.util.LinkedHashMap<>();
+        try (var stream = FishingData.class.getResourceAsStream("/assets/sky2m/skyhanni/SeaCreatures.json")) {
+            if (stream == null) return;
+            var root = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(stream, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+            for (var group : root.entrySet()) {
+                var g = group.getValue().getAsJsonObject();
+                String colour = g.has("chat_color") ? g.get("chat_color").getAsString() : "§7";
+                java.util.Set<String> names = new java.util.LinkedHashSet<>();
+                for (var creature : g.getAsJsonObject("sea_creatures").entrySet()) {
+                    var c = creature.getValue().getAsJsonObject();
+                    boolean rare = c.has("rare") && c.get("rare").getAsBoolean();
+                    skyHanniNames.put(creature.getKey(), colour + (rare ? "§l" : "") + creature.getKey());
+                    names.add(creature.getKey());
+                }
+                skyHanniVariants.put(firstUppercase(group.getKey()), names);
+            }
+        } catch (Exception e) {
+            System.err.println("[Sky2M] Couldn't read SkyHanni's sea creatures: " + e.getMessage());
+        }
+    }
+
+    /** SkyHanni's allLettersFirstUppercase: "WINTER_ISLAND" -> "Winter Island". */
+    private static String firstUppercase(String key) {
+        StringBuilder out = new StringBuilder();
+        for (String word : key.toLowerCase(java.util.Locale.ROOT).split("_")) {
+            if (word.isEmpty()) continue;
+            if (!out.isEmpty()) out.append(' ');
+            out.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return out.toString();
+    }
+
+    /**
+     * {@code name} coloured like SkyHanni's Sea Creature Tracker (SkyHanni-REPO's constants/SeaCreatures.json: the
+     * group's {@code chat_color}, plus §l for rare ones), or grey when SkyHanni doesn't list it.
+     */
+    public static String skyHanniDisplayName(String name) {
+        loadSkyHanni();
+        return skyHanniNames.getOrDefault(name, "§7" + name);
+    }
+
+    /** SkyHanni's sea creature categories, in its order, each with the names in it. */
+    public static java.util.Map<String, java.util.Set<String>> skyHanniVariants() {
+        loadSkyHanni();
+        return skyHanniVariants;
+    }
+
     /** The rare drop called {@code name} (or one of its other names), or null if Feesh doesn't list it. */
     public static RareDrop drop(String name) {
         for (RareDrop drop : DROPS) {

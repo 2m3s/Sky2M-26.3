@@ -36,7 +36,7 @@ public final class PartyCoordWaypoints {
 
     private static boolean enabled() {
         Sky2MConfig config = Sky2MConfig.current();
-        return config != null && config.mayors.diana.partyCoordWaypoints;
+        return config != null && config.events.diana.partyCoordWaypoints;
     }
 
     public static void init() {

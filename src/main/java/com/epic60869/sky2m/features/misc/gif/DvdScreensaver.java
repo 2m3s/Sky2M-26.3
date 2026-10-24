@@ -5,6 +5,7 @@ import com.epic60869.sky2m.custom.util.ChromaColours;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -54,7 +55,7 @@ public final class DvdScreensaver {
     }
 
     public static void init() {
-        HudElementRegistry.addLast(LAYER, (graphics, delta) -> render(graphics));
+        HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST, LAYER, (graphics, delta) -> render(graphics));
     }
 
     private static void render(GuiGraphicsExtractor graphics) {

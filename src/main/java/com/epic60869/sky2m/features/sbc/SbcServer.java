@@ -103,7 +103,7 @@ public final class SbcServer {
         boolean seen = update != null && update.version().equals(version);
         update = u;
         Sky2MConfig c = Sky2MConfig.current();
-        boolean wanted = c == null || c.misc.updateNotifications;
+        boolean wanted = c == null || c.general.updateNotifications;
         // The GitHub checker must not say the same thing again.
         Sky2MUpdateChecker.markAnnounced(version);
         if (required) {
@@ -129,6 +129,7 @@ public final class SbcServer {
                 .withClickEvent(new ClickEvent.OpenUrl(URI.create(u.url())))
                 .withHoverEvent(new HoverEvent.ShowText(Component.literal("Download Sky2M " + u.version())))));
         } catch (Exception ignored) {}
+        line.append(com.epic60869.sky2m.Sky2MUpdateChecker.githubLink());
         if (!u.notes().isBlank() || !u.title().isBlank()) {
             MutableComponent notes = Component.literal(u.title().isBlank() ? "Changelog" : u.title()).withStyle(ChatFormatting.GOLD);
             if (!u.notes().isBlank()) notes.append(Component.literal("\n" + u.notes()).withStyle(ChatFormatting.GRAY));

@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
  * uses (https://github.com/odtheking/Odin, BSD-3-Clause, as in {@link DungeonFeatures}); the F6 Sadan phase, the F7
  * terminal sections ("(7/7)" completions) and the M7 Wither King start follow SkyHanni's DungeonBossApi
  * (https://github.com/hannibal002/SkyHanni, LGPL-2.1). The attack timers are the fixed intervals already used here:
- * Livid's 340 tick invulnerability ({@link LividTimer}, Odin), Storm's 20 tick pillars, his 95 tick lightning and
+ * Livid's 340 tick invulnerability ({@link LividSolver}, Odin), Storm's 20 tick pillars, his 55 tick lightning (95 before the 2026 dungeon update) and
  * Goldor's 60 tick death tick ({@link DungeonFeatures}'s tick timers, Odin's TickTimers).
  * <p>
  * A phase only gets a record when the fight went through its start and the next phase's start (or the end) with none
@@ -61,10 +61,16 @@ public final class BossPhases {
     private static final String STORM_PY_1 = "[BOSS] Storm: ENERGY HEED MY CALL!";
     private static final String STORM_PY_2 = "[BOSS] Storm: THUNDER LET ME BE YOUR CATALYST!";
     private static final String CORE = "The Core entrance is opening!";
-    private static final int LIVID_TICKS = 340, PILLAR_TICKS = 20, PY_TICKS = 95, GOLDOR_TICKS = 60;
+    private static final int LIVID_TICKS = 340, PILLAR_TICKS = 20, PY_TICKS = 55, GOLDOR_TICKS = 60;
 
     /** A phase starting on an exact chat line, or (line null) on a terminal section being finished. */
-    private record PhaseDef(String name, String line, boolean masterOnly) {}
+    private record PhaseDef(String name, String line, boolean masterOnly, String altLine) {
+        PhaseDef(String name, String line, boolean masterOnly) { this(name, line, masterOnly, null); }
+
+        boolean matches(String text) {
+            return text.equals(line) || text.equals(altLine);
+        }
+    }
 
     private record Boss(String name, Predicate<FeatureConfigs.BossPhases> enabled, List<PhaseDef> phases) {}
 
@@ -98,7 +104,8 @@ public final class BossPhases {
             p("Terminals 4", null),
             p("Goldor", CORE),
             p("Necron", "[BOSS] Necron: You went further than any human before, congratulations."),
-            new PhaseDef("Wither King", "[BOSS] Necron: All this, for nothing...", true))));
+            // Since Hypixel's 2026 dungeon update the Wither King's first line starts P5 (Necron's last line is gone).
+            new PhaseDef("Wither King", "[BOSS] Wither King: You... again?", true, "[BOSS] Necron: All this, for nothing..."))));
 
     private record Done(String name, long ms, Long record) {}
 
@@ -120,7 +127,6 @@ public final class BossPhases {
     }
 
     public static void init() {
-        load();
         Sky2MChat.onChat(message -> onChat(message.text()));
         ServerTickCallback.EVENT.register(() -> serverTicks++);
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -131,7 +137,7 @@ public final class BossPhases {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             for (String root : Compat.COMMAND_ROOTS) dispatcher.register(ClientCommands.literal(root)
                 .then(ClientCommands.literal("resetbossrecords").executes(context -> {
-                    records.clear();
+                    records().clear();
                     save();
                     Sky2MAlerts.chat(Component.literal("Boss phase records cleared.").withStyle(ChatFormatting.GRAY));
                     return 1;
@@ -199,7 +205,7 @@ public final class BossPhases {
         }
         for (int j = Math.max(0, index + 1); j < phases.size(); j++) {
             PhaseDef def = phases.get(j);
-            if (def.line() == null || !def.line().equals(text) || !applies(def)) continue;
+            if (def.line() == null || !def.matches(text) || !applies(def)) continue;
             if (boss == candidate && endedAt != 0) return; // a finished fight doesn't restart in the same world
             advance(candidate, j, now, config);
             return;
@@ -223,6 +229,7 @@ public final class BossPhases {
         phaseStart = now;
         phaseClean = true;
         String name = boss.phases().get(next).name();
+        BossNotes.onPhase(floor, name);
         if (name.equals("Livid")) lividStart = serverTicks;
         if (name.equals("Storm")) stormStart = serverTicks;
         if (name.equals("Terminals 1")) { goldorStart = serverTicks; stormStart = -1; }
@@ -259,7 +266,7 @@ public final class BossPhases {
     }
 
     private static Long record(String name) {
-        Map<String, Long> floorRecords = records.get(floor);
+        Map<String, Long> floorRecords = records().get(floor);
         return floorRecords == null ? null : floorRecords.get(name);
     }
 
@@ -267,7 +274,7 @@ public final class BossPhases {
         if (ms < 500) return;
         Long old = record(name);
         if (old != null && ms >= old) return;
-        records.computeIfAbsent(floor, k -> new HashMap<>()).put(name, ms);
+        records().computeIfAbsent(floor, k -> new HashMap<>()).put(name, ms);
         save();
         if (old != null && config.recordMessages) {
             Sky2MAlerts.chat(Component.literal("New record! ").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD)
@@ -354,6 +361,17 @@ public final class BossPhases {
     }
 
     // ----- Storage -----
+
+    private static boolean recordsLoaded;
+
+    /** The saved records, read from disk on first use rather than at start-up. */
+    private static Map<String, Map<String, Long>> records() {
+        if (!recordsLoaded) {
+            recordsLoaded = true;
+            load();
+        }
+        return records;
+    }
 
     private static void load() {
         try {

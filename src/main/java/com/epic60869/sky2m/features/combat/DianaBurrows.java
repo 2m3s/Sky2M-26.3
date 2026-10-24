@@ -189,12 +189,12 @@ public final class DianaBurrows {
 
     private static FeatureConfigs.DianaBurrows config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.mayors.diana.burrows;
+        return c == null ? null : c.events.diana.burrows;
     }
 
     private static FeatureConfigs.DianaWarp warpConfig() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.mayors.diana.warp;
+        return c == null ? null : c.events.diana.warp;
     }
 
     private static boolean inHub() {

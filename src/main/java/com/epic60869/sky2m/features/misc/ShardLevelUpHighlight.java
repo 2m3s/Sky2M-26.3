@@ -47,14 +47,25 @@ public final class ShardLevelUpHighlight {
     private ShardLevelUpHighlight() {}
 
     /** Drawn behind the slot's item, from Sky2MSlotBackgroundMixin. */
+    // The screen title is matched when it changes, not for every slot every frame.
+    private static net.minecraft.network.chat.Component lastTitle;
+    private static boolean lastBox;
+    private static boolean lastMenu;
+
     public static void renderSlot(GuiGraphicsExtractor graphics, Slot slot) {
         Sky2MConfig config = Sky2MConfig.current();
-        if (config == null || !config.misc.shardLevelUpHighlight || !slot.hasItem()) return;
+        if (config == null || !config.inventory.shardLevelUpHighlight || !slot.hasItem()) return;
         if (slot.container instanceof Inventory || !Compat.isOnSkyblock()) return;
         if (!(Minecraft.getInstance().gui.screen() instanceof AbstractContainerScreen<?> screen)) return;
-        String title = Sky2MLocation.strip(screen.getTitle().getString());
-        boolean box = HUNTING_BOX.matcher(title).find();
-        if (!box && !ATTRIBUTE_MENU.matcher(title).find()) return;
+        net.minecraft.network.chat.Component screenTitle = screen.getTitle();
+        if (screenTitle != lastTitle) {
+            lastTitle = screenTitle;
+            String title = Sky2MLocation.strip(screenTitle.getString());
+            lastBox = HUNTING_BOX.matcher(title).find();
+            lastMenu = lastBox || ATTRIBUTE_MENU.matcher(title).find();
+        }
+        boolean box = lastBox;
+        if (!lastMenu) return;
         ItemStack stack = slot.getItem();
         Boolean ready = CACHE.get(stack);
         if (ready == null) {

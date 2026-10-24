@@ -83,7 +83,7 @@ public final class MuseumTooltip {
 
         ItemTooltipCallback.EVENT.register((stack, context, flag, lines) -> {
             Sky2MConfig config = Sky2MConfig.current();
-            if (config == null || !config.misc.collectionTooltips.museum || !Compat.isOnSkyblock()) return;
+            if (config == null || !config.inventory.collectionTooltips.museum || !Compat.isOnSkyblock()) return;
             addTooltip(stack, lines);
         });
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -104,7 +104,7 @@ public final class MuseumTooltip {
      */
     private static void maybeFetch() {
         Sky2MConfig config = Sky2MConfig.current();
-        if (config == null || !config.misc.collectionTooltips.museum || !Compat.isOnSkyblock() || categories.isEmpty()) return;
+        if (config == null || !config.inventory.collectionTooltips.museum || !Compat.isOnSkyblock() || categories.isEmpty()) return;
         String profile = Sky2MStorageSearch.currentProfile();
         if (profile.isEmpty()) return;
         long now = System.currentTimeMillis();

@@ -44,7 +44,10 @@ public final class IceFillSolverFeature {
                                 List<List<List<Pos>>> hard) {
     }
 
-    private static final IceFillData DATA = loadData();
+    /** Loaded on first use, not at start-up. */
+    private static final class LazyData {
+        static final IceFillData DATA = loadData();
+    }
     private static final List<Vec3> currentPath = new ArrayList<>();
     private static RoomEntry lastRoomEntry = null;
 
@@ -108,9 +111,9 @@ public final class IceFillSolverFeature {
     }
 
     private static void scanFloors(Level level, int[] clayAndRotation) {
-        List<List<List<Pos>>> paths = IceFillSolverConfig.getInstance().isOptimizedPath() ? DATA.hard() : DATA.easy();
-        for (int floorIndex = 0; floorIndex < DATA.identifier().size(); floorIndex++) {
-            List<List<Pos>> floorIdentifiers = DATA.identifier().get(floorIndex);
+        List<List<List<Pos>>> paths = IceFillSolverConfig.getInstance().isOptimizedPath() ? LazyData.DATA.hard() : LazyData.DATA.easy();
+        for (int floorIndex = 0; floorIndex < LazyData.DATA.identifier().size(); floorIndex++) {
+            List<List<Pos>> floorIdentifiers = LazyData.DATA.identifier().get(floorIndex);
             boolean found = false;
             for (int patternIndex = 0; patternIndex < floorIdentifiers.size(); patternIndex++) {
                 List<Pos> pair = floorIdentifiers.get(patternIndex);

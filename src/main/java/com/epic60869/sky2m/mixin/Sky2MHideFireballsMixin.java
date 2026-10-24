@@ -18,6 +18,12 @@ public abstract class Sky2MHideFireballsMixin {
         if (entity instanceof Fireball && BlazeSlayer.hideFireballs()) cir.setReturnValue(false);
         // Fishing > Hook & Bobber: Hypixel's timer stand over the bobber, while the Fishing Hook Display shows it.
         if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand && com.epic60869.sky2m.features.fishing.FishingHookTimer.hideStand(entity)) cir.setReturnValue(false);
+        // Fishing > Visuals > Hide Other Bobbers.
+        if (entity instanceof net.minecraft.world.entity.projectile.FishingHook && com.epic60869.sky2m.features.fishing.FishingVisuals.hideBobber(entity)) cir.setReturnValue(false);
+        // Foraging > Foraging Extras > Clean Tree View.
+        if (entity instanceof net.minecraft.world.entity.Display.BlockDisplay && com.epic60869.sky2m.features.foraging.ForagingExtras.hideEntity(entity)) cir.setReturnValue(false);
+        // Dungeons > Dungeon Extras > Hide Dungeon Clutter and Clean End.
+        if (com.epic60869.sky2m.features.dungeons.extras.DungeonExtras.hide(entity)) cir.setReturnValue(false);
         // Hunting > Safari > Critter Capsules.
         if (com.epic60869.sky2m.features.hunting.SafariFeatures.hide(entity)) cir.setReturnValue(false);
     }

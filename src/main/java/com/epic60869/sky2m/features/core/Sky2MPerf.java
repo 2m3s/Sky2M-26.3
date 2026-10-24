@@ -17,7 +17,11 @@ public final class Sky2MPerf {
     public record Stat(Kind kind, String name, long nanos, long calls, long worstNanos) {}
 
     private static final long WINDOW_NANOS = 5_000_000_000L;
-    private static final Map<String, long[]> CURRENT = new ConcurrentHashMap<>(); // "KIND|name" -> {nanos, calls, worst}
+    @SuppressWarnings("unchecked")
+    private static final Map<String, long[]>[] BY_KIND = new Map[Kind.values().length]; // name -> {nanos, calls, worst}
+    static {
+        for (int i = 0; i < BY_KIND.length; i++) BY_KIND[i] = new ConcurrentHashMap<>();
+    }
     private static final ClassValue<String> NAMES = new ClassValue<>() {
         @Override
         protected String computeValue(Class<?> type) {
@@ -44,13 +48,19 @@ public final class Sky2MPerf {
 
     public static void end(Kind kind, String name, long start) {
         long took = System.nanoTime() - start;
-        CURRENT.compute(kind.name() + "|" + name, (k, v) -> {
-            if (v == null) return new long[]{took, 1, took};
+        // Called for every HUD every frame and for every chat line: no key building, no lambda.
+        Map<String, long[]> byName = BY_KIND[kind.ordinal()];
+        long[] v = byName.get(name);
+        if (v == null) {
+            v = new long[]{0, 0, 0};
+            long[] raced = byName.putIfAbsent(name, v);
+            if (raced != null) v = raced;
+        }
+        synchronized (v) {
             v[0] += took;
             v[1]++;
             if (took > v[2]) v[2] = took;
-            return v;
-        });
+        }
     }
 
     /** A readable name for a listener or renderer: its class, without the lambda and package parts. */
@@ -64,16 +74,19 @@ public final class Sky2MPerf {
         long now = System.nanoTime();
         if (now - windowStart < WINDOW_NANOS) return;
         List<Stat> stats = new ArrayList<>();
-        for (Map.Entry<String, long[]> e : CURRENT.entrySet()) {
-            int bar = e.getKey().indexOf('|');
-            long[] v = e.getValue();
-            stats.add(new Stat(Kind.valueOf(e.getKey().substring(0, bar)), e.getKey().substring(bar + 1), v[0], v[1], v[2]));
+        for (Kind kind : Kind.values()) {
+            for (Map.Entry<String, long[]> e : BY_KIND[kind.ordinal()].entrySet()) {
+                long[] v = e.getValue();
+                synchronized (v) {
+                    if (v[1] > 0) stats.add(new Stat(kind, e.getKey(), v[0], v[1], v[2]));
+                }
+            }
         }
         stats.sort(Comparator.comparingLong(Stat::nanos).reversed());
         last = List.copyOf(stats);
         lastFrames = frames;
         lastSeconds = (now - windowStart) / 1e9;
-        CURRENT.clear();
+        for (Map<String, long[]> byName : BY_KIND) byName.clear();
         frames = 0;
         windowStart = now;
         Sky2MPerfWarnings.onWindow(last, lastFrames);

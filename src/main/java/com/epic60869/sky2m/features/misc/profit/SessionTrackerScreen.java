@@ -414,7 +414,7 @@ public final class SessionTrackerScreen extends Screen {
 
         if (!s.hasAny()) {
             message(g, SessionTracker.on() ? "No profit tracked for this day yet."
-                : "Turn on the Session Tracker (Profit Trackers > Session Tracker).");
+                : "Turn on the Session Tracker (Misc > Profit Trackers > Session Tracker).");
         } else if (tab == TOTAL) {
             total(g, mouseX, mouseY);
         } else {

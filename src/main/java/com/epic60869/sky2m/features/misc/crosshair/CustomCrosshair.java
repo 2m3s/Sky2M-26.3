@@ -58,7 +58,7 @@ public final class CustomCrosshair {
 
     private static Crosshair config() {
         Sky2MConfig config = Sky2MConfig.current();
-        return config == null ? null : config.misc.crosshair;
+        return config == null ? null : config.gui.crosshair;
     }
 
     public static void init() {

@@ -59,7 +59,7 @@ public final class DianaMobHealth {
 
     private static FeatureConfigs.DianaMobHealth config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.mayors.diana.mobHealth;
+        return c == null ? null : c.events.diana.mobHealth;
     }
 
     public static void init() {

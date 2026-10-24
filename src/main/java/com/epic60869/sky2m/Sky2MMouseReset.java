@@ -26,7 +26,7 @@ public final class Sky2MMouseReset {
 
     public static void tick(Minecraft mc) {
         Sky2MConfig config = Sky2MConfig.current();
-        if (config == null || !config.misc.mouseReset.enabled) {
+        if (config == null || !config.inventory.mouseReset.enabled) {
             resetState();
             return;
         }
@@ -48,9 +48,9 @@ public final class Sky2MMouseReset {
         }
 
         boolean isStorageGui =
-            (config.misc.mouseReset.accessoryBag && matches(title, "accessory bag"))
-            || (config.misc.mouseReset.enderChest && matches(title, "ender chest"))
-            || (config.misc.mouseReset.backpack && matches(title, "backpack"));
+            (config.inventory.mouseReset.accessoryBag && matches(title, "accessory bag"))
+            || (config.inventory.mouseReset.enderChest && matches(title, "ender chest"))
+            || (config.inventory.mouseReset.backpack && matches(title, "backpack"));
 
         if (!isStorageGui) {
             resetState();

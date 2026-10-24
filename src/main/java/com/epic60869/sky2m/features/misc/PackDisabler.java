@@ -55,7 +55,7 @@ public final class PackDisabler {
 
     private static boolean active() {
         Sky2MConfig config = Sky2MConfig.current();
-        if (config == null || !config.misc.packDisabler) return false;
+        if (config == null || !config.inventory.packDisabler) return false;
         if (noamm == null) noamm = FabricLoader.getInstance().isModLoaded("packdisabler");
         return !noamm;
     }

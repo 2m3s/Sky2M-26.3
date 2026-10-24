@@ -75,7 +75,7 @@ public final class Sky2MSelfTest {
             return new Check("Location", known, known ? "SkyBlock, " + area : "on SkyBlock but the area wasn't read from the scoreboard/tab list");
         }
         ServerData server = Minecraft.getInstance().getCurrentServer();
-        boolean hypixel = server != null && server.ip != null && server.ip.toLowerCase(Locale.ROOT).contains("hypixel");
+        boolean hypixel = server != null && com.epic60869.sky2m.custom.util.Compat.isHypixelAddress(server.ip);
         return new Check("Location", false, hypixel ? "on Hypixel but not detected as SkyBlock (join SkyBlock and run this again)"
             : "not on Hypixel SkyBlock, so it can't be checked");
     }

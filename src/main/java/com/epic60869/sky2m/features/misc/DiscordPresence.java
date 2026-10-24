@@ -156,7 +156,7 @@ public final class DiscordPresence {
 
     private static boolean onHypixel(Minecraft mc) {
         ServerData server = mc.getCurrentServer();
-        return server != null && server.ip.toLowerCase(Locale.ROOT).contains("hypixel");
+        return server != null && com.epic60869.sky2m.custom.util.Compat.isHypixelAddress(server.ip);
     }
 
     // ------------------------------------------------------------------------------------------------ IPC

@@ -553,6 +553,8 @@ public final class SbcItems {
 
     /** Converts zero-width item metadata back into a parser-only marker while retaining the readable name. */
     private static String restoreHiddenItemMarkers(String text) {
+        // Every chat line comes through here; a hidden marker always starts with this character.
+        if (text.indexOf(HIDDEN_START) < 0) return text;
         Matcher matcher = HIDDEN_ITEM.matcher(text);
         StringBuilder out = new StringBuilder();
         int cursor = 0;
@@ -582,12 +584,16 @@ public final class SbcItems {
     /** Replaces compact public-chat item references with the same clickable preview used by Sky2M chat. */
     public static Component decoratePublicItems(Component message) {
         if (!sharingEnabled()) return message;
-        if (message.getString().contains("[[SBINV|")) {
+        String raw = message.getString();
+        if (raw.contains("[[SBINV|")) {
             // A line with only follow-up parts is left as it is, for Sky2MChatHudMixin to see and hide.
             if (recordInventoryParts(message)) return message;
             message = replaceInventoryMarkers(message);
+            raw = message.getString();
         }
-        String plain = restoreHiddenItemMarkers(message.getString());
+        // Items are shared as "[[SBITEM|", "](sb:" or a hidden marker; a line with none of them is left alone.
+        if (raw.indexOf(HIDDEN_START) < 0 && !raw.contains("[[SBITEM|") && !raw.contains("](sb:")) return message;
+        String plain = restoreHiddenItemMarkers(raw);
         if (!plain.contains("[[SBITEM|") && !plain.contains("](sb:")) return message;
         // Part by part first, so the rest of the line keeps its colours (ranks, names, channel).
         Component styled = decorateItems(message, true);

@@ -172,7 +172,7 @@ public final class MiningFeatures {
                 g.fill(x - 2, z - 2, x + 2, z + 2, 0xFFFFFFFF);
                 g.pose().pushMatrix();
                 g.pose().translate(x + 3f, z - 3f);
-                g.pose().scale(0.5f, 0.5f);
+                g.pose().scale(0.75f, 0.75f);
                 g.text(font, entry.getKey(), 0, 0, 0xFFFFFFFF, true);
                 g.pose().popMatrix();
             }

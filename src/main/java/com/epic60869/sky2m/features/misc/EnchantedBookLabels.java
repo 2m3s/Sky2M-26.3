@@ -31,7 +31,7 @@ public final class EnchantedBookLabels {
     /** Drawn with the item's count and durability (Sky2MItemCooldownMixin). */
     public static void drawOverlay(GuiGraphicsExtractor g, ItemStack stack, int x, int y) {
         Sky2MConfig config = Sky2MConfig.current();
-        if (config == null || !config.misc.enchantedBookLabels || stack.isEmpty()) return;
+        if (config == null || !config.inventory.enchantedBookLabels || stack.isEmpty()) return;
         if (!Compat.isOnSkyblock() || !"ENCHANTED_BOOK".equals(Compat.neuName(stack))) return;
         Label enchant = CACHE.computeIfAbsent(stack, EnchantedBookLabels::enchantment);
         if (enchant.name().isEmpty()) return;

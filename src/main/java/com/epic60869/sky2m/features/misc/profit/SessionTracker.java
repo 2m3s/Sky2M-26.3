@@ -101,6 +101,8 @@ public final class SessionTracker {
     private static Session current;
     /** Last game's session, to show in chat once you've joined. */
     private static Session pendingSummary;
+    /** The recap taken when you last left a world, shown after you rejoin. */
+    private static Component pendingRecap;
     private static boolean dirty;
     private static long lastTick;
     private static int ticks, playerTicks;
@@ -109,7 +111,7 @@ public final class SessionTracker {
 
     static FeatureConfigs.SessionTrackerSettings config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.profitTrackers.session;
+        return c == null ? null : c.misc.profitTrackers.session;
     }
 
     static boolean on() {
@@ -153,16 +155,105 @@ public final class SessionTracker {
         trim();
         save();
         ClientTickEvents.END_CLIENT_TICK.register(SessionTracker::tick);
-        ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> save());
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
-            for (String root : Compat.COMMAND_ROOTS) dispatcher.register(ClientCommands.literal(root).then(command()));
+        ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> {
+            save();
+            SessionShare.upload(current, true);
         });
+        SessionShare.init();
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
+            for (String root : Compat.COMMAND_ROOTS) dispatcher.register(ClientCommands.literal(root).then(command()).then(recapCommand()));
+        });
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> onLeave());
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> command() {
         return ClientCommands.literal("session")
             .executes(ctx -> SessionTrackerScreen.open(-1))
             .then(ClientCommands.literal("last").executes(ctx -> SessionTrackerScreen.open(saved.history.isEmpty() ? -1 : 0)));
+    }
+
+    // ------------------------------------------------------------------------------------------------ recap
+
+    /** /s2 recap: one chat summary across every tracked activity of today's session. */
+    private static LiteralArgumentBuilder<FabricClientCommandSource> recapCommand() {
+        return ClientCommands.literal("recap").executes(ctx -> {
+            Minecraft mc = Minecraft.getInstance();
+            if (current == null || !current.hasAny()) {
+                ctx.getSource().sendFeedback(Component.literal("[S2M] Nothing tracked yet this session.").withStyle(ChatFormatting.YELLOW));
+                return 1;
+            }
+            ctx.getSource().sendFeedback(recap(current, "Session recap"));
+            return 1;
+        });
+    }
+
+    /** Playtime, total profit, coins, drops and actions across all activities, then each activity's line. */
+    static Component recap(Session s, String title) {
+        double coins = 0;
+        long drops = 0, actions = 0;
+        Map<String, Long> items = new LinkedHashMap<>();
+        for (ProfitTracker.Preset preset : ACTIVITIES) {
+            ProfitTracker.Stats st = s.get(preset);
+            if (st == null) continue;
+            coins += st.coins;
+            actions += st.actions;
+            for (Map.Entry<String, Long> e : st.items.entrySet()) {
+                drops += e.getValue();
+                items.merge(e.getKey(), e.getValue(), Long::sum);
+            }
+        }
+        long playtime = s.playtime();
+        double profit = profit(s);
+        MutableComponent text = Component.literal("[S2M] ").withStyle(ChatFormatting.LIGHT_PURPLE)
+            .append(Component.literal(title + " ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD))
+            .append(Component.literal("(" + duration(playtime) + " played): ").withStyle(ChatFormatting.GRAY))
+            .append(signed(profit));
+        if (playtime > 60_000) {
+            text.append(Component.literal(" (" + ProfitTrackerHud.coins(profit * 3_600_000d / playtime) + "/h)").withStyle(ChatFormatting.GRAY));
+        }
+        text.append(Component.literal("\n  Coins earned: ").withStyle(ChatFormatting.GRAY))
+            .append(Component.literal(ProfitTrackerHud.coins(coins)).withStyle(ChatFormatting.GOLD))
+            .append(Component.literal("  Drops: ").withStyle(ChatFormatting.GRAY))
+            .append(Component.literal(String.valueOf(drops)).withStyle(ChatFormatting.WHITE));
+        if (actions > 0) {
+            text.append(Component.literal("  Actions: ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(String.valueOf(actions)).withStyle(ChatFormatting.WHITE));
+        }
+        List<Map.Entry<String, Long>> top = new ArrayList<>(items.entrySet());
+        top.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
+        if (!top.isEmpty()) {
+            StringBuilder best = new StringBuilder();
+            for (int i = 0; i < Math.min(3, top.size()); i++) {
+                if (i > 0) best.append(", ");
+                best.append(top.get(i).getValue()).append("x ").append(ProfitTrackerHud.name(top.get(i).getKey()));
+            }
+            text.append(Component.literal("\n  Top drops: ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(best.toString()).withStyle(ChatFormatting.WHITE));
+        }
+        for (ProfitTracker.Preset preset : ACTIVITIES) {
+            if (!s.has(preset)) continue;
+            text.append(Component.literal("\n  " + name(preset) + " ").withStyle(colour(preset)))
+                .append(Component.literal(duration(s.get(preset).activeMs) + " · ").withStyle(ChatFormatting.GRAY))
+                .append(signed(profit(preset, s.get(preset), null)));
+        }
+        HoverEvent hover = new HoverEvent.ShowText(Component.literal("Click to open /s2 session").withStyle(ChatFormatting.YELLOW));
+        return text.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand("/s2 session")).withHoverEvent(hover));
+    }
+
+    /** Leaving the game or server: keep the recap and show it once you're back in a world. */
+    private static void onLeave() {
+        SessionShare.upload(current, true);
+        FeatureConfigs.SessionTrackerSettings c = config();
+        if (c == null || !c.recapOnLeave || current == null || !current.hasAny()) return;
+        pendingRecap = recap(current, "Recap");
+        playerTicks = 0;
+    }
+
+    private static void showRecap(Minecraft mc) {
+        if (pendingRecap == null || playerTicks < 120) return;
+        Component message = pendingRecap;
+        pendingRecap = null;
+        mc.gui.hud.getChat().addClientSystemMessage(message);
     }
 
     // ------------------------------------------------------------------------------------------------ counting
@@ -207,6 +298,7 @@ public final class SessionTracker {
         }
         playerTicks++;
         showSummary(mc);
+        showRecap(mc);
         if (!on() || current == null) return;
 
         // One daily section, regardless of how often the game is launched.
@@ -214,6 +306,7 @@ public final class SessionTracker {
         if (current.day != today) {
             if (current.hasAny()) {
                 saved.history.addFirst(current);
+                SessionShare.upload(current, false);
                 // Playing through midnight: the finished day's breakdown, like on the first launch of a day.
                 pendingSummary = current;
                 playerTicks = 100;
@@ -346,6 +439,17 @@ public final class SessionTracker {
     static Session session(int index) {
         if (index < 0 || index >= saved.history.size()) return current;
         return saved.history.get(index);
+    }
+
+    /** Today's record followed by the newest past days, at most {@code count} in all (for Share Sessions to Website). */
+    static List<Session> recentForShare(int count) {
+        List<Session> out = new ArrayList<>();
+        if (current != null) out.add(current);
+        for (Session s : saved.history) {
+            if (out.size() >= count) break;
+            out.add(s);
+        }
+        return out;
     }
 
     static int pastSessions() {

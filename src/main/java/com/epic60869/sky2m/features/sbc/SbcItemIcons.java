@@ -117,7 +117,7 @@ public final class SbcItemIcons {
 
     private static void download(String id) {
         Path dir = Minecraft.getInstance().gameDirectory.toPath().resolve("config").resolve("sky2m").resolve("item-icons");
-        RepoItems.runAsync(() -> {
+        RepoItems.runIconAsync(() -> {
             try {
                 Path file = dir.resolve(id.replace(':', '-') + ".png");
                 byte[] bytes;

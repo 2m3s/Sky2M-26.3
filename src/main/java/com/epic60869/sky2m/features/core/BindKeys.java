@@ -16,6 +16,14 @@ public final class BindKeys {
         return bind != InputConstants.UNKNOWN.getValue() && bind != 0 && bind != -1;
     }
 
+    /**
+     * The mouse button a bind stands for (as {@link Input} numbers buttons), or -1 for a keyboard key or no bind.
+     * On 26.3 mouse buttons are stored as -100 + the button (see {@link Input#bindMouseButton}).
+     */
+    public static int mouseButton(int bind) {
+        return isSet(bind) ? Input.bindMouseButton(bind) : -1;
+    }
+
     public static boolean down(int bind) {
         if (!isSet(bind)) return false;
         int mouse = Input.bindMouseButton(bind);

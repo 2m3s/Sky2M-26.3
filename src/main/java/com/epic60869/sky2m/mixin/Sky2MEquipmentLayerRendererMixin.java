@@ -19,7 +19,7 @@ public class Sky2MEquipmentLayerRendererMixin {
 
     @ModifyVariable(method = "renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/Identifier;II)V", at = @At("HEAD"), argsOnly = true)
     private ResourceKey<EquipmentAsset> sky2m$customArmorModel(ResourceKey<EquipmentAsset> assetKey, @Local(argsOnly = true) ItemStack stack) {
-        if (Compat.isOnSkyblock()) {
+        if (!CustomConfigManager.get().general.customArmorModel.isEmpty() && Compat.isOnSkyblock()) {
             String uuid = Compat.uuid(stack);
             if (!uuid.isEmpty()) {
                 Identifier identifier = CustomConfigManager.get().general.customArmorModel.get(uuid);

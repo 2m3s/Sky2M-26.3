@@ -38,7 +38,7 @@ public final class AuctionGuard {
 
     private static FeatureConfigs.AuctionGuard config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.misc.auctionGuard;
+        return c == null ? null : c.inventory.auctionGuard;
     }
 
     /** From the container click mixin: true stops the click. */

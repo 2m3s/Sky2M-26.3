@@ -45,7 +45,7 @@ public final class ItemNotificationScreen extends Screen {
     protected void init() {
         if (text == null) {
             Sky2MConfig c = Sky2MConfig.current();
-            String saved = c == null ? "" : c.misc.itemNotification.items;
+            String saved = c == null ? "" : c.inventory.itemNotification.items;
             text = String.join("\n", ItemNotification.split(saved));
         } else if (editor != null) {
             text = editor.getValue();
@@ -175,7 +175,7 @@ public final class ItemNotificationScreen extends Screen {
     private void save() {
         Sky2MConfig c = Sky2MConfig.current();
         if (c == null) return;
-        c.misc.itemNotification.items = String.join("\n", ItemNotification.split(editor.getValue()));
+        c.inventory.itemNotification.items = String.join("\n", ItemNotification.split(editor.getValue()));
         Sky2MConfig.saveCurrent(c);
     }
 

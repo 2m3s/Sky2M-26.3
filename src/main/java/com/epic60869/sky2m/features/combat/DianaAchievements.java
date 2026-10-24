@@ -92,7 +92,7 @@ public final class DianaAchievements {
 
     private static FeatureConfigs.DianaAchievements config() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c == null ? null : c.mayors.diana.achievements;
+        return c == null ? null : c.events.diana.achievements;
     }
 
     private static boolean enabled() {

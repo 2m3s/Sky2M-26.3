@@ -117,6 +117,21 @@ public final class Compat {
 		return Sky2MCustom.isHypixel(Minecraft.getInstance()) && com.epic60869.sky2m.features.core.Sky2MLocation.skyblockOnlyAllows();
 	}
 
+	/**
+	 * Whether a server address is Hypixel's: it contains "hypixel", or is one of the comma-separated addresses in the
+	 * {@code -Dsky2m.hypixelHosts} launch option (for a local test server, e.g. {@code localhost}). Unset, only Hypixel counts.
+	 */
+	public static boolean isHypixelAddress(String ip) {
+		if (ip == null) return false;
+		String address = ip.toLowerCase(java.util.Locale.ROOT);
+		if (address.contains("hypixel")) return true;
+		String host = address.contains(":") ? address.substring(0, address.lastIndexOf(':')) : address;
+		for (String extra : System.getProperty("sky2m.hypixelHosts", "").toLowerCase(java.util.Locale.ROOT).split(",")) {
+			if (!extra.isBlank() && host.equals(extra.trim())) return true;
+		}
+		return false;
+	}
+
 	public static String uuid(ItemStack stack) {
 		return Sky2MCustom.uuid(stack);
 	}

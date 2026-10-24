@@ -81,7 +81,7 @@ public class Sky2MScreensGameTest implements FabricClientGameTest {
         ctx.setScreen(() -> null);
         ctx.waitTicks(3);
         System.out.println("[Sky2M gametest] after disable all: whatsNewMessage=" + ctx.computeOnClient(mc -> Sky2MConfig.current().general.whatsNewMessage)
-            + " valueBreakdown=" + ctx.computeOnClient(mc -> Sky2MConfig.current().misc.storageOverlaySettings.valueBreakdown));
+            + " valueBreakdown=" + ctx.computeOnClient(mc -> Sky2MConfig.current().inventory.storageOverlaySettings.valueBreakdown));
         command(ctx, "s2");
         ctx.waitTicks(15);
         // The magnifier opens the search box.
@@ -107,7 +107,7 @@ public class Sky2MScreensGameTest implements FabricClientGameTest {
         ctx.waitTicks(5);
         shot(ctx, "36-storage-value-on");
         System.out.println("[Sky2M gametest] Storage Value Breakdown after clicking its switch: "
-            + ctx.computeOnClient(mc -> Sky2MConfig.current().misc.storageOverlaySettings.valueBreakdown));
+            + ctx.computeOnClient(mc -> Sky2MConfig.current().inventory.storageOverlaySettings.valueBreakdown));
         ctx.setScreen(() -> null);
         ctx.waitTicks(5);
         // /s2 gui: with everything else off, the Storage Value box should be the one HUD listed.

@@ -31,21 +31,22 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Upcoming SkyBlock events from the Sky2M server's calendar (refreshed every 10 minutes; times are real-world): a
- * HUD and /s2 calendar with countdowns, and reminders (popup + sound) a chosen number of minutes before the events
- * you turn on. Reminders are scheduled here, so they work between refreshes.
+ * Upcoming SkyBlock events from the Sky2M server's calendar: a HUD and /s2 calendar with countdowns, and reminders
+ * (popup + sound) 30, 5, and 1 minute before enabled events.
  */
 public final class EventCalendar {
-    public record Event(String id, String name, long start, long end, boolean active, List<String> crops) {}
+    public record Event(String id, String name, long start, long end, boolean active, List<String> crops, String requiredMayor, String requiredPerk) {}
 
     private static final String URL = "https://shadowisabot.com/mod-api/api/v1/calendar?hours=72";
-    private static final long REFRESH_MS = 10 * 60_000L;
+    private static final long REFRESH_MS = 30_000L;
+    private static final int[] REMINDER_MINUTES = {30, 5, 1};
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
     static volatile List<Event> events = List.of();
     static volatile String skyblockDate = "";
     static volatile String mayor = "";
     static volatile String minister = "";
+    static volatile boolean mayorFresh;
     static volatile long loadedAt;
     private static volatile boolean loading;
     private static final Set<String> REMINDED = new HashSet<>();
@@ -96,7 +97,8 @@ public final class EventCalendar {
                 JsonObject o = e.getAsJsonObject();
                 List<String> crops = new ArrayList<>();
                 for (JsonElement crop : Sbc.arr(o, "crops")) crops.add(crop.getAsString());
-                list.add(new Event(Sbc.str(o, "id"), Sbc.str(o, "name"), Sbc.lng(o, "start", 0), Sbc.lng(o, "end", 0), Sbc.bool(o, "active"), crops));
+                list.add(new Event(Sbc.str(o, "id"), Sbc.str(o, "name"), Sbc.lng(o, "start", 0), Sbc.lng(o, "end", 0), Sbc.bool(o, "active"), crops,
+                    Sbc.str(o, "requiredMayor"), Sbc.str(o, "requiredPerk")));
             }
             list.sort((a, b) -> Long.compare(a.start(), b.start()));
             events = List.copyOf(list);
@@ -104,6 +106,7 @@ public final class EventCalendar {
             skyblockDate = sb.size() == 0 ? "" : Sbc.str(sb, "monthName") + " " + Sbc.lng(sb, "day", 0) + ", Year " + Sbc.lng(sb, "year", 0);
             mayor = nameOf(root, "mayor");
             minister = nameOf(root, "minister");
+            mayorFresh = Sbc.bool(root, "mayorFresh");
             loadedAt = System.currentTimeMillis();
         }).whenComplete((v, e) -> {
             loading = false;
@@ -118,21 +121,32 @@ public final class EventCalendar {
         return Sbc.str(root.getAsJsonObject(key), "name");
     }
 
-    /** Whether reminders are on for this event, and how many minutes before it. */
-    static int reminderMinutes(SbcConfig.EventCalendar c, Event e) {
+    /** Whether reminders are on for this event. */
+    static boolean remindersEnabled(SbcConfig.EventCalendar c, Event e) {
+        if (!e.requiredMayor().isBlank() && (!mayorFresh || !mayorMatches(e))) return false;
         return switch (e.id()) {
-            case "jacob" -> c.jacob && cropsWanted(c, e) ? c.jacobMinutes : -1;
-            case "dark_auction" -> c.darkAuction ? c.darkAuctionMinutes : -1;
-            case "fallen_star" -> c.fallenStar ? c.fallenStarMinutes : -1;
-            case "spooky" -> c.spooky ? c.spookyMinutes : -1;
-            case "new_year" -> c.newYear ? c.newYearMinutes : -1;
-            case "jerry" -> c.jerry ? c.jerryMinutes : -1;
-            case "zoo_summer", "zoo_winter" -> c.zoo ? c.zooMinutes : -1;
-            case "hoppity" -> c.hoppity ? c.hoppityMinutes : -1;
-            case "election_open", "election_close" -> c.elections ? c.electionsMinutes : -1;
-            case "fishing_festival", "mythological_ritual" -> c.mayorEvents ? c.mayorEventsMinutes : -1;
-            default -> -1;
+            case "jacob" -> c.jacob && cropsWanted(c, e);
+            case "dark_auction" -> c.darkAuction;
+            case "fallen_star" -> c.fallenStar;
+            case "spooky" -> c.spooky;
+            case "new_year" -> c.newYear;
+            case "jerry" -> c.jerry;
+            case "zoo_summer", "zoo_winter" -> c.zoo;
+            case "hoppity" -> c.hoppity;
+            case "election_open", "election_close" -> c.elections;
+            case "fishing_festival", "mythological_ritual" -> c.mayorEvents;
+            default -> false;
         };
+    }
+
+    private static boolean mayorMatches(Event e) {
+        return mayorHasPerk(mayor, e) || mayorHasPerk(minister, e);
+    }
+
+    private static boolean mayorHasPerk(String person, Event e) {
+        if (!person.equalsIgnoreCase(e.requiredMayor())) return false;
+        return e.requiredPerk().isBlank() || (e.requiredPerk().equalsIgnoreCase("Fishing Festival") && e.id().equals("fishing_festival"))
+            || (e.requiredPerk().equalsIgnoreCase("Mythological Ritual") && e.id().equals("mythological_ritual"));
     }
 
     private static boolean cropsWanted(SbcConfig.EventCalendar c, Event e) {
@@ -146,17 +160,16 @@ public final class EventCalendar {
     private static void remind(SbcConfig.EventCalendar c) {
         long now = System.currentTimeMillis();
         for (Event e : events) {
-            int minutes = reminderMinutes(c, e);
-            if (minutes < 0) continue;
-            long at = e.start() - minutes * 60_000L;
-            // Due now, and not something that already started long ago (e.g. just after joining).
-            if (now < at || now > e.start() + 30_000L) continue;
-            String key = e.id() + "@" + e.start();
-            if (!REMINDED.add(key)) continue;
-            String when = e.start() - now > 1000 ? "in " + Sbc.duration(e.start() - now) : "now";
-            String crops = e.crops().isEmpty() ? "" : " (" + String.join(", ", e.crops()) + ")";
-            Sbc.toast(Component.literal(e.name() + " " + when).withStyle(ChatFormatting.GOLD), Component.literal(crops.isEmpty() ? "SkyBlock event" : crops.trim()));
-            if (c.sound) Sky2MAlerts.play(SoundEvents.NOTE_BLOCK_BELL.value(), 1.2f, 0.8f);
+            if (!remindersEnabled(c, e)) continue;
+            for (int minutes : REMINDER_MINUTES) {
+                long at = e.start() - minutes * 60_000L;
+                if (now < at || now > at + 30_000L) continue;
+                String key = e.id() + "@" + e.start() + ":" + minutes;
+                if (!REMINDED.add(key)) continue;
+                String crops = e.crops().isEmpty() ? "" : " (" + String.join(", ", e.crops()) + ")";
+                Sbc.toast(Component.literal(e.name() + " starts in " + (minutes == 1 ? "1 minute" : minutes + " minutes")).withStyle(ChatFormatting.GOLD), Component.literal(crops.isEmpty() ? "SkyBlock event" : crops.trim()));
+                if (c.sound) Sky2MAlerts.play(SoundEvents.NOTE_BLOCK_BELL.value(), 1.2f, 0.8f);
+            }
         }
         if (REMINDED.size() > 500) REMINDED.clear();
     }

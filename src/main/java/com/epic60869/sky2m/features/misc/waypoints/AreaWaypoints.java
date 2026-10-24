@@ -126,7 +126,9 @@ public final class AreaWaypoints {
         "[BOSS] Goldor: Who dares trespass into my domain?", "Terminals",
         "The Core entrance is opening!", "Goldor",
         "[BOSS] Necron: You went further than any human before, congratulations.", "Necron",
-        "[BOSS] Necron: All this, for nothing...", "Cleared");
+        "[BOSS] Necron: All this, for nothing...", "Cleared",
+        // Since Hypixel's 2026 dungeon update Necron's last line is gone and the Wither King's first line comes instead.
+        "[BOSS] Wither King: You... again?", "Cleared");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private static final List<Area> AREAS = new ArrayList<>();

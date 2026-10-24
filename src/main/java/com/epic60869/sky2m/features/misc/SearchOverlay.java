@@ -109,7 +109,7 @@ public final class SearchOverlay extends Screen {
                 (mode == Mode.BAZAAR ? "bz " : "auctionsearch ") + query));
             return 1;
         }
-        if (c == null || !c.misc.searchOverlay) {
+        if (c == null || !c.inventory.searchOverlay) {
             // Straight to the server: sendCommand would run this client command again, forever.
             if (mc.getConnection() != null) mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundChatCommandPacket(item.isEmpty() ? root : root + " " + item));
             return 1;
@@ -128,7 +128,7 @@ public final class SearchOverlay extends Screen {
      */
     public static boolean open(String[] lines, Screen current, Consumer<String[]> submit) {
         Sky2MConfig c = Sky2MConfig.current();
-        if (c == null || !c.misc.searchOverlay || current == null || lines.length < 4) return false;
+        if (c == null || !c.inventory.searchOverlay || current == null || lines.length < 4) return false;
         if (!lines[3].trim().equalsIgnoreCase("enter query")) return false;
         String title = ChatFormatting.stripFormatting(current.getTitle().getString());
         Mode mode = title.contains("Bazaar") ? Mode.BAZAAR : title.contains("Auction") ? Mode.AUCTION : null;

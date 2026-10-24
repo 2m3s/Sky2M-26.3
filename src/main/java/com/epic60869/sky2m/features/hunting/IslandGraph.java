@@ -109,7 +109,7 @@ public final class IslandGraph {
 
     /** Loads an island's graph (bundled, then the live repo copy). */
     public static void load(String island) {
-        SkyHanniRepo.load("island_graphs/" + island, json -> {
+        SkyHanniRepo.loadAsync("island_graphs/" + island, json -> {
             IslandGraph graph = new IslandGraph(json);
             Minecraft.getInstance().execute(() -> GRAPHS.put(island, graph));
         });

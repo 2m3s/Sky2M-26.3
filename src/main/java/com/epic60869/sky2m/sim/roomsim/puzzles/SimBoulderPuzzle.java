@@ -102,7 +102,10 @@ public final class SimBoulderPuzzle {
     }
 
     /** The eight bundled arrangements, as 42-character keys. */
-    private static final List<String> PATTERNS = loadPatterns();
+    /** Loaded on first use, not at start-up. */
+    private static final class LazyData {
+        static final List<String> PATTERNS = loadPatterns();
+    }
 
     /** The four push directions in room-relative steps: {dx, dz}. */
     private static final int[][] DIRS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
@@ -193,13 +196,13 @@ public final class SimBoulderPuzzle {
                 com.epic60869.sky2m.sim.roomsim.SimRoomPuzzles.bestAnchor(level, p, fixed,
                         com.epic60869.sky2m.sim.roomsim.SimRoomPuzzles.is(Blocks.DIORITE, Blocks.STONE_BRICK_STAIRS,
                                 Blocks.BARRIER), new int[]{0}, fixed.size() - 4);
-        if (anchor == null || PATTERNS.isEmpty()) {
+        if (anchor == null || LazyData.PATTERNS.isEmpty()) {
             return false;
         }
         forget();
         grid = anchor::world;
         // The capture's own plank, for the boxes - it mixes jungle and birch, so both are offered.
-        generate(level, PATTERNS.get(ThreadLocalRandom.current().nextInt(PATTERNS.size())));
+        generate(level, LazyData.PATTERNS.get(ThreadLocalRandom.current().nextInt(LazyData.PATTERNS.size())));
         placeRewardChest(level, anchor);
         return true;
     }
@@ -248,7 +251,7 @@ public final class SimBoulderPuzzle {
 
     /** A standalone board in front of him, for {@code /simpuzzle boulder}: the same grid on a stone floor. */
     public static void build(Minecraft client, BlockPos origin) {
-        if (!SimState.canAct(client) || origin == null || PATTERNS.isEmpty()) {
+        if (!SimState.canAct(client) || origin == null || LazyData.PATTERNS.isEmpty()) {
             return;
         }
         MinecraftServer server = client.getSingleplayerServer();
@@ -266,7 +269,7 @@ public final class SimBoulderPuzzle {
                     level.setBlock(grid.at(x, BOX_BOTTOM_Y - 1, z), Blocks.STONE.defaultBlockState(), WRITE_FLAGS);
                 }
             }
-            generate(level, PATTERNS.get(ThreadLocalRandom.current().nextInt(PATTERNS.size())));
+            generate(level, LazyData.PATTERNS.get(ThreadLocalRandom.current().nextInt(LazyData.PATTERNS.size())));
         });
     }
 

@@ -72,7 +72,7 @@ public final class DungeonFeatures {
         {{"^\\[BOSS] Thorn: Welcome Adventurers! I am Thorn, the Spirit! And host of the Vegan Trials!$", "§4Cleared"}},
         {{"^\\[BOSS] Livid: Welcome, you've arrived right on time\\. I am Livid, the Master of Shadows\\.$", "§4Cleared"}},
         {{"^\\[BOSS] Sadan: So you made it all the way here\\.\\.\\. Now you wish to defy me\\? Sadan\\?!$", "§cTerracottas"}, {"^\\[BOSS] Sadan: ENOUGH!$", "§aGiants"}, {"^\\[BOSS] Sadan: You did it\\. I understand now, you have earned my respect\\.$", "§4Cleared"}},
-        {{"^\\[BOSS] Maxor: WELL! WELL! WELL! LOOK WHO'S HERE!$", "§5Maxor"}, {"\\[BOSS] Storm: Pathetic Maxor, just like expected\\.", "§3Storm"}, {"\\[BOSS] Goldor: Who dares trespass into my domain\\?", "§6Terminals"}, {"The Core entrance is opening!", "§7Goldor"}, {"\\[BOSS] Necron: You went further than any human before, congratulations\\.", "§cNecron"}, {"\\[BOSS] Necron: All this, for nothing\\.\\.\\.", "§4Cleared"}},
+        {{"^\\[BOSS] Maxor: WELL! WELL! WELL! LOOK WHO'S HERE!$", "§5Maxor"}, {"\\[BOSS] Storm: Pathetic Maxor, just like expected\\.", "§3Storm"}, {"\\[BOSS] Goldor: Who dares trespass into my domain\\?", "§6Terminals"}, {"The Core entrance is opening!", "§7Goldor"}, {"\\[BOSS] Necron: You went further than any human before, congratulations\\.", "§cNecron"}, {"^\\[BOSS] Necron: All this, for nothing\\.\\.\\.$|^\\[BOSS] (?:The )?Wither King: You\\.\\.\\. again\\?$", "§4Cleared"}},
     };
     private static final List<Split> SPLITS = new ArrayList<>();
     private static String splitFloor = "";
@@ -87,9 +87,16 @@ public final class DungeonFeatures {
     /** The server tick Storm called his lightning (the purple pillar crush, Odin's PY timer), once per run. */
     private static long pyStartTick = -1;
     private static boolean pyTriggered;
-    private static final int PY_TICKS = 95;
+    /** 55 ticks since Hypixel's 2026 dungeon update (95 before), as in Odin 0.3.6. */
+    private static final int PY_TICKS = 55;
     /** Goldor hits everyone outside his safe spots every 60 server ticks (3 s), as in Odin's TickTimers. */
     private static final int GOLDOR_TICKS = 60;
+    /** Maxor's first line to the fight starting (NoammAddons' Maxor Start). */
+    private static final int MAXOR_START_TICKS = 83;
+    /** Storm's first line to his lightning, and Storm's death to terminals opening (Odin 0.3.6's TickTimers). */
+    private static final int STORM_LIGHTNING_TICKS = 520, GOLDOR_START_TICKS = 64;
+    private static long maxorStartTick = -1;
+    private static long stormDeathTick = -1;
 
     // ----- Masks (Odin's InvincibilityTimer), counted in server ticks -----
     private enum Invincibility {
@@ -192,6 +199,7 @@ public final class DungeonFeatures {
         OdinPuzzleSolvers.init();
         ThreeByThree.init();
         WitherDragons.init();
+        F7Extras.init();
 
         com.epic60869.sky2m.features.core.Sky2MHuds.setting("dungeon_splits", () -> config() != null && config().timers.splits);
         Sky2MHuds.register("dungeon_splits", "Dungeon Splits",
@@ -201,7 +209,7 @@ public final class DungeonFeatures {
             8, 740);
         com.epic60869.sky2m.features.core.Sky2MHuds.setting("tick_timers", () -> config() != null && config().timers.tickTimers);
         Sky2MHuds.register("tick_timers", "Tick Timers",
-            () -> config() != null && config().timers.tickTimers && (stormStartTick >= 0 || goldorStartTick >= 0),
+            () -> config() != null && config().timers.tickTimers && (stormStartTick >= 0 || goldorStartTick >= 0 || maxorStartActive()),
             DungeonFeatures::tickLines,
             List.of(kv("Storm pillars: ", "12 ticks")),
             200, 740);
@@ -236,6 +244,8 @@ public final class DungeonFeatures {
         goldorStartTick = -1;
         pyStartTick = -1;
         pyTriggered = false;
+        maxorStartTick = -1;
+        stormDeathTick = -1;
         goldorReached = false;
         dragonPhase = false;
         for (Invincibility type : Invincibility.values()) {
@@ -388,7 +398,46 @@ public final class DungeonFeatures {
             }
         }
         lines.add(splitLine(new SplitRow("§1Total", rows.getLast().time(), rows.getLast().ticks(), false), config));
+        if (config.timers.splitEta && SPLITS.getLast().time == 0) {
+            long eta = estimateTotal(rows);
+            if (eta > 0) lines.add(Component.literal("§7ETA: §f" + formatTime(eta)));
+        }
         return lines;
+    }
+
+    /**
+     * Estimated total run time: the time so far plus the rest of the current split and every later one, each taken as
+     * the average of that split in finished Run History runs for this floor (or the personal best if there are none).
+     * 0 when nothing is known.
+     */
+    private static long estimateTotal(List<SplitRow> rows) {
+        if (splitFloor.isEmpty() || rows.size() < 2) return 0;
+        Map<String, long[]> sums = new HashMap<>();
+        for (RunHistory.Run run : RunHistory.runs()) {
+            if (!run.completed || !splitFloor.equals(run.floor)) continue;
+            for (RunHistory.Split s : run.splits) {
+                long[] v = sums.computeIfAbsent(s.name(), k -> new long[2]);
+                v[0] += s.ms();
+                v[1]++;
+            }
+        }
+        Map<String, Float> pbs = personalBests.getOrDefault(splitFloor, Map.of());
+        long remaining = 0;
+        boolean started = false;
+        for (int i = 0; i < rows.size() - 1; i++) {
+            SplitRow row = rows.get(i);
+            if (!row.current() && !started) continue;
+            String name = ChatFormatting.stripFormatting(row.name());
+            long[] v = sums.get(name);
+            long expected;
+            if (v != null && v[1] > 0) expected = v[0] / v[1];
+            else if (pbs.containsKey(name)) expected = (long) (pbs.get(name) * 1000f);
+            else return 0;
+            remaining += started ? expected : Math.max(0, expected - row.time());
+            started = true;
+        }
+        if (!started) return 0;
+        return rows.getLast().time() + remaining;
     }
 
     private static Component splitLine(SplitRow row, FeatureConfigs.Dungeons config) {
@@ -439,10 +488,25 @@ public final class DungeonFeatures {
         return elapsed <= 0 ? period : (period - elapsed % period) % period;
     }
 
+    private static boolean maxorStartActive() {
+        FeatureConfigs.Dungeons config = config();
+        return config != null && config.timers.maxorStart && maxorStartTick >= 0 && serverTicks - maxorStartTick < MAXOR_START_TICKS;
+    }
+
     private static List<Component> tickLines() {
         List<Component> lines = new ArrayList<>();
+        FeatureConfigs.Dungeons config = config();
+        if (config == null) return lines;
+        if (maxorStartActive()) {
+            lines.add(kv("Maxor start: ", (MAXOR_START_TICKS - (serverTicks - maxorStartTick)) + " ticks"));
+        }
         if (stormStartTick >= 0 && goldorStartTick < 0) {
             lines.add(kv("Storm pillars: ", countdown(serverTicks - stormStartTick, 20) + " ticks"));
+            long lightning = STORM_LIGHTNING_TICKS - (serverTicks - stormStartTick);
+            if (config.timers.stormLightning && lightning > 0) lines.add(kv("Storm lightning: ", lightning + " ticks"));
+        }
+        if (config.timers.goldorStart && stormDeathTick >= 0 && serverTicks - stormDeathTick < GOLDOR_START_TICKS) {
+            lines.add(kv("Goldor start: ", (GOLDOR_START_TICKS - (serverTicks - stormDeathTick)) + " ticks"));
         }
         if (goldorStartTick >= 0) {
             lines.add(kv("Goldor death tick: ", countdown(serverTicks - goldorStartTick, GOLDOR_TICKS) + " ticks"));
@@ -561,6 +625,7 @@ public final class DungeonFeatures {
             pyTriggered = true;
             pyStartTick = serverTicks;
         }
+        if (text.equals("[BOSS] Maxor: WELL! WELL! WELL! LOOK WHO'S HERE!")) maxorStartTick = serverTicks;
         if (text.startsWith("[BOSS] Storm: Pathetic Maxor, just like expected.")) stormStartTick = serverTicks;
         else if (text.startsWith("[BOSS] Goldor: Who dares trespass into my domain?")) {
             goldorStartTick = serverTicks;
@@ -569,6 +634,7 @@ public final class DungeonFeatures {
         // Storm's death line starts the death tick too (Odin), in case Goldor's first line is missed; that line resyncs it.
         else if (text.startsWith("[BOSS] Storm: I should have known that I stood no chance.")) {
             goldorStartTick = serverTicks;
+            stormDeathTick = serverTicks;
             reachGoldor();
         }
         // Any Goldor line also means Goldor has been reached, in case the first one was missed.
@@ -579,11 +645,19 @@ public final class DungeonFeatures {
             goldorStartTick = -1;
         }
         else if (text.startsWith("[BOSS] Necron: You went further than any human before, congratulations.")) goldorStartTick = -1;
-        else if (text.startsWith("[BOSS] Necron: All this, for nothing...")) dragonPhase = true;
+        else if (text.startsWith("[BOSS] Necron: All this, for nothing...") || isWitherKingStart(text)) dragonPhase = true;
 
         if (Sky2MLocation.inDungeon()) onMaskMessage(text, config);
 
         if (dragonPhase && text.contains("Dragon") && text.contains("spawning")) resetDebuffs();
+    }
+
+    /**
+     * The Wither King's first line, which starts P5 since Hypixel's 2026 dungeon update removed Necron's "All this, for
+     * nothing..." (Odin's SplitsManager). Older Hypixel versions said "The Wither King", so both are accepted.
+     */
+    static boolean isWitherKingStart(String text) {
+        return text.equals("[BOSS] Wither King: You... again?") || text.equals("[BOSS] The Wither King: You... again?");
     }
 
     private static void sendCommand(String command) {

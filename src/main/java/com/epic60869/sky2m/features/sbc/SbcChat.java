@@ -155,6 +155,14 @@ public final class SbcChat {
             if (!text.isBlank()) line.append(Component.literal(" "));
             line.append(SbcItems.chatComponent(packet.getAsJsonObject("item")));
         }
+        // A dungeon run summary: [View] opens it (the data is fetched from the Sky2M server when it is clicked).
+        String summaryId = Sbc.str(packet, "runSummaryId");
+        if (summaryId.matches("[a-z0-9]{4,12}") && Flags.isEnabled("chat.runSummary")) {
+            line.append(Component.literal(" "));
+            line.append(Component.literal("[View]").withStyle(s -> s.withColor(ChatFormatting.AQUA).withBold(true)
+                .withClickEvent(new ClickEvent.RunCommand("/s2 runsummary view " + summaryId))
+                .withHoverEvent(new HoverEvent.ShowText(Component.literal("Click to view this run summary").withStyle(ChatFormatting.GRAY)))));
+        }
         if (id > 0 && config.replies && Flags.isEnabled("chat.replies")) {
             line.append(Component.literal(" ↩").withStyle(s -> s.withColor(ChatFormatting.DARK_GRAY)
                 .withClickEvent(new ClickEvent.RunCommand(REPLY_COMMAND + id))
@@ -332,6 +340,12 @@ public final class SbcChat {
         if (message.isBlank() && !packet.has("item")) return null;
         if (message.length() > 2000) message = message.substring(0, 2000);
         packet.addProperty("message", message);
+        // /s2c use <room>: plain messages go to that room (rooms have no replies).
+        String room = SbcRooms.activeRoom();
+        if (!room.isEmpty()) {
+            packet.addProperty("room", room);
+            replyTo = 0;
+        }
         if (replyTo > 0) {
             packet.addProperty("replyTo", replyTo);
             replyTo = 0;

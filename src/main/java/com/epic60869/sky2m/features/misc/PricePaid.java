@@ -39,7 +39,7 @@ public final class PricePaid {
 
     private static boolean enabled() {
         Sky2MConfig c = Sky2MConfig.current();
-        return c != null && c.misc.priceTooltip.pricePaid;
+        return c != null && c.inventory.priceTooltip.pricePaid;
     }
 
     public static void init(Path configDir) {

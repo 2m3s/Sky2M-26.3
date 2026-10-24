@@ -23,7 +23,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -37,12 +36,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
 
 /**
  * Positional messages: send a party message when you reach a spot (within a radius, or inside a box), and
  * show the spots in the world. Follows Odin's PositionalMessages (https://github.com/odtheking/Odin, BSD-3-Clause).
- * Sky2M also has built-in waypoints that are always shown in the right phase, such as "Py Stand Here".
  */
 public final class PositionalMessages {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -65,34 +62,6 @@ public final class PositionalMessages {
         }
     }
 
-    /**
-     * A hard-coded waypoint: a highlighted block with a label, shown on F7 and M7 while Built-in Waypoints is on. When {@code stand} is set,
-     * a ring is drawn there and {@code partyMessage} is sent to party chat once per run when you stand on that block.
-     */
-    private record FixedWaypoint(String label, AABB box, float[] colour, BooleanSupplier when, BlockPos stand, String partyMessage) {}
-
-    private static final List<FixedWaypoint> FIXED = List.of(
-        // After the yellow pad in Storm (F7/M7 phase 2): where to stand. The player's feet go at 95, 165.5, 94.4.
-        new FixedWaypoint("Py Stand Here", new AABB(94.5, 164.5, 93.9, 95.5, 165.5, 94.9), new float[]{1f, 0.9f, 0.1f},
-            () -> onFloor7() && isClass(com.epic60869.sky2m.sb.skyblock.dungeon.DungeonClass.MAGE), null, null),
-        // Mage stop in Storm (F7/M7 phase 2). The player's feet go at 34, 169, 65.
-        new FixedWaypoint("Mage Stop", new AABB(34, 168, 65, 35, 169, 66), new float[]{0.33f, 0.67f, 1f},
-            () -> onFloor7() && isClass(com.epic60869.sky2m.sb.skyblock.dungeon.DungeonClass.MAGE), null, null),
-        // Archer spot in Storm (F7/M7 phase 2): the block at 103, 168, 49 plus one to the east and west (floor blocks below).
-        new FixedWaypoint("Arch Stand Here", new AABB(102, 167, 49, 105, 168, 50), new float[]{1f, 0.67f, 0f},
-            () -> onFloor7() && isClass(com.epic60869.sky2m.sb.skyblock.dungeon.DungeonClass.ARCHER), null, null),
-        // Healer spot on floor 7 (Storm arena), during Storm. The player's feet go at 58, 169, 66.
-        new FixedWaypoint("Healer Stand Here After Lighting", new AABB(58, 168, 66, 59, 169, 67), new float[]{1f, 0.33f, 1f},
-            () -> onFloor7() && isClass(com.epic60869.sky2m.sb.skyblock.dungeon.DungeonClass.HEALER), null, null),
-        // Tank spot on floor 7 (Storm arena), during Storm. The player's feet go at 109, 170, 93.
-        new FixedWaypoint("Tank Stand Here", new AABB(109, 169, 93, 110, 170, 94), new float[]{0.33f, 1f, 0.33f},
-            () -> onFloor7() && isClass(com.epic60869.sky2m.sb.skyblock.dungeon.DungeonClass.TANK), null, null),
-        // Simon Says in Goldor's phase (P3, until Necron starts): stand at 108, 120, 93 (ring, sends "At SS"); the block east of it, 109, 120, 93, is highlighted.
-        new FixedWaypoint("SS", new AABB(109, 120, 93, 110, 121, 94), new float[]{1f, 0.33f, 1f},
-            () -> onFloor7() && isClass(com.epic60869.sky2m.sb.skyblock.dungeon.DungeonClass.HEALER), new BlockPos(108, 120, 93), "At SS")
-    );
-    private static final Set<FixedWaypoint> FIXED_SENT = new HashSet<>();
-
     private record Pending(String message, int ticksLeft) {}
 
     private static List<PosMessage> messages = new ArrayList<>();
@@ -105,10 +74,6 @@ public final class PositionalMessages {
     private static FeatureConfigs.PositionalMessages config() {
         Sky2MConfig c = Sky2MConfig.current();
         return c == null ? null : c.dungeons.positionalMessages;
-    }
-
-    private static boolean isClass(com.epic60869.sky2m.sb.skyblock.dungeon.DungeonClass dungeonClass) {
-        return SelfClass.get() == dungeonClass;
     }
 
     /**
@@ -142,7 +107,6 @@ public final class PositionalMessages {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> {
             floor7World = new java.lang.ref.WeakReference<>(null);
             SENT.clear();
-            FIXED_SENT.clear();
             PENDING.clear();
         });
         Sky2MWorldRender.register(PositionalMessages::render);
@@ -164,16 +128,6 @@ public final class PositionalMessages {
 
         FeatureConfigs.PositionalMessages config = config();
         if (config == null || mc.player == null) return;
-        if (config.builtInWaypoints) {
-            BlockPos feet = mc.player.blockPosition();
-            for (FixedWaypoint w : FIXED) {
-                if (w.partyMessage() == null) continue;
-                // Sent once per run (cleared when you join the next server), even if you step off and back on.
-                if (!feet.equals(w.stand()) || FIXED_SENT.contains(w) || !w.when().getAsBoolean()) continue;
-                FIXED_SENT.add(w);
-                PENDING.add(new Pending(w.partyMessage(), 0));
-            }
-        }
         if (!config.enabled || !active(config)) return;
         Vec3 pos = mc.player.position();
         for (PosMessage m : messages) {
@@ -186,16 +140,6 @@ public final class PositionalMessages {
     private static void render(PrimitiveCollector collector) {
         FeatureConfigs.PositionalMessages config = config();
         if (config == null) return;
-        for (FixedWaypoint w : FIXED) {
-            if (!config.builtInWaypoints || !w.when().getAsBoolean()) continue;
-            collector.submitFilledBox(w.box(), w.colour(), 0.35f, false);
-            collector.submitOutlinedBox(w.box(), w.colour(), 3f, false);
-            collector.submitText(Component.literal(w.label()).withStyle(ChatFormatting.YELLOW), w.box().getCenter().add(0, 1.5, 0), 1.2f, true);
-            if (w.stand() != null) {
-                int argb = 0xFF000000 | ((int) (w.colour()[0] * 255) << 16) | ((int) (w.colour()[1] * 255) << 8) | (int) (w.colour()[2] * 255);
-                ring(collector, Vec3.atBottomCenterOf(w.stand()), 0.7f, config.ringHeight, argb);
-            }
-        }
         if (!config.enabled || !config.showPositions || !active(config)) return;
         float[] colour = {0.3f, 0.8f, 1f};
         for (PosMessage m : messages) {

@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -41,11 +42,11 @@ public final class Sky2MNopoFeatures {
     private static Path configDir;
     private static boolean initialized;
 
-    private static final Set<String> EMOJIS = new HashSet<>();
+    private static volatile Set<String> EMOJIS = new HashSet<>();
     private static final Pattern EMOJI_PATTERN = Pattern.compile(":([A-Za-z0-9_+\\-]+):");
-    private static final Map<String, String> EMOJI_SYMBOLS = new LinkedHashMap<>();
-    private static final Map<String, String> EMOJI_CANONICAL = new HashMap<>();
-    private static final Map<String, String> EMOJI_UNICODE = new HashMap<>();
+    private static volatile Map<String, String> EMOJI_SYMBOLS = new LinkedHashMap<>();
+    private static volatile Map<String, String> EMOJI_CANONICAL = new HashMap<>();
+    private static volatile Map<String, String> EMOJI_UNICODE = new HashMap<>();
     private static final Map<String, SlayerData> SLAYERS = new LinkedHashMap<>();
     private static final Map<String, List<Long>> CROP_TIMES = new LinkedHashMap<>();
     private static String currentSlayer = null;
@@ -91,10 +92,14 @@ public final class Sky2MNopoFeatures {
         configDir = dir;
         PetHeldItems.init(dir, () -> currentPet);
         loadJson();
-        loadDefaultEmojiSymbols();
-        loadEmojis();
-        loadBuiltInEmojiAliases();
-        com.epic60869.sky2m.features.core.Sky2MChat.onGameMessage((message, overlay) -> { handleSlayer(message); handleRareCrop(message); });
+        // The emoji tables (a JSON resource) are built on the repo thread and swapped in when done.
+        com.epic60869.sky2m.custom.RepoItems.runAsync(Sky2MNopoFeatures::buildEmojiTables);
+        com.epic60869.sky2m.features.core.Sky2MChat.onGameMessage((message, overlay) -> {
+            // Slayer starts and rare drops are chat lines; the action bar (many a second) never holds them.
+            if (overlay) return;
+            handleSlayer(message);
+            handleRareCrop(message);
+        });
         registerOverflowPets();
         registerPetHud();
         initialized = true;
@@ -184,7 +189,7 @@ public final class Sky2MNopoFeatures {
     }
 
     private static void registerPetHud() {
-        HudElementRegistry.addLast(PET_HUD_ID, (context, deltaTracker) -> renderPetHud(context));
+        HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST, PET_HUD_ID, (context, deltaTracker) -> renderPetHud(context));
     }
 
     private static void renderPetHud(GuiGraphicsExtractor context) {
@@ -282,10 +287,8 @@ public final class Sky2MNopoFeatures {
             return;
         }
 
-        List<PlayerInfo> entries = new ArrayList<>(mc.getConnection().getOnlinePlayers());
-        try {
-            entries.sort(Sky2MPlayerTabOverlayAccessor.getOrdering());
-        } catch (Throwable ignored) {}
+        // The tab manager already holds the ordered list (and only rebuilds it when the tab changes).
+        List<PlayerInfo> entries = Sky2MTabWidgetManager.players();
 
         /*
          * Read the actual ordered TAB rows directly. The generic widget parser is
@@ -298,6 +301,8 @@ public final class Sky2MNopoFeatures {
         Pattern xpPattern = PET_XP_LINE;
         Pattern overflowXpPattern = PET_OVERFLOW_XP;
         int shownOverflow = -1;
+        // Whether the pet's XP line was in the tab yet: right after Autopet swaps pets the name can arrive first.
+        boolean sawXp = false;
 
         List<Component> display = new ArrayList<>();
         String petName = "";
@@ -365,7 +370,7 @@ public final class Sky2MNopoFeatures {
                     int offset = rarityOffsetFromComponent(nameComponent, petName.replace("✦", "").strip());
                     float xp = Float.parseFloat(overflowXp.group("xp").replace(",", "")) + calculativeXpForLevel(level, offset);
                     int overflow = calcLevel(xp);
-                    if (level == 200) overflow--; // Golden Dragon's curve starts at level 100
+                    sawXp = true;
                     if (overflow > level) {
                         display.set(nameIndex, stylePetLine(nameComponent, level, petName, overflow));
                         shownOverflow = overflow;
@@ -376,6 +381,7 @@ public final class Sky2MNopoFeatures {
             }
 
             if (!petName.isBlank() && (xpPattern.matcher(text).matches() || text.contains("MAX LEVEL"))) {
+                sawXp = true;
                 display.add(component);
                 continue;
             }
@@ -394,19 +400,21 @@ public final class Sky2MNopoFeatures {
             return;
         }
 
+        // The pet's real level, once its XP line is there (-1 until then, so a half-updated tab isn't a level up).
+        int known = shownOverflow > 0 ? shownOverflow : sawXp ? level : -1;
         if (!currentPet.equals(petName)) {
             currentPet = petName;
-            currentOverflowLevel = shownOverflow > 0 ? shownOverflow : level;
-        } else if (shownOverflow > 0) {
+            currentOverflowLevel = known;
+        } else if (known > 0) {
             // NopoMod's overflow level up message: Hypixel stops announcing levels past the maximum.
-            if (currentOverflowLevel > 0 && shownOverflow == currentOverflowLevel + 1) {
+            if (shownOverflow > 0 && currentOverflowLevel > 0 && shownOverflow == currentOverflowLevel + 1) {
                 com.epic60869.sky2m.features.core.Sky2MAlerts.chat(Component.literal("Your ").withStyle(ChatFormatting.GRAY)
                     .append(petNameComponent(nameComponent, petName))
                     .append(Component.literal(" leveled up to level ").withStyle(ChatFormatting.GRAY))
                     .append(Component.literal(Integer.toString(shownOverflow)).withStyle(ChatFormatting.BLUE))
                     .append(Component.literal("!").withStyle(ChatFormatting.GRAY)));
             }
-            currentOverflowLevel = shownOverflow;
+            currentOverflowLevel = known;
         }
 
         if (config.misc.pets.display.heldItem) {
@@ -583,9 +591,10 @@ public final class Sky2MNopoFeatures {
         return index < PET_XP.length ? PET_XP[index] : 1886700;
     }
 
+    /** The XP a pet needs to reach {@code level}: level 1 is free, so that's the first level - 1 steps. */
     private static int calculativeXpForLevel(int level, int offset) {
         int xp = 0;
-        for (int i = 0; i < level; i++) xp += getXpForLevel(i, offset);
+        for (int i = 0; i < level - 1; i++) xp += getXpForLevel(i, offset);
         return xp;
     }
 
@@ -730,16 +739,28 @@ public final class Sky2MNopoFeatures {
             // be an alias (hypixel.io) or go through a proxy.
             if (com.epic60869.sky2m.features.core.Sky2MLocation.onSkyblock()) return true;
             if (mc.getCurrentServer() == null || mc.getCurrentServer().ip == null) return false;
-            String ip = mc.getCurrentServer().ip.toLowerCase(Locale.ROOT);
-            return ip.contains("hypixel");
+            return com.epic60869.sky2m.custom.util.Compat.isHypixelAddress(mc.getCurrentServer().ip);
         } catch (Throwable ignored) {
             return false;
         }
     }
 
-    private static void loadEmojis() {
-        EMOJIS.clear();
-        EMOJI_CANONICAL.clear();
+    private static void buildEmojiTables() {
+        Set<String> emojis = new HashSet<>();
+        Map<String, String> symbols = new LinkedHashMap<>();
+        Map<String, String> canonical = new HashMap<>();
+        Map<String, String> unicode = new HashMap<>();
+        loadDefaultEmojiSymbols(emojis, symbols);
+        emojis.clear();
+        loadEmojis(emojis, canonical);
+        loadBuiltInEmojiAliases(emojis, canonical, unicode, symbols);
+        EMOJI_SYMBOLS = symbols;
+        EMOJI_CANONICAL = canonical;
+        EMOJI_UNICODE = unicode;
+        EMOJIS = emojis;
+    }
+
+    private static void loadEmojis(Set<String> EMOJIS, Map<String, String> EMOJI_CANONICAL) {
         try (InputStream in = Sky2MNopoFeatures.class.getResourceAsStream("/assets/sky2m/emojis.json")) {
             if (in == null) return;
             JsonObject root = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -760,7 +781,7 @@ public final class Sky2MNopoFeatures {
         }
     }
 
-    private static void loadBuiltInEmojiAliases() {
+    private static void loadBuiltInEmojiAliases(Set<String> EMOJIS, Map<String, String> EMOJI_CANONICAL, Map<String, String> EMOJI_UNICODE, Map<String, String> EMOJI_SYMBOLS) {
         String[][] aliases = {
             {"tada","🎉"},{"rocket","🚀"},{"100","💯"},{"broken_heart","💔"},
             {"orange_heart","🧡"},{"yellow_heart","💛"},{"green_heart","💚"},{"blue_heart","💙"},
@@ -782,39 +803,41 @@ public final class Sky2MNopoFeatures {
         for (var e : EMOJI_SYMBOLS.entrySet()) EMOJI_UNICODE.putIfAbsent(e.getKey(), e.getValue());
     }
 
-    private static void addDefaultEmoji(String name, String symbol) {
-        EMOJIS.add(name);
-        EMOJI_SYMBOLS.put(name, symbol);
+    private static void addDefaultEmoji(Set<String> emojis, Map<String, String> symbols, String name, String symbol) {
+        emojis.add(name);
+        symbols.put(name, symbol);
     }
 
-    private static void loadDefaultEmojiSymbols() {
-        addDefaultEmoji("wave", "👋");
-        addDefaultEmoji("smile", "😄");
-        addDefaultEmoji("grin", "😁");
-        addDefaultEmoji("joy", "😂");
-        addDefaultEmoji("heart", "❤️");
-        addDefaultEmoji("fire", "🔥");
-        addDefaultEmoji("sob", "😭");
-        addDefaultEmoji("cry", "😢");
-        addDefaultEmoji("angry", "😠");
-        addDefaultEmoji("laughing", "😆");
-        addDefaultEmoji("rofl", "🤣");
-        addDefaultEmoji("wink", "😉");
-        addDefaultEmoji("thinking", "🤔");
-        addDefaultEmoji("eyes", "👀");
-        addDefaultEmoji("thumbsup", "👍");
-        addDefaultEmoji("+1", "👍");
-        addDefaultEmoji("thumbsdown", "👎");
-        addDefaultEmoji("-1", "👎");
-        addDefaultEmoji("clap", "👏");
-        addDefaultEmoji("pray", "🙏");
-        addDefaultEmoji("ok_hand", "👌");
-        addDefaultEmoji("sunglasses", "😎");
+    private static void loadDefaultEmojiSymbols(Set<String> emojis, Map<String, String> symbols) {
+        addDefaultEmoji(emojis, symbols, "wave", "👋");
+        addDefaultEmoji(emojis, symbols, "smile", "😄");
+        addDefaultEmoji(emojis, symbols, "grin", "😁");
+        addDefaultEmoji(emojis, symbols, "joy", "😂");
+        addDefaultEmoji(emojis, symbols, "heart", "❤️");
+        addDefaultEmoji(emojis, symbols, "fire", "🔥");
+        addDefaultEmoji(emojis, symbols, "sob", "😭");
+        addDefaultEmoji(emojis, symbols, "cry", "😢");
+        addDefaultEmoji(emojis, symbols, "angry", "😠");
+        addDefaultEmoji(emojis, symbols, "laughing", "😆");
+        addDefaultEmoji(emojis, symbols, "rofl", "🤣");
+        addDefaultEmoji(emojis, symbols, "wink", "😉");
+        addDefaultEmoji(emojis, symbols, "thinking", "🤔");
+        addDefaultEmoji(emojis, symbols, "eyes", "👀");
+        addDefaultEmoji(emojis, symbols, "thumbsup", "👍");
+        addDefaultEmoji(emojis, symbols, "+1", "👍");
+        addDefaultEmoji(emojis, symbols, "thumbsdown", "👎");
+        addDefaultEmoji(emojis, symbols, "-1", "👎");
+        addDefaultEmoji(emojis, symbols, "clap", "👏");
+        addDefaultEmoji(emojis, symbols, "pray", "🙏");
+        addDefaultEmoji(emojis, symbols, "ok_hand", "👌");
+        addDefaultEmoji(emojis, symbols, "sunglasses", "😎");
     }
 
     public static Component replaceChatEmojis(Component message) {
         Sky2MConfig config = Sky2MConfig.current();
         if (config == null || !config.chat.chatEmoji) return message;
+        // An emoji is ":name:": most lines have no colon, and don't need rebuilding.
+        if (message.getString().indexOf(':') < 0) return message;
 
         final MutableComponent result = Component.empty();
         message.visit((style, value) -> {

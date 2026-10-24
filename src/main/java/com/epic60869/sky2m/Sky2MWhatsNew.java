@@ -267,16 +267,27 @@ public final class Sky2MWhatsNew {
      */
     private static Option find(String name, String where, List<Option> all) {
         String path = where.split(",")[0].trim();
-        List<String> segments = new ArrayList<>();
+        List<String> named = new ArrayList<>();
         if (path.contains(">") || !path.isEmpty() && all.stream().anyMatch(o -> leaf(o).equalsIgnoreCase(path))) {
-            for (String s : path.split(">")) if (!s.isBlank()) segments.add(s.trim().toLowerCase(Locale.ROOT));
+            for (String s : path.split(">")) if (!s.isBlank()) named.add(s.trim().toLowerCase(Locale.ROOT));
+            // Only the first segment is a category ("Profit Trackers > Farming" keeps its Farming).
+            if (!named.isEmpty()) named.set(0, renamed(named.getFirst()));
         }
-        List<Option> scope = all.stream().filter(o -> under(o, segments)).toList();
-        Option exact = scope.stream().filter(o -> leaf(o).equalsIgnoreCase(name)).findFirst().orElse(null);
+        List<Option> found = all.stream().filter(o -> under(o, named)).toList();
+        // Older entries name a category that has since moved ("Misc > Sacks Value" is now under Inventory): drop it.
+        if (found.isEmpty() && named.size() > 1) {
+            named.removeFirst();
+            found = all.stream().filter(o -> under(o, named)).toList();
+        }
+        List<String> segments = named;
+        List<Option> scope = found;
+        // The shallowest match: "Events" is the Events category, not GUI > Custom Scoreboard > Events.
+        java.util.Comparator<Option> shallowest = java.util.Comparator.comparingInt(o -> o.name().split(" > ").length);
+        Option exact = scope.stream().filter(o -> leaf(o).equalsIgnoreCase(name)).min(shallowest).orElse(null);
         if (exact != null) return exact;
         // The brackets named the section differently: an option with exactly the feature's name anywhere.
         if (!segments.isEmpty()) {
-            exact = all.stream().filter(o -> leaf(o).equalsIgnoreCase(name)).findFirst().orElse(null);
+            exact = all.stream().filter(o -> leaf(o).equalsIgnoreCase(name)).min(shallowest).orElse(null);
             if (exact != null) return exact;
         }
         String lower = name.toLowerCase(Locale.ROOT);
@@ -290,8 +301,23 @@ public final class Sky2MWhatsNew {
         // The section named last in the brackets ("Mute Overflow Drop Sound (Farming > Garden)" has no toggle of its
         // own name, but the section opens the right settings).
         String last = segments.getLast();
-        return all.stream().filter(o -> leaf(o).toLowerCase(Locale.ROOT).contains(last) && under(o, segments.subList(0, segments.size() - 1)))
+        List<String> before = segments.subList(0, segments.size() - 1);
+        Option section = all.stream().filter(o -> leaf(o).equalsIgnoreCase(last) && under(o, before)).min(shallowest).orElse(null);
+        if (section != null) return section;
+        return all.stream().filter(o -> leaf(o).toLowerCase(Locale.ROOT).contains(last) && under(o, before))
             .findFirst().orElse(null);
+    }
+
+    /** Category names older changelog entries use, as they are called now (SkyHanni's layout). */
+    private static String renamed(String segment) {
+        return switch (segment) {
+            case "dungeons" -> "dungeon";
+            case "slayers" -> "slayer";
+            case "farming" -> "garden";
+            case "mayors" -> "events";
+            case "general" -> "about";
+            default -> segment;
+        };
     }
 
     /** Whether the option's path contains the segments in order (sections in between may be skipped). */

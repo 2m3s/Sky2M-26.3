@@ -55,13 +55,13 @@ public final class ModConflictWarnings {
         if (loader.isModLoaded("skyblocker") && c.dungeons.f7.terminals.enabled && skyblockerTerminalSolver()) {
             out.add("Skyblocker's terminal solver is on too and draws over Sky2M's. Turn one of them off.");
         }
-        if (loader.isModLoaded("customscoreboard") && c.misc.customScoreboard.enabled) {
+        if (loader.isModLoaded("customscoreboard") && c.gui.customScoreboard.enabled) {
             out.add("The Custom Scoreboard mod is installed and Sky2M's Custom Scoreboard is on: two sidebars will draw. Turn one of them off.");
         }
-        if (loader.isModLoaded("skyblock-item-list") && c.misc.itemList.enabled) {
+        if (loader.isModLoaded("skyblock-item-list") && c.inventory.itemList.enabled) {
             out.add("SkyBlock Item List is installed and Sky2M's Item List is on: both panels will show. Turn one of them off.");
         }
-        if (loader.isModLoaded("skyhanni") && c.misc.customScoreboard.enabled && skyhanniScoreboard()) {
+        if (loader.isModLoaded("skyhanni") && c.gui.customScoreboard.enabled && skyhanniScoreboard()) {
             out.add("SkyHanni's Custom Scoreboard is on and so is Sky2M's. Turn one of them off.");
         }
         return out;
