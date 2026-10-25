@@ -4183,7 +4183,7 @@ public final class FeatureConfigs {
     /** SkyHanni's Item Pickup Log. */
     public static final class ItemPickupLog {
         public enum Alignment {
-            TOP("Newest Top"), BOTTOM("Newest Bottom");
+            TOP("Top"), CENTER("Center"), BOTTOM("Bottom");
 
             private final String label;
 
@@ -4248,7 +4248,7 @@ public final class FeatureConfigs {
         public ItemPickupLogValue coinValue = new ItemPickupLogValue();
 
         @Expose
-        @ConfigOption(name = "Alignment", desc = "Where new lines go.")
+        @ConfigOption(name = "Alignment", desc = "How the log is aligned at its position, like SkyHanni: Top grows downwards, Bottom grows upwards, Center both ways.")
         @ConfigEditorDropdown
         public Alignment alignment = Alignment.TOP;
 
