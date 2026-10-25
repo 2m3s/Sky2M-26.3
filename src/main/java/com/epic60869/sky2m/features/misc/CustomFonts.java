@@ -4,14 +4,11 @@ import com.epic60869.sky2m.Sky2MConfig;
 import com.mojang.blaze3d.font.GlyphProvider;
 import com.mojang.blaze3d.font.TrueTypeGlyphProvider;
 import com.mojang.blaze3d.platform.TextureUtil;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.font.FontOption;
 import net.minecraft.client.gui.font.providers.FreeTypeUtil;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -21,6 +18,10 @@ import org.lwjgl.util.freetype.FreeType;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,7 +39,7 @@ import java.util.stream.Stream;
  * have (Hypixel's icons, other scripts) still comes from Minecraft's fonts.
  */
 public final class CustomFonts {
-    public static final String DEFAULT = "";
+    public static final String DEFAULT = "Default";
     public static final String INTER = "Inter";
 
     private static final Identifier DEFAULT_FONT = Identifier.withDefaultNamespace("default");
@@ -82,7 +83,48 @@ public final class CustomFonts {
     /** The chosen font: {@link #DEFAULT}, {@link #INTER} or a file name in the fonts folder. */
     public static String selected() {
         Sky2MConfig.Fonts c = config();
-        return c == null || c.font == null ? DEFAULT : c.font;
+        return c == null || c.font == null || c.font.isBlank() ? DEFAULT : c.font;
+    }
+
+    /** Settings: the Font option is a dropdown of {@link #choices()}, read again when the fonts folder changes. */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface FontDropdown {}
+
+    /** "Default", "Inter", then each .ttf in the fonts folder. */
+    public static String[] choices() {
+        List<String> out = new ArrayList<>(List.of(DEFAULT, INTER));
+        out.addAll(fontFiles());
+        return out.toArray(String[]::new);
+    }
+
+    private static String applied;
+    private static List<String> listed = List.of();
+    private static int ticks;
+
+    /**
+     * Picking a font in the dropdown only changes the setting: this loads it (a resource reload) once the choice
+     * changed, and rebuilds the settings when .ttf files are added or removed so the dropdown lists them.
+     */
+    public static void init() {
+        listed = fontFiles();
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (++ticks % 20 != 0) return;
+            String choice = selected();
+            if (applied == null) applied = choice;
+            else if (!choice.equals(applied)) {
+                applied = choice;
+                reload();
+            }
+            boolean settingsOpen = mc.gui.screen() != null && mc.gui.screen().getClass().getName().contains("moulconfig");
+            if (ticks % 100 == 0 && !settingsOpen) {
+                List<String> files = fontFiles();
+                if (!files.equals(listed)) {
+                    listed = files;
+                    Sky2MConfig.rebuildEditors();
+                }
+            }
+        });
     }
 
     public static void select(String font) {
@@ -103,10 +145,6 @@ public final class CustomFonts {
         com.mojang.blaze3d.Blaze3D.openPath(folder());
     }
 
-    public static void openPicker() {
-        Minecraft mc = Minecraft.getInstance();
-        mc.execute(() -> mc.gui.setScreen(new PickerScreen(mc.gui.screen())));
-    }
 
     /**
      * From the font manager, with every font's glyph providers just worked out: puts the chosen font in front of
@@ -115,21 +153,27 @@ public final class CustomFonts {
     public static Map<Identifier, List<GlyphProvider.Conditional>> apply(Map<Identifier, List<GlyphProvider.Conditional>> fonts) {
         loaded = null;
         String choice = selected();
-        if (choice.isEmpty() || !fonts.containsKey(DEFAULT_FONT)) return fonts;
+        if (choice.equals(DEFAULT) || !fonts.containsKey(DEFAULT_FONT)) return fonts;
         List<GlyphProvider.Conditional> front;
         if (choice.equals(INTER)) {
             front = fonts.get(INTER_FONT);
-            if (front == null) return fonts;
+            if (front == null) {
+                System.out.println("[Sky2M] Font: Inter wasn't loaded (sky2m:inter), using Minecraft's font");
+                return fonts;
+            }
         } else {
             GlyphProvider ttf = loadTtf(folder().resolve(choice));
             if (ttf == null) return fonts;
             loaded = ttf;
             front = List.of(new GlyphProvider.Conditional(ttf, FontOption.Filter.ALWAYS_PASS));
         }
-        List<GlyphProvider.Conditional> merged = new ArrayList<>(front);
-        merged.addAll(fonts.get(DEFAULT_FONT));
+        // These lists run lowest priority first (the font set is built from the list reversed), so the chosen font
+        // goes last to come before Minecraft's glyphs.
+        List<GlyphProvider.Conditional> merged = new ArrayList<>(fonts.get(DEFAULT_FONT));
+        merged.addAll(front);
         Map<Identifier, List<GlyphProvider.Conditional>> out = new HashMap<>(fonts);
         out.put(DEFAULT_FONT, merged);
+        System.out.println("[Sky2M] Font: " + choice + " in front of minecraft:default (" + front.size() + " + " + fonts.get(DEFAULT_FONT).size() + " glyph providers)");
         return out;
     }
 
@@ -170,52 +214,4 @@ public final class CustomFonts {
         }
     }
 
-    /** "Default", "Inter" and each .ttf in the fonts folder as a button; the chosen one is marked. */
-    private static final class PickerScreen extends Screen {
-        private final Screen parent;
-
-        PickerScreen(Screen parent) {
-            super(Component.literal("Font"));
-            this.parent = parent;
-        }
-
-        @Override
-        protected void init() {
-            clearWidgets();
-            List<String[]> choices = new ArrayList<>();
-            choices.add(new String[]{"Default (Minecraft)", DEFAULT});
-            choices.add(new String[]{"Inter (built in)", INTER});
-            for (String file : fontFiles()) choices.add(new String[]{file, file});
-            int w = 220;
-            int x = (width - w) / 2;
-            int y = 44;
-            for (String[] choice : choices) {
-                String label = (choice[1].equals(selected()) ? "> " : "") + choice[0];
-                addRenderableWidget(Button.builder(Component.literal(label), b -> {
-                    select(choice[1]);
-                    init();
-                }).bounds(x, y, w, 20).build());
-                y += 24;
-                if (y > height - 60) break;
-            }
-            addRenderableWidget(Button.builder(Component.literal("Open Fonts Folder"), b -> openFolder())
-                .bounds(x, height - 30, 106, 20).build());
-            addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose())
-                .bounds(x + w - 106, height - 30, 106, 20).build());
-        }
-
-        @Override
-        public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-            g.fill(0, 0, width, height, 0xFF090B10);
-            g.text(font, "Font", (width - font.width("Font")) / 2, 16, 0xFFFFFFFF, true);
-            String hint = "Put .ttf files in the fonts folder, then pick one here.";
-            g.text(font, hint, (width - font.width(hint)) / 2, 28, 0xFF9AA4B2, false);
-            super.extractRenderState(g, mouseX, mouseY, delta);
-        }
-
-        @Override
-        public void onClose() {
-            minecraft.gui.setScreen(parent);
-        }
-    }
 }

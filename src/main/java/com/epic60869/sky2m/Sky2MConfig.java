@@ -2007,13 +2007,11 @@ public final class Sky2MConfig extends Config {
     }
 
     public static final class Fonts {
-        /** "" for Minecraft's font, "Inter", or a .ttf file name in config/sky2m/fonts. */
+        /** "Default" (Minecraft's font), "Inter", or a .ttf file name in config/sky2m/fonts. */
         @Expose
-        public String font = "";
-
-        @ConfigOption(name = "Font", desc = "Pick the font all text is drawn in: Default (Minecraft's), Inter (built in, like Caxton's default) or a .ttf from the fonts folder. Characters a font doesn't have, like Hypixel's icons, still use Minecraft's.")
-        @ConfigEditorButton(buttonText = "PICK")
-        public Runnable pick = () -> com.epic60869.sky2m.features.misc.CustomFonts.openPicker();
+        @ConfigOption(name = "Font", desc = "The font all text is drawn in: Default (Minecraft's), Inter (built in, like Caxton's default) or a .ttf from the fonts folder. Characters a font doesn't have, like Hypixel's icons, still use Minecraft's.")
+        @com.epic60869.sky2m.features.misc.CustomFonts.FontDropdown
+        public String font = "Default";
 
         @Expose
         @ConfigOption(name = "Size", desc = "How big a .ttf font is drawn (Minecraft's text is about 8). Press Apply after changing it.")
@@ -2034,7 +2032,7 @@ public final class Sky2MConfig extends Config {
         @ConfigEditorButton(buttonText = "APPLY")
         public Runnable apply = () -> com.epic60869.sky2m.features.misc.CustomFonts.reload();
 
-        @ConfigOption(name = "Fonts Folder", desc = "Open the folder for your fonts (config\\sky2m\\fonts). Put .ttf files there, then PICK one.")
+        @ConfigOption(name = "Fonts Folder", desc = "Open the folder for your fonts (config\\sky2m\\fonts). Put .ttf files there; they show in the Font dropdown a few seconds later (after closing this menu).")
         @ConfigEditorButton(buttonText = "OPEN")
         public Runnable openFolder = () -> com.epic60869.sky2m.features.misc.CustomFonts.openFolder();
     }
@@ -2305,6 +2303,11 @@ public final class Sky2MConfig extends Config {
      * MoulConfig's own button editor, except that HUD Overview also matches every registered HUD's name in the
      * settings search: HUDs are registered at runtime, so they can't be options (or search tags) of their own.
      */
+    /** Rebuilds the settings' editors (the Font dropdown lists the fonts folder as it is now). */
+    public static void rebuildEditors() {
+        if (managed != null) managed.rebuildConfigProcessor();
+    }
+
     private static io.github.notenoughupdates.moulconfig.gui.GuiOptionEditor buttonEditor(
         io.github.notenoughupdates.moulconfig.processor.ProcessedOption option, ConfigEditorButton button) {
         StructuredText text = StructuredText.of(button.buttonText());
@@ -2407,6 +2410,8 @@ public final class Sky2MConfig extends Config {
 
         var builder = new io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder<>(holder.file, Sky2MConfig.class);
         builder.customProcessor(ConfigEditorButton.class, Sky2MConfig::buttonEditor);
+        builder.customProcessor(com.epic60869.sky2m.features.misc.CustomFonts.FontDropdown.class, (option, a) ->
+            new io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorDropdown(option, com.epic60869.sky2m.features.misc.CustomFonts.choices(), false));
         managed = new ManagedConfig<>(builder);
         // 26.3: mouse keybinds saved as the plain button number move to -100 + it (A-F read as mouse buttons).
         com.epic60869.sky2m.custom.util.Input.migrateMouseBinds(managed.getInstance());
