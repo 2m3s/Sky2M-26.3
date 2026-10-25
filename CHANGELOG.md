@@ -21,6 +21,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - GitHub releases and their download are named "Sky2M Mod" instead of "SkyBalls Mod".
 
 ### Fixed
+- Cocoon Label shows over cocoons that appear together with (or just before) the "CAUGHT!" / "YOU COCOONED YOUR SLAYER BOSS" message.
 - Protected items (/s2 protect) can be put into The Hex, like the anvil and enchanting table.
 - Slayer profit: with auto-slayer, the spawn fee taken from your bank counts for the quest it starts, not the one that just ended, so the profit line no longer says "Slayer cost: unknown" (for every slayer). A purse change of a few coins at the quest start is no longer taken for the fee.
 - Slayer Boss Phase HUD: your boss no longer goes missing (with only minibosses showing) when someone else's boss is next to it, when the player picked with the boss-cycle key has no boss nearby, when "Spawned by" shows your name with a rank, or when Hypixel puts an icon before "SLAYER BOSS" and leaves out the "Spawned by" line.

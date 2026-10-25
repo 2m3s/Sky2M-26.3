@@ -12,8 +12,10 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -29,9 +31,13 @@ public final class CocoonTracker {
     /** A cocoon that never opens (you left, it despawned) stops being shown after this. */
     private static final long GIVE_UP_MS = 60_000L;
 
+    /** A cocoon can appear in the same tick as the chat line or just before it: stands this new still count. */
+    private static final long SPAWNED_BEFORE_MS = 1_500L;
+
     private static String mob;
     private static long cocoonedAt;
-    private static Set<Integer> before = Set.of();
+    /** When each armor stand around was first seen, so the cocoon is a stand that appeared around the chat line. */
+    private static final Map<Integer, Long> firstSeen = new HashMap<>();
     private static ArmorStand cocoon;
     /** Average time cocoons took to open, in ms (0 until one has been seen), and how many that is. */
     private static long openMs;
@@ -41,7 +47,10 @@ public final class CocoonTracker {
     private CocoonTracker() {}
 
     public static void init() {
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> clear());
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> {
+            clear();
+            firstSeen.clear();
+        });
         ClientTickEvents.END_CLIENT_TICK.register(CocoonTracker::tick);
         Sky2MWorldRender.register(collector -> {
             Minecraft mc = Minecraft.getInstance();
@@ -59,16 +68,22 @@ public final class CocoonTracker {
         load();
         mob = name;
         cocoonedAt = System.currentTimeMillis();
-        cocoon = null;
-        // The cocoon is a stand that isn't here yet: remember the ones that are.
-        Set<Integer> ids = new HashSet<>();
-        for (Entity e : mc.level.entitiesForRendering()) if (e instanceof ArmorStand) ids.add(e.getId());
-        before = ids;
+        // The cocoon may already be here (spawned with the chat line): look this tick too.
+        cocoon = find(mc);
     }
 
     private static void tick(Minecraft mc) {
-        if (mob == null) return;
         long now = System.currentTimeMillis();
+        if (mc.level != null && labelOn()) {
+            Set<Integer> present = new HashSet<>();
+            for (Entity e : mc.level.entitiesForRendering()) {
+                if (!(e instanceof ArmorStand)) continue;
+                present.add(e.getId());
+                firstSeen.putIfAbsent(e.getId(), now);
+            }
+            firstSeen.keySet().retainAll(present);
+        }
+        if (mob == null) return;
         if (mc.level == null || mc.player == null || now - cocoonedAt > GIVE_UP_MS) {
             clear();
             return;
@@ -87,12 +102,18 @@ public final class CocoonTracker {
         }
     }
 
-    /** The nearest new armor stand wearing a head (the cocoon model), not a name tag. */
+    /**
+     * The nearest armor stand wearing a head (the cocoon model) that appeared around the chat line. Hypixel can make
+     * it a marker stand, so markers count; name tags don't wear heads.
+     */
     private static ArmorStand find(Minecraft mc) {
         ArmorStand best = null;
         double bestDistance = FIND_RANGE * FIND_RANGE;
         for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof ArmorStand stand) || before.contains(stand.getId()) || stand.isMarker()) continue;
+            if (!(e instanceof ArmorStand stand)) continue;
+            // Not seen before this tick: it's new now.
+            long seen = firstSeen.getOrDefault(stand.getId(), System.currentTimeMillis());
+            if (seen < cocoonedAt - SPAWNED_BEFORE_MS) continue;
             if (stand.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) continue;
             double distance = stand.distanceToSqr(mc.player);
             if (distance < bestDistance) {
@@ -127,7 +148,6 @@ public final class CocoonTracker {
     private static void clear() {
         mob = null;
         cocoon = null;
-        before = Set.of();
     }
 
     private static boolean labelOn() {

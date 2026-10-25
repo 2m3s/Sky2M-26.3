@@ -33,7 +33,7 @@ public final class CombatFeatures {
     private static final Pattern ARROW_RAN_OUT = Pattern.compile("QUIVER! You have run out of (?<type>.*)s!");
     /** Any name, apostrophes included ("Arachne's Keeper"), with or without "a"/"an"/"the" before it. */
     private static final Pattern COCOON = Pattern.compile("CAUGHT! You cocooned (?:an? |the )?(?<name>.+?)!");
-    private static final Pattern COCOON_BOSS = Pattern.compile("\\s*YOU COCOONED YOUR SLAYER BOSS");
+    private static final Pattern COCOON_BOSS = Pattern.compile("^\\s*YOU COCOONED YOUR SLAYER BOSS");
     /**
      * Every rare drop line: RARE / VERY RARE / CRAZY RARE / INSANE / PRAY TO RNGESUS / PET / RNG METER drops, the
      * Garden's RARE CROP lines, RARE REWARD and OUTSTANDING CATCH, with or without spaces before them.
@@ -180,7 +180,7 @@ public final class CombatFeatures {
 
         String cocooned = null;
         if ((m = COCOON.matcher(text)).find()) cocooned = m.group("name").trim();
-        else if (COCOON_BOSS.matcher(text).matches()) cocooned = "Slayer Boss";
+        else if (COCOON_BOSS.matcher(text).find()) cocooned = "Slayer Boss";
         if (cocooned != null) {
             // Every cocoon gets its label; the title is only for the mobs the alert is set to.
             CocoonTracker.onCocoon(cocooned);
