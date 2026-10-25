@@ -5,7 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
-- Fonts (Misc > Fonts): draw all text in Inter (built in, Caxton's default font as a bitmap) or any .ttf you put in config/sky2m/fonts, picked from the Font dropdown (Default goes back to Minecraft's font), with Size, Sharpness and Height for .ttf fonts. Characters a font doesn't have, like Hypixel's icons, still use Minecraft's font.
+- Fonts (Misc > Fonts): draw all text in Inter (built in: the real Inter font, Caxton's default) or any .ttf you put in config/sky2m/fonts, picked from the Font dropdown (Default goes back to Minecraft's font), with Size, Sharpness and Height for .ttf fonts. Characters a font doesn't have, like Hypixel's icons, still use Minecraft's font.
 - Cocoon Label (Combat > Cocoon Alert, on by default): every mob you cocoon is named over its cocoon with the time until it hatches (once Sky2M has seen one hatch), even when the alert title is off or only for important mobs.
 - Highlight Auctions (Inventory, on by default, from SkyHanni): in Manage Auctions your sold auctions are green and expired ones red; "Highlight Underbid BINs" (off) also marks BINs priced above the item's value.
 - Pet Rarity (Chat > Chat Tweaks, on by default): pet drop lines say the pet's rarity in its colour, "PET DROP! Epic Slug" in purple or "Legendary Slug" in gold, from SkyHanni. Also for pets in RARE DROP! and fishing catch lines and Sky2M's +Drop message; hover and click parts of the message are kept.

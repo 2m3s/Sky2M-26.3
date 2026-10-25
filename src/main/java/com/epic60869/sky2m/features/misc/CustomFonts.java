@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
- * Misc > Fonts: the font all text is drawn in. Default is Minecraft's; Inter is built in (the bitmap Inter sized like
- * Caxton's default, {@code sky2m:inter}); anything else is a .ttf from config/sky2m/fonts. The chosen font goes in
+ * Misc > Fonts: the font all text is drawn in. Default is Minecraft's; Inter is built in (Inter-Regular.ttf, Caxton's
+ * default font); anything else is a .ttf from config/sky2m/fonts. The chosen font goes in
  * front of {@code minecraft:default} when the fonts load ({@code Sky2MCustomFontMixin}), so a character it doesn't
  * have (Hypixel's icons, other scripts) still comes from Minecraft's fonts.
  */
@@ -43,7 +43,7 @@ public final class CustomFonts {
     public static final String INTER = "Inter";
 
     private static final Identifier DEFAULT_FONT = Identifier.withDefaultNamespace("default");
-    private static final Identifier INTER_FONT = Identifier.fromNamespaceAndPath("sky2m", "inter");
+    private static final String INTER_TTF = "/assets/sky2m/font/inter.ttf";
 
     /** The .ttf loaded for the font sets being built, and the one the font sets in use were built with. */
     private static volatile GlyphProvider loaded;
@@ -154,19 +154,12 @@ public final class CustomFonts {
         loaded = null;
         String choice = selected();
         if (choice.equals(DEFAULT) || !fonts.containsKey(DEFAULT_FONT)) return fonts;
-        List<GlyphProvider.Conditional> front;
-        if (choice.equals(INTER)) {
-            front = fonts.get(INTER_FONT);
-            if (front == null) {
-                System.out.println("[Sky2M] Font: Inter wasn't loaded (sky2m:inter), using Minecraft's font");
-                return fonts;
-            }
-        } else {
-            GlyphProvider ttf = loadTtf(folder().resolve(choice));
-            if (ttf == null) return fonts;
-            loaded = ttf;
-            front = List.of(new GlyphProvider.Conditional(ttf, FontOption.Filter.ALWAYS_PASS));
-        }
+        GlyphProvider ttf = choice.equals(INTER)
+            ? loadTtf(INTER, () -> CustomFonts.class.getResourceAsStream(INTER_TTF))
+            : loadTtf(choice, () -> Files.newInputStream(folder().resolve(choice)));
+        if (ttf == null) return fonts;
+        loaded = ttf;
+        List<GlyphProvider.Conditional> front = List.of(new GlyphProvider.Conditional(ttf, FontOption.Filter.ALWAYS_PASS));
         // These lists run lowest priority first (the font set is built from the list reversed), so the chosen font
         // goes last to come before Minecraft's glyphs.
         List<GlyphProvider.Conditional> merged = new ArrayList<>(fonts.get(DEFAULT_FONT));
@@ -183,14 +176,19 @@ public final class CustomFonts {
         inUse = loaded;
     }
 
+    private interface FontSource {
+        InputStream open() throws IOException;
+    }
+
     /** A .ttf as Minecraft's own "ttf" font provider loads one, with the Size, Sharpness and Height settings. */
-    private static GlyphProvider loadTtf(Path file) {
+    private static GlyphProvider loadTtf(String name, FontSource source) {
         Sky2MConfig.Fonts c = config();
-        float size = c == null ? 10f : c.size;
-        float oversample = c == null ? 4f : c.sharpness;
+        float size = c == null ? 9f : c.size;
+        float oversample = c == null ? 6f : c.sharpness;
         float shift = c == null ? 1f : c.height;
         ByteBuffer buffer = null;
-        try (InputStream in = Files.newInputStream(file)) {
+        try (InputStream in = source.open()) {
+            if (in == null) throw new IOException("not found");
             buffer = TextureUtil.readResource(in);
             synchronized (FreeTypeUtil.LIBRARY_LOCK) {
                 FT_Face face;
@@ -208,7 +206,7 @@ public final class CustomFonts {
                 return new TrueTypeGlyphProvider(buffer, face, size, oversample, 0f, shift, "");
             }
         } catch (Exception e) {
-            System.err.println("[Sky2M] Could not load the font " + file.getFileName() + ": " + e.getMessage());
+            System.err.println("[Sky2M] Could not load the font " + name + ": " + e.getMessage());
             if (buffer != null) MemoryUtil.memFree(buffer);
             return null;
         }

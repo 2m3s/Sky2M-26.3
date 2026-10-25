@@ -92,11 +92,11 @@ Sky2M's current chat display (`Sky2MCurrentChat.java`) follows SkyHanni's Curren
 
 ## Inter font
 
-The built-in Inter font (`assets/sky2m/textures/font/inter.png`, used by Misc > Fonts) is a bitmap of Inter, sized like Caxton's default font:
+The built-in Inter font (`assets/sky2m/font/inter.ttf`, used by Misc > Fonts) is Inter-Regular.ttf from Inter 4.1, Caxton's default font:
 
 - https://github.com/rsms/inter
-- Copyright (c) 2016-2020 The Inter Project Authors. "Inter" is a trademark of Rasmus Andersson.
-- License: SIL Open Font License, Version 1.1 (the full text is in `assets/sky2m/textures/font/inter-license.txt`)
+- Copyright (c) 2016 The Inter Project Authors. "Inter" is a trademark of Rasmus Andersson.
+- License: SIL Open Font License, Version 1.1 (the full text is in `assets/sky2m/font/inter-license.txt`)
 
 ## SkyHanni Compact Bestiary and SkyBlock XP in Chat
 

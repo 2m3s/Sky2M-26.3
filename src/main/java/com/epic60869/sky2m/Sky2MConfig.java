@@ -124,7 +124,7 @@ public final class Sky2MConfig extends Config {
 
         /** Which changed defaults this config has already been given (see migrateConfigShape). */
         @Expose
-        public int defaultsVersion = 6;
+        public int defaultsVersion = 7;
     }
 
     public static final class Gui {
@@ -2014,17 +2014,17 @@ public final class Sky2MConfig extends Config {
         public String font = "Default";
 
         @Expose
-        @ConfigOption(name = "Size", desc = "How big a .ttf font is drawn (Minecraft's text is about 8). Press Apply after changing it.")
+        @ConfigOption(name = "Size", desc = "How big Inter or a .ttf font is drawn (Minecraft's text is about 8; 9 matches it best). Press Apply after changing it.")
         @ConfigEditorSlider(minValue = 6f, maxValue = 16f, minStep = 0.5f)
-        public float size = 10f;
+        public float size = 9f;
 
         @Expose
-        @ConfigOption(name = "Sharpness", desc = "How finely a .ttf font is rendered: higher is sharper on big GUI scales and uses more memory. Press Apply after changing it.")
+        @ConfigOption(name = "Sharpness", desc = "How finely Inter or a .ttf font is rendered: higher is sharper on big GUI scales and uses more memory. Press Apply after changing it.")
         @ConfigEditorSlider(minValue = 1f, maxValue = 8f, minStep = 1f)
-        public float sharpness = 4f;
+        public float sharpness = 6f;
 
         @Expose
-        @ConfigOption(name = "Height", desc = "Moves a .ttf font's letters down (or up when negative) to line up with Minecraft's. Press Apply after changing it.")
+        @ConfigOption(name = "Height", desc = "Moves Inter's or a .ttf font's letters down (or up when negative) to line up with Minecraft's. Press Apply after changing it.")
         @ConfigEditorSlider(minValue = -3f, maxValue = 3f, minStep = 0.5f)
         public float height = 1f;
 
@@ -2786,6 +2786,15 @@ public final class Sky2MConfig extends Config {
             // The cocoon title is back to important mobs only; every cocoon still gets its label.
             childObject(childObject(root, "combat"), "cocoonAlert").addProperty("onlyImportant", true);
             general.addProperty("defaultsVersion", 6);
+            changed = true;
+        }
+        if (defaults < 7) {
+            // Misc > Fonts: the built-in Inter is now the real Inter .ttf, which matches Minecraft's text at size 9 and
+            // sharpness 6; settings still on the first defaults (10 and 4) get the new ones.
+            JsonObject fonts = childObject(childObject(root, "misc"), "fonts");
+            if (!fonts.has("size") || fonts.get("size").getAsFloat() == 10f) fonts.addProperty("size", 9f);
+            if (!fonts.has("sharpness") || fonts.get("sharpness").getAsFloat() == 4f) fonts.addProperty("sharpness", 6f);
+            general.addProperty("defaultsVersion", 7);
             changed = true;
         }
 
