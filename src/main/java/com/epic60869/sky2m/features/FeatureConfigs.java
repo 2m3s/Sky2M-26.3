@@ -1113,11 +1113,6 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         public boolean dropMessage = false;
 
-        @Expose
-        @ConfigOption(name = "RNG Drop Title", desc = "Show RNG drops (PRAY TO RNGESUS, RNG METER, slayer, Diana and fishing RNG items, dyes) as a big title in the middle of the screen that fades, like SkyHanni, with the item and its value.")
-        @ConfigEditorBoolean
-        public boolean rngTitle = false;
-
         /** Remembered by the /s2 rng screen. */
         @Expose
         public String rngMagicFind = "";

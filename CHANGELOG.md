@@ -21,6 +21,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - GitHub releases and their download are named "Sky2M Mod" instead of "SkyBalls Mod".
 
 ### Removed
+- Remove the RNG Drop Title option: RNG drops show on the RNG HUD only.
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
