@@ -74,7 +74,16 @@ public final class SlayerPhaseTimer {
             String text = message.text().trim();
             if (text.equals("SLAYER QUEST STARTED!")) {
                 reset();
-            } else if (text.equals("NICE! SLAYER BOSS SLAIN!") || text.startsWith("YOU COCOONED YOUR SLAYER BOSS")) {
+            } else if (text.equals("NICE! SLAYER BOSS SLAIN!")) {
+                if (active) {
+                    finish(System.currentTimeMillis());
+                    killed = true;
+                }
+            } else if (text.startsWith("YOU COCOONED YOUR SLAYER BOSS")) {
+                // A cocooned boss hatches back out a few seconds later: that time is downtime, not the end.
+                if (active && gapStart == 0) gapStart = System.currentTimeMillis();
+            } else if (text.equals("SLAYER QUEST COMPLETE!")) {
+                // The quest ends once a cocooned boss has hatched and died, with no "SLAYER BOSS SLAIN!".
                 if (active) {
                     finish(System.currentTimeMillis());
                     killed = true;
@@ -90,7 +99,7 @@ public final class SlayerPhaseTimer {
         long now = System.currentTimeMillis();
         if (text == null) {
             // The health nametag can disappear during Tarantula's Conjoined Brood transition.
-            // A missing tag alone never ends a fight; wait for Hypixel's boss-slain/cocoon message.
+            // A missing tag alone never ends a fight; wait for "SLAYER BOSS SLAIN!" or the quest completing.
             if (killed) killed = false;
             else if (active && gapStart == 0) gapStart = now;
             return;

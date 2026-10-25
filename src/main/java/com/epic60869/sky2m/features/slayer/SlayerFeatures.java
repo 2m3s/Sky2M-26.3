@@ -159,10 +159,27 @@ public final class SlayerFeatures {
     private static void updateBossLines(Minecraft mc) {
         String name = mc.player.getGameProfile().name().toLowerCase(Locale.ROOT);
         List<Entity> owners = ownerTags(mc);
-        Entity ownOwner = owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), name)).findFirst().orElse(null);
-        if (ownOwner == null) ownOwner = unclaimedBossLabel(mc, owners);
+        // Your "Spawned by" tag with your boss's health next to it. One without (a cocoon's leftover tag, while the
+        // boss that hatched from it has none) doesn't count, and doesn't hide the boss's label from the search below.
+        Entity ownOwner = null;
+        List<Component> ownLines = List.of();
+        List<Entity> others = new ArrayList<>();
+        for (Entity entity : owners) {
+            if (!isOwnerTag(nametag(entity).getString(), name)) {
+                others.add(entity);
+            } else if (ownLines.isEmpty()) {
+                List<Component> health = bossHealthLines(mc, entity);
+                if (!health.isEmpty()) {
+                    ownOwner = entity;
+                    ownLines = health;
+                }
+            }
+        }
+        if (ownOwner == null) {
+            ownOwner = unclaimedBossLabel(mc, others);
+            if (ownOwner != null) ownLines = bossHealthLines(mc, ownOwner);
+        }
         boss = ownOwner == null ? null : mobNear(mc, ownOwner);
-        List<Component> ownLines = ownOwner == null ? List.of() : bossHealthLines(mc, ownOwner);
         String ownText = ownLines.isEmpty() ? null : Sky2MLocation.strip(ownLines.get(0).getString());
         SlayerTimes.onBoss(ownText);
         SlayerPhaseTimer.onBoss(ownText);
