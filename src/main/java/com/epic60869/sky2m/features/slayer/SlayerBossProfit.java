@@ -31,8 +31,8 @@ import java.util.regex.Pattern;
  * the slayer profit trackers (SkyHanni's SlayerProfitTracker), so the two agree: only items on that boss's own slayer
  * drop list (SkyHanni's SlayerProfitTrackerItems; nothing counts until the lists have loaded), "[Sacks]" changes within
  * 10 seconds of a Sack menu are you moving items, not drops, and the cost is the spawn cost actually paid
- * ({@link SlayerQuestCost}: the purse drop at the quest start, or auto-slayer's bank charge; "unknown" and 0 if neither
- * was seen). Drops are what came into your inventory since your boss spawned, what went straight into your sacks
+ * ({@link SlayerQuestCost}: the purse drop at the quest start, or auto-slayer's bank charge), checked against and
+ * snapped to the slayer's price ({@link SlayerCosts}); when neither was seen, the tier's last price or the wiki's. Drops are what came into your inventory since your boss spawned, what went straight into your sacks
  * (Hypixel's "[Sacks]" messages) and what it showed on the ground when it died (whichever is more for each item). The
  * chat line goes out once the drops on the ground have landed (or the "[Sacks]" message with them comes), at most
  * 30 seconds after the kill; the HUD shows from the moment the boss dies and fills in as later drops arrive, for up to
@@ -89,9 +89,9 @@ public final class SlayerBossProfit {
             this.quest = quest;
         }
 
-        /** The spawn cost paid, or -1 while it isn't known. */
+        /** The spawn cost paid: the one seen being paid, else the tier's last price or the wiki's ({@link SlayerCosts}). */
         long cost() {
-            return SlayerQuestCost.costOf(quest);
+            return SlayerCosts.price(boss, SlayerQuestCost.costOf(quest));
         }
     }
 
@@ -498,7 +498,7 @@ public final class SlayerBossProfit {
         }
         // The quest's fee is still being read off the purse (a quick kill or an instant restart): wait for it, up to 5
         // seconds after the kill, so the profit has the cost taken out instead of counting it as 0.
-        if (!closing && k.cost() < 0 && SlayerQuestCost.measuring(k.quest) && System.currentTimeMillis() - k.at < 5_000L) return;
+        if (!closing && SlayerQuestCost.costOf(k.quest) < 0 && SlayerQuestCost.measuring(k.quest) && System.currentTimeMillis() - k.at < 5_000L) return;
         if (last.cost() != k.cost()) {
             last = new Result(last.boss(), last.at(), last.lines(), last.drops(), k.cost(), last.counting(), last.listLoaded());
         }
