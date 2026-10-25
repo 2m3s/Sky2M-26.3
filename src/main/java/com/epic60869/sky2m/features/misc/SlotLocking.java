@@ -144,14 +144,14 @@ public final class SlotLocking {
             || title.contains("create bin auction") || title.contains("create auction");
     }
 
-    /** Menus where moving a protected item is fine: storage, equipment and crafting menus. */
+    /** Menus where moving a protected item is fine: storage, equipment and crafting menus, and the Hex (it applies upgrades to the item). */
     private static boolean isSafeMenu(AbstractContainerScreen<?> screen) {
         String title = net.minecraft.ChatFormatting.stripFormatting(screen.getTitle().getString());
         if (title == null) return false;
         title = title.toLowerCase(java.util.Locale.ROOT);
         for (String safe : new String[] {"chest", "ender", "backpack", "bag", "storage", "sack", "wardrobe", "equipment",
             "loadout", "pets", "anvil", "reforge", "forge", "craft", "enchant", "accessory", "quiver", "vault", "museum",
-            "salvage", "dye", "rune", "skin", "upgrade", "auction", "minion", "hopper"}) {
+            "salvage", "dye", "rune", "skin", "upgrade", "auction", "minion", "hopper", "hex"}) {
             if (title.contains(safe)) return true;
         }
         return false;
