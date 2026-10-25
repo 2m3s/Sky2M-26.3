@@ -158,8 +158,9 @@ public final class CustomFonts {
             ? loadTtf(INTER, () -> CustomFonts.class.getResourceAsStream(INTER_TTF))
             : loadTtf(choice, () -> Files.newInputStream(folder().resolve(choice)));
         if (ttf == null) return fonts;
-        loaded = ttf;
-        List<GlyphProvider.Conditional> front = List.of(new GlyphProvider.Conditional(ttf, FontOption.Filter.ALWAYS_PASS));
+        GlyphProvider textOnly = new TextOnly(ttf);
+        loaded = textOnly;
+        List<GlyphProvider.Conditional> front = List.of(new GlyphProvider.Conditional(textOnly, FontOption.Filter.ALWAYS_PASS));
         // These lists run lowest priority first (the font set is built from the list reversed), so the chosen font
         // goes last to come before Minecraft's glyphs.
         List<GlyphProvider.Conditional> merged = new ArrayList<>(fonts.get(DEFAULT_FONT));
@@ -174,6 +175,35 @@ public final class CustomFonts {
     public static void afterApply() {
         if (inUse != null && inUse != loaded) inUse.close();
         inUse = loaded;
+    }
+
+    /**
+     * The chosen font only draws text: letters, digits and punctuation (Latin, Greek and Cyrillic). Symbols stay with
+     * Minecraft's fonts and Hypixel's resource pack, which draws its stat icons (❤ ❈ ✦ ☠ ⚔ ...) over those characters:
+     * fonts like Inter have their own versions of some of them, which would replace Hypixel's.
+     */
+    private record TextOnly(GlyphProvider font) implements GlyphProvider {
+        static boolean isText(int cp) {
+            return cp >= 0x20 && cp <= 0x7E || cp >= 0xA0 && cp <= 0x24F || cp >= 0x370 && cp <= 0x52F
+                || cp >= 0x2010 && cp <= 0x2027 || cp >= 0x2030 && cp <= 0x205E;
+        }
+
+        @Override
+        public com.mojang.blaze3d.font.UnbakedGlyph getGlyph(int cp) {
+            return isText(cp) ? font.getGlyph(cp) : null;
+        }
+
+        @Override
+        public it.unimi.dsi.fastutil.ints.IntSet getSupportedGlyphs() {
+            it.unimi.dsi.fastutil.ints.IntSet out = new it.unimi.dsi.fastutil.ints.IntOpenHashSet();
+            for (int cp : font.getSupportedGlyphs()) if (isText(cp)) out.add(cp);
+            return out;
+        }
+
+        @Override
+        public void close() {
+            font.close();
+        }
     }
 
     private interface FontSource {

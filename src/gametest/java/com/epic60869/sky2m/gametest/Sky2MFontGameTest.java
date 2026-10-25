@@ -11,12 +11,18 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
  */
 public class Sky2MFontGameTest implements FabricClientGameTest {
     private static final String SAMPLE = "Sky2M Fonts: The quick brown fox";
+    /** Hypixel's stat and status symbols: they must stay as Minecraft (and Hypixel's resource pack) draw them. */
+    private static final String SYMBOLS = "❤❈✦❁☣☠⚔✎⫽✯⸕⏣☘";
 
     @Override
     public void runTest(ClientGameTestContext ctx) {
         int before = ctx.computeOnClient(mc -> mc.font.width(SAMPLE));
+        int symbolsBefore = ctx.computeOnClient(mc -> mc.font.width(SYMBOLS));
         pick(ctx, "Inter");
         int inter = ctx.computeOnClient(mc -> mc.font.width(SAMPLE));
+        int symbolsInter = ctx.computeOnClient(mc -> mc.font.width(SYMBOLS));
+        System.out.println("[Sky2M gametest] symbol width: Default " + symbolsBefore + ", Inter " + symbolsInter);
+        if (symbolsInter != symbolsBefore) throw new AssertionError("Inter changed Hypixel's stat symbols (" + symbolsInter + " vs " + symbolsBefore + ")");
         System.out.println("[Sky2M gametest] screenshot 30-font-inter -> " + ctx.takeScreenshot("30-font-inter"));
         pick(ctx, "Default");
         int after = ctx.computeOnClient(mc -> mc.font.width(SAMPLE));
