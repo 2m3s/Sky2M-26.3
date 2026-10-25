@@ -231,6 +231,7 @@ public final class ProfitTracker {
 
     public static void init(Path configDir) {
         file = configDir.resolve("sky2m").resolve("profit-trackers.json");
+        ProfitItemPrices.init(configDir);
         loadPresets();
         loadSkyHanniItems();
         SlayerArea.init();
@@ -920,7 +921,7 @@ public final class ProfitTracker {
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof AbstractContainerScreen<?>)) return;
             ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> ProfitTrackerHud.renderInScreen(graphics, mouseX, mouseY));
-            ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> !ProfitTrackerHud.click(event.x(), event.y()));
+            ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> !ProfitTrackerHud.click(event.x(), event.y(), event.button()));
             ScreenMouseEvents.allowMouseScroll(screen).register((s, mouseX, mouseY, horizontal, vertical) -> !ProfitTrackerHud.scroll(mouseX, mouseY, vertical));
         });
     }

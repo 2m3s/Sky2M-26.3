@@ -118,7 +118,7 @@ public final class SessionShare {
         List<JsonObject> drops = new ArrayList<>();
         for (Map.Entry<String, Long> e : items) {
             if (e.getValue() == null || e.getValue() <= 0) continue;
-            double unit = Sky2MPriceTooltip.price(e.getKey(), source);
+            double unit = ProfitItemPrices.price(e.getKey(), source);
             JsonObject d = new JsonObject();
             d.addProperty("id", e.getKey());
             d.addProperty("name", ProfitTrackerHud.name(e.getKey()));
