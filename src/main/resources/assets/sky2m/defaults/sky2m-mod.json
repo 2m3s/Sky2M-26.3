@@ -5,7 +5,7 @@
     "warnKeyConflicts": true,
     "performanceWarnings": true,
     "errorReporter": true,
-    "defaultsVersion": 4,
+    "defaultsVersion": 5,
     "updateNotifications": true
   },
   "chat": {
@@ -107,6 +107,9 @@
       "bazaar": true,
       "auctionHouse": true,
       "recipes": true
+    },
+    "social": {
+      "profileIcons": true
     }
   },
   "online": {

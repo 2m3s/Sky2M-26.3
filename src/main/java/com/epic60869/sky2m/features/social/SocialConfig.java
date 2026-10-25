@@ -28,7 +28,7 @@ public final class SocialConfig {
     @Expose
     @ConfigOption(name = "Profile Icons In Chat", desc = "Show a player's profile icon (Ironman, Stranded or Bingo) next to their name in chat messages that don't already show it, when the tab list showed it for them.")
     @ConfigEditorBoolean
-    public boolean profileIcons = false;
+    public boolean profileIcons = true;
 
     public static SocialConfig current() {
         Sky2MConfig c = Sky2MConfig.current();

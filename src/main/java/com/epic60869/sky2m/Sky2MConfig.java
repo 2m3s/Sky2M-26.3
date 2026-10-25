@@ -124,7 +124,7 @@ public final class Sky2MConfig extends Config {
 
         /** Which changed defaults this config has already been given (see migrateConfigShape). */
         @Expose
-        public int defaultsVersion = 4;
+        public int defaultsVersion = 5;
     }
 
     public static final class Gui {
@@ -2701,6 +2701,12 @@ public final class Sky2MConfig extends Config {
             JsonObject table = childObject(inventory, "experimentalTable");
             for (String key : new String[]{"chronomatron", "superpairs", "ultrasequencer"}) table.addProperty(key, true);
             general.addProperty("defaultsVersion", 4);
+            changed = true;
+        }
+        if (defaults < 5) {
+            // Profile Icons In Chat is on by default from 1.0.4; switch it on once for settings saved before.
+            childObject(childObject(root, "chat"), "social").addProperty("profileIcons", true);
+            general.addProperty("defaultsVersion", 5);
             changed = true;
         }
 

@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Changed
+- Profile Icons In Chat (Ironman ♲, Bingo Ⓑ, Stranded ☀) is now on by default, also for settings saved before.
 - GitHub releases and their download are named "Sky2M Mod" instead of "SkyBalls Mod".
 
 ## 1.0.3
