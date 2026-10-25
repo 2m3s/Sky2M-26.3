@@ -124,7 +124,7 @@ public final class Sky2MConfig extends Config {
 
         /** Which changed defaults this config has already been given (see migrateConfigShape). */
         @Expose
-        public int defaultsVersion = 7;
+        public int defaultsVersion = 8;
     }
 
     public static final class Gui {
@@ -2009,14 +2009,14 @@ public final class Sky2MConfig extends Config {
     public static final class Fonts {
         /** "Default" (Minecraft's font), "Inter", or a .ttf file name in config/sky2m/fonts. */
         @Expose
-        @ConfigOption(name = "Font", desc = "The font all text is drawn in: Default (Minecraft's), Inter (built in, like Caxton's default) or a .ttf from the fonts folder. Characters a font doesn't have, like Hypixel's icons, still use Minecraft's.")
+        @ConfigOption(name = "Font", desc = "The font all text is drawn in: Default (Minecraft's), Inter (built in, like Caxton's default) or a .ttf from the fonts folder. Only letters, digits and punctuation change: symbols like Hypixel's stat icons keep their look.")
         @com.epic60869.sky2m.features.misc.CustomFonts.FontDropdown
         public String font = "Default";
 
         @Expose
-        @ConfigOption(name = "Size", desc = "How big Inter or a .ttf font is drawn (Minecraft's text is about 8; 9 matches it best). Press Apply after changing it.")
+        @ConfigOption(name = "Size", desc = "How big Inter or a .ttf font is drawn (7.5 is Caxton's size; Minecraft's text is about 9). Press Apply after changing it.")
         @ConfigEditorSlider(minValue = 6f, maxValue = 16f, minStep = 0.5f)
-        public float size = 9f;
+        public float size = 7.5f;
 
         @Expose
         @ConfigOption(name = "Sharpness", desc = "How finely Inter or a .ttf font is rendered: higher is sharper on big GUI scales and uses more memory. Press Apply after changing it.")
@@ -2795,6 +2795,13 @@ public final class Sky2MConfig extends Config {
             if (!fonts.has("size") || fonts.get("size").getAsFloat() == 10f) fonts.addProperty("size", 9f);
             if (!fonts.has("sharpness") || fonts.get("sharpness").getAsFloat() == 4f) fonts.addProperty("sharpness", 6f);
             general.addProperty("defaultsVersion", 7);
+            changed = true;
+        }
+        if (defaults < 8) {
+            // Misc > Fonts: Inter is drawn at Caxton's size, 7.5; settings still on the previous default (9) get it.
+            JsonObject fonts = childObject(childObject(root, "misc"), "fonts");
+            if (!fonts.has("size") || fonts.get("size").getAsFloat() == 9f) fonts.addProperty("size", 7.5f);
+            general.addProperty("defaultsVersion", 8);
             changed = true;
         }
 

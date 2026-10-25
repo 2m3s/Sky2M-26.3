@@ -5,7 +5,7 @@
     "warnKeyConflicts": true,
     "performanceWarnings": true,
     "errorReporter": true,
-    "defaultsVersion": 7,
+    "defaultsVersion": 8,
     "updateNotifications": true
   },
   "chat": {
