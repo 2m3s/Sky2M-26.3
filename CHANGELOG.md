@@ -14,6 +14,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- RNG HUD names drops in the item's own rarity colour from the item list first, like SkyHanni (Shriveled Wasp Legendary gold); the chat message's colour is only a fallback.
 - Cocoon Alert is on by default. Its title is still only for slayer bosses, elusive mobs and important bosses; turn off "Only Important Mobs" to get it for every mob you cocoon (like "CAUGHT! You cocooned a Alligator!").
 - Profile Icons In Chat (Ironman ♲, Bingo Ⓑ, Stranded ☀) is now on by default, also for settings saved before.
 - Item Pickup Log works like SkyHanni's: item names in their rarity colour (sacks, shards, pets and enchanted books too), the coin value line on top, what you buy or move while a menu is open shows once it closes, nothing is logged for 2 seconds after a world change, each item's + and - lines expire together, and Alignment is now Top, Center or Bottom (which way the log grows).

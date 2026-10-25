@@ -145,13 +145,16 @@ public final class Sky2MRngHud {
         return PADDING + drops.size() * LINE_HEIGHT;
     }
 
-    /** Big drops in their chat colour; slug pets in their rarity colour (Epic purple, Legendary gold) if turned on; everything else the Drop Colour. */
+    /**
+     * The drop's rarity colour, as SkyHanni colours it: slug pets in their rarity (Epic purple, Legendary gold) if
+     * turned on, then the item's own rarity from the item repo (Shriveled Wasp is Legendary gold, Lucky Clover Core
+     * Epic purple), then the colour its name had in the chat message (pets, which the repo lists per rarity), then the
+     * Drop Colour.
+     */
     private static int rarityColour(FarmingRngTracker.Drop drop) {
-        if (drop.colour() != -1) return drop.colour();
         boolean pets = config() == null || config().farming.rng.petRarityColours;
         if (pets && drop.rarity().equals("LEGENDARY")) return 0xFFFFAA00;
         if (pets && drop.rarity().equals("EPIC")) return 0xFFAA00AA;
-        // Other drops in the item's own rarity colour, like SkyHanni (Lucky Clover Core is Epic purple).
         Integer tier = ITEM_COLOURS.computeIfAbsent(drop.name().toLowerCase(Locale.ROOT), name -> {
             String id = com.epic60869.sky2m.custom.RepoItems.idByName(drop.name());
             String rarity = id == null ? null : com.epic60869.sky2m.custom.RepoItems.tier(id);
@@ -159,6 +162,7 @@ public final class Sky2MRngHud {
             return rgb == null ? null : 0xFF000000 | rgb.getValue();
         });
         if (tier != null) return tier;
+        if (drop.colour() != -1) return drop.colour();
         return colour(config() == null ? null : config().farming.rng.dropColour, 0xFF55FFFF);
     }
 
