@@ -208,6 +208,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.misc.SacksValue.init(); lap("SacksValue.init");
         com.epic60869.sky2m.features.misc.StashCompact.init(); lap("StashCompact.init");
         com.epic60869.sky2m.features.misc.CompactBestiary.init(); lap("CompactBestiary.init");
+        com.epic60869.sky2m.features.misc.SkyBlockXpChat.init(); lap("SkyBlockXpChat.init");
         com.epic60869.sky2m.features.garden.visitor.GardenVisitors.init(configDir); lap("GardenVisitors.init");
         com.epic60869.sky2m.features.misc.ItemCooldowns.init(); lap("ItemCooldowns.init");
         com.epic60869.sky2m.features.misc.AbilityTimers.init(); lap("AbilityTimers.init");

@@ -440,6 +440,12 @@ public final class Sky2MConfig extends Config {
         public boolean compactBestiary = true;
 
         @Expose
+        @ConfigOption(name = "SkyBlock XP in Chat", desc = "SkyHanni's SkyBlock XP in Chat: also send the \"+5 SkyBlock XP (Accessories) (35/100)\" shown in the action bar to chat.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 201)
+        public boolean skyBlockXpInChat = true;
+
+        @Expose
         @ConfigOption(name = "Pet Rarity", desc = "Say a pet's rarity in Hypixel's pet drop lines, in its colour: \"PET DROP! Epic Slug\" (purple), \"Legendary Slug\" (gold). Also for pets in RARE DROP! and fishing catch lines, and Sky2M's +Drop message.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 201)
