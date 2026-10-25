@@ -30,7 +30,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
-- Slayer profit always takes the quest's cost out: the wiki's price for each slayer and tier (Riftstalker costs motes, so 0) is the anchor, a cost seen being paid is snapped to it or a known discount (4% off, Aatrox's half price) and remembered, and when no cost was seen the tier's last price is used instead of "unknown".
+- Slayer profit always takes the quest's cost out, as the wiki's price for the slayer and tier (100k for a T5 Tarantula, whatever discount you got; Riftstalker costs motes, so 0), instead of "unknown" or a misread purse change.
 - Cocoon Label counts down to the hatch from the first cocoon (about 6.5s until one has been timed), and says "Hatching..." if it runs over.
 - The boss HUD finds your slayer boss again after it hatches from a cocoon (its "Spawned by" tag stays with the cocoon).
 - Cocoon Label shows over cocoons that appear together with (or just before) the "CAUGHT!" / "YOU COCOONED YOUR SLAYER BOSS" message.

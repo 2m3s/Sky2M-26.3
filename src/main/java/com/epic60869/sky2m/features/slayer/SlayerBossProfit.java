@@ -30,9 +30,8 @@ import java.util.regex.Pattern;
  * drops' total, the quest's cost and what's left, and the same in the Boss Profit HUD. It counts by the same rules as
  * the slayer profit trackers (SkyHanni's SlayerProfitTracker), so the two agree: only items on that boss's own slayer
  * drop list (SkyHanni's SlayerProfitTrackerItems; nothing counts until the lists have loaded), "[Sacks]" changes within
- * 10 seconds of a Sack menu are you moving items, not drops, and the cost is the spawn cost actually paid
- * ({@link SlayerQuestCost}: the purse drop at the quest start, or auto-slayer's bank charge), checked against and
- * snapped to the slayer's price ({@link SlayerCosts}); when neither was seen, the tier's last price or the wiki's. Drops are what came into your inventory since your boss spawned, what went straight into your sacks
+ * 10 seconds of a Sack menu are you moving items, not drops, and the cost is the wiki's price for the slayer and
+ * tier ({@link SlayerCosts}), whatever was paid. Drops are what came into your inventory since your boss spawned, what went straight into your sacks
  * (Hypixel's "[Sacks]" messages) and what it showed on the ground when it died (whichever is more for each item). The
  * chat line goes out once the drops on the ground have landed (or the "[Sacks]" message with them comes), at most
  * 30 seconds after the kill; the HUD shows from the moment the boss dies and fills in as later drops arrive, for up to
@@ -89,7 +88,7 @@ public final class SlayerBossProfit {
             this.quest = quest;
         }
 
-        /** The spawn cost paid: the one seen being paid, else the tier's last price or the wiki's ({@link SlayerCosts}). */
+        /** The quest's cost: the wiki's price for the slayer and tier ({@link SlayerCosts}). */
         long cost() {
             return SlayerCosts.price(boss, SlayerQuestCost.costOf(quest));
         }
