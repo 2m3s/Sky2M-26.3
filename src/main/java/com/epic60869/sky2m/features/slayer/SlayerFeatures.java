@@ -98,7 +98,11 @@ public final class SlayerFeatures {
 
     private static boolean isOwnerTag(String text, String name) {
         String owner = ownerName(text);
-        return owner != null && owner.equalsIgnoreCase(name);
+        if (owner == null) return false;
+        if (owner.equalsIgnoreCase(name)) return true;
+        // "Spawned by: [MVP+] Name" or a trailing symbol: the name is one of its words.
+        for (String word : owner.split("[\\s\\[\\]]+")) if (word.equalsIgnoreCase(name)) return true;
+        return false;
     }
 
     private static String ownerName(String text) {
@@ -163,9 +167,12 @@ public final class SlayerFeatures {
         SlayerTimes.onBoss(ownText);
         SlayerPhaseTimer.onBoss(ownText);
 
-        String targetOwner = selectedBossOwner == null ? name : selectedBossOwner;
-        Entity owner = targetOwner.equals(name) ? ownOwner
-            : owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), targetOwner)).findFirst().orElse(null);
+        String picked = selectedBossOwner == null ? name : selectedBossOwner;
+        Entity pickedOwner = picked.equals(name) ? ownOwner
+            : owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), picked)).findFirst().orElse(null);
+        // The player picked with the cycle key has no boss here (killed, gone, left): show yours instead.
+        String targetOwner = pickedOwner == null ? name : picked;
+        Entity owner = pickedOwner == null ? ownOwner : pickedOwner;
         List<Component> lines = new ArrayList<>();
         if (owner != null) {
             // Someone else's boss picked with the cycle key: everything that follows "the boss" follows theirs.
@@ -202,13 +209,16 @@ public final class SlayerFeatures {
             Component tag = nametag(e);
             if (tag == null) return false;
             for (Component line : splitLines(tag)) {
-                if (Sky2MLocation.strip(line.getString()).trim().equalsIgnoreCase("SLAYER BOSS")) return true;
+                if (isLabel(line, "SLAYER BOSS")) return true;
             }
             return false;
         });
         labels.sort(Comparator.comparingDouble(mc.player::distanceToSqr));
         for (Entity label : labels) {
-            if (owners.stream().anyMatch(owner -> owner.distanceToSqr(label) < 4 * 4)) continue;
+            // Someone else's boss: a "Spawned by" line is next to it and closer to it than to any other boss label.
+            // Being near another player's boss alone doesn't make yours theirs.
+            if (owners.stream().anyMatch(owner -> owner.distanceToSqr(label) < 4 * 4
+                && labels.stream().allMatch(other -> owner.distanceToSqr(label) <= owner.distanceToSqr(other)))) continue;
             if (!bossHealthLines(mc, label).isEmpty()) return label;
         }
         return null;
@@ -219,10 +229,18 @@ public final class SlayerFeatures {
         AABB area = anchor.getBoundingBox().inflate(1.5, 3, 1.5);
         for (Entity e : mc.level.getEntities((Entity) null, area, e -> nametag(e) != null)) {
             for (Component line : splitLines(nametag(e))) {
-                if (Sky2MLocation.strip(line.getString()).trim().equalsIgnoreCase(label)) return line;
+                if (isLabel(line, label)) return line;
             }
         }
         return null;
+    }
+
+    /**
+     * Whether a nametag line is Hypixel's "SLAYER BOSS" / "SLAYER MINIBOSS" label. Hypixel puts an icon in front of
+     * it now, so only the end of the line is compared ("SLAYER MINIBOSS" doesn't end in "SLAYER BOSS").
+     */
+    private static boolean isLabel(Component line, String label) {
+        return Sky2MLocation.strip(line.getString()).trim().toUpperCase(Locale.ROOT).endsWith(label);
     }
 
     /**
@@ -236,7 +254,7 @@ public final class SlayerFeatures {
         for (Entity tagEntity : tags) {
             List<Component> parts = splitLines(nametag(tagEntity));
             for (int i = 0; i < parts.size(); i++) {
-                if (!Sky2MLocation.strip(parts.get(i).getString()).trim().equalsIgnoreCase("SLAYER MINIBOSS")) continue;
+                if (!isLabel(parts.get(i), "SLAYER MINIBOSS")) continue;
                 Component health = i + 1 < parts.size() ? parts.get(i + 1) : healthBelow(mc, tagEntity);
                 if (health == null) continue;
                 lines.add(parts.get(i));
