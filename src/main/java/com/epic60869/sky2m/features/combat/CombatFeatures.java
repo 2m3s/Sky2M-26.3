@@ -178,11 +178,14 @@ public final class CombatFeatures {
             arrowAmount = 0;
         }
 
-        if (config.cocoonAlert.enabled) {
-            String mob = null;
-            if ((m = COCOON.matcher(text)).find()) mob = m.group("name").trim();
-            else if (COCOON_BOSS.matcher(text).matches()) mob = "Slayer Boss";
-            if (mob != null && (mob.equals("Slayer Boss") || important(mob))) {
+        String cocooned = null;
+        if ((m = COCOON.matcher(text)).find()) cocooned = m.group("name").trim();
+        else if (COCOON_BOSS.matcher(text).matches()) cocooned = "Slayer Boss";
+        if (cocooned != null) {
+            // Every cocoon gets its label; the title is only for the mobs the alert is set to.
+            CocoonTracker.onCocoon(cocooned);
+            String mob = cocooned;
+            if (config.cocoonAlert.enabled && (!config.cocoonAlert.onlyImportant || mob.equals("Slayer Boss") || important(mob))) {
                 Sky2MAlerts.title(Component.literal("COCOONED!").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD),
                     Component.literal(mob).withStyle(ChatFormatting.WHITE));
             }

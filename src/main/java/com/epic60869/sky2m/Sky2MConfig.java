@@ -124,7 +124,7 @@ public final class Sky2MConfig extends Config {
 
         /** Which changed defaults this config has already been given (see migrateConfigShape). */
         @Expose
-        public int defaultsVersion = 5;
+        public int defaultsVersion = 6;
     }
 
     public static final class Gui {
@@ -2706,7 +2706,14 @@ public final class Sky2MConfig extends Config {
         if (defaults < 5) {
             // Profile Icons In Chat is on by default from 1.0.4; switch it on once for settings saved before.
             childObject(childObject(root, "chat"), "social").addProperty("profileIcons", true);
+            childObject(childObject(root, "combat"), "cocoonAlert").addProperty("enabled", true);
             general.addProperty("defaultsVersion", 5);
+            changed = true;
+        }
+        if (defaults < 6) {
+            // The cocoon title is back to important mobs only; every cocoon still gets its label.
+            childObject(childObject(root, "combat"), "cocoonAlert").addProperty("onlyImportant", true);
+            general.addProperty("defaultsVersion", 6);
             changed = true;
         }
 

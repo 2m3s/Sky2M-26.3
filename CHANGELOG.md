@@ -4,7 +4,11 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ## 1.0.4
 
+### Added
+- Cocoon Label (Combat > Cocoon Alert, on by default): every mob you cocoon is named over its cocoon with the time until it hatches (once Sky2M has seen one hatch), even when the alert title is off or only for important mobs.
+
 ### Changed
+- Cocoon Alert is on by default. Its title is still only for slayer bosses, elusive mobs and important bosses; turn off "Only Important Mobs" to get it for every mob you cocoon (like "CAUGHT! You cocooned a Alligator!").
 - Profile Icons In Chat (Ironman ♲, Bingo Ⓑ, Stranded ☀) is now on by default, also for settings saved before.
 - GitHub releases and their download are named "Sky2M Mod" instead of "SkyBalls Mod".
 

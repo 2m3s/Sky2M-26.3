@@ -1067,9 +1067,19 @@ public final class FeatureConfigs {
 
     public static final class CocoonAlert {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Show an on-screen alert when you cocoon a slayer boss, slayer miniboss, elusive mob or important boss.")
+        @ConfigOption(name = "Enabled", desc = "Show an on-screen alert with the mob's name when you cocoon a mob.")
         @ConfigEditorBoolean
-        public boolean enabled = false;
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Cocoon Label", desc = "Show the mob's name over every cocoon you make, with the time until it hatches (once one has been seen hatching), even with the alert off or limited to important mobs.")
+        @ConfigEditorBoolean
+        public boolean label = true;
+
+        @Expose
+        @ConfigOption(name = "Only Important Mobs", desc = "Only alert for slayer bosses and minibosses, elusive mobs and important bosses, not every mob.")
+        @ConfigEditorBoolean
+        public boolean onlyImportant = true;
     }
 
     public static final class RareDrops {

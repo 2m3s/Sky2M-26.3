@@ -5,7 +5,7 @@
     "warnKeyConflicts": true,
     "performanceWarnings": true,
     "errorReporter": true,
-    "defaultsVersion": 5,
+    "defaultsVersion": 6,
     "updateNotifications": true
   },
   "chat": {
@@ -659,7 +659,9 @@
     "zealotCounter": false,
     "legionDisplay": false,
     "cocoonAlert": {
-      "enabled": true
+      "enabled": true,
+      "label": true,
+      "onlyImportant": true
     },
     "rareDrops": {
       "copy": true,

@@ -67,6 +67,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.core.Sky2MWorldRender.init(); lap("Sky2MWorldRender.init");
 
         com.epic60869.sky2m.features.combat.CombatFeatures.init(); lap("CombatFeatures.init");
+        com.epic60869.sky2m.features.combat.CocoonTracker.init(); lap("CocoonTracker.init");
         com.epic60869.sky2m.features.combat.BestiaryOverlay.init(); lap("BestiaryOverlay.init");
         com.epic60869.sky2m.features.combat.ZealotCounter.init(configDir); lap("ZealotCounter.init");
         com.epic60869.sky2m.features.combat.DianaRareMobs.init(); lap("DianaRareMobs.init");
