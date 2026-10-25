@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Items on Ground (Slayers > Loot & Profit, on by default, from SkyHanni): while you have a slayer quest in that slayer's area, items on the ground within 15 blocks show their name, amount and price; ones worth less than the Minimum Price (50k) aren't labelled.
 - Fonts (Misc > Fonts): draw all text in Inter or any .ttf you put in config/sky2m/fonts, picked from the Font dropdown (Default goes back to Minecraft's font). Inter is built in and drawn the way Caxton draws it, sharp at any size and at Caxton's size, so Caxton isn't needed. Size and Height adjust it; Sharpness is for .ttf fonts. Only letters, digits and punctuation change: symbols like Hypixel's stat icons (❤ ❈ ✦ ☠ ⚔) keep their look.
 - Cocoon Label (Combat > Cocoon Alert, on by default): every mob you cocoon is named over its cocoon with the time until it hatches (once Sky2M has seen one hatch), even when the alert title is off or only for important mobs.
 - Highlight Auctions (Inventory, on by default, from SkyHanni): in Manage Auctions your sold auctions are green and expired ones red; "Highlight Underbid BINs" (off) also marks BINs priced above the item's value.

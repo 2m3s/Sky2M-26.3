@@ -773,6 +773,12 @@ public final class Sky2MConfig extends Config {
         public BossProfit bossProfit = new BossProfit();
 
         @Expose
+        @Accordion
+        @ConfigOption(name = "Items on Ground", desc = "Name, amount and price over items lying on the ground, only while you have a slayer quest in that slayer's area (SkyHanni's).")
+        @ConfigAccordionId(id = 503)
+        public ItemsOnGround itemsOnGround = new ItemsOnGround();
+
+        @Expose
         @ConfigOption(name = "RNG Meter Value", desc = "In an RNG Meter menu, show each drop's price and how many coins one Slayer XP (or dungeon Score) of meter progress is worth.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 503)
@@ -817,6 +823,18 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "PB Leaderboard Boss", desc = "Leave empty (or Auto) for your current or last slayer boss, or pin one, e.g. Revenant Horror V or Voidgloom Seraph IV.")
         @ConfigEditorText
         public String boss = "Auto";
+    }
+
+    public static final class ItemsOnGround {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Show the name and price of items lying on the ground within 15 blocks. Only in slayer areas, with a slayer quest for that area.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Minimum Price", desc = "Items worth less than this (the higher of their market and NPC price, times the amount) aren't labelled.")
+        @ConfigEditorSlider(minValue = 1f, maxValue = 1000000f, minStep = 1f)
+        public int minimumPrice = 50000;
     }
 
     public static final class BossProfit {

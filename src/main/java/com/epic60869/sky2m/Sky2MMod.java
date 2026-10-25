@@ -162,6 +162,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.itemlist.ItemList.init(); lap("ItemList.init");
         com.epic60869.sky2m.features.slayer.SlayerTargetHighlight.init(); lap("SlayerTargetHighlight.init");
         com.epic60869.sky2m.features.slayer.EggHitsDisplay.init(); lap("EggHitsDisplay.init");
+        com.epic60869.sky2m.features.slayer.SlayerItemsOnGround.init(); lap("SlayerItemsOnGround.init");
         com.epic60869.sky2m.features.misc.EtherwarpOverlay.init(); lap("EtherwarpOverlay.init");
         com.epic60869.sky2m.features.misc.ScreenshotShare.init(); lap("ScreenshotShare.init");
         com.epic60869.sky2m.features.misc.JoinCommands.init(); lap("JoinCommands.init");
