@@ -29,6 +29,7 @@ public abstract class Sky2MSlotBackgroundMixin {
         com.epic60869.sky2m.features.dungeons.DungeonChestProfit.renderSlotBackground(graphics, slot);
         com.epic60869.sky2m.features.portfolio.BazaarNotifications.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.misc.ShardLevelUpHighlight.renderSlot(graphics, slot);
+        com.epic60869.sky2m.features.misc.AuctionHighlight.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.garden.PestFinder.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.dungeons.DupeClass.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.itemlist.ItemList.renderSlot(graphics, slot);

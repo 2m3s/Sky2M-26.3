@@ -376,6 +376,18 @@ public final class Sky2MConfig extends Config {
         @ConfigAccordionId(id = 2302)
         public com.epic60869.sky2m.features.FeatureConfigs.AuctionGuard auctionGuard = new com.epic60869.sky2m.features.FeatureConfigs.AuctionGuard();
 
+        @Expose
+        @ConfigOption(name = "Highlight Auctions", desc = "In Manage Auctions, your sold auctions are green and expired ones red (SkyHanni).")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2302)
+        public boolean highlightAuctions = true;
+
+        @Expose
+        @ConfigOption(name = "Highlight Underbid BINs", desc = "Also highlight your BIN auctions in Manage Auctions, in orange, when their price is above the item's estimated value.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2302)
+        public boolean highlightAuctionsUnderbid = false;
+
         @ConfigOption(name = "Sacks & Item Tracking", desc = "Sacks value, the item pickup log and item notifications.")
         @ConfigEditorAccordion(id = 2310)
         public boolean itemTrackingGroup = false;
