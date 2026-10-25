@@ -477,7 +477,7 @@ public final class Sky2MHuds {
                 com.epic60869.sky2m.Sky2MConfig config = com.epic60869.sky2m.Sky2MConfig.current();
                 if (config != null) {
                     config.mining.commissions.background = false;
-                    config.farming.rng.background = false;
+                    config.misc.rngHud.background = false;
                     com.epic60869.sky2m.Sky2MConfig.saveCurrent(config);
                 }
                 save();

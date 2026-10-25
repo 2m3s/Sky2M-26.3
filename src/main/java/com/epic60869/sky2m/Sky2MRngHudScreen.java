@@ -6,13 +6,13 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
-/** Simple SkyHanni-style HUD editor for the Farming RNG HUD. */
+/** Simple SkyHanni-style HUD editor for the RNG HUD. */
 public final class Sky2MRngHudScreen extends Screen {
     private final Screen parent;
     private boolean dragging;
 
     public Sky2MRngHudScreen(Screen parent) {
-        super(Component.literal("Farming RNG HUD"));
+        super(Component.literal("RNG HUD"));
         this.parent = parent;
     }
 
@@ -38,27 +38,27 @@ public final class Sky2MRngHudScreen extends Screen {
     }
 
     private boolean enabled() {
-        return Sky2MConfig.current().farming.rng.enabled;
+        return Sky2MConfig.current().misc.rngHud.enabled;
     }
 
     private boolean background() {
-        return Sky2MConfig.current().farming.rng.background;
+        return Sky2MConfig.current().misc.rngHud.background;
     }
 
     private void setEnabled(boolean value) {
-        Sky2MConfig.current().farming.rng.enabled = value;
+        Sky2MConfig.current().misc.rngHud.enabled = value;
         Sky2MConfig.saveCurrent(Sky2MConfig.current());
     }
 
     private void setBackground(boolean value) {
-        Sky2MConfig.current().farming.rng.background = value;
+        Sky2MConfig.current().misc.rngHud.background = value;
         Sky2MConfig.saveCurrent(Sky2MConfig.current());
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         g.fill(0, 0, width, height, 0xFF090B10);
-        g.text(font, "Farming RNG HUD", 20, 58, 0xFFFFFFFF, true);
+        g.text(font, "RNG HUD", 20, 58, 0xFFFFFFFF, true);
         g.text(font, "Drag the preview anywhere on the screen.", 20, 74, 0xFF9AA4B2, false);
 
         int x = Sky2MRngHud.x();

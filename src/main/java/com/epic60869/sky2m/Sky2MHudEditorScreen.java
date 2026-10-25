@@ -120,7 +120,7 @@ public final class Sky2MHudEditorScreen extends Screen {
         elements.clear();
         // Only HUDs whose feature is turned on; turn one on in /s2 to place it.
         Sky2MConfig config = Sky2MConfig.current();
-        if (config != null && config.farming.rng.enabled) {
+        if (config != null && config.misc.rngHud.enabled) {
             elements.add(new EditableHud("RNG HUD", Sky2MRngHud::x, Sky2MRngHud::y,
                 Sky2MRngHud::setPosition, Sky2MRngHud::width, Sky2MRngHud::height,
                 Sky2MRngHud::renderPreview, "rng"));
@@ -458,7 +458,7 @@ public final class Sky2MHudEditorScreen extends Screen {
             Sky2MConfig c = Sky2MConfig.current();
             if (c == null) return;
             switch (type) {
-                case "rng" -> c.farming.rng.scale = clamp(c.farming.rng.scale + d);
+                case "rng" -> c.misc.rngHud.scale = clamp(c.misc.rngHud.scale + d);
                 case "commissions" -> c.mining.commissions.scale = clamp(c.mining.commissions.scale + d);
                 case "pet" -> c.misc.pets.display.scale = clamp(c.misc.pets.display.scale + d);
                 case "dmap" -> c.dungeons.map.scale = clamp(c.dungeons.map.scale + d);
@@ -474,7 +474,7 @@ public final class Sky2MHudEditorScreen extends Screen {
             Sky2MConfig c = Sky2MConfig.current();
             if (c == null) return true;
             return switch (type) {
-                case "rng" -> c.farming.rng.background;
+                case "rng" -> c.misc.rngHud.background;
                 case "commissions" -> c.mining.commissions.background;
                 case "pet" -> c.misc.pets.display.background;
                 case "dmap" -> c.dungeons.map.background;
@@ -485,7 +485,7 @@ public final class Sky2MHudEditorScreen extends Screen {
         /** What to search the settings for to find this HUD's options. */
         String settingsSearch() {
             return switch (type) {
-                case "rng" -> "Farming RNG HUD";
+                case "rng" -> "RNG HUD";
                 case "commissions" -> "Mining Commissions";
                 case "pet" -> "Pets Display";
                 case "dmap" -> "Dungeon Map";
@@ -497,7 +497,7 @@ public final class Sky2MHudEditorScreen extends Screen {
             Sky2MConfig c = Sky2MConfig.current();
             if (c == null) return;
             switch (type) {
-                case "rng" -> c.farming.rng.background = !c.farming.rng.background;
+                case "rng" -> c.misc.rngHud.background = !c.misc.rngHud.background;
                 case "commissions" -> c.mining.commissions.background = !c.mining.commissions.background;
                 case "pet" -> c.misc.pets.display.background = !c.misc.pets.display.background;
                 case "dmap" -> c.dungeons.map.background = !c.dungeons.map.background;

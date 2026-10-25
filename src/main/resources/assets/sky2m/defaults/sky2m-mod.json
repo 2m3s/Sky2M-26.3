@@ -854,16 +854,6 @@
       "coinRainSeconds": 3,
       "coinMultiplier": "AUTO"
     },
-    "rng": {
-      "enabled": true,
-      "background": false,
-      "scale": 1.2,
-      "dropColour": "0:255:85:255:255",
-      "petRarityColours": true,
-      "valueColour": "0:255:255:170:0",
-      "x": 381,
-      "y": 106
-    },
     "mouseLock": {
       "enabled": true,
       "gardenOnly": true,
@@ -1735,6 +1725,16 @@
         },
         "period": "SESSION"
       }
+    },
+    "rngHud": {
+      "enabled": true,
+      "background": false,
+      "scale": 1.2,
+      "dropColour": "0:255:85:255:255",
+      "petRarityColours": true,
+      "valueColour": "0:255:255:170:0",
+      "x": 381,
+      "y": 106
     }
   },
   "gui": {

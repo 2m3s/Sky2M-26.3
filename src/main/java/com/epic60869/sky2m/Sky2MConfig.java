@@ -593,14 +593,9 @@ public final class Sky2MConfig extends Config {
         @ConfigAccordionId(id = 801)
         public com.epic60869.sky2m.features.garden.helpers.HelperConfig gardenHelpers = new com.epic60869.sky2m.features.garden.helpers.HelperConfig();
 
-        @ConfigOption(name = "Farming Tools", desc = "The farming RNG HUD and mouse lock.")
+        @ConfigOption(name = "Farming Tools", desc = "Mouse lock.")
         @ConfigEditorAccordion(id = 802)
         public boolean farmingToolsGroup = false;
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Farming RNG HUD", desc = "Click to expand the farming RNG HUD options.")
-        @ConfigAccordionId(id = 802)
-        public FarmingRng rng = new FarmingRng();
 
         @Expose
         @Accordion
@@ -937,6 +932,11 @@ public final class Sky2MConfig extends Config {
         @Expose
         @Category(name = "Fonts", desc = "Draw all text in Inter or a .ttf font of your own instead of Minecraft's font.")
         public Fonts fonts = new Fonts();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "RNG HUD", desc = "RNG drops (farming, slayer, Diana, fishing...) and Item Notification items as they drop, in their rarity colours, centred like SkyHanni's.")
+        public RngHud rngHud = new RngHud();
 
         @Expose
         @Accordion
@@ -1728,19 +1728,19 @@ public final class Sky2MConfig extends Config {
         public String raffleTicketColour = "0:255:85:255:85";
     }
 
-    public static final class FarmingRng {
+    public static final class RngHud {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show the RNG HUD: farming RNG drops, plus any other rare drop worth 5M or more (slayer, Diana, fishing...).")
         @ConfigEditorBoolean
         public boolean enabled = true;
 
         @Expose
-        @ConfigOption(name = "Background", desc = "Draw a background behind the farming RNG HUD.")
+        @ConfigOption(name = "Background", desc = "Draw a background behind the RNG HUD.")
         @ConfigEditorBoolean
         public boolean background = false;
 
         @Expose
-        @ConfigOption(name = "Scale", desc = "Scale the farming RNG HUD.")
+        @ConfigOption(name = "Scale", desc = "Scale the RNG HUD.")
         @ConfigEditorSlider(minValue = 0.5f, maxValue = 3.0f, minStep = 0.1f)
         public float scale = 1.0f;
 
@@ -1765,7 +1765,7 @@ public final class Sky2MConfig extends Config {
         @Expose
         public int y = 8;
 
-        @ConfigOption(name = "Edit Position", desc = "Open the Sky2M HUD editor and drag the Farming RNG HUD.")
+        @ConfigOption(name = "Edit Position", desc = "Open the Sky2M HUD editor and drag the RNG HUD.")
         @ConfigEditorButton(buttonText = "OPEN")
         public Runnable editPosition = () -> openRngEditor();
     }
@@ -2593,11 +2593,11 @@ public final class Sky2MConfig extends Config {
         Sky2MConfig migrated = new Sky2MConfig();
         if (old.has("firstBootAcknowledged")) migrated.general.firstBootAcknowledged = old.get("firstBootAcknowledged").getAsBoolean();
 
-        if (old.has("farmingRngEnabled")) migrated.farming.rng.enabled = old.get("farmingRngEnabled").getAsBoolean();
-        if (old.has("farmingRngBackground")) migrated.farming.rng.background = old.get("farmingRngBackground").getAsBoolean();
-        if (old.has("farmingRngScale")) migrated.farming.rng.scale = old.get("farmingRngScale").getAsFloat();
-        if (old.has("farmingRngX")) migrated.farming.rng.x = old.get("farmingRngX").getAsInt();
-        if (old.has("farmingRngY")) migrated.farming.rng.y = old.get("farmingRngY").getAsInt();
+        if (old.has("farmingRngEnabled")) migrated.misc.rngHud.enabled = old.get("farmingRngEnabled").getAsBoolean();
+        if (old.has("farmingRngBackground")) migrated.misc.rngHud.background = old.get("farmingRngBackground").getAsBoolean();
+        if (old.has("farmingRngScale")) migrated.misc.rngHud.scale = old.get("farmingRngScale").getAsFloat();
+        if (old.has("farmingRngX")) migrated.misc.rngHud.x = old.get("farmingRngX").getAsInt();
+        if (old.has("farmingRngY")) migrated.misc.rngHud.y = old.get("farmingRngY").getAsInt();
         if (old.has("mouseLockEnabled")) migrated.farming.mouseLock.enabled = old.get("mouseLockEnabled").getAsBoolean();
         if (old.has("mouseLockGroundOnly")) migrated.farming.mouseLock.groundOnly = old.get("mouseLockGroundOnly").getAsBoolean();
 
@@ -2863,6 +2863,7 @@ public final class Sky2MConfig extends Config {
             moves.add(new String[]{"mayors.mayor", "events.mayor"});
             moves.add(new String[]{"profitTrackers", "misc.profitTrackers"});
             moves.add(new String[]{"clips", "misc.clips"});
+            moves.add(new String[]{"farming.rng", "misc.rngHud"});
             MOVES = moves.toArray(new String[0][]);
         }
 

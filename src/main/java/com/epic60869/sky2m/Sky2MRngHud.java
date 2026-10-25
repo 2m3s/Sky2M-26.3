@@ -58,7 +58,7 @@ public final class Sky2MRngHud {
     private static List<Line> computeLines() {
         List<Line> out = new java.util.ArrayList<>();
         java.util.Set<String> names = new java.util.HashSet<>();
-        if (config() != null && config().farming.rng.enabled) {
+        if (config() != null && config().misc.rngHud.enabled) {
             for (FarmingRngTracker.Drop drop : FarmingRngTracker.get().active()) {
                 out.add(rngLine(drop.amount(), Component.literal(drop.name()).withColor(rarityColour(drop)),
                     drop.unitPrice() * drop.amount()));
@@ -152,7 +152,7 @@ public final class Sky2MRngHud {
      * Drop Colour.
      */
     private static int rarityColour(FarmingRngTracker.Drop drop) {
-        boolean pets = config() == null || config().farming.rng.petRarityColours;
+        boolean pets = config() == null || config().misc.rngHud.petRarityColours;
         if (pets && drop.rarity().equals("LEGENDARY")) return 0xFFFFAA00;
         if (pets && drop.rarity().equals("EPIC")) return 0xFFAA00AA;
         Integer tier = ITEM_COLOURS.computeIfAbsent(drop.name().toLowerCase(Locale.ROOT), name -> {
@@ -163,14 +163,14 @@ public final class Sky2MRngHud {
         });
         if (tier != null) return tier;
         if (drop.colour() != -1) return drop.colour();
-        return colour(config() == null ? null : config().farming.rng.dropColour, 0xFF55FFFF);
+        return colour(config() == null ? null : config().misc.rngHud.dropColour, 0xFF55FFFF);
     }
 
     /** Item name -> rarity colour, looked up once per item (unknown items aren't stored, so they're tried again). */
     private static final java.util.Map<String, Integer> ITEM_COLOURS = new java.util.concurrent.ConcurrentHashMap<>();
 
     private static int priceColour() {
-        return colour(config() == null ? null : config().farming.rng.valueColour, 0xFFFFAA00);
+        return colour(config() == null ? null : config().misc.rngHud.valueColour, 0xFFFFAA00);
     }
 
     private static int colour(String special, int fallback) {
@@ -183,30 +183,30 @@ public final class Sky2MRngHud {
     }
 
     public static float scale() {
-        return config() == null ? 1.0f : config().farming.rng.scale;
+        return config() == null ? 1.0f : config().misc.rngHud.scale;
     }
 
     public static int x() { return positionX(); }
     public static int y() { return positionY(); }
 
     private static int positionX() {
-        return config() == null ? 8 : config().farming.rng.x;
+        return config() == null ? 8 : config().misc.rngHud.x;
     }
 
     private static int positionY() {
-        return config() == null ? 8 : config().farming.rng.y;
+        return config() == null ? 8 : config().misc.rngHud.y;
     }
 
     public static void setPosition(int x, int y) {
         if (config() == null) return;
-        config().farming.rng.x = Math.max(0, x);
-        config().farming.rng.y = Math.max(0, y);
+        config().misc.rngHud.x = Math.max(0, x);
+        config().misc.rngHud.y = Math.max(0, y);
         save();
     }
 
     public static void setScale(float value) {
         if (config() == null) return;
-        config().farming.rng.scale = Math.max(0.5f, Math.min(3.0f,
+        config().misc.rngHud.scale = Math.max(0.5f, Math.min(3.0f,
             Math.round(value * 10.0f) / 10.0f));
         save();
     }
@@ -235,14 +235,16 @@ public final class Sky2MRngHud {
         // The background fills exactly the HUD bounds so it can sit flush against a screen edge.
         int w = contentWidth(drops);
         int h = contentHeight(drops);
-        if (config() != null && config().farming.rng.background) {
+        if (config() != null && config().misc.rngHud.background) {
             graphics.fill(0, 0, w, h, 0xA8000000);
             graphics.fill(0, 0, w, 1, 0x55FFFFFF);
         }
 
+        // Each line centred in the HUD, like SkyHanni's.
+        var font = Minecraft.getInstance().font;
         int yOffset = PADDING;
         for (Line drop : drops) {
-            graphics.text(Minecraft.getInstance().font, drop.text(), PADDING, yOffset, 0xFFFFFFFF, true);
+            graphics.text(font, drop.text(), (w - font.width(drop.text())) / 2, yOffset, 0xFFFFFFFF, true);
             yOffset += LINE_HEIGHT;
         }
 
