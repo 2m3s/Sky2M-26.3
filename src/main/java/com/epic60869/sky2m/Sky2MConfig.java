@@ -917,6 +917,10 @@ public final class Sky2MConfig extends Config {
         public Clips clips = new Clips();
 
         @Expose
+        @Category(name = "Fonts", desc = "Draw all text in Inter or a .ttf font of your own instead of Minecraft's font.")
+        public Fonts fonts = new Fonts();
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Visual Tweaks", desc = "Fullbright, fog distance, hiding clouds, lightning and fire, dead and far-away mobs, other players' armor and particles (some per island), and a disconnect fix. Only changes your own screen.")
         public com.epic60869.sky2m.features.qol.VisualTweaks.Config visualTweaks = new com.epic60869.sky2m.features.qol.VisualTweaks.Config();
@@ -2000,6 +2004,39 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Download Sky2M Clipping", desc = "Download the Sky2M Clipping mod for this Minecraft version from its GitHub releases into your mods folder. Restart the game after.")
         @ConfigEditorButton(buttonText = "DOWNLOAD")
         public Runnable download = () -> com.epic60869.sky2m.features.misc.clips.Clips.download();
+    }
+
+    public static final class Fonts {
+        /** "" for Minecraft's font, "Inter", or a .ttf file name in config/sky2m/fonts. */
+        @Expose
+        public String font = "";
+
+        @ConfigOption(name = "Font", desc = "Pick the font all text is drawn in: Default (Minecraft's), Inter (built in, like Caxton's default) or a .ttf from the fonts folder. Characters a font doesn't have, like Hypixel's icons, still use Minecraft's.")
+        @ConfigEditorButton(buttonText = "PICK")
+        public Runnable pick = () -> com.epic60869.sky2m.features.misc.CustomFonts.openPicker();
+
+        @Expose
+        @ConfigOption(name = "Size", desc = "How big a .ttf font is drawn (Minecraft's text is about 8). Press Apply after changing it.")
+        @ConfigEditorSlider(minValue = 6f, maxValue = 16f, minStep = 0.5f)
+        public float size = 10f;
+
+        @Expose
+        @ConfigOption(name = "Sharpness", desc = "How finely a .ttf font is rendered: higher is sharper on big GUI scales and uses more memory. Press Apply after changing it.")
+        @ConfigEditorSlider(minValue = 1f, maxValue = 8f, minStep = 1f)
+        public float sharpness = 4f;
+
+        @Expose
+        @ConfigOption(name = "Height", desc = "Moves a .ttf font's letters down (or up when negative) to line up with Minecraft's. Press Apply after changing it.")
+        @ConfigEditorSlider(minValue = -3f, maxValue = 3f, minStep = 0.5f)
+        public float height = 1f;
+
+        @ConfigOption(name = "Apply", desc = "Load the font again with the settings above.")
+        @ConfigEditorButton(buttonText = "APPLY")
+        public Runnable apply = () -> com.epic60869.sky2m.features.misc.CustomFonts.reload();
+
+        @ConfigOption(name = "Fonts Folder", desc = "Open the folder for your fonts (config\\sky2m\\fonts). Put .ttf files there, then PICK one.")
+        @ConfigEditorButton(buttonText = "OPEN")
+        public Runnable openFolder = () -> com.epic60869.sky2m.features.misc.CustomFonts.openFolder();
     }
 
     public static final class PlayAsMob {

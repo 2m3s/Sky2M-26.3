@@ -90,6 +90,7 @@
     "Sky2MChromaTextMixin",
     "Sky2MCapeMixin",
     "Sky2MEmblemFontMixin",
+    "Sky2MCustomFontMixin",
     "Sky2MItemCooldownMixin",
     "Sky2MEntityGlowMixin",
     "Sky2MEntityGlowColourMixin",

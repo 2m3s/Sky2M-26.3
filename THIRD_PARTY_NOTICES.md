@@ -90,6 +90,14 @@ Sky2M's implementation is rewritten in Java for Sky2M's own profit tracker and d
 
 Sky2M's current chat display (`Sky2MCurrentChat.java`) follows SkyHanni's CurrentChatDisplay (src/main/java/at/hannibal2/skyhanni/features/chat/CurrentChatDisplay.kt): the channel-change message patterns and the channel names and colours. SkyHanni is licensed under the GNU Lesser General Public License v2.1 (LGPL-2.1).
 
+## Inter font
+
+The built-in Inter font (`assets/sky2m/textures/font/inter.png`, used by Misc > Fonts) is a bitmap of Inter, sized like Caxton's default font:
+
+- https://github.com/rsms/inter
+- Copyright (c) 2016-2020 The Inter Project Authors. "Inter" is a trademark of Rasmus Andersson.
+- License: SIL Open Font License, Version 1.1 (the full text is in `assets/sky2m/textures/font/inter-license.txt`)
+
 ## SkyHanni Compact Bestiary and SkyBlock XP in Chat
 
 Sky2M's Compact Bestiary (`features/misc/CompactBestiary.java`) and SkyBlock XP in Chat (`features/misc/SkyBlockXpChat.java`) are ported from SkyHanni, and the Spam Filters' Empty Lines check follows SkyHanni's ChatFilter empty-message check (StringUtils.isEmpty):
