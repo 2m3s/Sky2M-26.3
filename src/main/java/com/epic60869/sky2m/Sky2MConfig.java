@@ -434,6 +434,12 @@ public final class Sky2MConfig extends Config {
         public boolean currentChatDisplay = false;
 
         @Expose
+        @ConfigOption(name = "Compact Bestiary", desc = "SkyHanni's compact Bestiary messages: Hypixel's BESTIARY level-up block becomes one line (\"BESTIARY Zombie II➡III\"); hover it for the rewards, click it to open the Bestiary. Milestones get their own line.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 201)
+        public boolean compactBestiary = true;
+
+        @Expose
         @ConfigOption(name = "Pet Rarity", desc = "Say a pet's rarity in Hypixel's pet drop lines, in its colour: \"PET DROP! Epic Slug\" (purple), \"Legendary Slug\" (gold). Also for pets in RARE DROP! and fishing catch lines, and Sky2M's +Drop message.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 201)
