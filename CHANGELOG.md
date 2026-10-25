@@ -10,10 +10,12 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Pet Rarity (Chat > Chat Tweaks, on by default): pet drop lines say the pet's rarity in its colour, "PET DROP! Epic Slug" in purple or "Legendary Slug" in gold, from SkyHanni. Also for pets in RARE DROP! and fishing catch lines and Sky2M's +Drop message; hover and click parts of the message are kept.
 - Compact Bestiary (Chat > Chat Tweaks, from SkyHanni, on by default): Hypixel's BESTIARY level-up block becomes one line; hover it for the rewards, click it to open the Bestiary. Milestones get their own line.
 - SkyBlock XP in Chat (Chat > Chat Tweaks, from SkyHanni, on by default): the "+5 SkyBlock XP (Accessories) (35/100)" from the action bar is also sent to chat.
+- "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
 - Cocoon Alert is on by default. Its title is still only for slayer bosses, elusive mobs and important bosses; turn off "Only Important Mobs" to get it for every mob you cocoon (like "CAUGHT! You cocooned a Alligator!").
 - Profile Icons In Chat (Ironman ♲, Bingo Ⓑ, Stranded ☀) is now on by default, also for settings saved before.
+- Spam Filters' Empty Lines also catches lines of only spaces or colour codes, like SkyHanni.
 - GitHub releases and their download are named "Sky2M Mod" instead of "SkyBalls Mod".
 
 ## 1.0.3

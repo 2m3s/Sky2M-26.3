@@ -90,6 +90,16 @@ Sky2M's implementation is rewritten in Java for Sky2M's own profit tracker and d
 
 Sky2M's current chat display (`Sky2MCurrentChat.java`) follows SkyHanni's CurrentChatDisplay (src/main/java/at/hannibal2/skyhanni/features/chat/CurrentChatDisplay.kt): the channel-change message patterns and the channel names and colours. SkyHanni is licensed under the GNU Lesser General Public License v2.1 (LGPL-2.1).
 
+## SkyHanni Compact Bestiary and SkyBlock XP in Chat
+
+Sky2M's Compact Bestiary (`features/misc/CompactBestiary.java`) and SkyBlock XP in Chat (`features/misc/SkyBlockXpChat.java`) are ported from SkyHanni, and the Spam Filters' Empty Lines check follows SkyHanni's ChatFilter empty-message check (StringUtils.isEmpty):
+
+- https://github.com/hannibal002/SkyHanni (branch beta)
+- Relevant source: src/main/java/at/hannibal2/skyhanni/features/chat/CompactBestiaryChatMessage.kt, features/chat/SkyblockXPInChat.kt, the SkyBlock XP action bar pattern in data/ActionBarStatsData.kt, and features/chat/ChatFilter.kt
+- License: GNU Lesser General Public License v2.1 (LGPL-2.1)
+
+The Kotlin code was rewritten in Java on Sky2M's chat handling and config.
+
 ## SkyHanni Compact Tab List
 
 Sky2M's Compact Tab List (`features/qol/CompactTabList.java` and the Sky2MCompactTabMixin mixin) is ported from SkyHanni's compact tab list:

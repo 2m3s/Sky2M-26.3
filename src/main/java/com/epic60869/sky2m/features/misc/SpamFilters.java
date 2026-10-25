@@ -3,6 +3,7 @@ package com.epic60869.sky2m.features.misc;
 import com.epic60869.sky2m.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.google.gson.annotations.Expose;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
@@ -212,6 +213,9 @@ public final class SpamFilters {
     /** SkyBlock's Pristine proc, moved to the Side Chat by default (Chat > Side Chat). */
     private static final Pattern PRISTINE = p("^PRISTINE! You found . Flawed \\w+ Gemstone x\\d+!$");
 
+    /** Any § code, even ones vanilla doesn't know (and a lone § at the end), for {@link #isBlank}. */
+    private static final Pattern FORMAT_CODE = Pattern.compile("(?s)§.?");
+
     /** Inside a powder mining chest's reward block (between the two ▬ lines). */
     private static boolean inPowderRewards;
 
@@ -268,7 +272,7 @@ public final class SpamFilters {
             inPowderRewards = false;
         }
 
-        if (text.isEmpty()) return c.empty;
+        if (isBlank(raw)) return c.empty;
         if (c.separators != Mode.SHOW && SEPARATOR.matcher(text).matches()) return c.separators;
         if (check(c.lobby, LOBBY, text)) return c.lobby;
         if (check(c.visiting, VISITING, text)) return c.visiting;
@@ -291,8 +295,8 @@ public final class SpamFilters {
         if (check(c.factory, FACTORY, text)) return c.factory;
         if (check(c.sacrifice, SACRIFICE, text)) return c.sacrifice;
         if (c.skyMallLottery != Mode.SHOW) {
-            if (!Sky2MLocation.inMiningIsland() && any(SKY_MALL, text)) return c.skyMallLottery;
-            if (!inForagingIsland() && any(LOTTERY, text)) return c.skyMallLottery;
+            if ((c.skyMallEverywhere || !Sky2MLocation.inMiningIsland()) && any(SKY_MALL, text)) return c.skyMallLottery;
+            if ((c.skyMallEverywhere || !inForagingIsland()) && any(LOTTERY, text)) return c.skyMallLottery;
         }
         if (check(c.rewardBundles, REWARD_BUNDLES, text)) return c.rewardBundles;
         if (check(c.hoppity, HOPPITY, text)) return c.hoppity;
@@ -304,6 +308,12 @@ public final class SpamFilters {
         if (c.dungeonSpam != Mode.SHOW && Sky2MLocation.inDungeon() && any(DUNGEON_SPAM, text)) return c.dungeonSpam;
         if (check(c.foragingHunting, FORAGING_HUNTING, text)) return c.foragingHunting;
         return Mode.SHOW;
+    }
+
+    /** Like SkyHanni's StringUtils.isEmpty: nothing left once every § code (valid or not) and the whitespace are gone. */
+    private static boolean isBlank(String raw) {
+        if (raw.isEmpty()) return true;
+        return FORMAT_CODE.matcher(raw).replaceAll("").trim().isBlank();
     }
 
     private static boolean inForagingIsland() {
@@ -354,7 +364,7 @@ public final class SpamFilters {
         public Mode profileJoin = Mode.SHOW;
 
         @Expose
-        @ConfigOption(name = "Empty Lines", desc = "Blank chat lines.")
+        @ConfigOption(name = "Empty Lines", desc = "Blank chat lines, including lines of only spaces or colour codes.")
         @ConfigEditorDropdown
         public Mode empty = Mode.SHOW;
 
@@ -437,6 +447,11 @@ public final class SpamFilters {
         @ConfigOption(name = "Sky Mall & Lottery", desc = "\"New day! Your Sky Mall/Lottery buff changed!\" when you aren't on a mining (Sky Mall) or foraging (Lottery) island.")
         @ConfigEditorDropdown
         public Mode skyMallLottery = Mode.SHOW;
+
+        @Expose
+        @ConfigOption(name = "Sky Mall & Lottery: Everywhere", desc = "Apply Sky Mall & Lottery on every island too, including the mining (Sky Mall) and foraging (Lottery) islands. Needs Sky Mall & Lottery set to Hide or Side Chat.")
+        @ConfigEditorBoolean
+        public boolean skyMallEverywhere = false;
 
         @Expose
         @ConfigOption(name = "Reward Bundles", desc = "The reminders to claim seasonal reward bundles.")
