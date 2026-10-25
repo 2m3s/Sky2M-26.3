@@ -1104,16 +1104,6 @@ public final class FeatureConfigs {
         public boolean copyGarden = false;
 
         @Expose
-        @ConfigOption(name = "Big Drop Animation", desc = "Play an animation and a chat message when any rare drop is worth at least the Animation Threshold. Separate from the RNG Drop Totem Animation below.")
-        @ConfigEditorBoolean
-        public boolean animation = false;
-
-        @Expose
-        @ConfigOption(name = "Animation Threshold (millions)", desc = "Minimum drop value, in millions of coins, for the Big Drop Animation. Does not affect the RNG Drop Totem Animation.")
-        @ConfigEditorSlider(minValue = 1, maxValue = 500, minStep = 1)
-        public float thresholdMillions = 10;
-
-        @Expose
         @ConfigOption(name = "RNG Drop Totem Animation", desc = "Skyblocker's special effect: RNG drops pop up like a Totem of Undying, with particles and a sound, whatever they are worth (no threshold). Plays for slayer, Diana and fishing RNG items, dyes, and every PRAY TO RNGESUS DROP! or RNG METER DROP! chat message (the item you were filling the RNG Meter for), not for every item listed in the RNG Meter menu.")
         @ConfigEditorBoolean
         public boolean totemAnimation = false;

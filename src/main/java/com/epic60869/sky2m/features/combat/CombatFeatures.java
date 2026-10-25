@@ -330,15 +330,6 @@ public final class CombatFeatures {
                 }
             });
         }
-        if (config.animation) {
-            int count = Math.max(1, amount);
-            ItemPriceResolver.valueByNameAsync(item).thenAccept(value -> {
-                if (value != null && value > 0 && value * count >= config.thresholdMillions * 1_000_000d) {
-                    Sky2MAlerts.dropAnimation(Component.literal(item + "!").withStyle(ChatFormatting.BOLD), 0xFFAA00);
-                    Sky2MAlerts.chat(Component.literal(item + " is worth " + formatCoins(value * count) + " coins!").withStyle(ChatFormatting.GOLD));
-                }
-            });
-        }
     }
 
     public static String formatCoins(double value) {

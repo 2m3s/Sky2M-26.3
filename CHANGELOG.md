@@ -20,6 +20,9 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Spam Filters' Empty Lines also catches lines of only spaces or colour codes, like SkyHanni.
 - GitHub releases and their download are named "Sky2M Mod" instead of "SkyBalls Mod".
 
+### Removed
+- Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
+
 ### Fixed
 - Cocoon Label shows over cocoons that appear together with (or just before) the "CAUGHT!" / "YOU COCOONED YOUR SLAYER BOSS" message.
 - Protected items (/s2 protect) can be put into The Hex, like the anvil and enchanting table.

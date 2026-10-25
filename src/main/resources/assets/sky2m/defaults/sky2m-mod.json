@@ -668,8 +668,6 @@
       "copyRng": true,
       "copySlayer": true,
       "copyGarden": false,
-      "animation": true,
-      "thresholdMillions": 5,
       "totemAnimation": true
     },
     "bestiary": {
