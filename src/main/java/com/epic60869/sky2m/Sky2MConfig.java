@@ -434,6 +434,12 @@ public final class Sky2MConfig extends Config {
         public boolean currentChatDisplay = false;
 
         @Expose
+        @ConfigOption(name = "Pet Rarity", desc = "Say a pet's rarity in Hypixel's pet drop lines, in its colour: \"PET DROP! Epic Slug\" (purple), \"Legendary Slug\" (gold). Also for pets in RARE DROP! and fishing catch lines, and Sky2M's +Drop message.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 201)
+        public boolean petRarity = true;
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Copy Chat", desc = "Right-click chat messages to copy them, like NoFrills' Chat Tweaks.")
         @ConfigAccordionId(id = 201)

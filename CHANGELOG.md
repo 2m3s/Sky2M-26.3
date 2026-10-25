@@ -7,6 +7,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ### Added
 - Cocoon Label (Combat > Cocoon Alert, on by default): every mob you cocoon is named over its cocoon with the time until it hatches (once Sky2M has seen one hatch), even when the alert title is off or only for important mobs.
 - Highlight Auctions (Inventory, on by default, from SkyHanni): in Manage Auctions your sold auctions are green and expired ones red; "Highlight Underbid BINs" (off) also marks BINs priced above the item's value.
+- Pet Rarity (Chat > Chat Tweaks, on by default): pet drop lines say the pet's rarity in its colour, "PET DROP! Epic Slug" in purple or "Legendary Slug" in gold, from SkyHanni. Also for pets in RARE DROP! and fishing catch lines and Sky2M's +Drop message; hover and click parts of the message are kept.
 
 ### Changed
 - Cocoon Alert is on by default. Its title is still only for slayer bosses, elusive mobs and important bosses; turn off "Only Important Mobs" to get it for every mob you cocoon (like "CAUGHT! You cocooned a Alligator!").

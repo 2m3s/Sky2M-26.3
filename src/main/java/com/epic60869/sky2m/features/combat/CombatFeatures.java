@@ -219,7 +219,8 @@ public final class CombatFeatures {
                 } catch (Exception e) {
                     System.err.println("[Sky2M] RNG HUD: " + e);
                 }
-                onRareDrop(config.rareDrops, dropText, dropItem, dropAmount, rng, slayer, garden);
+                onRareDrop(config.rareDrops, dropText, dropItem, dropAmount, rng, slayer, garden,
+                    com.epic60869.sky2m.features.misc.PetDropRarity.label(message.component(), dropItem));
                 RareDropTotem.onDrop(dropType, dropItem);
             });
         }
@@ -299,7 +300,7 @@ public final class CombatFeatures {
     }
 
     private static void onRareDrop(FeatureConfigs.RareDrops config, String text, String item, int amount,
-                                   boolean rng, boolean slayer, boolean garden) {
+                                   boolean rng, boolean slayer, boolean garden, Component petLabel) {
         Minecraft mc = Minecraft.getInstance();
         // Garden drops (rare crops, pest drops) only with Copy Garden Drops, so that toggle really turns them off;
         // Copy Rare Drops and Copy RNG Drops cover everything else.
@@ -317,7 +318,9 @@ public final class CombatFeatures {
                 String worth = priced ? formatCoins(value * count) : null;
                 if (config.dropMessage) {
                     Sky2MAlerts.chat(Component.literal("+Drop: ").withStyle(ChatFormatting.GREEN)
-                        .append(Component.literal(item + (count > 1 ? " x" + count : "")).withStyle(ChatFormatting.AQUA))
+                        // A pet as "Epic Slug" in its rarity colour (Chat > Pet Rarity).
+                        .append(petLabel != null ? petLabel.copy().append(count > 1 ? " x" + count : "")
+                            : Component.literal(item + (count > 1 ? " x" + count : "")).withStyle(ChatFormatting.AQUA))
                         .append(priced ? Component.literal(" (" + worth + ")").withStyle(ChatFormatting.GOLD) : Component.empty()));
                 }
                 if (config.rngTitle && rng) {
