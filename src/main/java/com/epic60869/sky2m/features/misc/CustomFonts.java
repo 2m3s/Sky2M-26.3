@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
- * Misc > Fonts: the font all text is drawn in. Default is Minecraft's; Inter is built in (Inter-Regular.ttf, Caxton's
- * default font); anything else is a .ttf from config/sky2m/fonts. The chosen font goes in
+ * Misc > Fonts: the font all text is drawn in. Default is Minecraft's; Inter is built in and drawn like Caxton draws it
+ * ({@link MsdfFont}); anything else is a .ttf from config/sky2m/fonts. The chosen font goes in
  * front of {@code minecraft:default} when the fonts load ({@code Sky2MCustomFontMixin}), so a character it doesn't
  * have (Hypixel's icons, other scripts) still comes from Minecraft's fonts.
  */
@@ -43,7 +43,6 @@ public final class CustomFonts {
     public static final String INTER = "Inter";
 
     private static final Identifier DEFAULT_FONT = Identifier.withDefaultNamespace("default");
-    private static final String INTER_TTF = "/assets/sky2m/font/inter.ttf";
 
     /** The .ttf loaded for the font sets being built, and the one the font sets in use were built with. */
     private static volatile GlyphProvider loaded;
@@ -107,6 +106,7 @@ public final class CustomFonts {
      * changed, and rebuilds the settings when .ttf files are added or removed so the dropdown lists them.
      */
     public static void init() {
+        MsdfFont.init();
         listed = fontFiles();
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 20 != 0) return;
@@ -154,8 +154,9 @@ public final class CustomFonts {
         loaded = null;
         String choice = selected();
         if (choice.equals(DEFAULT) || !fonts.containsKey(DEFAULT_FONT)) return fonts;
+        Sky2MConfig.Fonts c = config();
         GlyphProvider ttf = choice.equals(INTER)
-            ? loadTtf(INTER, () -> CustomFonts.class.getResourceAsStream(INTER_TTF))
+            ? MsdfFont.inter(c == null ? 7.5f : c.size, c == null ? 0f : c.height - 1f)
             : loadTtf(choice, () -> Files.newInputStream(folder().resolve(choice)));
         if (ttf == null) return fonts;
         GlyphProvider textOnly = new TextOnly(ttf);

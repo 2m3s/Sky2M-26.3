@@ -2019,7 +2019,7 @@ public final class Sky2MConfig extends Config {
         public float size = 7.5f;
 
         @Expose
-        @ConfigOption(name = "Sharpness", desc = "How finely Inter or a .ttf font is rendered: higher is sharper on big GUI scales and uses more memory. Press Apply after changing it.")
+        @ConfigOption(name = "Sharpness", desc = "How finely a .ttf font is rendered: higher is sharper on big GUI scales and uses more memory (Inter is always sharp). Press Apply after changing it.")
         @ConfigEditorSlider(minValue = 1f, maxValue = 8f, minStep = 1f)
         public float sharpness = 6f;
 
