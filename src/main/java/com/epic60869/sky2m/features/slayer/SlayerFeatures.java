@@ -59,17 +59,14 @@ public final class SlayerFeatures {
         Sky2MHuds.register("slayer_phase", "Slayer Boss Phase",
             () -> config() != null && config().phaseDisplay,
             () -> bossLines,
-            List.of(Component.literal("☠ Voidgloom Seraph 45M❤").withStyle(ChatFormatting.RED),
-                Component.literal("Phase 1: ").withStyle(ChatFormatting.YELLOW).append(Component.literal("18.1s").withStyle(ChatFormatting.WHITE)),
-                Component.literal("Downtime: ").withStyle(ChatFormatting.DARK_AQUA).append(Component.literal("3.4s").withStyle(ChatFormatting.WHITE)),
-                Component.literal("Phase 2: ").withStyle(ChatFormatting.GREEN).append(Component.literal("6.2s").withStyle(ChatFormatting.WHITE))),
+            List.of(Component.literal("☠ Voidgloom Seraph 45M❤").withStyle(ChatFormatting.RED)),
             8, 220);
     }
 
     private static void tick(Minecraft mc) {
         FeatureConfigs.Slayer config = config();
         boolean needed = (config != null && config.phaseDisplay) || SlayerTimes.enabled()
-            || EndermanSlayer.needsBoss() || BlazeSlayer.needsBoss() || SlayerPhaseTimer.needsBoss() || VoidgloomLasers.needsBoss();
+            || EndermanSlayer.needsBoss() || BlazeSlayer.needsBoss() || VoidgloomLasers.needsBoss();
         // Without an explicit target, only scan during your quest; a selected player's boss can be observed separately.
         if (mc.player == null || mc.level == null || !needed || !Sky2MLocation.onSkyblock()
             || (selectedBossOwner == null && !onSlayerQuest())) {
@@ -182,7 +179,6 @@ public final class SlayerFeatures {
         boss = ownOwner == null ? null : mobNear(mc, ownOwner);
         String ownText = ownLines.isEmpty() ? null : Sky2MLocation.strip(ownLines.get(0).getString());
         SlayerTimes.onBoss(ownText);
-        SlayerPhaseTimer.onBoss(ownText);
 
         String picked = selectedBossOwner == null ? name : selectedBossOwner;
         Entity pickedOwner = picked.equals(name) ? ownOwner
@@ -208,8 +204,6 @@ public final class SlayerFeatures {
             phaseBoss = "";
         }
         FeatureConfigs.Slayer config = config();
-        // Outside the owner check: the phase times keep showing while a Tier 5 Tarantula is gone between phases.
-        if (config != null && config.t5PhaseTimes && targetOwner.equals(name)) lines.addAll(SlayerPhaseTimer.t5Lines());
         if (config != null && config.showMinibosses) addMinibossLines(mc, lines);
         bossLines = lines;
     }
@@ -317,7 +311,6 @@ public final class SlayerFeatures {
         maxHealth = 0;
         phaseBoss = "";
         SlayerTimes.onBoss(null);
-        SlayerPhaseTimer.onBoss(null);
     }
 
     /** The lower-case name in a "Spawned by: Name" nametag, or null (for the Carry Tracker). */

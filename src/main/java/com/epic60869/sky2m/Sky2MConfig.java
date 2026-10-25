@@ -735,12 +735,6 @@ public final class Sky2MConfig extends Config {
         @ConfigAccordionId(id = 501)
         public com.epic60869.sky2m.features.FeatureConfigs.EggHitsDisplay eggHitsDisplay = new com.epic60869.sky2m.features.FeatureConfigs.EggHitsDisplay();
 
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Phase Timer", desc = "How long each hit phase and damage phase of your boss took.")
-        @ConfigAccordionId(id = 501)
-        public com.epic60869.sky2m.features.FeatureConfigs.SlayerPhaseTimer phaseTimer = new com.epic60869.sky2m.features.FeatureConfigs.SlayerPhaseTimer();
-
         @ConfigOption(name = "Kill Times", desc = "Kill times, personal bests and the PB leaderboard HUD.")
         @ConfigEditorAccordion(id = 502)
         public boolean killTimesGroup = false;

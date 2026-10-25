@@ -1141,15 +1141,6 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         public boolean showMinibosses = true;
 
-        @Expose
-        @ConfigOption(name = "T5 Phase Times", desc = "For Tier 5 Tarantula and Tier 5 Revenant, under the boss in the Boss Phase Display (needs it on): hits left while the nametag shows hits, the current phase's time, and each finished phase's time with the downtime between phases (while the boss's nametag is gone, e.g. Tarantula Broodfather to Conjoined Brood).")
-        @ConfigEditorBoolean
-        public boolean t5PhaseTimes = false;
-
-        @Expose
-        @ConfigOption(name = "T5 Phase Summary", desc = "When a Tier 5 Tarantula or Revenant dies, one line in chat (only you see it), e.g. \"T5 Tara: 41.2s (phase 1 18.1s · downtime 3.4s · phase 2 19.7s)\". Replaces the Phase Timer's chat summary for those bosses.")
-        @ConfigEditorBoolean
-        public boolean t5PhaseSummary = false;
     }
 
     /** Title and sound when your slayer boss spawns, for runs where you aren't watching the screen. */
@@ -6103,23 +6094,6 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Chat Message", desc = "When a dragon dies, how long it took in chat (only you see it), and whether it was your best.")
         @ConfigEditorBoolean
         public boolean chat = false;
-    }
-
-    public static final class SlayerPhaseTimer {
-        @Expose
-        @ConfigOption(name = "Enabled", desc = "Times each phase of your slayer boss: hit phases (the \"15 Hits\" shields of a Voidgloom) and damage phases, in a HUD you can move in /s2 gui, from the boss's spawn to its death.")
-        @ConfigEditorBoolean
-        public boolean enabled = false;
-
-        @Expose
-        @ConfigOption(name = "Chat Summary", desc = "When the boss dies, every phase's time in chat (only you see it).")
-        @ConfigEditorBoolean
-        public boolean chat = true;
-
-        @Expose
-        @ConfigOption(name = "Phase Alerts", desc = "A title and ding when your boss switches between a hit phase and a damage phase (needs Enabled).")
-        @ConfigEditorBoolean
-        public boolean phaseAlerts = false;
     }
 
     /** Slayer RNG meter HUD, ported from SkyHanni's SlayerRngMeterDisplay. */

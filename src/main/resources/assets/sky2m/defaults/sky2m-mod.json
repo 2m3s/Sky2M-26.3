@@ -596,9 +596,7 @@
     },
     "huds": {
       "phaseDisplay": false,
-      "showMinibosses": true,
-      "t5PhaseTimes": false,
-      "t5PhaseSummary": false
+      "showMinibosses": true
     },
     "targetHighlight": {
       "enabled": true,
@@ -620,11 +618,6 @@
       "enabled": true,
       "colour": "0:255:255:255:255",
       "scale": 2
-    },
-    "phaseTimer": {
-      "enabled": false,
-      "chat": false,
-      "phaseAlerts": false
     },
     "personalBest": {
       "timeToKill": true,

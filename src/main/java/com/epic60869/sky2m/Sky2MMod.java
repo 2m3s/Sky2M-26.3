@@ -244,7 +244,6 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.mining.extras.MiningExtras.init(configDir); lap("MiningExtras.init");
         com.epic60869.sky2m.features.mining.dwarven.DwarvenMining.init(configDir); lap("DwarvenMining.init");
         com.epic60869.sky2m.features.mining.OrderedWaypoints.init(configDir); lap("OrderedWaypoints.init");
-        com.epic60869.sky2m.features.slayer.SlayerPhaseTimer.init(); lap("SlayerPhaseTimer.init");
         com.epic60869.sky2m.features.slayer.VoidgloomLasers.init(); lap("VoidgloomLasers.init");
         com.epic60869.sky2m.features.combat.DamageNumbers.init(); lap("DamageNumbers.init");
         com.epic60869.sky2m.features.combat.extra.CombatExtras.init(configDir); lap("CombatExtras.init");
