@@ -68,12 +68,27 @@ public final class SlayerItemsOnGround {
             for (Map.Entry<ItemEntity, Label> entry : labels.entrySet()) {
                 ItemEntity item = entry.getKey();
                 if (item.isRemoved()) continue;
-                collector.submitText(entry.getValue().text(), item.position().add(0, 0.8, 0), 1.0f, false);
+                // Drawn through blocks like SkyHanni's, which also keeps the colours bright (depth-tested text is faded).
+                collector.submitText(entry.getValue().text(), item.position().add(0, 0.8, 0), 1.0f, true);
             }
         });
     }
 
-    /** "5x Tarantula Web (12.3k)": the name in its own colour, or null when it's worth less than {@code minimum}. */
+    /**
+     * The item's name in its rarity colour, as SkyHanni names it: the item list's name (coloured by its rarity), since
+     * Hypixel's dropped items don't always carry a coloured name; else the item's own name.
+     */
+    private static Component name(String id, ItemStack stack) {
+        String repo = com.epic60869.sky2m.custom.RepoItems.displayName(id);
+        ChatFormatting colour = com.epic60869.sky2m.custom.RepoItems.tierColour(com.epic60869.sky2m.custom.RepoItems.tier(id));
+        if (repo != null && !repo.isBlank()) {
+            return repo.startsWith("§") ? Component.literal(repo) : Component.literal(repo).withStyle(colour);
+        }
+        Component own = stack.getHoverName();
+        return own.getStyle().getColor() != null ? own.copy() : Component.literal(own.getString()).withStyle(colour);
+    }
+
+    /** "5x Tarantula Web (12.3k)" with the name in its rarity colour, or null when it's worth less than {@code minimum}. */
     private static Component label(ItemStack stack, int minimum) {
         if (stack.isEmpty() || stack.getItem() instanceof SpawnEggItem) return null;
         String id = Compat.neuName(stack);
@@ -82,8 +97,8 @@ public final class SlayerItemsOnGround {
         double total = unit * stack.getCount();
         if (total <= 0 || total < minimum) return null;
         MutableComponent text = Component.empty();
-        if (stack.getCount() > 1) text.append(Component.literal(stack.getCount() + "x ").withStyle(ChatFormatting.GRAY));
-        return text.append(stack.getHoverName().copy())
+        if (stack.getCount() > 1) text.append(Component.literal(stack.getCount() + "x ").withStyle(ChatFormatting.WHITE));
+        return text.append(name(id, stack))
             .append(Component.literal(" (").withStyle(ChatFormatting.GRAY))
             .append(Component.literal(CombatFeatures.formatCoins(total)).withStyle(ChatFormatting.GOLD))
             .append(Component.literal(")").withStyle(ChatFormatting.GRAY));
