@@ -31,6 +31,8 @@ public final class CocoonTracker {
     /** A cocoon that never opens (you left, it despawned) stops being shown after this. */
     private static final long GIVE_UP_MS = 60_000L;
 
+    /** How long a cocoon takes to hatch before one has been timed (a slayer boss's took 6.55s). */
+    private static final long DEFAULT_OPEN_MS = 6_500L;
     /** A cocoon can appear in the same tick as the chat line or just before it: stands this new still count. */
     private static final long SPAWNED_BEFORE_MS = 1_500L;
 
@@ -126,12 +128,10 @@ public final class CocoonTracker {
 
     private static Component timer() {
         long elapsed = System.currentTimeMillis() - cocoonedAt;
-        if (openMs > 0) {
-            long left = Math.max(0, openMs - elapsed);
-            return Component.literal("Hatches in ~" + seconds(left)).withStyle(ChatFormatting.YELLOW);
-        }
-        // No cocoon seen hatching yet: count up until this one does, and the next ones count down.
-        return Component.literal("Cocooned " + seconds(elapsed) + " ago").withStyle(ChatFormatting.YELLOW);
+        // Until a cocoon has been seen hatching, Hypixel's usual hatch time (about 6.5s) is used.
+        long left = (openMs > 0 ? openMs : DEFAULT_OPEN_MS) - elapsed;
+        if (left <= 0) return Component.literal("Hatching...").withStyle(ChatFormatting.YELLOW);
+        return Component.literal("Hatches in " + seconds(left)).withStyle(ChatFormatting.YELLOW);
     }
 
     private static String seconds(long ms) {

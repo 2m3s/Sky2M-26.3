@@ -1072,7 +1072,7 @@ public final class FeatureConfigs {
         public boolean enabled = true;
 
         @Expose
-        @ConfigOption(name = "Cocoon Label", desc = "Show the mob's name over every cocoon you make, with the time until it hatches (once one has been seen hatching), even with the alert off or limited to important mobs.")
+        @ConfigOption(name = "Cocoon Label", desc = "Show the mob's name over every cocoon you make, counting down to when it hatches (about 6.5s at first, then as long as yours have taken), even with the alert off or limited to important mobs.")
         @ConfigEditorBoolean
         public boolean label = true;
 

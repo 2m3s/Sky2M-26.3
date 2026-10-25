@@ -27,6 +27,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
+- Cocoon Label counts down to the hatch from the first cocoon (about 6.5s until one has been timed), and says "Hatching..." if it runs over.
 - Cocoon Label shows over cocoons that appear together with (or just before) the "CAUGHT!" / "YOU COCOONED YOUR SLAYER BOSS" message.
 - Protected items (/s2 protect) can be put into The Hex, like the anvil and enchanting table.
 - Slayer profit: with auto-slayer, the spawn fee taken from your bank counts for the quest it starts, not the one that just ended, so the profit line no longer says "Slayer cost: unknown" (for every slayer). A purse change of a few coins at the quest start is no longer taken for the fee.
