@@ -2,6 +2,11 @@
 
 All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. The 26.3 build has its own version numbers, starting again at 1.0; the 26.2 build keeps its own changelog.
 
+## 1.0.4
+
+### Changed
+- GitHub releases and their download are named "Sky2M Mod" instead of "SkyBalls Mod".
+
 ## 1.0.3
 
 ### Added
