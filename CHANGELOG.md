@@ -21,6 +21,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - GitHub releases and their download are named "Sky2M Mod" instead of "SkyBalls Mod".
 
 ### Fixed
+- Slayer profit: with auto-slayer, the spawn fee taken from your bank counts for the quest it starts, not the one that just ended, so the profit line no longer says "Slayer cost: unknown" (for every slayer). A purse change of a few coins at the quest start is no longer taken for the fee.
 - Fix the Item Pickup Log adding different pets (and enchanted books) into one line and valuing them at the wrong price.
 
 ## 1.0.3

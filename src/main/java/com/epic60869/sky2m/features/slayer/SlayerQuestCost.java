@@ -30,11 +30,15 @@ public final class SlayerQuestCost {
     private static final Pattern BANK_CHARGE = Pattern.compile("^Took (.+?) coins from your bank\\b(.*)$");
     /** A bank charge that doesn't say it's for auto-slayer only counts this close to a quest start (either side). */
     private static final long BANK_NEAR_START_MS = 10_000L;
+    /** A bank charge this soon after a quest started is that quest's; later ones wait for the next start. */
+    private static final long BANK_AFTER_START_MS = 3_000L;
     private static final Pattern NUMBER = Pattern.compile("[\\d,]+(?:\\.\\d+)?");
     /** How long after the quest started its slayer may take to show on the scoreboard. */
     private static final long QUEST_COST_WINDOW_MS = 3_000L;
     /** The highest cost that can be a spawn fee: anything more is some other purse change. */
     private static final long MAX_COST = 350_000L;
+    /** The lowest spawn fee (a Tier 1 with Aatrox's discount): less is the purse wobbling, not a fee. */
+    private static final long MIN_COST = 1_000L;
 
     /** The purse over the last 15 seconds: {time, coins}. Hypixel takes the fee before "SLAYER QUEST STARTED!". */
     private static final ArrayDeque<double[]> purseHistory = new ArrayDeque<>();
@@ -146,13 +150,14 @@ public final class SlayerQuestCost {
             long cost = Math.round(parseCoins(bank.group(1)));
             if (cost <= 0 || cost > MAX_COST) return;
             bankAt = now;
-            boolean autoSlayer = bank.group(2).toLowerCase(java.util.Locale.ROOT).contains("slayer");
-            if (autoSlayer || now - lastStartAt <= BANK_NEAR_START_MS) {
+            if (now - lastStartAt <= BANK_AFTER_START_MS) {
                 slot(serial)[1] = cost;
                 pendingBank = -1;
                 charge(new Charge(SlayerArea.questSlayer(), cost, true));
             } else {
-                // Maybe for a quest about to start: only counted if one starts within 10 seconds.
+                // For the quest about to start: auto-slayer's "Took 96k coins from your bank" comes between "SLAYER
+                // QUEST COMPLETE!" and the next "SLAYER QUEST STARTED!", so it isn't the ending quest's. Only counted
+                // if a quest starts within 10 seconds.
                 pendingBank = cost;
             }
         }
@@ -194,7 +199,7 @@ public final class SlayerQuestCost {
             else if (entry[0] > at) lowest = lowest < 0 ? entry[1] : Math.min(lowest, entry[1]);
         }
         long cost = highest > 0 && lowest >= 0 ? Math.round(highest - lowest) : -1;
-        boolean found = cost > 0 && cost <= MAX_COST;
+        boolean found = cost >= MIN_COST && cost <= MAX_COST;
         // One line per check, so a log shows why a cost came out "unknown".
         System.out.println("[Sky2M] Slayer quest cost at " + m.what + " (quest " + m.quest + "): " + (m.slayer == null ? "no quest seen" : m.slayer)
             + ", purse " + (highest < 0 ? "not readable" : Math.round(highest) + " -> " + Math.round(lowest))
