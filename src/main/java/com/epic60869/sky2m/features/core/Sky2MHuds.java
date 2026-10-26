@@ -168,8 +168,6 @@ public final class Sky2MHuds {
         if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        // Hidden while the Inquisitor Gamble plays, so a tracker doesn't show the Chimera first.
-        if (com.epic60869.sky2m.features.combat.InquisitorGamble.holding()) return;
         if (!Sky2MLocation.skyblockOnlyAllows()) return;
         // Positions saved before the reference size existed were placed on this screen size.
         if (refWidth <= 0 || refHeight <= 0) setReferenceToScreen();

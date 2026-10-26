@@ -80,7 +80,6 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.combat.DianaMobHealth.init(); lap("DianaMobHealth.init");
         com.epic60869.sky2m.features.combat.kuudra.KuudraFeatures.init(configDir); lap("KuudraFeatures.init");
         com.epic60869.sky2m.features.combat.DianaAchievements.init(configDir); lap("DianaAchievements.init");
-        com.epic60869.sky2m.features.combat.InquisitorGamble.init(); lap("InquisitorGamble.init");
         com.epic60869.sky2m.features.misc.profit.SessionTracker.init(configDir); lap("SessionTracker.init");
         com.epic60869.sky2m.features.misc.profit.ProfitTracker.init(configDir); lap("ProfitTracker.init");
         com.epic60869.sky2m.features.combat.DianaLobbyCompromised.init(); lap("DianaLobbyCompromised.init");

@@ -526,12 +526,6 @@ public final class FeatureConfigs {
         @ConfigAccordionId(id = 402)
         public DianaDrops drops = new DianaDrops();
 
-        @Expose
-        @ConfigOption(name = "Inquisitor Gamble", desc = "When an Inquisitor you dug up dies, or you lootshare one, it gets shot on screen: the bullet goes through its heart if a Chimera dropped and misses if not. Try it with /s2 inqgamble hit|miss.")
-        @ConfigEditorBoolean
-        @ConfigAccordionId(id = 402)
-        public boolean inquisitorGamble = true;
-
         @ConfigOption(name = "Party & Lootshare", desc = "Party messages, checkmarks, coordinate waypoints and the lootshare helper.")
         @ConfigEditorAccordion(id = 403)
         public boolean partyLootshareGroup = false;

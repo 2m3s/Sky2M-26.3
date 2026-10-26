@@ -188,8 +188,7 @@ public final class DianaAchievements {
 
     private static void tick(Minecraft mc) {
         if (queueCooldown > 0) queueCooldown--;
-        // Popups wait for the Inquisitor Gamble so they don't give a Chimera away.
-        while (queueCooldown == 0 && !queue.isEmpty() && !InquisitorGamble.holding()) {
+        while (queueCooldown == 0 && !queue.isEmpty()) {
             int id = queue.poll();
             Achievement a = ALL.get(id);
             if (a == null || !canBeUnlocked(a)) continue;

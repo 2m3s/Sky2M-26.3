@@ -488,7 +488,6 @@ public final class DianaTracker {
         lastActivity = now;
         lastSpawned = mob;
         lastSpawnedAt = now;
-        if (mob == Mob.MINOS_INQUISITOR) InquisitorGamble.onYourInquisitor();
         Streaks s = saved.streaks;
 
         // SkyHanni's creatures since, per period.
@@ -535,7 +534,6 @@ public final class DianaTracker {
     /** Rare mob died near you (from its nametag health). Counted as lootshared if LOOT SHARE came around then. */
     static void onRareMobDeath(Mob mob) {
         if (!inHub()) return;
-        if (mob == Mob.MINOS_INQUISITOR) InquisitorGamble.onInquisitorDeath(gotLootShareRecently());
         if (gotLootShareRecently()) onLootshareMob(mob);
         else recentRareDeaths.put(mob, System.currentTimeMillis());
     }
@@ -546,7 +544,6 @@ public final class DianaTracker {
 
     private static void onLootshareMob(Mob mob) {
         if (onCooldown("ls:" + mob)) return;
-        if (mob == Mob.MINOS_INQUISITOR) InquisitorGamble.onInquisitorLootshare();
         for (Data d : targets()) d.add(d.mobs, mob.name() + "_LS", 1);
         for (Drop drop : Drop.values()) {
             if (drop.from != mob || !drop.lootshare) continue;
@@ -560,7 +557,6 @@ public final class DianaTracker {
     // ------------------------------------------------------------------------------------------------ drops
 
     private static void onDrop(Drop drop, int magicFind, boolean lootshare) {
-        if (drop == Drop.CHIMERA) InquisitorGamble.onChimera();
         // Chimera can drop twice from one Inquisitor (yours and a lootshare), so it has its own cooldown per kind.
         // Crown of Greed and Hilt can be seen both in chat and when they reach your inventory.
         boolean pickup = drop == Drop.CROWN_OF_GREED || drop == Drop.HILT_OF_REVELATIONS;
@@ -596,7 +592,7 @@ public final class DianaTracker {
             DianaAchievements.onMagicFind(magicFind, drop == Drop.CHIMERA);
         }
         dirty = true;
-        InquisitorGamble.afterReveal(() -> announce(drop, magicFind, ls, c));
+        announce(drop, magicFind, ls, c);
         DianaAchievements.check();
     }
 
@@ -681,7 +677,7 @@ public final class DianaTracker {
     }
 
     private static void info(Component message) {
-        InquisitorGamble.afterReveal(() -> Sky2MAlerts.chat(message));
+        Sky2MAlerts.chat(message);
     }
 
     // ------------------------------------------------------------------------------------------------ tick

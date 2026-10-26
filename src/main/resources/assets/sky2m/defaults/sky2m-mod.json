@@ -2415,7 +2415,6 @@
         "sinceMessages": false,
         "announceCocoon": false
       },
-      "inquisitorGamble": false,
       "showPartyMessages": true,
       "partyCoordWaypoints": true,
       "partyCheckmarks": true,

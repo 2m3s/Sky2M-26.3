@@ -207,11 +207,9 @@ public final class CombatFeatures {
             boolean slayer = com.epic60869.sky2m.features.slayer.SlayerBossProfit.isSlayerDrop(item);
             // RARE CROP lines, and anything else that drops in the Garden (pest drops).
             boolean garden = type.contains("CROP") || Sky2MLocation.inGarden();
-            // A Chimera's animations wait for the Inquisitor Gamble's shot.
-            InquisitorGamble.checkLine(text.trim());
             String dropText = text.trim(), dropItem = item, dropType = m.group("type").trim();
             int dropAmount = amount;
-            InquisitorGamble.afterReveal(() -> {
+            {
                 // First and on its own, so a problem in the other drop features can't stop it reaching the RNG HUD.
                 try {
                     com.epic60869.sky2m.FarmingRngTracker.get().onRareDrop(message.component(), dropItem, dropAmount,
@@ -222,7 +220,7 @@ public final class CombatFeatures {
                 onRareDrop(config.rareDrops, dropText, dropItem, dropAmount, rng, slayer, garden,
                     com.epic60869.sky2m.features.misc.PetDropRarity.label(message.component(), dropItem));
                 RareDropTotem.onDrop(dropType, dropItem);
-            });
+            }
         }
 
         if ((m = DYE_DROP.matcher(text)).find()) {
