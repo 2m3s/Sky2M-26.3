@@ -19,6 +19,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- Right-clicking an item in the Item List or on a recipe shows the recipes it is used in (Item List > Right Click is now Show Usages by default, also for settings on Wiki or Recipes).
 - The Farming RNG HUD is now the RNG HUD, in Misc instead of Farming (your settings move with it), with each line centred like SkyHanni's.
 - RNG HUD names drops in the item's own rarity colour from the item list first, like SkyHanni (Shriveled Wasp Legendary gold); the chat message's colour is only a fallback.
 - Cocoon Alert is on by default. Its title is still only for slayer bosses, elusive mobs and important bosses; turn off "Only Important Mobs" to get it for every mob you cocoon (like "CAUGHT! You cocooned a Alligator!").

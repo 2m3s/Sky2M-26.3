@@ -124,7 +124,7 @@ public final class Sky2MConfig extends Config {
 
         /** Which changed defaults this config has already been given (see migrateConfigShape). */
         @Expose
-        public int defaultsVersion = 8;
+        public int defaultsVersion = 9;
     }
 
     public static final class Gui {
@@ -2820,6 +2820,15 @@ public final class Sky2MConfig extends Config {
             JsonObject fonts = childObject(childObject(root, "misc"), "fonts");
             if (!fonts.has("size") || fonts.get("size").getAsFloat() == 9f) fonts.addProperty("size", 7.5f);
             general.addProperty("defaultsVersion", 8);
+            changed = true;
+        }
+        if (defaults < 9) {
+            // Item List > Right Click shows usages by default; settings on the old default (Wiki) or on Recipes (the
+            // same as Left Click) get it.
+            JsonObject itemList = childObject(inventory, "itemList");
+            String right = itemList.has("rightClick") ? itemList.get("rightClick").getAsString() : "WIKI";
+            if (right.equals("WIKI") || right.equals("RECIPE")) itemList.addProperty("rightClick", "USAGE");
+            general.addProperty("defaultsVersion", 9);
             changed = true;
         }
 

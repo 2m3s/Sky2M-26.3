@@ -2274,7 +2274,7 @@
       "itemSize": 18,
       "hideWhen": "SEARCH",
       "leftClick": "RECIPE",
-      "rightClick": "WIKI",
+      "rightClick": "USAGE",
       "middleClick": "NOTHING",
       "hideVanilla": true,
       "prefixFirst": false,

@@ -4937,9 +4937,9 @@ public final class FeatureConfigs {
         public ClickAction leftClick = ClickAction.RECIPE;
 
         @Expose
-        @ConfigOption(name = "Right Click", desc = "What right-clicking an item does.")
+        @ConfigOption(name = "Right Click", desc = "What right-clicking an item does. Show Usages by default: right-click an item on a recipe for the recipes it is used in.")
         @ConfigEditorDropdown
-        public ClickAction rightClick = ClickAction.WIKI;
+        public ClickAction rightClick = ClickAction.USAGE;
 
         @Expose
         @ConfigOption(name = "Middle Click", desc = "What middle-clicking an item does.")
