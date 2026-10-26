@@ -19,6 +19,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- /pv's Armour & Equipment page shows only its slots: four armour pieces on top and four equipment pieces below, instead of two rows of nine.
 - Right-clicking an item in the Item List or on a recipe shows the recipes it is used in (Item List > Right Click is now Show Usages by default, also for settings on Wiki or Recipes).
 - The Farming RNG HUD is now the RNG HUD, in Misc instead of Farming (your settings move with it), with each line centred like SkyHanni's.
 - RNG HUD names drops in the item's own rarity colour from the item list first, like SkyHanni (Shriveled Wasp Legendary gold); the chat message's colour is only a fallback.

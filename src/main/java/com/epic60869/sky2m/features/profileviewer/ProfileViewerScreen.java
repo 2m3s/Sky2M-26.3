@@ -583,8 +583,8 @@ public final class ProfileViewerScreen extends Screen {
                 List<PvItem> laid = new ArrayList<>();
                 List<PvItem> armour = ProfileItems.decode(Json.obj(inv, "inv_armor"));
                 List<PvItem> equipment = ProfileItems.decode(Json.obj(inv, "equipment_contents"));
+                // Two rows of four (see columns()): armour, then equipment.
                 for (int i = 3; i >= 0; i--) laid.add(i < armour.size() ? armour.get(i) : null);
-                for (int i = 0; i < 5; i++) laid.add(null);
                 for (int i = 0; i < 4; i++) laid.add(i < equipment.size() ? equipment.get(i) : null);
                 pages.add(laid);
             }
@@ -678,13 +678,19 @@ public final class ProfileViewerScreen extends Screen {
         List<PvItem> items = pages.get(invPage);
         String name = INVENTORIES[inventory][0] + (pages.size() > 1 ? " (" + (invPage + 1) + "/" + pages.size() + ")" : "");
         g.text(font, name, gx, gy, GOLD, true);
-        int rows = Math.max(1, (items.size() + 8) / 9);
+        int cols = columns();
+        int rows = Math.max(1, (items.size() + cols - 1) / cols);
         int sy = gy + 12;
-        for (int i = 0; i < rows * 9; i++) {
-            int x = gx + (i % 9) * SLOT, y = sy + (i / 9) * SLOT + (inventory == 0 && i >= 27 ? 4 : 0);
+        for (int i = 0; i < rows * cols; i++) {
+            int x = gx + (i % cols) * SLOT, y = sy + (i / cols) * SLOT + (inventory == 0 && i >= 27 ? 4 : 0);
             slot(g, i < items.size() ? items.get(i) : null, x, y, mouseX, mouseY);
         }
-        if (pages.size() > 1) pageArrows(g, gx, sy + rows * SLOT + 8, 9 * SLOT, mouseX, mouseY);
+        if (pages.size() > 1) pageArrows(g, gx, sy + rows * SLOT + 8, cols * SLOT, mouseX, mouseY);
+    }
+
+    /** Slots per row: Armour & Equipment has only its four armour and four equipment slots, everything else nine. */
+    private int columns() {
+        return inventory == 1 ? 4 : 9;
     }
 
     private void sacks(GuiGraphicsExtractor g, int gx, int gy, int mouseX, int mouseY) {
