@@ -20,9 +20,15 @@ import java.util.Set;
  * Tooltip's Estimated Item Value ({@link Sky2MPriceTooltip#costPrice}: bazaar insta-buy, else lowest BIN).
  */
 public final class ValueBreakdown {
-    public record Row(String label, double coins) {}
+    /** One line of the breakdown; {@code group} is "ench", "gem" or "part" for rows the panel lists under a heading. */
+    public record Row(String label, double coins, String group) {
+        public Row(String label, double coins) {
+            this(label, coins, "");
+        }
+    }
 
     private static final Set<String> UNIVERSAL_SLOTS = Set.of("COMBAT", "OFFENSIVE", "DEFENSIVE", "UNIVERSAL", "MINING", "CHISEL");
+    private static final String[] ROD_SLOTS = {"hook", "line", "sinker"};
     private static final String[] MASTER_STARS = {"FIRST_MASTER_STAR", "SECOND_MASTER_STAR", "THIRD_MASTER_STAR", "FOURTH_MASTER_STAR", "FIFTH_MASTER_STAR"};
 
     private ValueBreakdown() {}
@@ -52,12 +58,27 @@ public final class ValueBreakdown {
             CompoundTag enchants = data.getCompoundOrEmpty("enchantments");
             for (String enchant : enchants.keySet()) {
                 int level = enchants.getIntOr(enchant, 1);
-                add(rows, pretty(enchant) + " " + level, "ENCHANTMENT_" + enchant.toUpperCase(Locale.ROOT) + "_" + level, 1);
+                add(rows, pretty(enchant) + " " + level, "ENCHANTMENT_" + enchant.toUpperCase(Locale.ROOT) + "_" + level, 1, "ench");
             }
         }
 
         int stars = Math.max(data.getIntOr("upgrade_level", 0), data.getIntOr("dungeon_item_level", 0));
-        for (int i = 5; i < Math.min(stars, 10); i++) add(rows, "Master Star " + (i - 4), MASTER_STARS[i - 5], 1);
+        com.google.gson.JsonArray starCosts = com.epic60869.sky2m.custom.RepoItems.starCosts(id);
+        if (starCosts != null && starCosts.size() > 5) {
+            // Kuudra armour: ten stars paid in essence (and Heavy Pearls), shown as one row each.
+            for (int i = 0; i < Math.min(stars, starCosts.size()); i++) {
+                double cost = 0;
+                for (var entry : starCosts.get(i).getAsJsonArray()) {
+                    var c = entry.getAsJsonObject();
+                    String item = c.get("type").getAsString().equals("ESSENCE") ? "ESSENCE_" + c.get("essence_type").getAsString() : c.get("item_id").getAsString();
+                    cost += c.get("amount").getAsInt() * Sky2MPriceTooltip.costPrice(item);
+                }
+                if (cost > 0) rows.add(new Row("Star " + (i + 1), cost));
+            }
+        } else if (starCosts != null) {
+            // Dungeon items: stars 6 to 10 are master stars. Items with no stars of their own (fishing rods) get none.
+            for (int i = 5; i < Math.min(stars, 10); i++) add(rows, "Master Star " + (i - 4), MASTER_STARS[i - 5], 1);
+        }
 
         CompoundTag gems = data.getCompoundOrEmpty("gems");
         for (String slot : gems.keySet()) {
@@ -66,7 +87,16 @@ public final class ValueBreakdown {
             if (quality.isEmpty()) continue;
             String type = slot.substring(0, Math.max(0, slot.lastIndexOf('_')));
             if (UNIVERSAL_SLOTS.contains(type)) type = gems.getStringOr(slot + "_gem", "");
-            if (!type.isEmpty()) add(rows, pretty(quality) + " " + pretty(type) + " Gem", quality + "_" + type + "_GEM", 1);
+            if (!type.isEmpty()) add(rows, pretty(quality) + " " + pretty(type) + " Gem", quality + "_" + type + "_GEM", 1, "gem");
+        }
+
+        // Fishing rod parts: {"hook": {"part": "hotspot"}, "line": {...}, "sinker": {...}}.
+        for (String slot : ROD_SLOTS) {
+            String part = data.getCompoundOrEmpty(slot).getStringOr("part", "").toUpperCase(Locale.ROOT);
+            if (part.isEmpty()) continue;
+            String suffix = "_" + slot.toUpperCase(Locale.ROOT);
+            String partId = part.endsWith(suffix) ? part : part + suffix;
+            add(rows, pretty(partId), partId, 1, "part");
         }
 
         if (data.getIntOr("art_of_war_count", 0) > 0) add(rows, "The Art of War", "THE_ART_OF_WAR", 1);
@@ -106,9 +136,13 @@ public final class ValueBreakdown {
     }
 
     private static void add(List<Row> rows, String label, String priceId, int times) {
+        add(rows, label, priceId, times, "");
+    }
+
+    private static void add(List<Row> rows, String label, String priceId, int times, String group) {
         if (times <= 0 || priceId.isEmpty()) return;
         double each = Sky2MPriceTooltip.costPrice(priceId);
-        if (each > 0) rows.add(new Row(label, each * times));
+        if (each > 0) rows.add(new Row(label, each * times, group));
     }
 
     private static String pretty(String text) {
@@ -146,11 +180,17 @@ public final class ValueBreakdown {
         double sum = 0;
         for (Row row : rows) sum += row.coins();
         String total = coins(sum * count) + " Coins";
-        String title = "Estimated Item Value";
-        int labelWidth = font.width(title);
-        for (Row row : rows) labelWidth = Math.max(labelWidth, font.width(row.label()) + 12 + font.width(coins(row.coins())));
-        int w = Math.max(labelWidth, font.width("Total: " + total)) + 16;
-        int h = 8 + 12 + rows.size() * 10 + 6 + 12 + 6;
+        Component name = stack.getHoverName();
+        Component header = Component.literal("Estimated Item Value").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        List<PanelLine> lines = panelLines(rows);
+
+        // The icon takes 26 pixels before the name and header, which are the panel's widest lines on a short list.
+        int labelWidth = Math.max(font.width(name), font.width(header)) + 18;
+        for (PanelLine l : lines) labelWidth = Math.max(labelWidth, l.indent() + font.width(l.label()) + 14 + font.width(l.value()));
+        Component totalLine = Component.literal("Total: ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+            .append(Component.literal(total).withStyle(ChatFormatting.YELLOW));
+        int w = Math.max(labelWidth, font.width(totalLine)) + 16;
+        int h = 8 + 20 + 12 + lines.size() * 10 + 6 + 12 + 6;
 
         int left = access.sky2m$getLeftPos(), top = access.sky2m$getTopPos(), image = access.sky2m$getImageWidth();
         int x = left - w - 6;
@@ -160,19 +200,77 @@ public final class ValueBreakdown {
 
         g.nextStratum();
         g.fill(x, y, x + w, y + h, 0xE0101216);
+        g.fill(x, y, x + w, y + 2, 0xFFFFAA00);
         g.outline(x, y, w, h, 0xFF2C313A);
-        int line = y + 8;
-        g.text(font, Component.literal(title).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), x + 8, line, 0xFFFFFFFF, true);
-        line += 12;
-        for (Row row : rows) {
-            g.text(font, row.label(), x + 8, line, 0xFFCCCCCC, true);
-            String value = coins(row.coins());
-            g.text(font, value, x + w - 8 - font.width(value), line, 0xFF55FFFF, true);
+        g.item(stack, x + 6, y + 7);
+        g.text(font, name, x + 26, y + 7, 0xFFFFFFFF, true);
+        g.text(font, header, x + 26, y + 17, 0xFFFFFFFF, true);
+        int line = y + 8 + 20 + 4;
+        for (PanelLine l : lines) {
+            g.text(font, l.label(), x + 8 + l.indent(), line, 0xFFFFFFFF, true);
+            g.text(font, l.value(), x + w - 8 - font.width(l.value()), line, 0xFFFFFFFF, true);
             line += 10;
         }
-        line += 6;
-        g.text(font, Component.literal("Total: ").withStyle(ChatFormatting.GOLD).append(Component.literal(total).withStyle(ChatFormatting.YELLOW)),
-            x + 8, line, 0xFFFFFFFF, true);
+        line += 2;
+        g.fill(x + 6, line, x + w - 6, line + 1, 0xFF2C313A);
+        line += 5;
+        g.text(font, totalLine, x + 8, line, 0xFFFFFFFF, true);
+    }
+
+    private record PanelLine(Component label, Component value, int indent) {}
+
+    /** How many of a heading's items are listed (the most expensive ones); the rest are summed on a "+N more" line. */
+    private static final int LISTED = 5;
+
+    private static Component coinsText(double value, boolean plus) {
+        return Component.literal(plus ? "+" : "").withStyle(ChatFormatting.GREEN)
+            .append(Component.literal(coins(value)).withStyle(ChatFormatting.GOLD));
+    }
+
+    /**
+     * The panel's lines like SkyHanni's: the base item, single upgrades (recombobulator, stars, books, scrolls), then
+     * Rod Parts, Enchantments and Gemstones, each a heading with its total over its most expensive items.
+     */
+    private static List<PanelLine> panelLines(List<Row> rows) {
+        List<PanelLine> out = new ArrayList<>();
+        out.add(new PanelLine(Component.literal(rows.get(0).label()).withStyle(ChatFormatting.WHITE), coinsText(rows.get(0).coins(), false), 0));
+        for (Row row : rows.subList(1, rows.size())) {
+            if (row.group().isEmpty()) out.add(new PanelLine(Component.literal(row.label()).withStyle(labelColour(row.label())), coinsText(row.coins(), true), 0));
+        }
+        String[][] groups = {{"part", "Rod Parts"}, {"ench", "Enchantments"}, {"gem", "Gemstones"}};
+        ChatFormatting[] colours = {ChatFormatting.GREEN, ChatFormatting.BLUE, ChatFormatting.LIGHT_PURPLE};
+        for (int k = 0; k < groups.length; k++) {
+            List<Row> members = new ArrayList<>();
+            for (Row row : rows) if (row.group().equals(groups[k][0])) members.add(row);
+            if (members.isEmpty()) continue;
+            members.sort((x, y) -> Double.compare(y.coins(), x.coins()));
+            double groupTotal = 0;
+            for (Row row : members) groupTotal += row.coins();
+            out.add(new PanelLine(Component.literal(groups[k][1] + " (" + members.size() + ")").withStyle(colours[k]), coinsText(groupTotal, true), 0));
+            double rest = 0;
+            for (int i = 0; i < members.size(); i++) {
+                Row row = members.get(i);
+                if (i < LISTED) out.add(new PanelLine(Component.literal(row.label()).withStyle(ChatFormatting.GRAY), coinsText(row.coins(), false), 6));
+                else rest += row.coins();
+            }
+            if (members.size() > LISTED) {
+                out.add(new PanelLine(Component.literal("+" + (members.size() - LISTED) + " more").withStyle(ChatFormatting.DARK_GRAY), coinsText(rest, false), 6));
+            }
+        }
+        return out;
+    }
+
+    /** SkyHanni-style colour for a row's label, by what it is. */
+    private static ChatFormatting labelColour(String label) {
+        String l = label.toLowerCase(Locale.ROOT);
+        if (l.contains("gem")) return ChatFormatting.LIGHT_PURPLE;
+        if (l.contains("recombobulator")) return ChatFormatting.LIGHT_PURPLE;
+        if (l.contains("potato")) return ChatFormatting.GOLD;
+        if (l.contains("star")) return ChatFormatting.GOLD;
+        if (l.contains("rune")) return ChatFormatting.DARK_PURPLE;
+        if (l.contains("scroll") || l.contains("art of") || l.contains("enrichment")) return ChatFormatting.YELLOW;
+        if (l.matches(".* \\d+$")) return ChatFormatting.BLUE;
+        return ChatFormatting.AQUA;
     }
 
     /** Adds the breakdown rows to a tooltip while Shift is held. */

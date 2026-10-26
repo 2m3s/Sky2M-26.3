@@ -37,9 +37,21 @@ final class EstimatedItemValue {
             }
         }
 
-        // Stars past 5 are master stars.
+        // Kuudra armour has ten essence stars; dungeon items have five, then master stars. Items like fishing rods have
+        // stars of their own that cost nothing we can price, so they get neither.
         int stars = Math.max(data.getIntOr("upgrade_level", 0), data.getIntOr("dungeon_item_level", 0));
-        for (int i = 5; i < Math.min(stars, 10); i++) total += price(MASTER_STARS[i - 5]);
+        com.google.gson.JsonArray starCosts = com.epic60869.sky2m.custom.RepoItems.starCosts(id);
+        if (starCosts != null && starCosts.size() > 5) {
+            for (int i = 0; i < Math.min(stars, starCosts.size()); i++) {
+                for (var cost : starCosts.get(i).getAsJsonArray()) {
+                    var c = cost.getAsJsonObject();
+                    String item = c.get("type").getAsString().equals("ESSENCE") ? "ESSENCE_" + c.get("essence_type").getAsString() : c.get("item_id").getAsString();
+                    total += c.get("amount").getAsInt() * price(item);
+                }
+            }
+        } else if (starCosts != null) {
+            for (int i = 5; i < Math.min(stars, 10); i++) total += price(MASTER_STARS[i - 5]);
+        }
 
         CompoundTag gems = data.getCompoundOrEmpty("gems");
         for (String slot : gems.keySet()) {
@@ -49,6 +61,13 @@ final class EstimatedItemValue {
             String type = slot.substring(0, Math.max(0, slot.lastIndexOf('_')));
             if (UNIVERSAL_SLOTS.contains(type)) type = gems.getStringOr(slot + "_gem", "");
             if (!type.isEmpty()) total += price(quality + "_" + type + "_GEM");
+        }
+
+        for (String slot : new String[]{"hook", "line", "sinker"}) {
+            String part = data.getCompoundOrEmpty(slot).getStringOr("part", "").toUpperCase(Locale.ROOT);
+            if (part.isEmpty()) continue;
+            String suffix = "_" + slot.toUpperCase(Locale.ROOT);
+            total += price(part.endsWith(suffix) ? part : part + suffix);
         }
 
         if (data.getIntOr("art_of_war_count", 0) > 0) total += price("THE_ART_OF_WAR");

@@ -5,7 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
-- Value Breakdown Panel (Inventory > Economy, on by default, like SkyHanni's): hovering an item in a menu or your inventory shows a panel beside it listing what its Estimated Item Value is made of (base item, stars, recombobulator, enchantments, gemstones, scrolls and other upgrades) with the total. While it is on, the Estimated Item Value line is no longer in the Price Tooltip.
+- Value Breakdown Panel (Inventory > Economy, on by default, like SkyHanni's): hovering an item in a menu or your inventory shows a coloured panel (item icon, labels coloured by type, green + gold prices) beside it listing what its Estimated Item Value is made of (base item, stars, recombobulator, enchantments, gemstones, scrolls and other upgrades) with the total: single upgrades first, then Rod Parts, Enchantments (the five most expensive, the rest summed) and Gemstones under their own headings, like SkyHanni's. Fishing rod parts (hook, line, sinker) now count towards the value. While it is on, the Estimated Item Value line is no longer in the Price Tooltip.
 - Command Tab Complete (Chat > Command Autofill, like SkyHanni's): Tab suggests player names and subcommands for /p, /f, /g, /msg, /w, /visit, /pv, /invite, /ah, /boop and /trade (players on your island, your party, friends from /f list and, if turned on, guild members from /g online), /warp destinations, your sack items for /gfs, the slots for /show and the VIP islands for /visit.
 - Custom Wardrobe (Inventory, on by default): the Wardrobe as cards showing you in each armour set, with page tabs, favourite stars, an Only Favourites button and hover tooltips for each piece; click a card to equip it. Pick a theme (Sky2M, Midnight, Forest, Sunset, Ocean, Crimson, Candy, Light, Glass) or make your own with Custom's colours; the Theme button in the wardrobe cycles them.
 - Edit HUDs Key (GUI > HUDs): a keybind that opens /s2 gui, also while a menu is open, so HUDs that only show in a menu (like the Chocolate Factory Stats) can be moved with the menu behind them.
@@ -47,6 +47,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
+- Fix Estimated Item Value counting master stars on fishing rods and Kuudra armour: Kuudra armour is now priced by its ten essence stars (Crimson Essence and Heavy Pearls), shown star by star in the breakdown, and items with no stars of their own, like fishing rods, get no star cost. Master stars stay for dungeon items.
 - Dungeon splits don't time a part whose start wasn't seen, so a missed start can't print a time like 1793018752s or save a 0.20s PB over a real one. Reconnecting keeps the run's splits, and joining a run already going picks the timer up from the sidebar's Time Elapsed (only parts seen from their start count for PBs).
 - Skill Progress > Progress Bar > Textured Bar Width and Height work.
 - HUDs don't draw over the Held Item editor (/s2 helditem).

@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import org.jspecify.annotations.Nullable;
@@ -43,6 +44,8 @@ public final class RepoItems {
 	private static final Map<String, RepoItem> ITEMS = new LinkedHashMap<>();
 	/** Items that take essence to star (dungeon items), from Hypixel's {@code upgrade_costs}. */
 	private static volatile java.util.Set<String> starable = java.util.Set.of();
+	/** Item id -> its per-star {@code upgrade_costs} (essence and items), from Hypixel's item list. */
+	private static volatile Map<String, JsonArray> starCosts = Map.of();
 	private static final List<Runnable> AFTER_ITEMS_LOADED = new ArrayList<>();
 	private static volatile boolean itemsLoaded;
 
@@ -211,6 +214,14 @@ public final class RepoItems {
 		}
 	}
 
+	/**
+	 * What each star costs, star by star ({@code [{"type":"ESSENCE","essence_type":"CRIMSON","amount":30}, ...]}), or null
+	 * when the item has no stars of its own (a fishing rod, say).
+	 */
+	public static @Nullable JsonArray starCosts(String id) {
+		return starCosts.get(id);
+	}
+
 	/** Whether the item can be starred with essence (a dungeon item). */
 	public static boolean isStarable(String id) {
 		return starable.contains(id);
@@ -301,6 +312,7 @@ public final class RepoItems {
 		try {
 			Map<String, RepoItem> loaded = new LinkedHashMap<>();
 			java.util.Set<String> loadedStarable = new java.util.HashSet<>();
+			Map<String, JsonArray> loadedStarCosts = new java.util.HashMap<>();
 			for (JsonObject item : items.values()) {
 				if (!item.has("id")) continue;
 				String id = item.get("id").getAsString();
@@ -311,9 +323,13 @@ public final class RepoItems {
 				String itemModel = item.has("item_model") ? item.get("item_model").getAsString() : null;
 				String tier = item.has("tier") ? item.get("tier").getAsString() : null;
 				loaded.put(id, new RepoItem(id, name, material(material, durability), texture, itemModel, tier));
-				if (item.has("upgrade_costs")) loadedStarable.add(id);
+				if (item.has("upgrade_costs")) {
+					loadedStarable.add(id);
+					if (item.get("upgrade_costs").isJsonArray()) loadedStarCosts.put(id, item.getAsJsonArray("upgrade_costs"));
+				}
 			}
 			starable = loadedStarable;
+			starCosts = loadedStarCosts;
 			synchronized (ITEMS) {
 				ITEMS.clear();
 				ITEMS.putAll(loaded);
