@@ -512,6 +512,11 @@ public final class DianaBurrows {
     }
 
     private static Vec3 guessFromParticles() {
+        return guessFromPoints(lavaParticles);
+    }
+
+    /** Where a trail of particles ends up (also the Fishing Hotspot Radar's), or null with too few points. */
+    public static Vec3 guessFromPoints(List<Vec3> lavaParticles) {
         if (lavaParticles.size() < 4) return null;
         try {
             double[][] coefficients = new double[3][];

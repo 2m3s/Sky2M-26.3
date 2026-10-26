@@ -124,6 +124,7 @@ public final class FishingFeatures {
         FishingStreak.init();
         RareSc.init();
         FishingExtras.init();
+        FishingHotspotRadar.init();
         FishingMore.init();
         FishingVisuals.init();
         Sky2MChat.onChat(FishingFeatures::onChat);

@@ -90,7 +90,7 @@ public final class FishingExtras {
 
     private FishingExtras() {}
 
-    private static Config config() {
+    static Config config() {
         Sky2MConfig c = Sky2MConfig.current();
         return c == null || c.fishing == null ? null : c.fishing.extras;
     }
@@ -421,6 +421,16 @@ public final class FishingExtras {
         @ConfigOption(name = "Highlight Hotspots", desc = "A coloured box around fishing hotspots, visible through walls.")
         @ConfigEditorBoolean
         public boolean highlightHotspots = false;
+
+        @Expose
+        @ConfigOption(name = "Guess Hotspot Radar", desc = "Right-click a Hotspot Radar and the flame trail it shows is followed to the hotspot: a HOTSPOT label and its distance appear there, like SkyHanni's.")
+        @ConfigEditorBoolean
+        public boolean guessHotspotRadar = false;
+
+        @Expose
+        @ConfigOption(name = "Line to Hotspot", desc = "Draw a line from your crosshair to the guessed hotspot. Needs Guess Hotspot Radar.")
+        @ConfigEditorBoolean
+        public boolean lineToHotspot = true;
 
         @Expose
         @ConfigOption(name = "Hotspot Colour", desc = "Colour of the hotspot highlight.")

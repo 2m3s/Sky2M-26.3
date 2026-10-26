@@ -21,6 +21,7 @@ public abstract class Sky2MSlayerPacketsMixin {
         // Mayors > Diana > Burrows reads burrow, arrow and spade particles (never hides them).
         com.epic60869.sky2m.features.combat.DianaBurrows.onParticle(packet);
         com.epic60869.sky2m.features.combat.DianaRareMobs.onParticle(packet);
+        com.epic60869.sky2m.features.fishing.FishingHotspotRadar.onParticle(packet);
         // Mining > Precision Mining Highlight reads the aim-spot particles (never hides them).
         com.epic60869.sky2m.features.mining.dwarven.PrecisionMining.onParticle(packet);
         // Hunting > Galatea Mob Highlights > Invisibugs are found by their crit particles.
