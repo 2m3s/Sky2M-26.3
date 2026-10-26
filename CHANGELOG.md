@@ -23,6 +23,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Changed
 - Livid (F5/M5) uses SkyHanni's Livid Finder, like 26.2: it boxes and labels the real Livid with a line to her, can hide the wrong ones (Hide Wrong Livids) and has a Color Override, instead of Odin's Livid Solver.
+- Command Tab Complete learns your friends from Hypixel's "Friend > Name joined/left" messages too, so /pv and the other commands suggest them without running /f list first.
 - Sky2M's screens fit better on GUI scale Auto: while one is open, the GUI is one step smaller (1080p: 3 instead of 4), so text and buttons aren't cut off. Other GUI scales, the HUD editor and menus Sky2M draws over are unchanged.
 - Buttons in Sky2M's own screens look like the settings' buttons, so every screen matches /s2.
 - Fishing Profit only shows while you're fishing (a rod in your hand, your bobber out, or a catch in the last 3 minutes), like the Sea Creature Tracker, instead of following you to Kuudra, the End or the Rift.
@@ -47,6 +48,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
+- Fix Command Tab Complete never learning your friends: Hypixel sends each /f list page as one message, which wasn't read. Opening /f list now fills /pv, /p, /msg and the rest with your friends (and /g online or /g list with your guild).
 - Fix Estimated Item Value counting master stars on fishing rods and Kuudra armour: Kuudra armour is now priced by its ten essence stars (Crimson Essence and Heavy Pearls), shown star by star in the breakdown, and items with no stars of their own, like fishing rods, get no star cost. Master stars stay for dungeon items.
 - Dungeon splits don't time a part whose start wasn't seen, so a missed start can't print a time like 1793018752s or save a 0.20s PB over a real one. Reconnecting keeps the run's splits, and joining a run already going picks the timer up from the sidebar's Time Elapsed (only parts seen from their start count for PBs).
 - Skill Progress > Progress Bar > Textured Bar Width and Height work.
