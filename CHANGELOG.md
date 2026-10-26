@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Edit HUDs Key (GUI > HUDs): a keybind that opens /s2 gui, also while a menu is open, so HUDs that only show in a menu (like the Chocolate Factory Stats) can be moved with the menu behind them.
 - Chocolate Factory Stats (Events > Chocolate Factory, on by default): while the Chocolate Factory is open, a HUD with SkyHanni's stats in Sky2M's own compact layout: your chocolate, all-time and this prestige, time and chocolate to prestige, production per second, minute, hour and day, multiplier, barn, Time Tower charges and when they are full, leaderboard position and time until the best upgrade.
 - Skill Level As Stack Size (Skill Progress, on by default): in the Your Skills menu each skill's level shows on its icon like a stack size (Combat 58 shows 58), and past the max the overflow level (70) with Overflow > Skill Menu Stack Size.
 - Items on Ground (Slayers > Loot & Profit, on by default, from SkyHanni): while you have a slayer quest in that slayer's area, items on the ground within 15 blocks show their name in its rarity colour, amount and price, drawn through blocks like SkyHanni's; ones worth less than the Minimum Price (50k) aren't labelled.

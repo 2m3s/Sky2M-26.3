@@ -149,6 +149,12 @@ public final class Sky2MConfig extends Config {
         public Runnable editHuds = Sky2MConfig::openHudEditor;
 
         @Expose
+        @ConfigOption(name = "Edit HUDs Key", desc = "Press this key to open /s2 gui, also while a menu is open, so HUDs that only show in a menu (like the Chocolate Factory Stats) can be moved with the menu behind them.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigAccordionId(id = 102)
+        public int editHudsKey = -1;
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Custom Scoreboard", desc = "Your own sidebar: pick the lines and their order, background, title and footer, like j10a1n15's Custom Scoreboard.")
         public com.epic60869.sky2m.features.FeatureConfigs.CustomScoreboard customScoreboard = new com.epic60869.sky2m.features.FeatureConfigs.CustomScoreboard();
