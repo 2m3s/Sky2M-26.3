@@ -61,6 +61,8 @@
     "Sky2MProfileKeysAccessor",
     "Sky2MLeapMenuMixin",
     "Sky2MLeapMenuBackgroundMixin",
+    "Sky2MCustomWardrobeMixin",
+    "Sky2MCustomWardrobeBackgroundMixin",
     "Sky2MWorldNickMixin",
     "Sky2MTextDisplayNickMixin",
     "Sky2MHeldItemMixin",

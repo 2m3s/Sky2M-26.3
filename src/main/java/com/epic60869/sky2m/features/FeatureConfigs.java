@@ -2437,6 +2437,111 @@ public final class FeatureConfigs {
         public String equippedColor = "0:170:85:255:85";
     }
 
+    /** The Custom Wardrobe (features/misc/CustomWardrobe), with its themes. */
+    public static final class CustomWardrobe {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Replace the Wardrobe menu with cards showing you in each armour set. Click a card to equip it, the star to favourite it, the page tabs to switch pages; hover a piece for its tooltip.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Theme", desc = "The wardrobe's colours. Custom uses the colours below; the Theme button in the wardrobe cycles through them too.")
+        @ConfigEditorDropdown
+        public WardrobeTheme theme = WardrobeTheme.SKY2M;
+
+        @Expose
+        @ConfigOption(name = "Cards Per Row", desc = "How many armour sets go in a row (a page has 9).")
+        @ConfigEditorSlider(minValue = 3, maxValue = 9, minStep = 1)
+        public int perRow = 9;
+
+        @Expose
+        @ConfigOption(name = "Hide Locked Slots", desc = "Don't show slots you haven't unlocked.")
+        @ConfigEditorBoolean
+        public boolean hideLocked = true;
+
+        @Expose
+        @ConfigOption(name = "Hide Empty Slots", desc = "Don't show slots with no armour in them (the equipped one always shows).")
+        @ConfigEditorBoolean
+        public boolean hideEmpty = false;
+
+        @Expose
+        @ConfigOption(name = "Only Favourites", desc = "Show only favourite sets and the equipped one. Also a button in the wardrobe.")
+        @ConfigEditorBoolean
+        public boolean onlyFavourites = false;
+
+        /** Favourite slots, by their number across all pages. */
+        @Expose
+        public List<Integer> favourites = new ArrayList<>();
+
+        @ConfigOption(name = "Custom Theme", desc = "The colours of the Custom theme.")
+        @ConfigEditorAccordion(id = 0)
+        public boolean customGroup = false;
+
+        @Expose
+        @ConfigOption(name = "Background", desc = "Behind everything.")
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 0)
+        public String background = "0:220:16:18:24";
+
+        @Expose
+        @ConfigOption(name = "Card", desc = "Each armour set's card.")
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 0)
+        public String card = "0:200:34:38:48";
+
+        @Expose
+        @ConfigOption(name = "Card Hovered", desc = "The card under the mouse.")
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 0)
+        public String hover = "0:220:52:58:74";
+
+        @Expose
+        @ConfigOption(name = "Border", desc = "Card and button edges.")
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 0)
+        public String border = "0:255:70:78:96";
+
+        @Expose
+        @ConfigOption(name = "Equipped", desc = "The equipped set's edge and label.")
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 0)
+        public String equipped = "0:255:85:255:85";
+
+        @Expose
+        @ConfigOption(name = "Favourite", desc = "Favourite stars and edges.")
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 0)
+        public String favourite = "0:255:255:200:60";
+
+        @Expose
+        @ConfigOption(name = "Accent", desc = "The title, active page tab and slot numbers.")
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 0)
+        public String accent = "0:255:255:170:0";
+
+        @Expose
+        @ConfigOption(name = "Text", desc = "Labels and button text.")
+        @ConfigEditorColour
+        @ConfigAccordionId(id = 0)
+        public String text = "0:255:230:230:230";
+
+        public enum WardrobeTheme {
+            SKY2M("Sky2M"), MIDNIGHT("Midnight"), FOREST("Forest"), SUNSET("Sunset"), OCEAN("Ocean"), CRIMSON("Crimson"),
+            CANDY("Candy"), LIGHT("Light"), GLASS("Glass"), CUSTOM("Custom");
+
+            private final String name;
+
+            WardrobeTheme(String name) {
+                this.name = name;
+            }
+
+            @Override
+            public String toString() {
+                return name;
+            }
+        }
+    }
+
     public static final class WardrobeHotkeys {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Use configurable keys to equip Wardrobe slots while its menu is open.")

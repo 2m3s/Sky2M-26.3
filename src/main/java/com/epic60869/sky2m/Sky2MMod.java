@@ -140,6 +140,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.core.HudEditorKey.init(); lap("HudEditorKey.init");
         com.epic60869.sky2m.features.misc.SlotLocking.init(); lap("SlotLocking.init");
         com.epic60869.sky2m.features.misc.WardrobeHotkeys.init(); lap("WardrobeHotkeys.init");
+        com.epic60869.sky2m.features.misc.CustomWardrobe.init(); lap("CustomWardrobe.init");
         com.epic60869.sky2m.features.misc.storage.StorageOverlay.init(configDir); lap("StorageOverlay.init");
         com.epic60869.sky2m.features.misc.ItemEmojis.init(configDir); lap("ItemEmojis.init");
         com.epic60869.sky2m.features.misc.HypixelButton.init(); lap("HypixelButton.init");

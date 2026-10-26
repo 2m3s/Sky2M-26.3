@@ -324,6 +324,12 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Custom Wardrobe", desc = "The Wardrobe as cards with you wearing each set, in a theme of your choice (Sky2M, Midnight, Forest, Sunset, Ocean, Crimson, Candy, Light, Glass or your own colours).")
+        @ConfigAccordionId(id = 2302)
+        public com.epic60869.sky2m.features.FeatureConfigs.CustomWardrobe customWardrobe = new com.epic60869.sky2m.features.FeatureConfigs.CustomWardrobe();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Wardrobe & Loadout Hotkeys", desc = "Equip Wardrobe or Loadout slots on the open page with configurable keys, like SkyHanni.")
         @ConfigAccordionId(id = 2302)
         public com.epic60869.sky2m.features.FeatureConfigs.WardrobeHotkeys wardrobeHotkeys = new com.epic60869.sky2m.features.FeatureConfigs.WardrobeHotkeys();

@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Custom Wardrobe (Inventory, on by default): the Wardrobe as cards showing you in each armour set, with page tabs, favourite stars, an Only Favourites button and hover tooltips for each piece; click a card to equip it. Pick a theme (Sky2M, Midnight, Forest, Sunset, Ocean, Crimson, Candy, Light, Glass) or make your own with Custom's colours; the Theme button in the wardrobe cycles them.
 - Edit HUDs Key (GUI > HUDs): a keybind that opens /s2 gui, also while a menu is open, so HUDs that only show in a menu (like the Chocolate Factory Stats) can be moved with the menu behind them.
 - Chocolate Factory Stats (Events > Chocolate Factory, on by default): while the Chocolate Factory is open, a HUD with SkyHanni's stats in Sky2M's own compact layout: your chocolate, all-time and this prestige, time and chocolate to prestige, production per second, minute, hour and day, multiplier, barn, Time Tower charges and when they are full, leaderboard position and time until the best upgrade.
 - Skill Level As Stack Size (Skill Progress, on by default): in the Your Skills menu each skill's level shows on its icon like a stack size (Combat 58 shows 58), and past the max the overflow level (70) with Overflow > Skill Menu Stack Size.
