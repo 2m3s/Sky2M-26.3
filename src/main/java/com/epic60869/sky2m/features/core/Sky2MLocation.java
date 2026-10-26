@@ -160,6 +160,7 @@ public final class Sky2MLocation {
             if (text.startsWith("Area: ")) { newArea = text.substring(6).trim(); break; }
             if (text.startsWith("Dungeon: ")) { newArea = text.substring(9).trim(); break; }
         }
+        if (testArea != null) newArea = testArea;
         // The sidebar's floor, or (when it can't be read) the one from the run's start message or the F7 bosses.
         floor = !newFloor.isEmpty() ? newFloor : newArea.equals("Catacombs") || newArea.isEmpty() ? chatFloor : "";
         setArea(newArea);
@@ -205,6 +206,9 @@ public final class Sky2MLocation {
         String stripped = ChatFormatting.stripFormatting(text);
         return stripped == null ? "" : stripped;
     }
+
+    /** The tab list's "Area: ..." for the fake-SkyBlock game test (singleplayer has no Hypixel tab list); null in play. */
+    public static volatile String testArea;
 
     public static boolean onSkyblock() { return onSkyblock; }
 

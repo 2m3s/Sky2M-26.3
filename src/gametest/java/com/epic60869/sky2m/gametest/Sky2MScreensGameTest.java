@@ -52,6 +52,10 @@ public class Sky2MScreensGameTest implements FabricClientGameTest {
             disableAllAndStorageValue(ctx);
 
             termism(ctx);
+            java.util.List<String> failures = new java.util.ArrayList<>();
+            customWardrobe(ctx, failures);
+            tabComplete(ctx, failures);
+            if (!failures.isEmpty()) throw new AssertionError("Sky2M screens failed:\n  " + String.join("\n  ", failures));
 
             try {
                 staffScreen(ctx);
@@ -247,6 +251,78 @@ public class Sky2MScreensGameTest implements FabricClientGameTest {
         double scale = ctx.computeOnClient(mc -> mc.getWindow().getGuiScale());
         ctx.getInput().setCursorPos(guiX * scale, guiY * scale);
         ctx.getInput().pressMouse(com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT);
+    }
+
+    /**
+     * A Wardrobe chest as Hypixel lays it out (armour in rows 1-4, slot buttons in row 5), shown by the Custom Wardrobe
+     * in two themes and screenshotted. Set 1 is equipped, set 2 ready, 3-7 empty, 8-9 locked.
+     */
+    private static void customWardrobe(ClientGameTestContext ctx, java.util.List<String> failures) {
+        String error = ctx.computeOnClient(mc -> {
+            try {
+                com.epic60869.sky2m.features.misc.CustomWardrobe.forceForTests = true;
+                Sky2MConfig.current().inventory.customWardrobe.enabled = true;
+                Sky2MConfig.current().inventory.customWardrobe.theme = com.epic60869.sky2m.features.FeatureConfigs.CustomWardrobe.WardrobeTheme.SKY2M;
+                var container = new net.minecraft.world.SimpleContainer(54);
+                String[][] sets = {{"diamond_helmet", "diamond_chestplate", "diamond_leggings", "diamond_boots"},
+                    {"golden_helmet", "iron_chestplate", "chainmail_leggings", "leather_boots"}};
+                for (int i = 0; i < 9; i++) {
+                    for (int row = 0; row < 4; row++) {
+                        container.setItem(row * 9 + i, i < sets.length ? stack(sets[i][row], null) : stack("gray_stained_glass_pane", " "));
+                    }
+                    String state = i == 0 ? "Equipped" : i == 1 ? "Ready" : i < 7 ? "Empty" : "Locked";
+                    container.setItem(36 + i, stack(i < 7 ? "lime_dye" : "red_dye", "Slot " + (i + 1) + ": " + state));
+                }
+                container.setItem(53, stack("arrow", "Next Page"));
+                var menu = net.minecraft.world.inventory.ChestMenu.sixRows(1, mc.player.getInventory(), container);
+                mc.gui.setScreen(new net.minecraft.client.gui.screens.inventory.ContainerScreen(menu, mc.player.getInventory(),
+                    net.minecraft.network.chat.Component.literal("Wardrobe (1/2)")));
+                return null;
+            } catch (Throwable e) {
+                e.printStackTrace();
+                return e.toString();
+            }
+        });
+        if (error != null) {
+            failures.add("Custom Wardrobe threw " + error);
+            return;
+        }
+        ctx.waitTicks(10);
+        shot(ctx, "90-custom-wardrobe");
+        ctx.runOnClient(mc -> Sky2MConfig.current().inventory.customWardrobe.theme = com.epic60869.sky2m.features.FeatureConfigs.CustomWardrobe.WardrobeTheme.CANDY);
+        ctx.waitTicks(5);
+        shot(ctx, "91-custom-wardrobe-candy");
+        ctx.runOnClient(mc -> {
+            Sky2MConfig.current().inventory.customWardrobe.theme = com.epic60869.sky2m.features.FeatureConfigs.CustomWardrobe.WardrobeTheme.SKY2M;
+            com.epic60869.sky2m.features.misc.CustomWardrobe.forceForTests = false;
+        });
+        ctx.setScreen(() -> null);
+        ctx.waitTicks(5);
+    }
+
+    /** Command Tab Complete: /warp, /show and /f subcommands suggest what SkyHanni's do. */
+    private static void tabComplete(ClientGameTestContext ctx, java.util.List<String> failures) {
+        // On, whatever an earlier step (Disable All) left them as.
+        ctx.runOnClient(mc -> {
+            var c = Sky2MConfig.current().chat.commandAutofill;
+            c.enabled = c.warps = c.showItem = c.players = c.party = true;
+        });
+        String[][] cases = {{"/warp gar", "garden"}, {"/show hel", "helmet"}, {"/f rem", "remove"}, {"/p tra", "transfer"}};
+        for (String[] test : cases) {
+            String got = ctx.computeOnClient(mc -> {
+                var suggestions = com.epic60869.sky2m.features.misc.CommandAutofill.suggest(test[0]);
+                return suggestions == null ? "nothing" : suggestions.getList().stream().map(s -> s.getText()).toList().toString();
+            });
+            System.out.println("[Sky2M gametest] tab complete " + test[0] + " -> " + got);
+            if (!got.contains(test[1])) failures.add("Tab complete for " + test[0] + " didn't suggest " + test[1] + " (got " + got + ")");
+        }
+    }
+
+    private static net.minecraft.world.item.ItemStack stack(String id, String name) {
+        var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(id));
+        var stack = new net.minecraft.world.item.ItemStack(item);
+        if (name != null) stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal(name));
+        return stack;
     }
 
     private static void shot(ClientGameTestContext ctx, String name) {

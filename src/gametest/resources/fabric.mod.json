@@ -10,7 +10,8 @@
       "com.epic60869.sky2m.gametest.Sky2MOfflineScreensGameTest",
       "com.epic60869.sky2m.gametest.Sky2MScreensGameTest",
       "com.epic60869.sky2m.gametest.Sky2MSettingsGameTest",
-      "com.epic60869.sky2m.gametest.Sky2MKeybindGameTest"
+      "com.epic60869.sky2m.gametest.Sky2MKeybindGameTest",
+      "com.epic60869.sky2m.gametest.Sky2MSkyblockGameTest"
     ]
   },
   "depends": {

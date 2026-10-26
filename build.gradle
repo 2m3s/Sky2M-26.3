@@ -34,6 +34,23 @@ fabricApi {
     }
 }
 
+// The game tests with your own Sky2M settings: gradlew runClientGameTest -Psky2mTestConfig="<instance>/minecraft/config".
+// Copied in after the test client's run folder is cleared. Settings only: the feature settings, HUD positions,
+// customisations and Command Keys macros, not profit trackers, PBs, drop counts or any other data.
+if (project.hasProperty('sky2mTestConfig')) {
+    tasks.matching { it.name == 'runClientGameTest' }.configureEach {
+        doFirst {
+            copy {
+                from(project.property('sky2mTestConfig')) {
+                    include 'sky2m-mod.json', 'sky2m-huds.json', 'sky2m-cheats.json', 'sky2m-clipping.json', 'sky2m-custom.json',
+                        'sky2m_commandkeys.json'
+                }
+                into layout.buildDirectory.dir('run/clientGameTest/config')
+            }
+        }
+    }
+}
+
 // In the game tests, an injector that matches nothing in this Minecraft version is an error instead of being skipped
 // silently (sky2m.mixins.json isn't "required"), so Sky2MOfflineScreensGameTest's Mixin audit reports it.
 loom.runs.matching { it.name == 'clientGameTest' }.configureEach {

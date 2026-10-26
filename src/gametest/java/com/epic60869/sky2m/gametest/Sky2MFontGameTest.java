@@ -16,6 +16,8 @@ public class Sky2MFontGameTest implements FabricClientGameTest {
 
     @Override
     public void runTest(ClientGameTestContext ctx) {
+        // Settings copied from a player (-Psky2mTestConfig) may already use Inter: start from Minecraft's font.
+        pick(ctx, "Default");
         int before = ctx.computeOnClient(mc -> mc.font.width(SAMPLE));
         int symbolsBefore = ctx.computeOnClient(mc -> mc.font.width(SYMBOLS));
         pick(ctx, "Inter");
