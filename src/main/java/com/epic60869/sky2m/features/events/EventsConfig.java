@@ -65,6 +65,11 @@ public final class EventsConfig {
 
     public static final class ChocolateFactory {
         @Expose
+        @ConfigOption(name = "Stats Display", desc = "Like SkyHanni: while the Chocolate Factory is open, a HUD with your chocolate, production per second, minute, hour and day, multiplier, barn, Time Tower, leaderboard position, time to prestige and time until the best upgrade. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean stats = true;
+
+        @Expose
         @ConfigOption(name = "Upgrade Advice", desc = "In the Chocolate Factory, highlights the best upgrade (cheapest per extra chocolate per second) and the best one you can afford now, and lists them in a HUD with how long they take to pay for themselves. Move it in /s2 gui.\n§7Only rabbits and Coach Jackrabbit are compared; the Time Tower is not counted.")
         @ConfigEditorBoolean
         public boolean upgradeAdvice = false;

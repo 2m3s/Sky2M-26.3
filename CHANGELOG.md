@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Chocolate Factory Stats (Events > Chocolate Factory, on by default): while the Chocolate Factory is open, a HUD with SkyHanni's stats in Sky2M's own compact layout: your chocolate, all-time and this prestige, time and chocolate to prestige, production per second, minute, hour and day, multiplier, barn, Time Tower charges and when they are full, leaderboard position and time until the best upgrade.
 - Skill Level As Stack Size (Skill Progress, on by default): in the Your Skills menu each skill's level shows on its icon like a stack size (Combat 58 shows 58), and past the max the overflow level (70) with Overflow > Skill Menu Stack Size.
 - Items on Ground (Slayers > Loot & Profit, on by default, from SkyHanni): while you have a slayer quest in that slayer's area, items on the ground within 15 blocks show their name in its rarity colour, amount and price, drawn through blocks like SkyHanni's; ones worth less than the Minimum Price (50k) aren't labelled.
 - Fonts (Misc > Fonts): draw all text in Inter or any .ttf you put in config/sky2m/fonts, picked from the Font dropdown (Default goes back to Minecraft's font). Inter is built in and drawn the way Caxton draws it, sharp at any size and at Caxton's size, so Caxton isn't needed. Size and Height adjust it; Sharpness is for .ttf fonts. Only letters, digits and punctuation change: symbols like Hypixel's stat icons (❤ ❈ ✦ ☠ ⚔) keep their look.
