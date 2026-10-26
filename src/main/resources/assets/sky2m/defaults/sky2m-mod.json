@@ -1123,6 +1123,7 @@
   },
   "skills": {
     "enabled": true,
+    "skillLevelStackSize": true,
     "textAlignmentProperty": "CENTERED",
     "hideInActionBar": true,
     "alwaysShow": false,

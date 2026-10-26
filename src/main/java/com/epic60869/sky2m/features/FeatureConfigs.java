@@ -2065,6 +2065,11 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         public boolean enabled = false;
 
+        @Expose
+        @ConfigOption(name = "Skill Level As Stack Size", desc = "In the Your Skills menu, show each skill's level on its icon like a stack size (Combat 58 shows 58). Past the max it shows the overflow level when Overflow > Skill Menu Stack Size is on.")
+        @ConfigEditorBoolean
+        public boolean skillLevelStackSize = true;
+
         @ConfigOption(name = "Display", desc = "What the skill progress display shows and when.")
         @ConfigEditorAccordion(id = 1201)
         public boolean displayGroup = false;
@@ -2268,7 +2273,7 @@ public final class FeatureConfigs {
         public boolean enableInProgressBar = false;
 
         @Expose
-        @ConfigOption(name = "Skill Menu Stack Size", desc = "Enable the overflow calculation when the 'Skill Level' Item Number is enabled.")
+        @ConfigOption(name = "Skill Menu Stack Size", desc = "Show the overflow level (past 60) when Skill Level As Stack Size is on.")
         @ConfigEditorBoolean
         public boolean enableInSkillMenuAsStackSize = false;
 

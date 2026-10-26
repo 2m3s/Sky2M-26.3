@@ -47,6 +47,7 @@ public abstract class Sky2MSlotBackgroundMixin {
         com.epic60869.sky2m.features.itemlist.ItemList.renderSlotDim(graphics, slot);
         com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.renderSlotLabel(graphics, slot);
         com.epic60869.sky2m.features.mining.dwarven.HotxOverlay.renderSlotLabel(graphics, slot);
+        com.epic60869.sky2m.features.skills.SkillProgress.renderSlotLabel(graphics, slot);
     }
 
     @Inject(method = "extractContents", at = @At("RETURN"))

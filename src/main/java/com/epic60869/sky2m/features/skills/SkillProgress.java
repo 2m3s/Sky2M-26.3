@@ -99,6 +99,30 @@ public final class SkillProgress {
     private static final List<Line> ALL_PREVIEW = List.of(new Line("§aCombat 45 §7(§b1,234,567§6/§b2,600,000§7)"),
         new Line("§2Farming 60 §7(§b5,000,000§7)"));
 
+    // ---------------------------------------------------------------------------------------------- Your Skills menu
+
+    /** Each skill's level on its icon in the Your Skills menu, like a stack size; the overflow level past the max (Sky2MSlotBackgroundMixin). */
+    public static void renderSlotLabel(GuiGraphicsExtractor graphics, net.minecraft.world.inventory.Slot slot) {
+        FeatureConfigs.SkillProgress c = config();
+        if (c == null || !c.skillLevelStackSize || !slot.hasItem() || slot.container instanceof net.minecraft.world.entity.player.Inventory) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.gui.screen() == null || !mc.gui.screen().getTitle().getString().equals("Your Skills") || !Sky2MLocation.onSkyblock()) return;
+        ItemStack stack = slot.getItem();
+        String[] split = Sky2MLocation.strip(stack.getHoverName().getString()).trim().split(" ");
+        if (split.length < 2) return;
+        SkillType skill = SkillType.getByNameOrNull(split[0]);
+        if (skill == null && !split[0].equals("Runecrafting") && !split[0].equals("Social")) return;
+        if (SkillApi.lore(stack).stream().noneMatch(l -> l.contains("Click to view!"))) return;
+        int level = SkillApi.romanToDecimalIfNecessary(split[split.length - 1]);
+        if (skill != null && c.overflowConfig.enableInSkillMenuAsStackSize) {
+            SkillApi.SkillInfo info = SkillApi.storage().get(skill);
+            if (info != null && level >= skill.maxLevel) level = Math.max(level, info.overflowLevel);
+        }
+        if (level <= 0) return;
+        String text = String.valueOf(level);
+        graphics.text(mc.font, text, slot.x + 17 - mc.font.width(text), slot.y + 9, 0xFFFFFFFF, true);
+    }
+
     // ---------------------------------------------------------------------------------------------- events
 
     static void onProfileJoin() {
