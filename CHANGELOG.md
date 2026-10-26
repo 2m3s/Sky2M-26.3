@@ -21,6 +21,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- Buttons in Sky2M's own screens look like the settings' buttons, so every screen matches /s2.
 - Fishing Profit only shows while you're fishing (a rod in your hand, your bobber out, or a catch in the last 3 minutes), like the Sea Creature Tracker, instead of following you to Kuudra, the End or the Rift.
 - The slayer tracker, RNG HUD and loadout lines are only written to the log while /s2 debug is on.
 - Settings missing from a saved config now get the same default a new install gets.
