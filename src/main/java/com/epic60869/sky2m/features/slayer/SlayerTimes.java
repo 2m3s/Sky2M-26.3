@@ -101,7 +101,8 @@ public final class SlayerTimes {
         }
         Matcher m = BOSS.matcher(healthLine);
         if (m.find()) {
-            boss = key(m.group(2) == null ? m.group(1) : m.group(1) + " " + m.group(2));
+            String tier = m.group(2) != null ? m.group(2) : sidebarTier(m.group(1));
+            boss = key(tier == null ? m.group(1) : m.group(1) + " " + tier);
             if (!boss.equals(lastBoss)) {
                 lastBoss = boss;
                 saveLastBoss();
@@ -175,6 +176,15 @@ public final class SlayerTimes {
         spawnedAt = 0;
         zeroAt = 0;
         boss = null;
+    }
+
+    /** The tier of {@code name}'s quest from the sidebar ("Tarantula Broodfather V"), for a tag read without its tier. */
+    private static String sidebarTier(String name) {
+        for (String line : com.epic60869.sky2m.features.core.Sky2MLocation.scoreboard()) {
+            Matcher m = BOSS.matcher(line);
+            if (m.find() && m.group(1).equals(name) && m.group(2) != null) return m.group(2);
+        }
+        return null;
     }
 
     private static void onKill() {
