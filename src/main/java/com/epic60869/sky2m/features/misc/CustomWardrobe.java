@@ -343,8 +343,8 @@ public final class CustomWardrobe {
         if (model == null) return;
         EquipmentSlot[] slots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
         for (int i = 0; i < 4; i++) model.setItemSlot(slots[i], s.pieces()[i] == null ? ItemStack.EMPTY : s.pieces()[i]);
-        // Turned a little towards the mouse.
-        float yaw = Mth.clamp((mouseX - (x + w / 2f)) / 4f, -35, 35);
+        // Facing you (180, as the Profile Viewer's model), turned a little towards the mouse.
+        float yaw = 180 + Mth.clamp((mouseX - (x + w / 2f)) / 4f, -35, 35);
         float pitch = Mth.clamp((mouseY - (y + h / 3f)) / 10f, -12, 12);
         Quaternionf rotation = new Quaternionf().rotationXYZ(-pitch * Mth.DEG_TO_RAD, -yaw * Mth.DEG_TO_RAD, (float) Math.PI);
         EntityRenderState state = Sky2MInventoryScreenInvoker.invokeExtractRenderState(model);
