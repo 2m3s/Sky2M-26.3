@@ -22,6 +22,8 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Changed
 - Fishing Profit only shows while you're fishing (a rod in your hand, your bobber out, or a catch in the last 3 minutes), like the Sea Creature Tracker, instead of following you to Kuudra, the End or the Rift.
+- The slayer tracker, RNG HUD and loadout lines are only written to the log while /s2 debug is on.
+- Settings missing from a saved config now get the same default a new install gets.
 - /s2 calc also takes x (or ×) for multiply, like 5x3 or 2.5m x 4.
 - /pv's Armour & Equipment page shows only its slots: four armour pieces on top and four equipment pieces below, instead of two rows of nine.
 - Right-clicking an item in the Item List or on a recipe shows the recipes it is used in (Item List > Right Click is now Show Usages by default, also for settings on Wiki or Recipes).
@@ -42,6 +44,8 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ### Fixed
 - Dungeon splits don't time a part whose start wasn't seen, so a missed start can't print a time like 1793018752s or save a 0.20s PB over a real one. Reconnecting keeps the run's splits, and joining a run already going picks the timer up from the sidebar's Time Elapsed (only parts seen from their start count for PBs).
 - Skill Progress > Progress Bar > Textured Bar Width and Height work.
+- HUDs don't draw over the Held Item editor (/s2 helditem).
+- Setting descriptions that said "Move it in /s2 hud" now say /s2 gui, and Use /pv no longer says it's off by default.
 - Slayer profit takes the tier from the sidebar's quest line when a boss's name tag doesn't show it, so its quest cost is never counted as 0.
 - Slayer profit always takes the quest's cost out, as the wiki's price for the slayer and tier (100k for a T5 Tarantula, whatever discount you got; Riftstalker costs motes, so 0), instead of "unknown" or a misread purse change.
 - Cocoon Label counts down to the hatch from the first cocoon (about 6.5s until one has been timed), and says "Hatching..." if it runs over.

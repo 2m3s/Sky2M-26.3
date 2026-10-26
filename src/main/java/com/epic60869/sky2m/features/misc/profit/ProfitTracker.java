@@ -351,7 +351,7 @@ public final class ProfitTracker {
                 + (quest.slayerName().equals(SlayerArea.slayerHere()) ? (counting(quest) ? "counting" : "tracker off") : "not this slayer's area");
         if (state.equals(slayerState)) return;
         slayerState = state;
-        System.out.println("[Sky2M] Slayer profit tracker: " + state);
+        if (com.epic60869.sky2m.Sky2MDebug.roomDebug()) System.out.println("[Sky2M] Slayer profit tracker: " + state);
     }
 
     /**

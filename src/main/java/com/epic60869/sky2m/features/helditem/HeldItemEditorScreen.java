@@ -66,6 +66,11 @@ public final class HeldItemEditorScreen {
 
     // ================================================================ the screen
 
+    /** Whether the editor is open (Sky2M's HUDs hide meanwhile). */
+    public static boolean editing() {
+        return net.minecraft.client.Minecraft.getInstance().gui.screen() instanceof Editor;
+    }
+
     private static final class Editor extends Screen {
         private static final long SAVE_DELAY_MILLIS = 400L;
 

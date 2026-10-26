@@ -162,7 +162,7 @@ public final class LoadoutHighlight {
                 .append(" lore=").append(lore == null ? "none" : lore.lines().stream()
                     .map(l -> Sky2MLocation.strip(l.getString())).collect(java.util.stream.Collectors.joining(" | "))).append('\n');
         }
-        for (String row : log.toString().split("\n")) System.out.println(row);
+        if (com.epic60869.sky2m.Sky2MDebug.roomDebug()) for (String row : log.toString().split("\n")) System.out.println(row);
     }
 
     public static void renderSlot(GuiGraphicsExtractor graphics, Slot slot) {

@@ -262,7 +262,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Shard Level Up Highlight", desc = "Highlight attribute shards you have enough of to level up or unlock, in the Hunting Box and the Attribute Menu. The Attribute Menu uses the amounts last seen in your Hunting Box (remembered between sessions), so open it once first.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2301)
-        public boolean shardLevelUpHighlight = true;
+        public boolean shardLevelUpHighlight = false;
 
         @Expose
         @Accordion
@@ -292,7 +292,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Calendar Time to Real Time", desc = "When enabled, hovering a SkyBlock calendar date adds the equivalent real-world date and time in your computer's local time zone.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2301)
-        public boolean calendarTimeToRealTime = false;
+        public boolean calendarTimeToRealTime = true;
 
         @Expose
         @Accordion
@@ -362,7 +362,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Sign Calculator", desc = "On SkyBlock's number signs (auction prices, bazaar amounts, ...) show what you typed as a number above the sign, e.g. 15m = 15,000,000, and send that number, so sums like 2.5m*3 work. Suffixes: k, m, b, s (64), e (160).")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2302)
-        public boolean signCalculator = false;
+        public boolean signCalculator = true;
 
         @Expose
         @ConfigOption(name = "Enter Confirms Signs", desc = "Pressing Enter in a sign (an auction price, a bazaar amount, a search) sends it, like clicking Done, instead of moving to the next line.")
@@ -374,7 +374,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Bazaar & AH Search", desc = "From Skyblocker: clicking Search in the Bazaar or Auction House opens a search box instead of the sign, suggesting what's sold there as you type (bazaar items and enchantments, or auction items and pets) and your last searches. In the Auction House it can search for max level pets or dungeon items with stars. /ahs and /bzs open it from anywhere.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2302)
-        public boolean searchOverlay = false;
+        public boolean searchOverlay = true;
 
         @Expose
         @Accordion
@@ -443,7 +443,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Current Chat Display", desc = "Show which chat you are typing in (All, Party, Guild, Officer, Co-op, a private conversation or Sky2M chat) just above the chat box while it is open.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 201)
-        public boolean currentChatDisplay = false;
+        public boolean currentChatDisplay = true;
 
         @Expose
         @ConfigOption(name = "Compact Bestiary", desc = "SkyHanni's compact Bestiary messages: Hypixel's BESTIARY level-up block becomes one line (\"BESTIARY Zombie II➡III\"); hover it for the rewards, click it to open the Bestiary. Milestones get their own line.")
@@ -527,7 +527,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Clickable Names", desc = "Click a player's name on their chat message (all, party, guild, co-op and private chat) to open their profile in the Sky2M profile viewer. This replaces Hypixel's own click on the name.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 201)
-        public boolean clickableNames = false;
+        public boolean clickableNames = true;
 
         @Expose
         @Accordion
@@ -543,7 +543,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Chat Emoji", desc = "Replace :emoji: shortcodes with Sky2M emoji sprites and provide emoji autocomplete while typing chat.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 202)
-        public boolean chatEmoji = false;
+        public boolean chatEmoji = true;
 
         @Expose
         @ConfigOption(name = "Emoji Autocomplete", desc = "Suggest emojis (with a picture of each) while you type :name in chat. Turn off to hide the emoji suggestions.")
@@ -555,7 +555,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Hypixel Item Emojis", desc = "In any chat (all, party, guild, private, Sky2M), :item_id: shows that SkyBlock item's icon, like the SkyHelper Discord: :summoning_eye:, :hyperion:, :enchanted_diamond:. Client side: everyone with Sky2M sees the icon, others see the text. Hover the icon for the item's name.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 202)
-        public boolean itemEmojis = false;
+        public boolean itemEmojis = true;
 
         @Expose
         @Accordion
@@ -733,7 +733,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Miniboss Alert", desc = "A title and a ding when one of your slayer minibosses spawns (Hypixel's \"SLAYER MINI-BOSS ... has spawned!\"), not other players' minibosses.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 501)
-        public boolean minibossAlert = false;
+        public boolean minibossAlert = true;
 
         @Expose
         @Accordion
@@ -759,7 +759,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "PB Leaderboard HUD", desc = "A HUD with the Sky2M kill time leaderboard for your slayer boss, and a live timer against your PB and the #1 time. Move it in /s2 hud.")
+        @ConfigOption(name = "PB Leaderboard HUD", desc = "A HUD with the Sky2M kill time leaderboard for your slayer boss, and a live timer against your PB and the #1 time. Move it in /s2 gui.")
         @ConfigAccordionId(id = 502)
         public PbLeaderboardHud pbLeaderboardHud = new PbLeaderboardHud();
 
@@ -783,7 +783,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "RNG Meter Value", desc = "In an RNG Meter menu, show each drop's price and how many coins one Slayer XP (or dungeon Score) of meter progress is worth.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 503)
-        public boolean rngMeterValue = false;
+        public boolean rngMeterValue = true;
 
         @Expose
         @Accordion
@@ -801,7 +801,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Kills Since Rare Drop", desc = "Show the kills-since-drop counter.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 503)
-        public boolean killsSinceDrop = false;
+        public boolean killsSinceDrop = true;
     }
 
     public static final class PbLeaderboardHud {
@@ -845,7 +845,7 @@ public final class Sky2MConfig extends Config {
         public boolean chat = false;
 
         @Expose
-        @ConfigOption(name = "HUD", desc = "When a boss dies, its profit (+84.2k or -15.0k) on screen, then it hides until the next boss. Move it in /s2 hud.")
+        @ConfigOption(name = "HUD", desc = "When a boss dies, its profit (+84.2k or -15.0k) on screen, then it hides until the next boss. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean hud = false;
 
@@ -869,17 +869,17 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Time to Kill Personal Bests", desc = "Your fastest kill of that boss and tier, in brackets after the kill time: (PB: 30.10s), or (NEW PERSONAL BEST!) when you beat it. Saved per Minecraft account.")
         @ConfigEditorBoolean
-        public boolean personalBests = false;
+        public boolean personalBests = true;
 
         @Expose
         @ConfigOption(name = "Quest Complete", desc = "Say in chat how long the whole slayer quest (spawn and kill) took.")
         @ConfigEditorBoolean
-        public boolean questComplete = false;
+        public boolean questComplete = true;
 
         @Expose
         @ConfigOption(name = "Compact Time Messages", desc = "Shorter Time to Kill, Personal Best and Quest Complete messages.")
         @ConfigEditorBoolean
-        public boolean compactTimes = false;
+        public boolean compactTimes = true;
 
         @Expose
         @ConfigOption(name = "Share Slayer PBs", desc = "Send your slayer kill time personal bests to the Sky2M leaderboard (/s2 leaderboard slayer). When off, nothing is sent.")
@@ -1122,7 +1122,7 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Hypixel Button", desc = "A Hypixel button on the title screen, next to Multiplayer, that joins play.hypixel.net in one click.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2307)
-        public boolean hypixelButton = false;
+        public boolean hypixelButton = true;
 
         @Expose
         @ConfigOption(name = "Smart Disconnect", desc = "Clicking Disconnect in the pause menu asks first, with Cancel and a red Disconnect button, so a misclick doesn't kick you from the server.")
@@ -1140,13 +1140,13 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Warp Shortcuts", desc = "Type /dhub, /crypts, /garden and other warp names without /warp (SkyHanni's and Skysoft's short warp commands). In the Garden, /home warps to the Garden, /barn goes to the barn and /tp <plot> to a plot.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2307)
-        public boolean warpShortcuts = false;
+        public boolean warpShortcuts = true;
 
         @Expose
         @ConfigOption(name = "Join Commands", desc = "Quick commands to join dungeons and Kuudra: /f0 (Entrance) to /f7, /m1 to /m7, and /t1 to /t5 for Kuudra (Basic to Infernal). Applies next time you join a server.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2307)
-        public boolean joinCommands = false;
+        public boolean joinCommands = true;
 
         @ConfigOption(name = "Discord & Screenshots", desc = "Discord Rich Presence and screenshot sharing.")
         @ConfigEditorAccordion(id = 2308)
@@ -1311,7 +1311,7 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Show", desc = "Show this tab.")
         @ConfigEditorBoolean
-        public boolean render = true;
+        public boolean render = false;
 
         @Expose
         @ConfigOption(name = "Double Click", desc = "Only run the command on a second click within a second (for warps).")
@@ -1524,12 +1524,12 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Reset Position When Not Hovered", desc = "Reset tooltip movement after the tooltip disappears.")
         @ConfigEditorBoolean
-        public boolean resetWhenNotHovered = true;
+        public boolean resetWhenNotHovered = false;
 
         @Expose
         @ConfigOption(name = "Use Left Shift", desc = "Hold left shift to move tooltips horizontally with the mouse wheel.")
         @ConfigEditorBoolean
-        public boolean useLeftShift = true;
+        public boolean useLeftShift = false;
 
         @Expose
         @ConfigOption(name = "Invert Horizontal Movement", desc = "Invert horizontal tooltip movement.")
@@ -1555,7 +1555,7 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Show Customize Button", desc = "Show a button in the inventory that opens the item and armor customization screen.")
         @ConfigEditorBoolean
-        public boolean showCustomizeButton = false;
+        public boolean showCustomizeButton = true;
     }
 
     public static final class SlotLocking {
@@ -1603,29 +1603,29 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Chat on Outbid", desc = "Show a clickable chat notification when a tracked order becomes outbid.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2201)
-        public boolean outbidChat = true;
+        public boolean outbidChat = false;
 
         @Expose
         @ConfigOption(name = "Sound on Outbid", desc = "Play a sound when a tracked order becomes outbid.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2201)
-        public boolean outbidSound = true;
+        public boolean outbidSound = false;
 
         @Expose
         @ConfigOption(name = "Sound on Order Filled", desc = "Play a sound when one of your Bazaar orders or offers fills.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2201)
-        public boolean filledSound = true;
+        public boolean filledSound = false;
 
         @Expose
         @ConfigOption(name = "Order Colours", desc = "In your Bazaar orders menu, colour each order's slot by where it stands, like Bazaar Utils: green when it's the best price, yellow when another order matches its price, red when it's outbid. Uses the bazaar prices from Hypixel's API, which can be up to a minute old.")
         @ConfigEditorBoolean
-        public boolean orderColours = true;
+        public boolean orderColours = false;
 
         @Expose
         @ConfigOption(name = "Bookmarks", desc = "Bookmark Bazaar items, like Bazaar Utils: click the ★ in the top-left of an item's Bazaar page to bookmark it. Your bookmarks show to the right of the Bazaar; hover one for its instant buy and sell prices, click to open it, shift-click to remove it.")
         @ConfigEditorBoolean
-        public boolean bookmarks = true;
+        public boolean bookmarks = false;
 
         /** Bookmarked Bazaar items, in the order they were added. */
         @Expose
@@ -1642,7 +1642,7 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Copy Message Key", desc = "Key or mouse button that copies the message under the mouse while chat is open. Right click by default.")
         @ConfigEditorKeybind(defaultKey = -99)
-        public int copyMessageKey = -99;
+        public int copyMessageKey = 1;
 
         @Expose
         @ConfigOption(name = "Copy Preview", desc = "Show what was copied in chat.")
@@ -1674,12 +1674,12 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "S2M Chat Ping", desc = "Play a little ping when someone sends a message in /s2c.")
         @ConfigEditorBoolean
-        public boolean pingSound = false;
+        public boolean pingSound = true;
 
         @Expose
         @ConfigOption(name = "Hide Other Players' Commands", desc = "Hide other players' ! commands (like !nw or !lvl) and the bot's answers to them in /s2c. Your own commands and answers stay visible.")
         @ConfigEditorBoolean
-        public boolean hideOtherCommands = true;
+        public boolean hideOtherCommands = false;
 
         @Expose
         @ConfigOption(name = "! Chat Commands", desc = "Use the Sky2M ! commands (!nw, !lvl, !mp, !skill, !lb, !help, ...) in /s2c. Off: nothing is sent to the command bot, ! messages go out as normal chat, and the bot's command answers are not shown.")
@@ -1896,7 +1896,7 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Price Paid", desc = "Remember what you paid for items you buy on the auction house and show it in their tooltip, like NoFrills.")
         @ConfigEditorBoolean
-        public boolean pricePaid = false;
+        public boolean pricePaid = true;
 
         @Expose
         @ConfigOption(name = "Show in Item List", desc = "Show the prices when you hover items in Sky2M's Item List and its recipe cards (works outside SkyBlock too).")
@@ -1918,7 +1918,7 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Accessories", desc = "Show whether you're missing an accessory, already have it, or whether it's an upgrade or downgrade of the one you have from the same family. Open each page of your Accessory Bag once to fill this in; it's saved per profile.")
         @ConfigEditorBoolean
-        public boolean accessories = false;
+        public boolean accessories = true;
     }
 
     public static final class ItemRarity {
@@ -2115,7 +2115,7 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Mobs", desc = "Use the colour on mobs and NPCs (off = they keep the red flash).")
         @ConfigEditorBoolean
-        public boolean mobs = true;
+        public boolean mobs = false;
 
         @Expose
         @ConfigOption(name = "Only Entities You Hit", desc = "Only recolour entities you hit in the last 2 seconds (and yourself): ones you attacked, and ones hurt in front of you just after you used a right-click weapon like Soul Whip or Flaming Flay. Other hurt entities keep the red flash.")
@@ -2152,7 +2152,7 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Show Leaderboard Above Head", desc = "A line above your stats with your amount and placement on a leaderboard (gold, silver or bronze for the top 3, aqua otherwise). Pick the board by right-clicking it in /s2 leaderboard (collections, slayer XP or kill times). Other Sky2M users can see it too.")
         @ConfigEditorBoolean
-        public boolean showCollectionLeaderboard = false;
+        public boolean showCollectionLeaderboard = true;
 
         /** The board shown over your head ("collection|WHEAT", "slayer|zombie", "pb|Revenant Horror V"), picked in /s2 leaderboard. */
         @Expose
@@ -2215,7 +2215,7 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Low Fire", desc = "Lower the burning overlay on your screen so it covers less of the view.")
         @ConfigEditorBoolean
-        public boolean lowFire = false;
+        public boolean lowFire = true;
 
         @Expose
         @ConfigOption(name = "Fire Height", desc = "How far to lower the fire overlay (0 = vanilla, 1 = off the screen).")
@@ -2225,12 +2225,12 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Hide Explosions", desc = "Hide explosion particles (TNT, Bonzo staff, Wither impact and other server explosions).")
         @ConfigEditorBoolean
-        public boolean hideExplosions = false;
+        public boolean hideExplosions = true;
 
         @Expose
         @ConfigOption(name = "Hide Block Break Particles", desc = "Hide the particles when a block breaks (yours or anyone's) and the bits that fly off a block while you mine it, like SkyHanni's.")
         @ConfigEditorBoolean
-        public boolean hideBlockBreakParticles = false;
+        public boolean hideBlockBreakParticles = true;
 
         @Expose
         @ConfigOption(name = "Remove All Fog", desc = "Remove every kind of fog, everywhere: the distance fog, and the fog in water, lava, powder snow, darkness and blindness. Only affects your own screen.")
@@ -2278,17 +2278,17 @@ public final class Sky2MConfig extends Config {
         @Expose
         @ConfigOption(name = "Accessory Bag", desc = "Reset the cursor when the Accessory Bag opens.")
         @ConfigEditorBoolean
-        public boolean accessoryBag = true;
+        public boolean accessoryBag = false;
 
         @Expose
         @ConfigOption(name = "Ender Chest", desc = "Reset the cursor when an Ender Chest opens.")
         @ConfigEditorBoolean
-        public boolean enderChest = true;
+        public boolean enderChest = false;
 
         @Expose
         @ConfigOption(name = "Backpack", desc = "Reset the cursor when a Backpack opens.")
         @ConfigEditorBoolean
-        public boolean backpack = true;
+        public boolean backpack = false;
     }
 
     public static final class Discord {

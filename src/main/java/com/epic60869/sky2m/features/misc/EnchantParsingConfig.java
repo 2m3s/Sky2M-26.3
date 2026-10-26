@@ -13,7 +13,7 @@ public final class EnchantParsingConfig {
     @Expose
     @ConfigOption(name = "Enable", desc = "Colour the enchants in item tooltips by how good their level is: perfect (max level, chroma by default), great, good and poor, with ultimate enchants bold. Turn this off if you want to use enchant parsing from other mods.")
     @ConfigEditorBoolean
-    public boolean colorParsing = false;
+    public boolean colorParsing = true;
 
     @Expose
     @ConfigOption(name = "Format", desc = "The way the enchants are formatted in the tooltip.")
@@ -50,7 +50,7 @@ public final class EnchantParsingConfig {
     @Expose
     @ConfigOption(name = "Perfect Enchantment Bold", desc = "Enchantments at max level will be bold.")
     @ConfigEditorBoolean
-    public boolean boldPerfectEnchant = false;
+    public boolean boldPerfectEnchant = true;
 
     @Expose
     @ConfigOption(name = "Great Enchantment Color", desc = "The color an enchantment will be at a great level.")

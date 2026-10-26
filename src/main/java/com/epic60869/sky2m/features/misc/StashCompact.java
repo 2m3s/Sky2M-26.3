@@ -220,13 +220,13 @@ public final class StashCompact {
             @Expose
             @ConfigOption(name = "Once Per World", desc = "Show warnings even if the counts are previously reported, once per world change.")
             @ConfigEditorBoolean
-            public boolean worldChangeReset = true;
+            public boolean worldChangeReset = false;
         }
 
         @Expose
         @ConfigOption(name = "Hide Added Messages", desc = "Hide the messages when something is added to your stash.")
         @ConfigEditorBoolean
-        public boolean hideAddedMessages = true;
+        public boolean hideAddedMessages = false;
 
         @Expose
         @ConfigOption(name = "Hide Low Warnings", desc = "Hide warnings with a total count below this number.")
@@ -236,6 +236,6 @@ public final class StashCompact {
         @Expose
         @ConfigOption(name = "Use /ViewStash", desc = "Use /viewstash [type] instead of /pickupstash.")
         @ConfigEditorBoolean
-        public boolean useViewStash = false;
+        public boolean useViewStash = true;
     }
 }

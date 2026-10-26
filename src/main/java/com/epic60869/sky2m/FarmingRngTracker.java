@@ -121,7 +121,7 @@ public final class FarmingRngTracker {
         }
         // An RNG drop whose price can't be found is still shown (without a price) rather than missed.
         boolean show = unit >= BIG_DROP_PRICE || (unit <= 0 && rng);
-        System.out.println("[Sky2M] RNG HUD: " + amount + "x " + item + " worth " + (unit <= 0 ? "unknown" : unit)
+        if (com.epic60869.sky2m.Sky2MDebug.roomDebug()) System.out.println("[Sky2M] RNG HUD: " + amount + "x " + item + " worth " + (unit <= 0 ? "unknown" : unit)
             + (rng ? " (RNG drop)" : "") + (show ? ", shown" : ", under 5M so not shown"));
         if (!show) return;
         long shownUntil = System.currentTimeMillis() + SHOW_MILLIS;

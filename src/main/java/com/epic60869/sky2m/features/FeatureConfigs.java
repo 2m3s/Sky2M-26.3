@@ -37,7 +37,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Arrow Counter", desc = "HUD showing the selected arrow type and how many arrows are left in your quiver.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 301)
-        public boolean arrowCounter = false;
+        public boolean arrowCounter = true;
 
         @Expose
         @ConfigOption(name = "Arrow Counter Only With Bow", desc = "Only show the Arrow Counter while you're holding a bow (or crossbow).")
@@ -147,12 +147,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Hide Maxed", desc = "Hide maxed families.")
         @ConfigEditorBoolean
-        public boolean hideMaxed = false;
+        public boolean hideMaxed = true;
 
         @Expose
         @ConfigOption(name = "Replace Romans", desc = "Show tiers as regular numbers (9) instead of Roman numerals (IX).")
         @ConfigEditorBoolean
-        public boolean replaceRoman = false;
+        public boolean replaceRoman = true;
 
         public enum NumberFormat {
             SHORT("Short"), LONG("Long");
@@ -197,32 +197,32 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Close Burrow Detection", desc = "Detects burrow locations when being close to them from the particles when holding shovel to register/update it as a Treasure, Mob or Start burrow. Needs Critical Hit and Enchant particles, and set /particlequality extreme. To reset waypoints type /s2 clearburrows.")
         @ConfigEditorBoolean
-        public boolean closeBurrowDetection = false;
+        public boolean closeBurrowDetection = true;
 
         @Expose
         @ConfigOption(name = "Arrow Guess", desc = "Guesses the burrow location from the arrow direction after digging a burrow.\n§cHave Dust and Smoke Particles enabled and /particlequality extreme!\n§aDo every burrow you see and Use Spade when the mod tells you to for doing Diana the fastest way!")
         @ConfigEditorBoolean
-        public boolean arrowGuess = false;
+        public boolean arrowGuess = true;
 
         @Expose
         @ConfigOption(name = "Spade Guess", desc = "Guess the burrow location when using spade ability. Needs Dripping Lava Particles and set /particlequality to Extreme for more accuracy.")
         @ConfigEditorBoolean
-        public boolean spadeGuess = false;
+        public boolean spadeGuess = true;
 
         @Expose
         @ConfigOption(name = "Multi Guesses", desc = "Remember previous guess locations when guessing to a new location. Off: a new arrow or spade guess replaces the old ones.")
         @ConfigEditorBoolean
-        public boolean multiGuesses = false;
+        public boolean multiGuesses = true;
 
         @Expose
         @ConfigOption(name = "Keep Waypoints on World Change", desc = "Keep your burrow and guess waypoints when you change servers (burrows are yours, so they're in the same places on every Hub). Off: they're cleared.")
         @ConfigEditorBoolean
-        public boolean keepOnWorldChange = false;
+        public boolean keepOnWorldChange = true;
 
         @Expose
         @ConfigOption(name = "Show Beacon Beam", desc = "Shows a beacon beam for waypoints going to the sky if enabled.")
         @ConfigEditorBoolean
-        public boolean beaconBeam = false;
+        public boolean beaconBeam = true;
 
         @Expose
         @ConfigOption(name = "Show Progress", desc = "Show burrow click progress.")
@@ -392,7 +392,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Since Messages", desc = "\"Took 12 Inquisitors to get Chimera!\", \"Took 240 mobs and 1h 2m to get an Inquisitor!\" and \"b2b Chimera!\" in chat.")
         @ConfigEditorBoolean
-        public boolean sinceMessages = true;
+        public boolean sinceMessages = false;
 
         @Expose
         @ConfigOption(name = "Announce Cocoon", desc = "Say \"Cocooned a Minos Inquisitor!\" in party chat when you cocoon a rare mob.")
@@ -460,7 +460,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Don't Warp If Close", desc = "The warp key won't warp you if you are already within 60 blocks of the target (burrow, guess or rare mob).")
         @ConfigEditorBoolean
-        public boolean dontWarpIfClose = true;
+        public boolean dontWarpIfClose = false;
 
         @Expose
         @ConfigOption(name = "Warp Block Difference", desc = "Only warp if the warp is at least this many blocks closer to the target than you are.")
@@ -494,7 +494,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Rare Mob Sharing", desc = "When you dig up a rare mob picked in Shared Mobs, send its coordinates in party chat. Rare mobs your party shares get a waypoint and a title.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 402)
-        public boolean rareMobSharing = false;
+        public boolean rareMobSharing = true;
 
         @Expose
         @Accordion
@@ -534,7 +534,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Show Party Messages", desc = "Keep the rare mob and lootshare party messages in chat. Off: they're hidden, and a shared mob shows as \"Name found a Minos Inquisitor at x y z\".")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 403)
-        public boolean showPartyMessages = false;
+        public boolean showPartyMessages = true;
 
         @Expose
         @ConfigOption(name = "Party Coord Waypoints", desc = "Like SkyHanni: coordinates someone sends in party chat (\"x: -30, y: 87, z: 126\") get a waypoint with their name and how far away it is, for a minute or until you reach it. Rare mob shares keep their own waypoint.")
@@ -589,7 +589,7 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Profit Tracker", desc = "What each Diana drop was worth, the total profit and the time spent, for this session, this mayor term or all time, like SkyHanni's. Move it in /s2 hud.")
+        @ConfigOption(name = "Profit Tracker", desc = "What each Diana drop was worth, the total profit and the time spent, for this session, this mayor term or all time, like SkyHanni's. Move it in /s2 gui.")
         @ConfigAccordionId(id = 405)
         public DianaProfitTracker profitTracker = new DianaProfitTracker();
 
@@ -613,7 +613,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Sphinx Solver", desc = "Helps you solve the sphinx riddle by showing you the answer choices in chat and it automatically clicks the correct one for you when you click anywhere while the chat is open.\nTheres also the option to us a keybind in the mc keybinds menu but §c⚠ USE AT YOUR OWN RISK ⚠")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 406)
-        public boolean sphinxSolver = false;
+        public boolean sphinxSolver = true;
 
         @Expose
         @Accordion
@@ -1080,17 +1080,17 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Copy Rare Drops", desc = "Copy rare drop messages to your clipboard (RARE, VERY RARE, CRAZY RARE, INSANE, PRAY TO RNGESUS, PET and RNG METER drops, rare rewards and outstanding catches). Garden drops (rare crops, pest drops) are copied only with Copy Garden Drops. Only your own drops are copied, not other players' drops announced in the lobby. What was copied shows in chat, using Copy Chat's preview settings.")
         @ConfigEditorBoolean
-        public boolean copy = false;
+        public boolean copy = true;
 
         @Expose
         @ConfigOption(name = "Copy RNG Drops", desc = "Copy only RNG drops to your clipboard: PRAY TO RNGESUS and RNG METER drops, and slayer, Diana and fishing RNG items (Skyblocker's list). Not needed with Copy Rare Drops on, which copies these too.")
         @ConfigEditorBoolean
-        public boolean copyRng = false;
+        public boolean copyRng = true;
 
         @Expose
         @ConfigOption(name = "Copy Slayer Drops", desc = "Copy only slayer drops to your clipboard: anything on a slayer's drop list (SkyHanni's slayer profit tracker lists). Not needed with Copy Rare Drops on.")
         @ConfigEditorBoolean
-        public boolean copySlayer = false;
+        public boolean copySlayer = true;
 
         @Expose
         @ConfigOption(name = "Copy Garden Drops", desc = "Copy only Garden drops to your clipboard: RARE CROP drops and anything else that drops in the Garden, like pest drops. The other copy options never copy Garden drops, so with this off none are copied.")
@@ -1100,7 +1100,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "RNG Drop Totem Animation", desc = "Skyblocker's special effect: RNG drops pop up like a Totem of Undying, with particles and a sound, whatever they are worth (no threshold). Plays for slayer, Diana and fishing RNG items, dyes, and every PRAY TO RNGESUS DROP! or RNG METER DROP! chat message (the item you were filling the RNG Meter for), not for every item listed in the RNG Meter menu.")
         @ConfigEditorBoolean
-        public boolean totemAnimation = false;
+        public boolean totemAnimation = true;
 
         @Expose
         @ConfigOption(name = "Drop Chat Message", desc = "SkyHanni's drop tracker message: \"+Drop: Gold Bottle Cap (16.1M)\" in chat for every rare drop you get, with the item and what it is worth.")
@@ -1327,7 +1327,7 @@ public final class FeatureConfigs {
         public boolean firePitsWarning = false;
 
         @Expose
-        @ConfigOption(name = "Fire Pillar Display", desc = "HUD with the time until a Fire Pillar explodes, for any player's boss. Move it in /s2 hud.")
+        @ConfigOption(name = "Fire Pillar Display", desc = "HUD with the time until a Fire Pillar explodes, for any player's boss. Move it in /s2 gui.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 602)
         public boolean firePillarDisplay = false;
@@ -1348,7 +1348,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Yaw and Pitch", desc = "HUD showing your yaw, pitch and facing direction.")
         @ConfigEditorBoolean
-        public boolean yawPitch = false;
+        public boolean yawPitch = true;
 
         @Expose
         @ConfigOption(name = "Pest Cooldown Time (seconds)", desc = "Your pest spawn cooldown. The Pest Spawn Timer counts down this long from each pest spawn (the tab list isn't used).")
@@ -1383,7 +1383,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Mute Overflow Drop Sound", desc = "Don't play the nether portal sound with \"OVERFLOW! Your ... has just dropped a ...!\" (e.g. a Tool Exp Capsule).")
         @ConfigEditorBoolean
-        public boolean muteOverflowDropSound = true;
+        public boolean muteOverflowDropSound = false;
 
         @Expose
         @ConfigOption(name = "Composter Reminder", desc = "Title and chat reminder in the Garden when your composter is out of Organic Matter or Fuel (read from the tab list Composter widget).")
@@ -1540,12 +1540,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Highlight Infested Plots", desc = "In Configure Plots (/desk), colour the plots that have pests red.")
         @ConfigEditorBoolean
-        public boolean highlightInfestedPlots = true;
+        public boolean highlightInfestedPlots = false;
 
         @Expose
         @ConfigOption(name = "Plot Teleport Panel", desc = "In the Garden, show a map of your plots to the right of your inventory, like Skyblocker's Garden Plots widget: click a plot to /plottp to it. Plots with pests are red with their pest count, locked plots grey, and the plot you're in is outlined. Open Configure Plots (/desk) once so plot names and pests are known.")
         @ConfigEditorBoolean
-        public boolean plotPanel = true;
+        public boolean plotPanel = false;
     }
 
     /** SkyHanni's PestSpawnConfig (LGPL-2.1). */
@@ -1575,7 +1575,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Show Title", desc = "Show a Title when a pest spawns.")
         @ConfigEditorBoolean
-        public boolean showTitle = true;
+        public boolean showTitle = false;
 
         public enum SoundMode {
             DEFAULT("Default"),
@@ -1704,7 +1704,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Alert on Cocooned Sea Creature", desc = "Also alert when a sea creature from the list is cocooned by you or your party members.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 901)
-        public boolean alertCocooned = true;
+        public boolean alertCocooned = false;
 
         @Expose
         @ConfigOption(name = "Alert Source", desc = "\"Own and party\": your catches and your party members'. \"Own\": only yours.")
@@ -1716,7 +1716,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Alert When Killed by a Fishing Boss", desc = "A title and a sound when you, or a party member, are killed by a fishing boss (Thunder, Lord Jawbus, Ragnarok, Wiki Tiki, Titanoboa, Nessie, ...).")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 901)
-        public boolean alertDeath = true;
+        public boolean alertDeath = false;
 
         @ConfigOption(name = "Party Sharing", desc = "Telling your party about sea creatures.")
         @ConfigEditorAccordion(id = 902)
@@ -1738,13 +1738,13 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Share Cocooned Sea Creature", desc = "Also says in party chat when you cocoon a sea creature from the list.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 902)
-        public boolean shareCocooned = true;
+        public boolean shareCocooned = false;
 
         @Expose
         @ConfigOption(name = "Tell Party When Killed", desc = "Says so in party chat when a fishing boss kills you, so your party's Sky2M (or Feesh) alerts them to wait for you.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 902)
-        public boolean shareDeath = true;
+        public boolean shareDeath = false;
 
         @ConfigOption(name = "Highlight", desc = "Highlighting sea creatures in the world.")
         @ConfigEditorAccordion(id = 903)
@@ -1812,7 +1812,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Include Magic Find", desc = "Add the drop's ✯ Magic Find to the party message.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1002)
-        public boolean shareMagicFind = true;
+        public boolean shareMagicFind = false;
     }
 
     public static final class FishingCatchMessages {
@@ -1850,13 +1850,13 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Alert on New Trophy Fish", desc = "A title when you discover a new Trophy Fish on the Crimson Isle.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1101)
-        public boolean trophyFish = true;
+        public boolean trophyFish = false;
 
         @Expose
         @ConfigOption(name = "Alert on New Trophy Frog", desc = "A title when you discover a new Trophy Frog on the Lotus Atoll.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1101)
-        public boolean trophyFrog = true;
+        public boolean trophyFrog = false;
 
         @ConfigOption(name = "Deployables", desc = "Alerts before your deployables run out.")
         @ConfigEditorAccordion(id = 1102)
@@ -1866,7 +1866,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Alert When Deployable Expires Soon", desc = "A title and a sound when one of your deployables below is about to run out.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1102)
-        public boolean deployables = true;
+        public boolean deployables = false;
 
         @Expose
         @ConfigOption(name = "Deployables to Alert On", desc = "Which of your deployables to alert on.")
@@ -1894,7 +1894,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Alert When Hotspot Is Gone", desc = "A title and a sound when the hotspot you were fishing in disappears.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1103)
-        public boolean hotspotGone = true;
+        public boolean hotspotGone = false;
 
         @Expose
         @ConfigOption(name = "Offer Sharing Found Hotspots", desc = "When you come near a hotspot, a chat message with buttons to share its location and perk to party or all chat.")
@@ -1906,7 +1906,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Alert When Wormhole Is Gone", desc = "A title and a sound when your Wormhole closes up.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1103)
-        public boolean wormholeGone = true;
+        public boolean wormholeGone = false;
 
         @ConfigOption(name = "Pets", desc = "Pet max level alert and level-up price.")
         @ConfigEditorAccordion(id = 1104)
@@ -1916,13 +1916,13 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Alert When Pet Reaches Max Level", desc = "A title and a sound when a pet reaches level 100 (or 200).")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1104)
-        public boolean petMaxLevel = true;
+        public boolean petMaxLevel = false;
 
         @Expose
         @ConfigOption(name = "Show Estimated Pet Level-Up Price", desc = "When a pet reaches max level, says in chat what it's worth now and the profit over a level 1 one (lowest BINs).")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1104)
-        public boolean petLevelUpPrice = true;
+        public boolean petLevelUpPrice = false;
 
         @ConfigOption(name = "Fishing Festival & Party", desc = "Fishing Festival alerts and personal best, and Lootshare! in party chat.")
         @ConfigEditorAccordion(id = 1105)
@@ -1932,13 +1932,13 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Alert on Fishing Festival Ended", desc = "A title and your shark counts in chat when the Fishing Festival ends.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1105)
-        public boolean festivalEnded = true;
+        public boolean festivalEnded = false;
 
         @Expose
         @ConfigOption(name = "Track Festival Personal Best", desc = "Your best total sharks and Great White Sharks in one Fishing Festival, announced when you beat them.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1105)
-        public boolean festivalPersonalBest = true;
+        public boolean festivalPersonalBest = false;
 
         @Expose
         @ConfigOption(name = "Alert on Lootshare! in Party Chat", desc = "A title and a sound when a party member says \"Lootshare!\" in party chat.")
@@ -1962,12 +1962,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Crystal Hollows Map", desc = "HUD map of the Crystal Hollows with your position and the structures you have found.")
         @ConfigEditorBoolean
-        public boolean crystalHollowsMap = false;
+        public boolean crystalHollowsMap = true;
 
         @Expose
         @ConfigOption(name = "Crystal Hollows Waypoints", desc = "Mark Mines of Divan, Jungle Temple, Goblin Queen's Den and other places when you find them, like Skyblocker. /s2 crystalwaypoints add|share|remove|clear.")
         @ConfigEditorBoolean
-        public boolean crystalWaypoints = false;
+        public boolean crystalWaypoints = true;
 
         @Expose
         @ConfigOption(name = "Waypoints From Chat", desc = "Turn Crystal Hollows coordinates in chat into waypoints.")
@@ -1987,17 +1987,17 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Pickaxe Ability HUD", desc = "Cooldown of your pickaxe ability (Mining Speed Boost, Pickobulus, ...) on the mining islands (Gold Mine, Deep Caverns, Dwarven Mines, Crystal Hollows, Mineshafts). Move it in /s2 gui.")
         @ConfigEditorBoolean
-        public boolean pickaxeAbilityHud = false;
+        public boolean pickaxeAbilityHud = true;
 
         @Expose
         @ConfigOption(name = "Pickaxe Ability Ready Alert", desc = "Show a title when your pickaxe ability is ready again.")
         @ConfigEditorBoolean
-        public boolean pickaxeAbilityAlert = false;
+        public boolean pickaxeAbilityAlert = true;
 
         @Expose
         @ConfigOption(name = "Mines of Divan Tools Alert", desc = "Alert when you are holding all four scavenged tools for the Jade Crystal.")
         @ConfigEditorBoolean
-        public boolean divanToolsAlert = false;
+        public boolean divanToolsAlert = true;
 
         @Expose
         @ConfigOption(name = "Mineshaft Timer", desc = "HUD with your time in the mineshaft and time until you freeze.")
@@ -2017,7 +2017,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Only When Holding", desc = "Only show the drill fuel while you hold the drill. Off: also use a drill in your hotbar.")
         @ConfigEditorBoolean
-        public boolean drillFuelOnlyWhenHolding = true;
+        public boolean drillFuelOnlyWhenHolding = false;
 
         @Expose
         @ConfigOption(name = "Display", desc = "Show the drill fuel as an amount, a percentage or both.")
@@ -2078,7 +2078,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Hide In Action Bar", desc = "Hide the skill progress in the Hypixel action bar.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1201)
-        public boolean hideInActionBar = false;
+        public boolean hideInActionBar = true;
 
         @Expose
         @ConfigOption(name = "Always Show", desc = "Always show the skill progress.")
@@ -2090,7 +2090,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Show Action left", desc = "Show action left until you reach the next level.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1201)
-        public boolean showActionLeft = false;
+        public boolean showActionLeft = true;
 
         @Expose
         @ConfigOption(name = "Use percentage", desc = "Use percentage instead of XP.")
@@ -2269,7 +2269,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Skill Menu Stack Size", desc = "Show the overflow level (past 60) when Skill Level As Stack Size is on.")
         @ConfigEditorBoolean
-        public boolean enableInSkillMenuAsStackSize = false;
+        public boolean enableInSkillMenuAsStackSize = true;
 
         @Expose
         @ConfigOption(name = "Skill Menu Tooltips", desc = "Enable the overflow calculation in the tooltip of items in skills menu.")
@@ -2596,7 +2596,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Hide Contents In Croesus", desc = "In Croesus's menu for a run, hide what's in the chests that will spin, so the spin shows you.")
         @ConfigEditorBoolean
-        public boolean hideCroesusContents = true;
+        public boolean hideCroesusContents = false;
 
         @Expose
         @ConfigOption(name = "Seconds", desc = "How long the spin takes.")
@@ -2606,7 +2606,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Gold Sound", desc = "Play the \"GOLD GOLD GOLD\" sound as soon as a chest whose best item is Legendary (gold) or better starts spinning.")
         @ConfigEditorBoolean
-        public boolean goldSound = true;
+        public boolean goldSound = false;
     }
 
     public static final class DungeonMap {
@@ -2689,7 +2689,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Secret Waypoints", desc = "Show waypoints for each room's secrets.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1501)
-        public boolean secretWaypoints = false;
+        public boolean secretWaypoints = true;
 
         @Expose
         @ConfigOption(name = "Waypoint Type", desc = "How dungeon secret waypoints are drawn. Outline: a clean boxless marker. Highlight: a filled box. Waypoint: a filled box with a beacon beam. A + adds an outline.")
@@ -2701,7 +2701,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Show Routes", desc = "Show a secret route for the current room: yours if you recorded one, otherwise Stella's. Record with /s2 route start and /s2 route stop; share with /s2 export; import a Stella (or SecretRoutes) export with /s2 route import (clipboard) or /s2 route import <file>.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1501)
-        public boolean routes = false;
+        public boolean routes = true;
 
         @ConfigOption(name = "Secrets Display", desc = "The secrets found HUD.")
         @ConfigEditorAccordion(id = 1502)
@@ -2711,7 +2711,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Secrets Display", desc = "SkyblockAddons' Secrets Display: how many of the room's secrets you've found (2/5), with a chest icon, going from red to green. Move it in /s2 gui.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1502)
-        public boolean secretsDisplay = false;
+        public boolean secretsDisplay = true;
 
         @Expose
         @ConfigOption(name = "Hide Secrets In Action Bar", desc = "While the Secrets Display is on, take \"2/5 Secrets\" out of the action bar, like SkyblockAddons.")
@@ -2812,19 +2812,19 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Door Highlight", desc = "Highlight wither and blood doors through walls once they show on your dungeon map (a room next to them is opened): green when your team has the key, red when locked.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1505)
-        public boolean doorHighlight = false;
+        public boolean doorHighlight = true;
 
         @Expose
         @ConfigOption(name = "Key Highlight", desc = "Outline dropped Wither and Blood keys, visible through walls.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1505)
-        public boolean keyHighlight = false;
+        public boolean keyHighlight = true;
 
         @Expose
         @ConfigOption(name = "Announce Key Spawn", desc = "Show a title when a Wither or Blood key spawns.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1505)
-        public boolean announceKeySpawn = false;
+        public boolean announceKeySpawn = true;
 
         @ConfigOption(name = "Room Clear Alert", desc = "An alert when a room is cleared.")
         @ConfigEditorAccordion(id = 1506)
@@ -2834,7 +2834,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Room Clear Alert", desc = "Odin's Room Clear: a title and a ding when the room you're in is cleared (white checkmark, \"Room Cleared!\") or has all its secrets done (green checkmark, \"Room Complete!\"). Not for the entrance or fairy room.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1506)
-        public boolean roomClearAlert = false;
+        public boolean roomClearAlert = true;
 
         @Expose
         @ConfigOption(name = "Room Clear Alert Mode", desc = "Which checkmarks to alert on. Secrets: all secrets done (green). Cleared: room cleared (white). Both: either.")
@@ -2867,7 +2867,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Highlight Starred Mobs", desc = "Draw a box around starred (✯) dungeon mobs you can see. Hidden behind walls.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1601)
-        public boolean starredMobs = false;
+        public boolean starredMobs = true;
 
         @Expose
         @ConfigOption(name = "Starred Mob Colour", desc = "Colour of the box around starred mobs.")
@@ -2895,7 +2895,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Highlight Teammates", desc = "Outline your dungeon teammates in their class colour, the same colours as the Leap Menu (Mage blue, Tank green...; change them under Leap Menu). Shows through walls.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1602)
-        public boolean teammates = false;
+        public boolean teammates = true;
 
         @Expose
         @ConfigOption(name = "Highlight Bats", desc = "Draw a box around bats in dungeons (secret bats), hidden behind walls.")
@@ -2917,7 +2917,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Highlight Withers", desc = "Draw a box around the F7/M7 boss withers (Maxor, Storm, Goldor, Necron) you can see. Hidden behind walls, so it isn't ESP.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1603)
-        public boolean withers = false;
+        public boolean withers = true;
 
         @Expose
         @ConfigOption(name = "Wither Colour", desc = "Colour of the box around the withers.")
@@ -3010,22 +3010,22 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Show Previous Phases", desc = "List the phases already done this fight with their times.")
         @ConfigEditorBoolean
-        public boolean showPrevious = true;
+        public boolean showPrevious = false;
 
         @Expose
         @ConfigOption(name = "Show Attack Timers", desc = "Countdowns for attacks on a fixed timer: Livid's invulnerability, Storm's pillars and lightning (PY), and Goldor's death tick.")
         @ConfigEditorBoolean
-        public boolean showCooldowns = true;
+        public boolean showCooldowns = false;
 
         @Expose
         @ConfigOption(name = "Show Records", desc = "Show your best time next to each phase and the whole fight, green when you're faster. Records are saved in config/sky2m/boss-phases.json; /s2 resetbossrecords clears them.")
         @ConfigEditorBoolean
-        public boolean showRecords = true;
+        public boolean showRecords = false;
 
         @Expose
         @ConfigOption(name = "Record Messages", desc = "A chat message when you beat a phase or fight record, with the time saved (only you see it).")
         @ConfigEditorBoolean
-        public boolean recordMessages = true;
+        public boolean recordMessages = false;
 
         @Expose
         @ConfigOption(name = "Phase Alert Title", desc = "Show the new phase's name as a title when the phase changes.")
@@ -3081,19 +3081,19 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Split Messages", desc = "Send \"<split> took <time>\" with your PB to chat when a split finishes.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1701)
-        public boolean splitMessages = true;
+        public boolean splitMessages = false;
 
         @Expose
         @ConfigOption(name = "Boss Entry Split", desc = "Add a Boss Entry row (Blood Open + Blood Clear + Portal Entry) to the split HUD.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1701)
-        public boolean bossEntrySplit = true;
+        public boolean bossEntrySplit = false;
 
         @Expose
         @ConfigOption(name = "Show Tick Time", desc = "Show the split time counted in server ticks next to the real time.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1701)
-        public boolean splitTickTime = true;
+        public boolean splitTickTime = false;
 
         @Expose
         @ConfigOption(name = "Show ETA", desc = "Show an estimated finish time under the split HUD, from your average split times for this floor in Run History (or your personal bests).")
@@ -3387,7 +3387,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Colored Boxes", desc = "Fill each box with the class colour. Off: dark boxes with class-coloured names.")
         @ConfigEditorBoolean
-        public boolean coloredBoxes = false;
+        public boolean coloredBoxes = true;
 
         @Expose
         @ConfigOption(name = "Leap Announce", desc = "Send \"Leaped to <name>!\" to party chat after you leap.")
@@ -3410,27 +3410,27 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Move Prediction", desc = "Predict when the Watcher moves after its first spawns and show a Move Timer HUD.")
         @ConfigEditorBoolean
-        public boolean movePrediction = false;
+        public boolean movePrediction = true;
 
         @Expose
         @ConfigOption(name = "Move Message", desc = "Print \"Watcher will move in Xs.\" in chat.")
         @ConfigEditorBoolean
-        public boolean moveMessage = false;
+        public boolean moveMessage = true;
 
         @Expose
         @ConfigOption(name = "Party Move Message", desc = "Send \"Watcher will move in Xs.\" to party chat.")
         @ConfigEditorBoolean
-        public boolean partyMoveMessage = false;
+        public boolean partyMoveMessage = true;
 
         @Expose
         @ConfigOption(name = "Kill Title", desc = "Show a \"Kill Mobs\" title when it is time to kill the first spawns.")
         @ConfigEditorBoolean
-        public boolean killTitle = false;
+        public boolean killTitle = true;
 
         @Expose
         @ConfigOption(name = "Mob Kill Timers", desc = "Box where each blood mob will land, with a countdown until it spawns, coloured by Beam Time (red when to shoot, aqua once spawned). Like Odin, only heads the Watcher throws are tracked, not the heads on the walls.")
         @ConfigEditorBoolean
-        public boolean killTimers = false;
+        public boolean killTimers = true;
 
         @Expose
         @ConfigOption(name = "Spawn Colour", desc = "Box where the mob will land.")
@@ -3485,12 +3485,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Interpolation", desc = "Smooth the landing box between ticks.")
         @ConfigEditorBoolean
-        public boolean interpolation = true;
+        public boolean interpolation = false;
 
         @Expose
         @ConfigOption(name = "Ping Offset", desc = "Move the position box ahead by your ping.")
         @ConfigEditorBoolean
-        public boolean pingOffset = true;
+        public boolean pingOffset = false;
 
         @Expose
         @ConfigOption(name = "Watcher Bar", desc = "Show how many blood mobs are left in the Watcher's boss bar.")
@@ -3718,7 +3718,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Fade Out", desc = "Make the trail fainter towards its tail.")
         @ConfigEditorBoolean
-        public boolean fadeOut = true;
+        public boolean fadeOut = false;
     }
 
     /** Killer560's GIF Player. */
@@ -3822,12 +3822,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "New Colour on Corner", desc = "Change the text colour when it hits a corner exactly.")
         @ConfigEditorBoolean
-        public boolean colourOnCorner = true;
+        public boolean colourOnCorner = false;
 
         @Expose
         @ConfigOption(name = "Corner Sound", desc = "Play a sound when it hits a corner exactly.")
         @ConfigEditorBoolean
-        public boolean cornerSound = true;
+        public boolean cornerSound = false;
 
         @Expose
         @ConfigOption(name = "Corner Message", desc = "Shown above your hotbar when it hits a corner exactly (only you see it). {name} is the GIF's name, or the text. Empty for none.")
@@ -4080,7 +4080,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Attack Indicator", desc = "Keep the game's attack cooldown indicator under the crosshair (when it's set to Crosshair in Options).")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 3005)
-        public boolean attackIndicator = true;
+        public boolean attackIndicator = false;
 
         @Expose
         @ConfigOption(name = "Show In Third Person", desc = "Also show the crosshair in third person.")
@@ -4219,12 +4219,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Animation", desc = "Items bounce when they're picked up, like on the hotbar.")
         @ConfigEditorBoolean
-        public boolean animation = true;
+        public boolean animation = false;
 
         @Expose
         @ConfigOption(name = "Show Counts", desc = "Stack counts and durability bars on the items.")
         @ConfigEditorBoolean
-        public boolean showCounts = true;
+        public boolean showCounts = false;
 
         @Expose
         @ConfigOption(name = "Hide When Empty", desc = "Hide it while your inventory is empty.")
@@ -4234,7 +4234,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Hide In Menus", desc = "Hide it while a menu is open (not chat).")
         @ConfigEditorBoolean
-        public boolean hideInScreens = true;
+        public boolean hideInScreens = false;
     }
 
     /** NoammAddons' Auto Requeue. */
@@ -4252,7 +4252,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Cancel If Someone Leaves", desc = "Don't requeue when a party member leaves, is kicked or disconnects during the run or before the requeue.")
         @ConfigEditorBoolean
-        public boolean cancelOnLeave = true;
+        public boolean cancelOnLeave = false;
 
         @Expose
         @ConfigOption(name = "Announce", desc = "Say in chat (only you see it) that it's going to requeue.")
@@ -4310,7 +4310,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Sacks", desc = "Also show items added to and removed from your sacks.")
         @ConfigEditorBoolean
-        public boolean sacks = false;
+        public boolean sacks = true;
 
         @Expose
         @ConfigOption(name = "Shards", desc = "Also show shards you get and send to your Hunting Box.")
@@ -4320,7 +4320,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Coins", desc = "Also show coins added to and removed from your purse.")
         @ConfigEditorBoolean
-        public boolean coins = false;
+        public boolean coins = true;
 
         @Expose
         @Accordion
@@ -4435,7 +4435,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Master Mode", desc = "Check the Master Mode floor's time instead of the normal one.")
         @ConfigEditorBoolean
-        public boolean masterMode = true;
+        public boolean masterMode = false;
 
         @Expose
         @ConfigOption(name = "Slowest S+ (seconds)", desc = "Kick when their fastest S+ on that floor is slower than this, or they have none. 0 = don't check.")
@@ -4470,15 +4470,15 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Remember Kicks", desc = "Kick straight away anyone auto kicked before who joins again (until restart, or /s2 cata clearkicks).")
         @ConfigEditorBoolean
-        public boolean kickCache = true;
+        public boolean kickCache = false;
     }
 
     /** The Profile Viewer (/s2 pv), in NEU's layout. */
     public static final class ProfileViewer {
         @Expose
-        @ConfigOption(name = "Use /pv", desc = "/pv opens Sky2M's Profile Viewer too, not just /s2 pv. Off by default because NEU and SBPV use /pv. Takes effect when you next join a server.")
+        @ConfigOption(name = "Use /pv", desc = "/pv opens Sky2M's Profile Viewer too, not just /s2 pv. Turn it off if you'd rather NEU or SBPV had /pv. Takes effect when you next join a server.")
         @ConfigEditorBoolean
-        public boolean pvCommand = false;
+        public boolean pvCommand = true;
 
         @Expose
         @ConfigOption(name = "Profile API", desc = "Where profiles are loaded from, for the Profile Viewer and Party Finder Stats: a public proxy of Hypixel's API, since Sky2M has no API key. Default: Odin's, https://api.odtheking.com/hypixel/")
@@ -4656,7 +4656,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Pause After", desc = "Pause time tracking after a while without tracked activity.")
         @ConfigEditorBoolean
-        public boolean pauseAfter = true;
+        public boolean pauseAfter = false;
 
         @Expose
         @ConfigOption(name = "Inactivity Time", desc = "Seconds without tracked activity before time tracking pauses.")
@@ -4678,7 +4678,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Show Item Icons", desc = "Show item icons beside tracked drops.")
         @ConfigEditorBoolean
-        public boolean showItemIcons = true;
+        public boolean showItemIcons = false;
 
         @Expose
         @ConfigOption(name = "Quantity Position", desc = "Where item quantities are shown.")
@@ -4688,7 +4688,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Highlight Changes", desc = "Briefly highlight item quantities when they change.")
         @ConfigEditorBoolean
-        public boolean highlightChanges = true;
+        public boolean highlightChanges = false;
 
         @Expose
         @ConfigOption(name = "Summary Lines", desc = "Choose and reorder the summary lines shown by the tracker.")
@@ -4843,7 +4843,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Diana Commands", desc = "SBO's Diana party commands, answered from this season's Diana trackers: !chim, !chimls, !inq, !king, !manti, !sphinx, !relic, !stick, !core, !wool, !food, !stinger, !feathers, !mobs, !burrows, !profit, !playtime, !mf, !stats <you>, !help and !since <chim|inq|relic|stick|king|manti|core|wool|food|...>.")
         @ConfigEditorBoolean
-        public boolean diana = true;
+        public boolean diana = false;
     }
 
     public static final class SacksValue {
@@ -4899,7 +4899,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Use Item Rarity Colour", desc = "Show each item's name in its own rarity colour on the RNG HUD. Turn off to use the Name Colour below.")
         @ConfigEditorBoolean
-        public boolean rarityColour = true;
+        public boolean rarityColour = false;
 
         @Expose
         @ConfigOption(name = "Name Colour", desc = "Colour of item names on the RNG HUD when Use Item Rarity Colour is off.")
@@ -4909,12 +4909,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Check Sacks", desc = "Watch the [Sacks] messages for items on the list.")
         @ConfigEditorBoolean
-        public boolean checkSacks = true;
+        public boolean checkSacks = false;
 
         @Expose
         @ConfigOption(name = "Check Inventory", desc = "Watch your inventory for items on the list.")
         @ConfigEditorBoolean
-        public boolean checkInventory = true;
+        public boolean checkInventory = false;
 
         @Expose
         @ConfigOption(name = "Show For (seconds)", desc = "How long an item stays on the HUD after you get it. Getting more of it keeps it there and adds to the amount.")
@@ -5048,22 +5048,22 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Hide Vanilla Items", desc = "Leave out plain Minecraft items.")
         @ConfigEditorBoolean
-        public boolean hideVanilla = false;
+        public boolean hideVanilla = true;
 
         @Expose
         @ConfigOption(name = "Prefix Matches First", desc = "Items whose name starts with your search come first.")
         @ConfigEditorBoolean
-        public boolean prefixFirst = true;
+        public boolean prefixFirst = false;
 
         @Expose
         @ConfigOption(name = "Fuzzy Search", desc = "Also find items when the search has small typos.")
         @ConfigEditorBoolean
-        public boolean fuzzy = false;
+        public boolean fuzzy = true;
 
         @Expose
         @ConfigOption(name = "Clear Search on Restart", desc = "Start with an empty search bar after restarting the game.")
         @ConfigEditorBoolean
-        public boolean clearOnRestart = false;
+        public boolean clearOnRestart = true;
 
         @Expose
         @ConfigOption(name = "Favourites", desc = "A Favourites panel on the other side: press the Favourite key over an item or recipe to add it. Ctrl and click a favourite recipe to pin it at the top.")
@@ -5083,7 +5083,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Enter Replaces Sum", desc = "Pressing Enter replaces the sum with its result.")
         @ConfigEditorBoolean
-        public boolean enterReplaces = true;
+        public boolean enterReplaces = false;
 
         @Expose
         @ConfigOption(name = "Hide Key", desc = "Hold Ctrl and press this to hide or show the list and favourites.")
@@ -5219,7 +5219,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Channel Timer", desc = "Show the 3s channel before the buff.")
         @ConfigEditorBoolean
-        public boolean channelTimer = false;
+        public boolean channelTimer = true;
 
         @Expose
         @ConfigOption(name = "Buff Timer", desc = "Show how long the Strength buff has left.")
@@ -5229,7 +5229,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Cooldown Timer", desc = "Show the time until you can cast it again.")
         @ConfigEditorBoolean
-        public boolean cooldownTimer = false;
+        public boolean cooldownTimer = true;
 
         @Expose
         @ConfigOption(name = "Cooldown", desc = "The axe's cooldown in seconds. Hypixel doesn't tell the client your cooldown reductions, so set yours here (20 is the base).")
@@ -5284,12 +5284,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Prompt As Title", desc = "Also show prompts as a big title (they always show in their HUD).")
         @ConfigEditorBoolean
-        public boolean promptTitle = false;
+        public boolean promptTitle = true;
 
         @Expose
         @ConfigOption(name = "Skip Tank and Healer", desc = "No dragon prompts while you're Tank or Healer (they don't rag for dragons).")
         @ConfigEditorBoolean
-        public boolean skipTankHealer = true;
+        public boolean skipTankHealer = false;
 
         @Expose
         @Accordion
@@ -5585,7 +5585,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Text Shadow", desc = "Draw the lines with a shadow.")
         @ConfigEditorBoolean
-        public boolean textShadow = true;
+        public boolean textShadow = false;
 
         @Expose
         @ConfigOption(name = "Click and Hover Actions", desc = "With chat open, hover lines for a tip and click them to run their command (Bits opens the SkyBlock menu, Objective your quests, Island /warp...).")
@@ -5675,7 +5675,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Hypixel's Footer", desc = "Show www.hypixel.net instead of your text.")
         @ConfigEditorBoolean
-        public boolean hypixelFooter = true;
+        public boolean hypixelFooter = false;
 
         @Expose
         @ConfigOption(name = "Footer Text", desc = "Your footer; & colour codes work, and \\n starts a new line.")
@@ -5951,17 +5951,17 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Condense Separators", desc = "Show one blank line where several meet.")
         @ConfigEditorBoolean
-        public boolean condenseSeparators = true;
+        public boolean condenseSeparators = false;
 
         @Expose
         @ConfigOption(name = "Hide Separators at Top and Bottom", desc = "No blank line at the very top or bottom.")
         @ConfigEditorBoolean
-        public boolean hideSeparatorsAtEnds = true;
+        public boolean hideSeparatorsAtEnds = false;
 
         @Expose
         @ConfigOption(name = "Show All Active Events", desc = "Show every event that's going on. Off: only the first one in your Events order.")
         @ConfigEditorBoolean
-        public boolean showAllEvents = true;
+        public boolean showAllEvents = false;
 
         @Expose
         @ConfigOption(name = "Separator Between Events", desc = "A blank line between events.")
@@ -5971,7 +5971,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Hide Tab List Events in Dungeons", desc = "Don't show the tab list's event (Spooky Festival, Mining Fiesta...) in dungeons and Kuudra.")
         @ConfigEditorBoolean
-        public boolean tabEventsInDungeon = true;
+        public boolean tabEventsInDungeon = false;
 
         @Expose
         @ConfigOption(name = "Max Party Members", desc = "How many party members the Party line lists.")
@@ -5986,7 +5986,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Powder Only While Mining", desc = "Only show Powder in the Dwarven Mines, Crystal Hollows and Mineshafts.")
         @ConfigEditorBoolean
-        public boolean powderOnlyMining = true;
+        public boolean powderOnlyMining = false;
     }
 
     /** Party Dungeon Data (Killer560's): teammates running Sky2M share what they know about the run. */
@@ -6022,12 +6022,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Show Yourself", desc = "Include your own Melody in the HUD.")
         @ConfigEditorBoolean
-        public boolean showSelf = false;
+        public boolean showSelf = true;
 
         @Expose
         @ConfigOption(name = "Send Progress in Party Chat", desc = "Like Odin: when a row of your Melody is done, say \"Melody 2/4 - 50%\" in party chat, which Odin, NoammAddons and Sky2M users all read.")
         @ConfigEditorBoolean
-        public boolean sendProgress = false;
+        public boolean sendProgress = true;
 
         @Expose
         @ConfigOption(name = "Send Coords", desc = "Like Odin's Melody Send Coords: when you open Melody in P3, say where you are in party chat (\"x: 1, y: 2, z: 3\").")
@@ -6103,7 +6103,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Count Across Runs", desc = "Also keep how many times each player has died in your runs, shown next to them in the HUD. /s2 deaths lists the most deaths.")
         @ConfigEditorBoolean
-        public boolean lifetime = true;
+        public boolean lifetime = false;
     }
 
     public static final class ClassCounters {
@@ -6115,7 +6115,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Arrows Only As Archer", desc = "Only count and show arrows while you're Archer.")
         @ConfigEditorBoolean
-        public boolean arrowsArcherOnly = true;
+        public boolean arrowsArcherOnly = false;
 
         @Expose
         @ConfigOption(name = "Damage Taken", desc = "How much health you've lost this run, after defence (read from the action bar, so healing doesn't take any off), in a HUD you can move in /s2 gui.")
@@ -6125,7 +6125,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Damage Only As Tank", desc = "Only count and show damage taken while you're Tank.")
         @ConfigEditorBoolean
-        public boolean damageTankOnly = true;
+        public boolean damageTankOnly = false;
 
         @Expose
         @ConfigOption(name = "Run Summary", desc = "When the run ends, both counts in chat (only you see it).")
@@ -6137,17 +6137,17 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Key Pickup Alert", desc = "A title and a ding when a Wither Key or Blood Key is picked up, with who picked it up.")
         @ConfigEditorBoolean
-        public boolean pickupAlert = false;
+        public boolean pickupAlert = true;
 
         @Expose
         @ConfigOption(name = "Door Opened Message", desc = "When a door opens, say in chat (only to you) who opened it and how long after the key was picked up. Hypixel doesn't say who opens the Blood Door, so it's whoever had the Blood Key.")
         @ConfigEditorBoolean
-        public boolean doorMessage = false;
+        public boolean doorMessage = true;
 
         @Expose
         @ConfigOption(name = "Key Holder HUD", desc = "A HUD with who has the Wither and Blood keys right now. Move it in /s2 gui.")
         @ConfigEditorBoolean
-        public boolean holderHud = false;
+        public boolean holderHud = true;
     }
 
     public static final class DupeClass {
@@ -6210,7 +6210,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Bosses Left", desc = "Show how many bosses are left: the XP still needed over the XP one boss added last time (or the tier's slayer XP before that).")
         @ConfigEditorBoolean
-        public boolean bossesLeft = true;
+        public boolean bossesLeft = false;
 
         @Expose
         @ConfigOption(name = "Warn Without a Drop", desc = "After a boss, say in chat when that slayer has no RNG Meter drop selected.")
@@ -6286,12 +6286,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Show Perks", desc = "List each perk under the mayor and minister in the HUD.")
         @ConfigEditorBoolean
-        public boolean perks = true;
+        public boolean perks = false;
 
         @Expose
         @ConfigOption(name = "Show Election", desc = "While an election is open, who's leading and each candidate's share of the votes, in the HUD.")
         @ConfigEditorBoolean
-        public boolean election = true;
+        public boolean election = false;
 
         @ConfigOption(name = "Show In Chat", desc = "Everything (mayor, minister, perks, the election and the candidates' perks) in chat. Also /s2 mayor.")
         @ConfigEditorButton(buttonText = "Show")
@@ -6328,17 +6328,17 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Show as Flawed Equivalent", desc = "Show each gemstone type as Flawed gemstones (1 Fine = 80 Flawed, 80 Rough = 1 Flawed). Off: the count of each tier (Rough, Flawed, Fine...).")
         @ConfigEditorBoolean
-        public boolean flawedEquivalent = true;
+        public boolean flawedEquivalent = false;
 
         @Expose
         @ConfigOption(name = "Show Glossy Gemstones", desc = "A line with the Glossy Gemstones from the Mining Fiesta and their value. They always count towards the total value.")
         @ConfigEditorBoolean
-        public boolean showGlossy = true;
+        public boolean showGlossy = false;
 
         @Expose
         @ConfigOption(name = "Show Pristine Procs", desc = "A line with this session's pristine procs and the Flawed gemstones they gave.")
         @ConfigEditorBoolean
-        public boolean showPristine = true;
+        public boolean showPristine = false;
 
         @Expose
         @ConfigOption(name = "Show All-Time Totals", desc = "Also show every gemstone and Glossy Gemstone you've tracked, kept between sessions.")
@@ -6395,7 +6395,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Trace Line", desc = "A line from your crosshair to the next waypoint.")
         @ConfigEditorBoolean
-        public boolean traceLine = true;
+        public boolean traceLine = false;
 
         @Expose
         @ConfigOption(name = "Trace Line Colour", desc = "")
@@ -6405,12 +6405,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Show Distance", desc = "Show how far each waypoint is.")
         @ConfigEditorBoolean
-        public boolean showDistance = true;
+        public boolean showDistance = false;
 
         @Expose
         @ConfigOption(name = "Show Number", desc = "Show each waypoint's number.")
         @ConfigEditorBoolean
-        public boolean showName = true;
+        public boolean showName = false;
 
         @Expose
         @ConfigOption(name = "Show All Waypoints", desc = "Show the whole route at once.")
@@ -6430,7 +6430,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Sneaking During Route", desc = "Whether you sneak between waypoints (with an AOTV), for setup mode's line of sight.")
         @ConfigEditorBoolean
-        public boolean sneaking = true;
+        public boolean sneaking = false;
 
         @Expose
         @ConfigOption(name = "Auto-Skip Forward", desc = "Skip ahead when you reach a waypoint further down the route.")
@@ -6509,7 +6509,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Chat Tabs", desc = "All, Party, Guild and Private tabs above the chat box while chat is open: a tab shows only those messages (also when chat is closed). Click All to see everything again.")
         @ConfigEditorBoolean
-        public boolean tabs = false;
+        public boolean tabs = true;
 
         @Expose
         @ConfigOption(name = "Message Search", desc = "A search tab next to them (or Ctrl+F with chat open): what you type in the chat box filters the chat instead of being sent. Click the tab again or close chat to stop searching.")
@@ -6593,17 +6593,17 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Count Dungeon Runs", desc = "Count a carry when a dungeon run ends with that player in it (if the carry's type is a floor like f7 or m5, only runs of that floor).")
         @ConfigEditorBoolean
-        public boolean countDungeons = true;
+        public boolean countDungeons = false;
 
         @Expose
         @ConfigOption(name = "Count Slayer Bosses", desc = "Count a carry when a slayer boss spawned by that player dies near you.")
         @ConfigEditorBoolean
-        public boolean countSlayers = true;
+        public boolean countSlayers = false;
 
         @Expose
         @ConfigOption(name = "Done Message", desc = "When a carry is finished, a line in chat with what they still owe.")
         @ConfigEditorBoolean
-        public boolean doneMessage = true;
+        public boolean doneMessage = false;
 
         @Expose
         @ConfigOption(name = "Party Progress", desc = "After each counted carry, say their progress in party chat (\"Name: 3/5 carries done\").")
@@ -6645,12 +6645,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Bazaar Last Amount", desc = "Custom Amount signs in the Bazaar start with the last amount you entered on one.")
         @ConfigEditorBoolean
-        public boolean bazaarAmount = true;
+        public boolean bazaarAmount = false;
 
         @Expose
         @ConfigOption(name = "AH BIN Price", desc = "The Set Item Price sign in Create BIN Auction starts with the item's lowest BIN (times the stack size) minus the AH Undercut.")
         @ConfigEditorBoolean
-        public boolean ahBinPrice = true;
+        public boolean ahBinPrice = false;
 
         @Expose
         @ConfigOption(name = "AH Undercut", desc = "How far under the lowest BIN to suggest.")
@@ -6677,7 +6677,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Too Cheap Warning", desc = "When you create a BIN auction for much less than the item's lowest BIN, the Create/Confirm click is stopped with a warning; click again within 3 seconds to list it anyway.")
         @ConfigEditorBoolean
-        public boolean underprice = false;
+        public boolean underprice = true;
 
         @Expose
         @ConfigOption(name = "Too Cheap Below", desc = "Warn when the price is below this percent of the lowest BIN.")
@@ -6687,7 +6687,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Overpay Warning", desc = "When you buy a BIN auction for much more than the item's lowest BIN, the Buy/Confirm click is stopped with a warning; click again within 3 seconds to buy it anyway.")
         @ConfigEditorBoolean
-        public boolean overpay = false;
+        public boolean overpay = true;
 
         @Expose
         @ConfigOption(name = "Overpay Above", desc = "Warn when the price is more than this percent above the lowest BIN.")
@@ -6699,7 +6699,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Quality On Slot", desc = "Like SkyblockAddons: the item quality (base stat boost, 0 to 50%) of dungeon items in the corner of their slot, coloured by how good it is.")
         @ConfigEditorBoolean
-        public boolean slot = false;
+        public boolean slot = true;
 
         @Expose
         @ConfigOption(name = "Quality As Stack Size", desc = "SkyHanni's and SkyOcean's way: draw the quality like a stack count, in the bottom right corner of the slot at normal size, instead of small in the top left. Needs Quality On Slot.")
@@ -6726,7 +6726,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Unlock Popup", desc = "A title and a sound when you unlock one.")
         @ConfigEditorBoolean
-        public boolean popup = true;
+        public boolean popup = false;
 
         @Expose
         @ConfigOption(name = "Unlock Message", desc = "A line in chat when you unlock one.")
@@ -6783,12 +6783,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Labels", desc = "Write \"Fairy Soul\" above each box.")
         @ConfigEditorBoolean
-        public boolean labels = true;
+        public boolean labels = false;
 
         @Expose
         @ConfigOption(name = "Distances", desc = "Add how far away each nearest Fairy Soul is, in metres.")
         @ConfigEditorBoolean
-        public boolean distances = true;
+        public boolean distances = false;
 
         @Expose
         @ConfigOption(name = "HUD", desc = "A HUD with how many Fairy Souls you've found on this island, out of all of them (\"Fairy Souls 45/81 — Hub\"). Move it in /s2 gui.")
@@ -6798,7 +6798,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Progress on Island Join", desc = "Say the island's Fairy Souls count in chat each time you arrive.")
         @ConfigEditorBoolean
-        public boolean progress = true;
+        public boolean progress = false;
     }
     /** A shopping list of what to get and how many (/s2 shopping), ticked off by what you pick up. */
     public static final class ShoppingList {
@@ -6810,7 +6810,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Auto Pickups", desc = "Count what you pick up towards the list: an entry whose name matches an item that lands in your inventory goes up on its own, and says in chat when it's done.")
         @ConfigEditorBoolean
-        public boolean autoPickups = true;
+        public boolean autoPickups = false;
     }
     public static final class TerminalProgress {
         @Expose
@@ -6878,7 +6878,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Coin Rain", desc = "Coins rain down the screen when the fever starts.")
         @ConfigEditorBoolean
-        public boolean coinRain = true;
+        public boolean coinRain = false;
 
         @Expose
         @ConfigOption(name = "Coin Rain Seconds", desc = "How long coins keep falling.")

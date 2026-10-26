@@ -169,6 +169,8 @@ public final class Sky2MHuds {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         if (!Sky2MLocation.skyblockOnlyAllows()) return;
+        // The held item editor has no background (your hand shows through it): HUDs would draw over its panel.
+        if (com.epic60869.sky2m.features.helditem.HeldItemEditorScreen.editing()) return;
         // Positions saved before the reference size existed were placed on this screen size.
         if (refWidth <= 0 || refHeight <= 0) setReferenceToScreen();
         Sky2MPerf.frame();

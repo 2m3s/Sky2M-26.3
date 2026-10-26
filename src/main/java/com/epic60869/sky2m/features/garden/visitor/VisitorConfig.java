@@ -49,17 +49,17 @@ public final class VisitorConfig {
     @Expose
     @ConfigOption(name = "Notification Chat", desc = "Show in chat when a new visitor is visiting your island.")
     @ConfigEditorBoolean
-    public boolean notificationChat = false;
+    public boolean notificationChat = true;
 
     @Expose
     @ConfigOption(name = "Compact Chat", desc = "Compact reward summary messages when you accept an offer.")
     @ConfigEditorBoolean
-    public boolean compactRewardChat = false;
+    public boolean compactRewardChat = true;
 
     @Expose
     @ConfigOption(name = "Notification Title", desc = "Show a title when a new visitor is visiting your island.")
     @ConfigEditorBoolean
-    public boolean notificationTitle = false;
+    public boolean notificationTitle = true;
 
     @Expose
     @ConfigOption(name = "Highlight Status", desc = "Highlight the status for visitors with a text above or with color.")
@@ -95,12 +95,12 @@ public final class VisitorConfig {
     @Expose
     @ConfigOption(name = "Hypixel Message", desc = "Hide the chat message from Hypixel that a new visitor has arrived at your garden.")
     @ConfigEditorBoolean
-    public boolean hypixelArrivedMessage = false;
+    public boolean hypixelArrivedMessage = true;
 
     @Expose
     @ConfigOption(name = "Hide Chat", desc = "Hide chat messages from the visitors in the garden. (Except those with long dialogues)")
     @ConfigEditorBoolean
-    public boolean hideChat = false;
+    public boolean hideChat = true;
 
     @Expose
     @ConfigOption(name = "Accept Hotkey", desc = "Accept a visitor when you press this keybind while in the visitor GUI.\n§eUseful for getting Ephemeral Gratitudes during the Great Spook event.")
@@ -153,7 +153,7 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "New Visitor Ping", desc = "Ping you when you are less than 10 seconds away from getting a new visitor.\n§eUseful for getting Ephemeral Gratitudes during the Great Spook event.")
         @ConfigEditorBoolean
-        public boolean newVisitorPing = false;
+        public boolean newVisitorPing = true;
     }
 
     public static final class ShoppingList {
@@ -165,12 +165,12 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Only when Close", desc = "Only show the shopping list when close to the visitors.")
         @ConfigEditorBoolean
-        public boolean onlyWhenClose = false;
+        public boolean onlyWhenClose = true;
 
         @Expose
         @ConfigOption(name = "Bazaar Alley", desc = "Show the Visitor Items List while inside the Bazaar Alley in the Hub.\n§eHelps in buying the correct amount when not having a §6Booster Cookie §ebuff active.")
         @ConfigEditorBoolean
-        public boolean inBazaarAlley = true;
+        public boolean inBazaarAlley = false;
 
         @Expose
         @ConfigOption(name = "Farming Areas", desc = "Show the Visitor Shopping List while on the Farming Islands or inside the Farm in the Hub.\n§eHelps in farming the correct amount, especially when in the early game.")
@@ -185,7 +185,7 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Show Sack Count", desc = "Show the amount of this item that you already have in your sacks.\n§eOnly updates on sack change messages and when you look in your sacks.")
         @ConfigEditorBoolean
-        public boolean showSackCount = true;
+        public boolean showSackCount = false;
 
         @Expose
         @ConfigOption(name = "Show Super Craft", desc = "Show super craft button if there are enough materials to make in the sack.")
@@ -195,7 +195,7 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Item Preview", desc = "Show the base type for the required items next to new visitors.\n§cNote that some visitors may require any crop.")
         @ConfigEditorBoolean
-        public boolean itemPreview = true;
+        public boolean itemPreview = false;
     }
 
     public static final class Inventory {
@@ -212,7 +212,7 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Copper Price", desc = "Show the price per copper inside the visitor GUI.")
         @ConfigEditorBoolean
-        public boolean copperPrice = true;
+        public boolean copperPrice = false;
 
         @Expose
         @ConfigOption(name = "Copper Time", desc = "Show the time required per copper inside the visitor GUI.")
@@ -287,7 +287,7 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Block Refusing New Visitors", desc = "Prevents refusing a visitor you've never completed an offer with.\n§eDisabled while on bingo.")
         @ConfigEditorBoolean
-        public boolean preventRefusingNew = true;
+        public boolean preventRefusingNew = false;
 
         @Expose
         @ConfigOption(name = "Transparency", desc = "How transparent the offer buttons should be when blocked.")
@@ -297,7 +297,7 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Outline", desc = "Add a red/green line around the best offer buttons.")
         @ConfigEditorBoolean
-        public boolean optionOutline = true;
+        public boolean optionOutline = false;
     }
 
     public static final class DropsStatistics {
@@ -321,12 +321,12 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Display Numbers First", desc = "Whether the number or drop name displays first.\n§eNote: Will not update the preview above!")
         @ConfigEditorBoolean
-        public boolean displayNumbersFirst = true;
+        public boolean displayNumbersFirst = false;
 
         @Expose
         @ConfigOption(name = "Only on Barn Plot", desc = "Only show the overlay while on the Barn plot.")
         @ConfigEditorBoolean
-        public boolean onlyOnBarn = true;
+        public boolean onlyOnBarn = false;
 
         @ConfigOption(name = "Reset Statistics", desc = "Reset the Visitor Drops Statistics for this profile (SkyHanni's /shresetvisitordrops).")
         @ConfigEditorButton(buttonText = "RESET")

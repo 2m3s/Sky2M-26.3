@@ -232,7 +232,7 @@ public final class SbcConfig {
         @Expose
         @ConfigOption(name = "Cooldown Bar", desc = "A bar at the bottom of the slot, like item durability.")
         @ConfigEditorBoolean
-        public boolean bar = true;
+        public boolean bar = false;
 
         @Expose
         @ConfigOption(name = "Slot Overlay", desc = "Shade the slot from the top while the ability cools down, like vanilla ender pearls.")

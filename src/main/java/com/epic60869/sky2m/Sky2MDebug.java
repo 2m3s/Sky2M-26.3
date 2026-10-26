@@ -15,7 +15,10 @@ public final class Sky2MDebug {
 
     private static boolean roomDebug;
 
-    /** Whether /s2 debug has turned the dungeon room debug lines on (a chat line when the Dungeon Sim room under you changes). */
+    /**
+     * Whether /s2 debug is on: the dungeon room debug lines (a chat line when the Dungeon Sim room under you changes),
+     * and the slayer tracker, RNG HUD and loadout lines in the log.
+     */
     public static boolean roomDebug() { return roomDebug; }
 
     public static void roomLine(String text) { line("Debug", text); }
