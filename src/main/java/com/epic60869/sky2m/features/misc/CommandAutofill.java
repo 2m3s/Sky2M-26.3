@@ -24,7 +24,7 @@ import java.util.Set;
 /**
  * Client side argument suggestions for Hypixel commands whose arguments the server doesn't suggest: Bazaar products
  * for {@code /bz} and {@code /bazaar}, item names for {@code /ahs} and {@code /ahsearch}, and item ids for
- * {@code /viewrecipe} and {@code /recipe}. Shown in vanilla's command suggestion popup (see
+ * {@code /viewrecipe} and {@code /recipe}; other commands go to {@link CommandTabComplete} (players, /warp, /gfs...). Shown in vanilla's command suggestion popup (see
  * {@code Sky2MCommandAutofillMixin}); nothing is sent to the server and no command is registered.
  *
  * <p>Matching ignores case and treats spaces and underscores the same ("enchanted dia" finds
@@ -61,7 +61,8 @@ public final class CommandAutofill {
             case "viewrecipe", "recipe" -> config.recipes ? itemIdEntries() : null;
             default -> null;
         };
-        if (source == null || source.isEmpty()) return null;
+        if (source == null) return CommandTabComplete.suggest(config, uptoCursor);
+        if (source.isEmpty()) return null;
 
         int start = space;
         while (start < uptoCursor.length() && uptoCursor.charAt(start) == ' ') start++;
@@ -198,5 +199,45 @@ public final class CommandAutofill {
         @ConfigOption(name = "Recipes (/viewrecipe)", desc = "Suggest SkyBlock item ids for /viewrecipe and /recipe.")
         @ConfigEditorBoolean
         public boolean recipes = true;
+
+        @Expose
+        @ConfigOption(name = "Player Names", desc = "Like SkyHanni: suggest player names and subcommands for /p, /f, /g, /msg, /w, /visit, /pv, /invite, /ah, /boop and /trade (players on your island; party, friends and guild below).")
+        @ConfigEditorBoolean
+        public boolean players = true;
+
+        @Expose
+        @ConfigOption(name = "Party Members", desc = "Include your party members (and /p kick, promote, transfer... them).")
+        @ConfigEditorBoolean
+        public boolean party = true;
+
+        @Expose
+        @ConfigOption(name = "Friends", desc = "Include your friends, learnt from /f list and friend messages.")
+        @ConfigEditorBoolean
+        public boolean friends = true;
+
+        @Expose
+        @ConfigOption(name = "Guild Members", desc = "Include your guild members, learnt from /g online and /g list.")
+        @ConfigEditorBoolean
+        public boolean guild = false;
+
+        @Expose
+        @ConfigOption(name = "VIP Visits", desc = "Suggest the special islands for /visit (like PortalHub and the Cake Hub).")
+        @ConfigEditorBoolean
+        public boolean vipVisits = true;
+
+        @Expose
+        @ConfigOption(name = "Warps (/warp)", desc = "Suggest /warp destinations.")
+        @ConfigEditorBoolean
+        public boolean warps = true;
+
+        @Expose
+        @ConfigOption(name = "Sack Items (/gfs)", desc = "Suggest the items in your sacks for /gfs and /getfromsacks (open your sacks once so Sky2M knows them).")
+        @ConfigEditorBoolean
+        public boolean gfsSack = true;
+
+        @Expose
+        @ConfigOption(name = "Show Item (/show)", desc = "Suggest the slots /show, /showitem and /showoff take (item, helmet, pet...).")
+        @ConfigEditorBoolean
+        public boolean showItem = true;
     }
 }
