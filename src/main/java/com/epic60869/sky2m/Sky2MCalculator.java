@@ -58,7 +58,7 @@ public final class Sky2MCalculator {
             double value = parseFactor();
             while (true) {
                 skipSpaces();
-                if (match('*')) value *= parseFactor();
+                if (match('*') || match('x') || match('X') || match('×')) value *= parseFactor();
                 else if (match('/')) {
                     double divisor = parseFactor();
                     if (divisor == 0) throw new IllegalArgumentException("Cannot divide by zero.");
