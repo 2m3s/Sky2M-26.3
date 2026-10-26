@@ -688,16 +688,10 @@ public final class FeatureConfigs {
         public boolean spiritBear = true;
 
         @Expose
-        @ConfigOption(name = "Livid Solver (F5/M5)", desc = "Odin's Livid Solver: once the wool above the arena shows which Livid is real, says so in chat and boxes that Livid (not while you're blind).")
-        @ConfigEditorBoolean
+        @Accordion
+        @ConfigOption(name = "Livid Finder (F5/M5)", desc = "SkyHanni's Livid Finder: once the wool above the arena shows which Livid is real, boxes and labels her, with a line from your crosshair (not while you're blind), and can hide the fake ones.")
         @ConfigAccordionId(id = 1301)
-        public boolean lividSolver = true;
-
-        @Expose
-        @ConfigOption(name = "Livid Colour", desc = "Colour of the box around the real Livid.")
-        @ConfigEditorColour
-        @ConfigAccordionId(id = 1301)
-        public String lividColour = "0:120:255:85:255";
+        public LividFinder lividFinder = new LividFinder();
 
         @Expose
         @ConfigOption(name = "Livid Invulnerability (F5/M5)", desc = "Odin's HUD with the server ticks left of Livid's invulnerability after her opening line. Move it in /s2 gui.")
@@ -2678,6 +2672,24 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Creeper Beams", desc = "Odin: each pair of lanterns to connect in its own colour, with a line between them.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean creeperBeams = false;
         @Expose @ConfigOption(name = "Silverfish", desc = "Show the path.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean silverfish = false;
         @Expose @ConfigOption(name = "Teleport Maze", desc = "Odin: visited pads in red, the right pad in green (orange while there are several), and a line to the best next pad.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean teleportMaze = false;
+    }
+
+    public static final class LividFinder {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Help find the correct livid in F5 and in M5.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Hide Wrong Livids", desc = "Hide wrong livids entirely.")
+        @ConfigEditorBoolean
+        public boolean hideWrong = false;
+
+        @Expose
+        @ConfigOption(name = "Color Override", desc = "Forces the livid highlight to be a specific color.")
+        @ConfigEditorDropdown
+        public com.epic60869.sky2m.features.dungeons.DungeonLividFinder.LividColorHighlight colorOverride =
+            com.epic60869.sky2m.features.dungeons.DungeonLividFinder.LividColorHighlight.DEFAULT;
     }
 
     public static final class Secrets {

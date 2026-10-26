@@ -167,7 +167,8 @@ public final class DungeonFeatures {
         Sky2MChat.onChat(DungeonFeatures::onChat);
         ServerTickCallback.EVENT.register(DungeonFeatures::onServerTick);
         SpiritBear.init();
-        LividSolver.init();
+        DungeonLividFinder.init();
+        LividTimer.init();
         TerracottaTimer.init();
         AutoRequeue.init();
         PartyFinderStats.init();

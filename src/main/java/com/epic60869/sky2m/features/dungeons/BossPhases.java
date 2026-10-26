@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
  * uses (https://github.com/odtheking/Odin, BSD-3-Clause, as in {@link DungeonFeatures}); the F6 Sadan phase, the F7
  * terminal sections ("(7/7)" completions) and the M7 Wither King start follow SkyHanni's DungeonBossApi
  * (https://github.com/hannibal002/SkyHanni, LGPL-2.1). The attack timers are the fixed intervals already used here:
- * Livid's 340 tick invulnerability ({@link LividSolver}, Odin), Storm's 20 tick pillars, his 55 tick lightning (95 before the 2026 dungeon update) and
+ * Livid's 340 tick invulnerability ({@link LividTimer}, Odin), Storm's 20 tick pillars, his 55 tick lightning (95 before the 2026 dungeon update) and
  * Goldor's 60 tick death tick ({@link DungeonFeatures}'s tick timers, Odin's TickTimers).
  * <p>
  * A phase only gets a record when the fight went through its start and the next phase's start (or the end) with none
