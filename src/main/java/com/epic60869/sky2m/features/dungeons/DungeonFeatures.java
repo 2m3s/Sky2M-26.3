@@ -173,7 +173,9 @@ public final class DungeonFeatures {
         PartyFinderStats.init();
         PfRequirements.init();
         BlessingDisplay.init();
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> resetRun());
+        // A reconnect keeps the run's splits: leaving the dungeon or the next run's start clears them.
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> resetRunState());
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> resumeSplits());
         Sky2MLocation.onAreaChange(area -> {
             // An empty area is the tab list briefly not being read (world load, lag), not leaving the dungeon.
             if (!area.isEmpty() && !area.equals("Catacombs")) resetRun();
@@ -240,6 +242,11 @@ public final class DungeonFeatures {
     private static void resetRun() {
         SPLITS.clear();
         splitFloor = "";
+        resetRunState();
+    }
+
+    /** Everything about the run but its splits. */
+    private static void resetRunState() {
         stormStartTick = -1;
         goldorStartTick = -1;
         pyStartTick = -1;
@@ -268,6 +275,7 @@ public final class DungeonFeatures {
 
     private static void startSplits() {
         SPLITS.clear();
+        resumed = false;
         String floor = Sky2MLocation.dungeonFloor();
         int number = floor.equals("E") ? 0 : floor.length() == 2 ? floor.charAt(1) - '0' : -1;
         if (number < 0 || number >= FLOOR_SPLITS.length) return;
@@ -279,6 +287,33 @@ public final class DungeonFeatures {
         SPLITS.add(new Split(CLEARED, "§1Total"));
     }
 
+    private static final Pattern TIME_ELAPSED = Pattern.compile("Time Elapsed: (?:(\\d+)h )?(?:(\\d+)m )?(\\d+)s");
+
+    /**
+     * A run joined (or rejoined) after its start: the splits start from the sidebar's "Time Elapsed", so the timer and
+     * total carry on. Parts whose start wasn't seen don't count towards PBs.
+     */
+    private static void resumeSplits() {
+        if (!SPLITS.isEmpty() || !Sky2MLocation.inDungeon()) return;
+        for (String line : Sky2MLocation.scoreboard()) {
+            Matcher m = TIME_ELAPSED.matcher(line);
+            if (!m.find()) continue;
+            long elapsed = ((m.group(1) == null ? 0 : Long.parseLong(m.group(1))) * 3600
+                + (m.group(2) == null ? 0 : Long.parseLong(m.group(2))) * 60 + Long.parseLong(m.group(3))) * 1000L;
+            if (elapsed <= 0) return;
+            startSplits();
+            if (SPLITS.isEmpty()) return;
+            Split first = SPLITS.getFirst();
+            first.time = System.currentTimeMillis() - elapsed;
+            first.ticks = serverTicks - elapsed / 50;
+            resumed = true;
+            return;
+        }
+    }
+
+    /** The splits were picked up mid-run: the Total isn't a full run, so it can't be a PB. */
+    private static boolean resumed;
+
     private static void onSplitMessage(String message) {
         for (int index = 0; index < SPLITS.size(); index++) {
             Split split = SPLITS.get(index);
@@ -287,6 +322,8 @@ public final class DungeonFeatures {
             split.ticks = serverTicks;
             if (index == 0) return;
             Split previous = SPLITS.get(index - 1);
+            // The part before this wasn't seen start (joined mid-run): no time for it, and no PB.
+            if (previous.time == 0) return;
             float segment = (split.time - previous.time) / 1000f;
             if (index == SPLITS.size() - 1) {
                 finishRun(previous, segment);
@@ -301,7 +338,7 @@ public final class DungeonFeatures {
         List<SplitRow> rows = currentRows();
         personalBest(lastSegment.name, lastSegmentTime, "§6" + lastSegment.name + " §7took §6");
         if (rows.isEmpty()) return;
-        personalBest("Total", rows.getLast().time() / 1000f, "§6Total time §7took §6");
+        if (!resumed) personalBest("Total", rows.getLast().time() / 1000f, "§6Total time §7took §6");
         if (!splitMessagesEnabled()) return;
         for (int i = 0; i < rows.size(); i++) {
             SplitRow row = rows.get(i);
