@@ -535,13 +535,13 @@ public final class SkillProgress {
         @Override
         public int width() {
             FeatureConfigs.SkillProgressBar bar = config().skillProgressBarConfig;
-            return bar.useTexturedBar ? 182 : bar.regularBar.width;
+            return bar.useTexturedBar ? bar.texturedBar.width : bar.regularBar.width;
         }
 
         @Override
         public int height() {
             FeatureConfigs.SkillProgressBar bar = config().skillProgressBarConfig;
-            return bar.useTexturedBar ? 5 : bar.regularBar.height;
+            return bar.useTexturedBar ? bar.texturedBar.height : bar.regularBar.height;
         }
 
         @Override
@@ -555,9 +555,13 @@ public final class SkillProgress {
             double fraction = preview && display.isEmpty() ? 0.457 : Math.min(1.0, skillExpPercentage);
             int start = colour(bar.barStartColor);
             if (bar.useTexturedBar) {
-                maxWidth = 182;
+                // The texture is 182x5 (like the XP bar), stretched to the Width and Height chosen.
+                maxWidth = bar.texturedBar.width;
                 int progress = (int) (Math.max(0, fraction) * 182);
+                graphics.pose().pushMatrix();
+                graphics.pose().scale(bar.texturedBar.width / 182f, bar.texturedBar.height / 5f);
                 renderTextured(graphics, bar.texturedBar.usedTexture, progress, bar.useChroma);
+                graphics.pose().popMatrix();
             } else {
                 maxWidth = bar.regularBar.width;
                 int width = bar.regularBar.width;
