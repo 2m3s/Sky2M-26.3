@@ -42,6 +42,7 @@ public final class Economy {
 
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof AbstractContainerScreen<?> container)) return;
+            ScreenEvents.afterExtract(screen).register((s, g, mouseX, mouseY, delta) -> ValueBreakdown.renderPanel(g, container));
             ScreenKeyboardEvents.allowKeyPress(screen).register((s, event) -> {
                 EconomyConfig c = config();
                 if (c == null || !c.breakdownScreen || VALUE_BREAKDOWN == null || !VALUE_BREAKDOWN.matches(event)) return true;

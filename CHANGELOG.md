@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Value Breakdown Panel (Inventory > Economy, on by default, like SkyHanni's): hovering an item in a menu or your inventory shows a panel beside it listing what its Estimated Item Value is made of (base item, stars, recombobulator, enchantments, gemstones, scrolls and other upgrades) with the total. While it is on, the Estimated Item Value line is no longer in the Price Tooltip.
 - Command Tab Complete (Chat > Command Autofill, like SkyHanni's): Tab suggests player names and subcommands for /p, /f, /g, /msg, /w, /visit, /pv, /invite, /ah, /boop and /trade (players on your island, your party, friends from /f list and, if turned on, guild members from /g online), /warp destinations, your sack items for /gfs, the slots for /show and the VIP islands for /visit.
 - Custom Wardrobe (Inventory, on by default): the Wardrobe as cards showing you in each armour set, with page tabs, favourite stars, an Only Favourites button and hover tooltips for each piece; click a card to equip it. Pick a theme (Sky2M, Midnight, Forest, Sunset, Ocean, Crimson, Candy, Light, Glass) or make your own with Custom's colours; the Theme button in the wardrobe cycles them.
 - Edit HUDs Key (GUI > HUDs): a keybind that opens /s2 gui, also while a menu is open, so HUDs that only show in a menu (like the Chocolate Factory Stats) can be moved with the menu behind them.

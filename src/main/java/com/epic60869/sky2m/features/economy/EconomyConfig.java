@@ -9,6 +9,11 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 /** Misc > Economy: Bazaar extras, item value breakdown, trade value, bits, reforge and anvil helpers. */
 public final class EconomyConfig {
     @Expose
+    @ConfigOption(name = "Value Breakdown Panel", desc = "Hover a SkyBlock item in a menu or your inventory to see a panel beside the menu listing what its Estimated Item Value is made of: base item, stars, recombobulator, enchantments, gemstones, scrolls and other upgrades, with the total (like SkyHanni's Estimated Item Value). While it is on, the Estimated Item Value line is left out of the Price Tooltip.")
+    @ConfigEditorBoolean
+    public boolean breakdownPanel = true;
+
+    @Expose
     @ConfigOption(name = "Value Breakdown Tooltip", desc = "Hold Shift over a SkyBlock item to see what its Estimated Item Value is made of: base item, stars, recombobulator, enchantments, gemstones, scrolls and other upgrades (like SkyHanni's Estimated Item Value).")
     @ConfigEditorBoolean
     public boolean breakdownTooltip = false;

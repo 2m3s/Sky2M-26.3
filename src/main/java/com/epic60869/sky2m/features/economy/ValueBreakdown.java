@@ -125,6 +125,56 @@ public final class ValueBreakdown {
         return String.format(Locale.ENGLISH, "%,.0f", value);
     }
 
+    /** Whether the side panel is on, which replaces the Price Tooltip's Estimated Item Value line. */
+    public static boolean panelEnabled() {
+        EconomyConfig c = config();
+        return c != null && c.breakdownPanel;
+    }
+
+    /** Draws the hovered item's breakdown in a panel beside the menu (left of it, else right, else the screen's edge). */
+    static void renderPanel(net.minecraft.client.gui.GuiGraphicsExtractor g, net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
+        if (!panelEnabled() || !Compat.isOnSkyblock()) return;
+        var access = (com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor) screen;
+        net.minecraft.world.inventory.Slot hovered = access.sky2m$getHoveredSlot();
+        if (hovered == null || !hovered.hasItem()) return;
+        ItemStack stack = hovered.getItem();
+        List<Row> rows = rows(stack);
+        if (rows.isEmpty()) return;
+
+        net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
+        int count = Math.max(1, stack.getCount());
+        double sum = 0;
+        for (Row row : rows) sum += row.coins();
+        String total = coins(sum * count) + " Coins";
+        String title = "Estimated Item Value";
+        int labelWidth = font.width(title);
+        for (Row row : rows) labelWidth = Math.max(labelWidth, font.width(row.label()) + 12 + font.width(coins(row.coins())));
+        int w = Math.max(labelWidth, font.width("Total: " + total)) + 16;
+        int h = 8 + 12 + rows.size() * 10 + 6 + 12 + 6;
+
+        int left = access.sky2m$getLeftPos(), top = access.sky2m$getTopPos(), image = access.sky2m$getImageWidth();
+        int x = left - w - 6;
+        if (x < 4) x = left + image + 6;
+        if (x + w > screen.width - 4) x = Math.max(4, screen.width - w - 4);
+        int y = Math.clamp(top, 4, Math.max(4, screen.height - h - 4));
+
+        g.nextStratum();
+        g.fill(x, y, x + w, y + h, 0xE0101216);
+        g.outline(x, y, w, h, 0xFF2C313A);
+        int line = y + 8;
+        g.text(font, Component.literal(title).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), x + 8, line, 0xFFFFFFFF, true);
+        line += 12;
+        for (Row row : rows) {
+            g.text(font, row.label(), x + 8, line, 0xFFCCCCCC, true);
+            String value = coins(row.coins());
+            g.text(font, value, x + w - 8 - font.width(value), line, 0xFF55FFFF, true);
+            line += 10;
+        }
+        line += 6;
+        g.text(font, Component.literal("Total: ").withStyle(ChatFormatting.GOLD).append(Component.literal(total).withStyle(ChatFormatting.YELLOW)),
+            x + 8, line, 0xFFFFFFFF, true);
+    }
+
     /** Adds the breakdown rows to a tooltip while Shift is held. */
     static void tooltip(ItemStack stack, List<Component> lines) {
         EconomyConfig c = config();
