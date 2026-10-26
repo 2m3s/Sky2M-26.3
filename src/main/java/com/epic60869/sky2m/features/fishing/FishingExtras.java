@@ -425,7 +425,7 @@ public final class FishingExtras {
         @Expose
         @ConfigOption(name = "Guess Hotspot Radar", desc = "Right-click a Hotspot Radar and the flame trail it shows is followed to the hotspot: a HOTSPOT label and its distance appear there, like SkyHanni's.")
         @ConfigEditorBoolean
-        public boolean guessHotspotRadar = false;
+        public boolean guessHotspotRadar = true;
 
         @Expose
         @ConfigOption(name = "Line to Hotspot", desc = "Draw a line from your crosshair to the guessed hotspot. Needs Guess Hotspot Radar.")
