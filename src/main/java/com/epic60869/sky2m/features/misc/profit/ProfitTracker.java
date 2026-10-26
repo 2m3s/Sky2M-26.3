@@ -368,6 +368,16 @@ public final class ProfitTracker {
         return false;
     }
 
+    /**
+     * Fishing, by the Sea Creature Tracker's rule: a rod in your hand, your bobber out, or a catch in the last 3
+     * minutes. Otherwise the Fishing tracker doesn't follow you to Kuudra, the End or the Rift.
+     */
+    private static boolean fishingNow(Minecraft mc) {
+        if (mc.player.fishing != null || mc.player.getMainHandItem().getItem() instanceof net.minecraft.world.item.FishingRodItem) return true;
+        Long last = lastActivity.get(Preset.FISHING);
+        return last != null && System.currentTimeMillis() - last < 3 * 60_000L;
+    }
+
     /** What you're doing, if it has a tracker that's turned on. */
     static Preset currentPreset() {
         Minecraft mc = Minecraft.getInstance();
@@ -377,7 +387,7 @@ public final class ProfitTracker {
         if (slayer != null && counting(slayer)) return slayer;
         Preset preferred = null;
         if (counting(Preset.MYTHOLOGICAL_RITUAL) && island.equals("Hub") && spadeInHotbar(mc)) preferred = Preset.MYTHOLOGICAL_RITUAL;
-        if (preferred == null && counting(Preset.FISHING) && (mc.player.fishing != null || !paused(Preset.FISHING, System.currentTimeMillis()) && lastActivity.containsKey(Preset.FISHING))) {
+        if (preferred == null && counting(Preset.FISHING) && fishingNow(mc)) {
             preferred = Preset.FISHING;
         }
         Preset preset = forLocation(island, area, preferred);

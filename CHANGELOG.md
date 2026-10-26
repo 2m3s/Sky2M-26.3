@@ -21,6 +21,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- Fishing Profit only shows while you're fishing (a rod in your hand, your bobber out, or a catch in the last 3 minutes), like the Sea Creature Tracker, instead of following you to Kuudra, the End or the Rift.
 - /s2 calc also takes x (or ×) for multiply, like 5x3 or 2.5m x 4.
 - /pv's Armour & Equipment page shows only its slots: four armour pieces on top and four equipment pieces below, instead of two rows of nine.
 - Right-clicking an item in the Item List or on a recipe shows the recipes it is used in (Item List > Right Click is now Show Usages by default, also for settings on Wiki or Recipes).
