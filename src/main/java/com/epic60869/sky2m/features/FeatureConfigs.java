@@ -4974,6 +4974,42 @@ public final class FeatureConfigs {
         public boolean compactNumbers = true;
     }
 
+    public static final class MissingAccessories {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "/s2 mp lists the accessories you're missing, cheapest Magical Power first, with soulbound and unpriced ones at the bottom. The first time you run it on a profile your accessories are loaded from the SkyBlock API (Inventory API on), then refreshed every few minutes; your Accessory Bag pages, inventory and saved Ender Chest and backpack pages count straight away, so a new accessory leaves the list as soon as you have it. Nothing is tracked on a profile until you've run /s2 mp there once.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Include Upgrades", desc = "Also list the next tier of accessory families you already have (your Talisman's Ring), with the Magical Power it adds over the one you own. Off: only families you have nothing of. Also changed with the list's Upgrades button.")
+        @ConfigEditorBoolean
+        public boolean includeUpgrades = true;
+
+        @Expose
+        @ConfigOption(name = "Price Source", desc = "Cheapest: the lowest of the lowest BIN, the Bazaar insta-buy price and the cost of crafting it (or buying it from an NPC). Market Only: the lowest BIN or Bazaar insta-buy price.")
+        @ConfigEditorDropdown
+        public MpPriceSource priceSource = MpPriceSource.CHEAPEST;
+
+        @ConfigOption(name = "Open List", desc = "The missing accessories list. Also /s2 mp.")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable open = com.epic60869.sky2m.features.misc.items.MissingAccessories::open;
+    }
+
+    public enum MpPriceSource {
+        CHEAPEST("Cheapest"), MARKET("Market Only");
+
+        private final String label;
+
+        MpPriceSource(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
     public enum SackPriceSource {
         NPC_SELL("NPC Sell"), INSTA_SELL("Bazaar Insta-Sell"), SELL_OFFER("Bazaar Sell Offer"),
         INSTA_BUY("Bazaar Insta-Buy"), LOWEST_BIN("Lowest BIN");

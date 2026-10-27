@@ -241,6 +241,12 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Missing Accessories (/s2 mp)", desc = "A list of the accessories you're missing, cheapest Magical Power first, that updates when you get a new one.")
+        @ConfigAccordionId(id = 2301)
+        public com.epic60869.sky2m.features.FeatureConfigs.MissingAccessories missingAccessories = new com.epic60869.sky2m.features.FeatureConfigs.MissingAccessories();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Enchant Parsing", desc = "Enchants in tooltips coloured by level (perfect enchants in chroma), sorted, and laid out normal, compressed or stacked.")
         @ConfigAccordionId(id = 2301)
         public com.epic60869.sky2m.features.misc.items.EnchantParsingConfig enchantParsing = new com.epic60869.sky2m.features.misc.items.EnchantParsingConfig();

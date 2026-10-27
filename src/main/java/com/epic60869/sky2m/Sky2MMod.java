@@ -249,6 +249,8 @@ public final class Sky2MMod implements ClientModInitializer {
         Sky2MPriceTooltip.init(); lap("Sky2MPriceTooltip.init");
         com.epic60869.sky2m.features.misc.items.MuseumTooltip.init(configDir); lap("MuseumTooltip.init");
         com.epic60869.sky2m.features.misc.items.AccessoryTooltip.init(configDir); lap("AccessoryTooltip.init");
+        // /s2 mp: missing accessories, cheapest Magical Power first (uses the Accessory Bag pages read above).
+        com.epic60869.sky2m.features.misc.items.MissingAccessories.init(configDir); lap("MissingAccessories.init");
         com.epic60869.sky2m.features.misc.items.EnchantParser.init(); lap("EnchantParser.init");
         com.epic60869.sky2m.features.misc.items.SackTracker.init(configDir); lap("SackTracker.init");
         // Sacks Value HUD (after SackTracker, whose sack contents it prices).

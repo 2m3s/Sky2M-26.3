@@ -74,6 +74,10 @@ public final class AccessoryTooltip {
     /** Profile id -> what's in that profile's Accessory Bag. */
     private static final Map<String, ProfileAccessoryData> COLLECTED_ACCESSORIES = new ConcurrentHashMap<>();
     private static Path file;
+    /** Goes up whenever a profile's Accessory Bag contents change, so /s2 mp knows to rebuild its list. */
+    private static volatile int bagVersion;
+    /** Set by the game tests: the profile id to use while Hypixel hasn't sent one. */
+    public static volatile String testProfile;
 
     private AccessoryTooltip() {}
 
@@ -83,7 +87,8 @@ public final class AccessoryTooltip {
         RepoItems.runAsync(AccessoryTooltip::loadAccessories);
 
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-            if (Compat.isOnSkyblock() && enabled() && !profileId().isEmpty() && screen instanceof ContainerScreen genericContainerScreen) {
+            // Missing Accessories (/s2 mp, once used on this profile) reads the bag too, so it fills in with the tooltip off.
+            if (Compat.isOnSkyblock() && (enabled() || MissingAccessories.tracking()) && !profileId().isEmpty() && screen instanceof ContainerScreen genericContainerScreen) {
                 Matcher matcher = ACCESSORY_BAG_TITLE.matcher(genericContainerScreen.getTitle().getString());
 
                 if (matcher.matches()) {
@@ -109,7 +114,34 @@ public final class AccessoryTooltip {
     }
 
     private static String profileId() {
-        return Sky2MStorageSearch.currentProfile();
+        String profile = Sky2MStorageSearch.currentProfile();
+        String test = testProfile;
+        return profile.isEmpty() && test != null ? test : profile;
+    }
+
+    /** The current profile's id ("" until Hypixel has sent it). */
+    public static String currentProfile() {
+        return profileId();
+    }
+
+    /** See {@link #bagVersion}. */
+    public static int bagVersion() {
+        return bagVersion;
+    }
+
+    /** Whether any page of the current profile's Accessory Bag has been read. */
+    public static boolean bagRead() {
+        ProfileAccessoryData data = COLLECTED_ACCESSORIES.get(profileId());
+        return data != null && !data.pages().isEmpty();
+    }
+
+    /** Every accessory id seen in the current profile's Accessory Bag (all pages read so far). */
+    public static Set<String> bagContents() {
+        ProfileAccessoryData data = COLLECTED_ACCESSORIES.get(profileId());
+        if (data == null) return Set.of();
+        Set<String> ids = new HashSet<>();
+        for (Set<String> page : data.pages().values()) ids.addAll(page);
+        return ids;
     }
 
     private static void collectAccessories(List<Slot> slots, int page) {
@@ -133,6 +165,7 @@ public final class AccessoryTooltip {
         data.recombobulatedAccessories().removeAll(previous); // Remove previous accessories.
         data.recombobulatedAccessories().addAll(recombobulated);
         data.pages().put(page, now);
+        bagVersion++;
         save();
     }
 

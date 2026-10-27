@@ -213,6 +213,15 @@ public final class Sky2MPriceTooltip {
         return seen == null ? 0 : seen.price();
     }
 
+    /**
+     * What it costs to craft (or buy from an NPC shop) one {@code id} without the ingredients in {@code free}; 0 when it
+     * can't be priced. {@code kind[0]} gets the recipe kind ("Crafting", "Forge", "NPC Shop"). For /s2 mp.
+     */
+    public static double craftCost(String id, java.util.Set<String> free, String[] kind) {
+        refreshIfStale();
+        return Sky2MRecipeCost.costWithout(id, free, kind);
+    }
+
     /** The bazaar insta-buy price, or null (the Item List calculator's bz()). */
     public static Double bazaarBuyPrice(String id) {
         refreshIfStale();

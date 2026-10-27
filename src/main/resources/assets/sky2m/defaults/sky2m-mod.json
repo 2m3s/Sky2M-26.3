@@ -1979,6 +1979,11 @@
       "museum": false,
       "accessories": true
     },
+    "missingAccessories": {
+      "enabled": true,
+      "includeUpgrades": true,
+      "priceSource": "CHEAPEST"
+    },
     "enchantParsing": {
       "colorParsing": true,
       "format": "NORMAL",

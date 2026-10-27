@@ -108,6 +108,44 @@ final class Sky2MRecipeCost {
         return result;
     }
 
+    /**
+     * What it costs to make one {@code id} with its cheapest complete crafting, forge or NPC shop recipe, leaving out
+     * the ingredients in {@code free} (ones you already have, like the Talisman a Ring is crafted from). Ingredients are
+     * priced at their market or NPC shop price (no sub-crafts). 0 when it has no such recipe or an ingredient has no
+     * price; {@code kind[0]} gets the recipe's kind ("Crafting", "Forge", "NPC Shop").
+     */
+    static double costWithout(String id, Set<String> free, String[] kind) {
+        if (id == null || id.isEmpty()) return 0;
+        if (!ItemListData.loaded()) {
+            ItemListData.ensureLoaded();
+            return 0;
+        }
+        double best = 0;
+        for (ItemListData.Recipe recipe : ItemListData.recipes(id)) {
+            Set<String> visiting = new HashSet<>();
+            visiting.add(id);
+            Result r = evaluate(recipe, id, false, 0, visiting);
+            if (r == null) continue;
+            double total = 0;
+            boolean priced = true;
+            for (Part part : r.parts()) {
+                if (free.contains(part.id())) continue;
+                if (Double.isNaN(part.cost())) {
+                    priced = false;
+                    break;
+                }
+                total += part.cost();
+            }
+            if (!priced || r.outputs() <= 0) continue;
+            double each = total / r.outputs();
+            if (each > 0 && (best == 0 || each < best)) {
+                best = each;
+                kind[0] = r.kind();
+            }
+        }
+        return best;
+    }
+
     /** The cheapest of the item's crafting, forge and NPC shop recipes (a complete one over a partial one), or null if it has none. */
     private static Result compute(String id, boolean subCrafts) {
         Set<String> visiting = new HashSet<>();
