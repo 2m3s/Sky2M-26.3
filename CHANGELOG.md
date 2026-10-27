@@ -23,6 +23,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- Game tests are kept local and no longer pushed to GitHub; the build skips them when the folder is missing.
 - Tidy the source layout: the loose classes, mixins and miscellaneous features are sorted into clearer folders. Nothing changes in game, and the /s2 menu looks the same.
 - Livid (F5/M5) uses the same Livid Finder as 26.2: it boxes and labels the real Livid with a line to her, can hide the wrong ones (Hide Wrong Livids) and has a Color Override, instead of the old Livid Solver.
 - Command Tab Complete learns your friends from Hypixel's "Friend > Name joined/left" messages too, so /pv and the other commands suggest them without running /f list first.

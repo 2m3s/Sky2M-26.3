@@ -26,3 +26,6 @@ run-bridge/
 run-bridge2/
 run-bridge-gradle.log
 THIRD_PARTY_NOTICES.md
+src/gametest/
+run-bridge-home/
+run-bridge-home2/
