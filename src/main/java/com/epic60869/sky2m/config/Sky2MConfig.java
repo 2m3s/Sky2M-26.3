@@ -453,6 +453,18 @@ public final class Sky2MConfig extends Config {
         public boolean currentChatDisplay = true;
 
         @Expose
+        @ConfigOption(name = "Longer Chat History", desc = "Keep more chat lines than Minecraft's 100, so you can scroll much further back.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 201)
+        public boolean longerChatHistory = true;
+
+        @Expose
+        @ConfigOption(name = "Chat History Lines", desc = "How many chat lines Longer Chat History keeps.")
+        @ConfigEditorSlider(minValue = 100, maxValue = 10000, minStep = 100)
+        @ConfigAccordionId(id = 201)
+        public int chatHistoryLines = 1000;
+
+        @Expose
         @ConfigOption(name = "Compact Bestiary", desc = "SkyHanni's compact Bestiary messages: Hypixel's BESTIARY level-up block becomes one line (\"BESTIARY Zombie II➡III\"); hover it for the rewards, click it to open the Bestiary. Milestones get their own line.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 201)

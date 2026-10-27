@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Longer Chat History (Chat > Chat Tweaks, on by default): the chat keeps 1000 lines instead of Minecraft's 100, so you can scroll much further back; Chat History Lines sets how many (100 to 10000).
 - Add-ons (bottom of /s2): shows the features of an approved Sky2M add-on when one is installed. Without one the category isn't there.
 - Resource pack fonts (Misc > Fonts): font resource packs in config/sky2m/fonts or your resourcepacks folder show in the Font dropdown next to Default and Inter, and draw all text without turning the pack on. Packs that only replace the font texture (font overlays) work too; spaces and Hypixel's symbols keep Minecraft's look.
 - Guess Hotspot Radar (Fishing > Extras, on by default): right-click a Hotspot Radar and the flame trail it shows is followed to the hotspot, marked with a HOTSPOT label, its distance and (Line to Hotspot, on) a line from your crosshair; it clears when you get within 10 blocks.

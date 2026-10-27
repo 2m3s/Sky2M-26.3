@@ -12,6 +12,7 @@
     "items.Sky2MDyedItemColorMixin",
     "items.Sky2MDataComponentHolderMixin",
     "chat.Sky2MChatHudMixin",
+    "chat.Sky2MChatHistoryMixin",
     "world.Sky2MPestSoundMixin",
     "world.Sky2MFloor7PacketsMixin",
     "gui.Sky2MQuickNavMixin",
