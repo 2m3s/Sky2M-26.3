@@ -118,11 +118,17 @@ public final class GardenVisitors {
         STAT_PATTERNS.put(Pattern.compile("^[+](.*) Bits$"), "bits");
         STAT_PATTERNS.put(Pattern.compile("^[+](.*) Mithril Powder$"), "mithrilPowder");
         STAT_PATTERNS.put(Pattern.compile("^[+](.*) Gemstone Powder$"), "gemstonePowder");
+        // Ghost Visitors (Spooky Festival, October 2026 update) pay in Ectoplasm; the exact reward line isn't known yet,
+        // so "+12 Ectoplasm", "+12x Ectoplasm" and "Ectoplasm x12" are all read.
+        STAT_PATTERNS.put(Pattern.compile("^[+]([\\d,.]+[kKmM]?)x? Ectoplasm$"), "ectoplasm");
+        STAT_PATTERNS.put(Pattern.compile("^[+]?Ectoplasm x([\\d,]+)$"), "ectoplasm");
     }
 
     private static final Set<String> NOT_ITEMS = Set.of("Copper", "Garden Experience", "Farming XP", "Farming Experience", "Bits",
         "Mithril Powder", "Gemstone Powder", "Glacite Powder");
     private static final List<String> STATIC_VISITORS = List.of("Jacob", "Anita");
+    /** The visitor queue without upgrades, and how many Max Occupancy tiers SkyMart sells (one visitor each). */
+    private static final int BASE_QUEUE_SIZE = 5, MAX_OCCUPANCY_TIERS = 5;
     private static final String[] RARITIES = {"UNCOMMON", "RARE", "LEGENDARY", "MYTHIC", "SPECIAL"};
     private static final ChatFormatting[] RARITY_COLOURS = {ChatFormatting.GREEN, ChatFormatting.BLUE, ChatFormatting.GOLD, ChatFormatting.LIGHT_PURPLE, ChatFormatting.RED};
     private static final Set<String> CROPS = Set.of("Wheat", "Carrot", "Potato", "Pumpkin", "Melon Slice", "Melon", "Sugar Cane", "Cactus",
@@ -203,8 +209,12 @@ public final class GardenVisitors {
 
     /** What SkyHanni keeps in its profile storage for the garden visitors. */
     static final class ProfileData {
+        /** The visitor cooldown, learned from the tab list's countdown when a visitor arrives (Better Advertising lowers it). */
         Long visitorInterval;
-        long nextSixthVisitorArrival;
+        /** When the next visitor is due while the queue is full (the "Next Visitor When Full" estimate). */
+        long nextFullQueueVisitor;
+        /** How many visitors the queue holds, learned from the visitor count when the tab list says "Queue Full!". */
+        Integer queueSize;
         Set<String> ignoredVisitors = new LinkedHashSet<>();
         Map<String, double[]> npcVisitorLocations = new HashMap<>();
         Set<String> charmedVisitors = new LinkedHashSet<>();
@@ -212,7 +222,7 @@ public final class GardenVisitors {
     }
 
     static final class Drops {
-        long acceptedVisitors, deniedVisitors, copper, farmingExp, gardenExp, bits, mithrilPowder, gemstonePowder, coinsSpent;
+        long acceptedVisitors, deniedVisitors, copper, farmingExp, gardenExp, bits, mithrilPowder, gemstonePowder, ectoplasm, coinsSpent;
         Map<String, Long> rewardsCount = new HashMap<>();
         Map<String, Long> acceptedRarities = new HashMap<>();
     }
@@ -242,9 +252,9 @@ public final class GardenVisitors {
     // Timer state.
     private static List<Component> timerLines = List.of();
     private static long lastMillis;
-    private static long sixthVisitorArrivalTime;
+    private static long fullQueueArrivalTime;
     private static boolean visitorJustArrived;
-    private static long lastSixthVisitorWarning;
+    private static long lastFullQueueWarning;
     private static String lastTimerValue = "";
     private static long lastTimerUpdate;
     private static int lastVisitors = -1;
@@ -282,9 +292,9 @@ public final class GardenVisitors {
             visitors.clear();
             lastWorldSwitch = System.currentTimeMillis();
             lastVisitors = -1;
-            long next = storage().nextSixthVisitorArrival;
-            if (next > System.currentTimeMillis()) sixthVisitorArrivalTime = next;
-            lastMillis = sixthVisitorArrivalTime - System.currentTimeMillis();
+            long next = storage().nextFullQueueVisitor;
+            if (next > 0) fullQueueArrivalTime = next;
+            lastMillis = fullQueueArrivalTime - System.currentTimeMillis();
         });
         ClientTickEvents.END_CLIENT_TICK.register(GardenVisitors::tick);
         ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> save());
@@ -296,7 +306,7 @@ public final class GardenVisitors {
             if (!Sky2MLocation.inGarden()) return;
             cropBreaks.add(System.currentTimeMillis());
             // SkyHanni's onCropClick: farming makes the next visitor come sooner.
-            sixthVisitorArrivalTime -= 100;
+            fullQueueArrivalTime -= 100;
             if (lastMillis > 5 * 60_000L) lastTimerUpdate -= 100;
         });
 
@@ -348,7 +358,7 @@ public final class GardenVisitors {
         Sky2MHuds.register("visitor_timer", "Garden Visitor Timer",
             () -> config() != null && config().timer.enabled && Sky2MLocation.inGarden(),
             () -> timerLines,
-            List.of(SbcItems.parseLegacy("§b3 visitors §7(Next in §e5m 3s§7)")),
+            List.of(SbcItems.parseLegacy("§b3§7/§b7 visitors §7(Next in §e5m 3s§7)")),
             200, 40);
         Sky2MHuds.setting("visitor_stats", () -> config() != null && config().dropsStatistics.enabled);
         Sky2MHuds.register("visitor_stats", "Visitor Stats",
@@ -389,10 +399,17 @@ public final class GardenVisitors {
             }
             String skin = repoString(v, "skinOrType");
             if (skin != null) skin = skin.replace("\\n", "").replace("\n", "");
-            out.put(entry.getKey(), new GardenVisitorData(repoString(v, "rarity"), needs, repoString(v, "mode"), position, skin,
-                repoBool(v, "showChatMessage"), repoBool(v, "unknownRewards")));
+            // The file spells these "show_chat_message" and "unknown_rewards"; only the camel case ones used to be read.
+            out.put(entry.getKey(), new GardenVisitorData(rarityOverride(entry.getKey(), repoString(v, "rarity")), needs, repoString(v, "mode"),
+                position, skin, repoBool(v, "showChatMessage") || repoBool(v, "show_chat_message"),
+                repoBool(v, "unknownRewards") || repoBool(v, "unknown_rewards")));
         }
         repoVisitors = out;
+    }
+
+    /** Hypixel's October 2026 update made Taylor a SPECIAL visitor; the repo file may still say mythic. */
+    private static String rarityOverride(String name, String rarity) {
+        return "Taylor".equals(name) ? "special" : rarity;
     }
 
     private static String repoString(JsonObject o, String key) {
@@ -567,7 +584,11 @@ public final class GardenVisitors {
 
     // ------------------------------------------------------------------------------------------------ visitor timer
 
-    /** SkyHanni's GardenVisitorTimer. */
+    /**
+     * SkyHanni's GardenVisitorTimer, for the October 2026 visitor rules: the queue holds 5 visitors plus your Max
+     * Occupancy tier (up to 10), and the cooldown (lowered by Better Advertising) is learned from the tab list's countdown
+     * each time a visitor arrives. While the queue is full the countdown to the next visitor is estimated.
+     */
     private static void updateTimer(List<Component> tab, int visitorsAmount, VisitorConfig.Timer config) {
         ProfileData storage = storage();
         String info = null;
@@ -586,44 +607,54 @@ public final class GardenVisitors {
             timerLines = List.of(SbcItems.parseLegacy("§cVisitors not unlocked!"));
             return;
         }
+        long now = System.currentTimeMillis();
         Long interval = storage.visitorInterval;
         long millis = interval == null ? 0 : interval;
-        boolean queueFull = false;
-        if (info.equals("Queue Full!")) {
-            queueFull = true;
+        boolean queueFull = info.startsWith("Queue Full");
+        if (queueFull) {
+            // The queue is as big as the number of visitors when it says it's full.
+            if (visitorsAmount > 0 && !Integer.valueOf(visitorsAmount).equals(storage.queueSize)) {
+                storage.queueSize = visitorsAmount;
+                markDirty();
+            }
         } else {
+            // More visitors than the learned size without a full queue: Max Occupancy was upgraded since.
+            if (storage.queueSize != null && visitorsAmount >= storage.queueSize) {
+                storage.queueSize = null;
+                markDirty();
+            }
             if (!lastTimerValue.equals(info)) {
-                lastTimerUpdate = System.currentTimeMillis();
+                lastTimerUpdate = now;
                 lastTimerValue = info;
             }
             millis = parseDuration(info);
         }
 
-        if (lastVisitors != -1 && visitorsAmount - lastVisitors == 1) {
+        boolean arrived = lastVisitors != -1 && visitorsAmount - lastVisitors == 1;
+        if (arrived) {
             if (!queueFull) {
                 storage.visitorInterval = millis;
                 markDirty();
             } else if (interval != null) {
-                sixthVisitorArrivalTime = System.currentTimeMillis() + interval;
+                fullQueueArrivalTime = now + interval;
             }
         }
+        boolean estimateKnown = false;
         if (queueFull) {
-            if (visitorJustArrived && visitorsAmount - lastVisitors == 1 && interval != null) {
-                sixthVisitorArrivalTime = System.currentTimeMillis() + interval;
+            if (visitorJustArrived && arrived && interval != null) {
+                fullQueueArrivalTime = now + interval;
                 visitorJustArrived = false;
             }
-            millis = sixthVisitorArrivalTime - System.currentTimeMillis();
-            if (interval != null) {
-                storage.nextSixthVisitorArrival = System.currentTimeMillis() + millis + interval * (5 - visitorsAmount);
+            estimateKnown = interval != null && fullQueueArrivalTime > 0;
+            millis = fullQueueArrivalTime - now;
+            if (estimateKnown && storage.nextFullQueueVisitor != fullQueueArrivalTime) {
+                storage.nextFullQueueVisitor = fullQueueArrivalTime;
                 markDirty();
             }
-            if (millis < 0) {
-                visitorsAmount++;
-                if (config.sixthVisitorWarning) warn6thVisitor();
-            }
+            if (estimateKnown && millis < 0 && config.fullQueueEstimate && config.fullQueueWarning) warnNextVisitorReady();
         }
-        long sinceLastTimerUpdate = System.currentTimeMillis() - lastTimerUpdate - 100;
-        if (visitorsAmount < 5 && sinceLastTimerUpdate >= 500 && sinceLastTimerUpdate <= 60_000) millis -= sinceLastTimerUpdate;
+        long sinceLastTimerUpdate = now - lastTimerUpdate - 100;
+        if (!queueFull && sinceLastTimerUpdate >= 500 && sinceLastTimerUpdate <= 60_000) millis -= sinceLastTimerUpdate;
 
         if (lastMillis == millis && visitorsAmount == lastVisitors) return;
         lastMillis = millis;
@@ -637,21 +668,43 @@ public final class GardenVisitors {
             long duration = (long) (adjusted * (recentBps() / 20.0));
             extraSpeed = "§7/§" + formatColour + formatDuration(duration);
         }
-        if (config.newVisitorPing && adjusted < 10_000 && System.currentTimeMillis() - lastPing > 900) {
-            lastPing = System.currentTimeMillis();
+        // No visitor can arrive while the queue is full, so there is nothing to ping for then.
+        if (config.newVisitorPing && !queueFull && adjusted < 10_000 && now - lastPing > 900) {
+            lastPing = now;
             Sky2MAlerts.ding();
         }
-        String next = queueFull && (!config.sixthVisitorEnabled || millis < 0) ? "§cQueue Full!"
-            : "Next in §" + formatColour + formatDuration(millis) + extraSpeed;
+        String next;
+        if (!queueFull) next = "Next in §e" + formatDuration(millis) + extraSpeed;
+        else if (!config.fullQueueEstimate || !estimateKnown) next = "§cQueue Full!";
+        else if (millis < 0) next = "§cQueue Full§7, §anext ready";
+        else next = "§cQueue Full§7, next in §6" + formatDuration(millis) + extraSpeed;
         String label = visitorsAmount == 1 ? "visitor" : "visitors";
-        timerLines = List.of(SbcItems.parseLegacy("§b" + visitorsAmount + " " + label + " §7(" + next + "§7)"));
+        String count = "§b" + visitorsAmount;
+        if (storage.queueSize != null || config.maxOccupancy > 0) count += "§7/§b" + queueSize(config, visitorsAmount);
+        timerLines = List.of(SbcItems.parseLegacy(count + " " + label + " §7(" + next + "§7)"));
     }
 
-    private static void warn6thVisitor() {
+    /**
+     * How many visitors the queue holds: 5 plus the Max Occupancy tier (Hypixel's October 2026 update; it used to be 5,
+     * with a bug that let a hidden 6th one wait), or what the tab list showed when it was last full, if that's more.
+     */
+    static int queueSize(VisitorConfig.Timer config, int visitorsAmount) {
+        return queueSize(config.maxOccupancy, storage().queueSize, visitorsAmount);
+    }
+
+    /** {@link #queueSize(VisitorConfig.Timer, int)} from its parts (public for the game tests). */
+    public static int queueSize(int maxOccupancy, Integer learned, int visitorsAmount) {
+        int size = BASE_QUEUE_SIZE + Math.max(0, Math.min(MAX_OCCUPANCY_TIERS, maxOccupancy));
+        if (learned != null) size = Math.max(size, learned);
+        return Math.max(size, visitorsAmount);
+    }
+
+    /** Once per estimate: the countdown ran out while the queue was full. */
+    private static void warnNextVisitorReady() {
         if (System.currentTimeMillis() - lastWorldSwitch < 3000) return;
-        if (System.currentTimeMillis() - lastSixthVisitorWarning < 120_000) return;
-        lastSixthVisitorWarning = System.currentTimeMillis();
-        Sky2MAlerts.title(SbcItems.parseLegacy("§a6th Visitor Ready"), Component.empty(), true);
+        if (lastFullQueueWarning == fullQueueArrivalTime) return;
+        lastFullQueueWarning = fullQueueArrivalTime;
+        Sky2MAlerts.title(SbcItems.parseLegacy("§aNext Visitor Ready"), SbcItems.parseLegacy("§7Serve a visitor to make room"), true);
     }
 
     private static boolean isCurrentlyFarming() {
@@ -773,7 +826,9 @@ public final class GardenVisitors {
             }
             if (!started) continue;
             if (line.isEmpty()) break;
-            ParsedItem item = readItemLine(line, true);
+            // Items the item list doesn't know (such as the mutations Ghost Visitors ask for, if they're missing from
+            // it) are kept by name, so the visitor doesn't look like it needs nothing (and show as Items Ready).
+            ParsedItem item = readItemLine(line, true, true);
             if (item != null) visitor.shoppingList.put(item.id, item.amount);
         }
         visitor.lastLore = List.of();
@@ -796,6 +851,11 @@ public final class GardenVisitors {
 
     /** A tooltip line as an item and amount ("Enchanted Hay Bale x2", "+2x Gold Essence", "Dedication IV"). */
     private static ParsedItem readItemLine(String line, boolean shoppingList) {
+        return readItemLine(line, shoppingList, false);
+    }
+
+    /** @param keepUnknown give an item the item list doesn't know a {@link #NAMED_ITEM} id instead of skipping it */
+    private static ParsedItem readItemLine(String line, boolean shoppingList, boolean keepUnknown) {
         String text = ChatFormatting.stripFormatting(line).trim();
         if (!shoppingList) text = text.replace(" ❤", "").trim();
         if (text.startsWith("+")) text = text.substring(1).trim();
@@ -812,8 +872,36 @@ public final class GardenVisitors {
         }
         VisitorReward reward = VisitorReward.byName(name);
         String id = reward != null ? reward.internalName : RepoItems.idByName(name);
+        if (id == null && keepUnknown && !name.isBlank()) id = NAMED_ITEM + name;
         if (id == null || id.startsWith("SKYBLOCK_")) return null;
         return new ParsedItem(id, name, amount);
+    }
+
+    /** The id prefix of a shopping list item the item list doesn't know, followed by its plain name. */
+    private static final String NAMED_ITEM = "name:";
+    private static final Map<String, String> RESOLVED = new ConcurrentHashMap<>();
+
+    static boolean isNamedItem(String id) {
+        return id.startsWith(NAMED_ITEM);
+    }
+
+    /** A named item's real id once the item list (which may still have been loading) knows it, else the id itself. */
+    static String resolveItem(String id) {
+        if (!isNamedItem(id)) return id;
+        String known = RESOLVED.get(id);
+        if (known != null) return known;
+        if (!RepoItems.itemsLoaded()) return id;
+        String found = RepoItems.idByName(id.substring(NAMED_ITEM.length()));
+        String resolved = found == null ? id : found;
+        RESOLVED.put(id, resolved);
+        return resolved;
+    }
+
+    /** The item's coloured name from the item list, or a named item's plain name. */
+    private static String itemDisplayName(String id) {
+        if (isNamedItem(id)) return "§f" + id.substring(NAMED_ITEM.length());
+        String name = RepoItems.displayName(id);
+        return name == null ? id : name;
     }
 
     /** The price key for a NEU id: books as ENCHANTMENT_NAME_LEVEL, runes as NAME_RUNE_LEVEL. */
@@ -827,6 +915,7 @@ public final class GardenVisitors {
     }
 
     static double price(String id, int amount) {
+        if (isNamedItem(id)) return 0;
         return Sky2MPriceTooltip.unitPrice(priceKey(id)) * amount;
     }
 
@@ -1094,7 +1183,8 @@ public final class GardenVisitors {
 
     private static boolean hasItems(Visitor visitor) {
         for (Map.Entry<String, Integer> e : visitor.shoppingList.entrySet()) {
-            if (amountInInventory(e.getKey()) + amountInSacks(e.getKey()) < e.getValue()) return false;
+            String id = resolveItem(e.getKey());
+            if (amountInInventory(id) + amountInSacks(id) < e.getValue()) return false;
         }
         return true;
     }
@@ -1102,17 +1192,22 @@ public final class GardenVisitors {
     private static long amountInInventory(String id) {
         Player player = Minecraft.getInstance().player;
         if (player == null) return 0;
+        String named = isNamedItem(id) ? id.substring(NAMED_ITEM.length()) : null;
         long total = 0;
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             ItemStack stack = player.getInventory().getItem(i);
-            if (!stack.isEmpty() && id.equals(Compat.neuName(stack))) total += stack.getCount();
+            if (stack.isEmpty()) continue;
+            boolean match = named != null
+                ? named.equalsIgnoreCase(ChatFormatting.stripFormatting(stack.getHoverName().getString()).trim())
+                : id.equals(Compat.neuName(stack));
+            if (match) total += stack.getCount();
         }
         return total;
     }
 
     /** -1 when the item has never been seen in your sacks. */
     private static long amountInSacksOrUnknown(String id) {
-        String name = RepoItems.displayName(id);
+        String name = isNamedItem(id) ? id.substring(NAMED_ITEM.length()) : RepoItems.displayName(id);
         return name == null ? -1 : SackTracker.amount(ChatFormatting.stripFormatting(name));
     }
 
@@ -1305,6 +1400,7 @@ public final class GardenVisitors {
                     case "bits" -> drops.bits += amount;
                     case "mithrilPowder" -> drops.mithrilPowder += amount;
                     case "gemstonePowder" -> drops.gemstonePowder += amount;
+                    case "ectoplasm" -> drops.ectoplasm += amount;
                     default -> {}
                 }
                 markDirty();
@@ -1412,7 +1508,7 @@ public final class GardenVisitors {
             if (visitor.status == Status.ACCEPTED || visitor.status == Status.REFUSED) continue;
             (visitor.shoppingList.isEmpty() ? newVisitors : knownVisitors).add(visitor);
             if (visitor.ignoreShoppingList()) continue;
-            visitor.shoppingList.forEach((id, amount) -> shopping.merge(id, amount, Integer::sum));
+            visitor.shoppingList.forEach((id, amount) -> shopping.merge(resolveItem(id), amount, Integer::sum));
         }
         List<Component> out = new ArrayList<>();
         if (!shopping.isEmpty()) {
@@ -1426,7 +1522,7 @@ public final class GardenVisitors {
                 if (list.showPrice) {
                     double price = price(id, amount);
                     totalPrice += price;
-                    line.append(" §7(§6").append(shortFormat(price)).append("§7)");
+                    if (price > 0) line.append(" §7(§6").append(shortFormat(price)).append("§7)");
                 }
                 if (list.showSackCount) line.append(sackData(id, amount));
                 out.add(SbcItems.parseLegacy(line.toString()));
@@ -1471,6 +1567,7 @@ public final class GardenVisitors {
 
     /** Whether the sacks hold the ingredients of {@code id}'s crafting recipe, {@code count} times over. Cached, worked out in the background. */
     private static boolean canCraftFromSacks(String id, long count) {
+        if (isNamedItem(id)) return false;
         Optional<long[]> cached = superCraftCache.get(id);
         if (cached == null) {
             superCraftCache.put(id, Optional.empty());
@@ -1499,9 +1596,10 @@ public final class GardenVisitors {
         VisitorConfig config = config();
         if (config == null || !config.shoppingList.showSuperCraft) return;
         for (Map.Entry<String, Integer> e : visitor.shoppingList.entrySet()) {
-            long inSacks = amountInSacks(e.getKey());
+            String id = resolveItem(e.getKey());
+            long inSacks = amountInSacks(id);
             if (inSacks >= e.getValue()) continue;
-            if (canCraftFromSacks(e.getKey(), e.getValue() - inSacks)) superCraftItem = e.getKey();
+            if (canCraftFromSacks(id, e.getValue() - inSacks)) superCraftItem = id;
         }
     }
 
@@ -1614,6 +1712,7 @@ public final class GardenVisitors {
                 case BITS -> format(drops.bits, "Bits", "§b", "§b", numbersFirst);
                 case MITHRIL_POWDER -> format(drops.mithrilPowder, "Mithril Powder", "§2", "§2", numbersFirst);
                 case GEMSTONE_POWDER -> format(drops.gemstonePowder, "Gemstone Powder", "§d", "§d", numbersFirst);
+                case ECTOPLASM -> format(drops.ectoplasm, "Ectoplasm", "§5", "§5", numbersFirst);
                 case VISITORS_BY_RARITY -> {
                     StringBuilder b = new StringBuilder();
                     for (int i = 0; i < RARITIES.length; i++) {

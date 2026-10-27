@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Support the October 27 Garden update: the Visitor Timer handles Max Occupancy queues of up to 10 visitors (it learns the size when the queue is full, or set Max Occupancy 0-5) and shows "7/10 visitors"; the visitor cooldown is learned from the tab list, so Better Advertising is picked up by itself. Ghost Visitors' mutation requests are listed even when the item list doesn't know them, Drops Statistics counts Ectoplasm, Taylor shows as SPECIAL, and the four bonus Spooky Festivals (Oct 28-31) are in the event calendar.
 - Garden Drops (Combat > Rare Drops, off by default): farming dyes and the Ray of Helios in the Garden play the RNG Drop Totem animation and show on the RNG HUD. This replaces the Garden's separate Special Drop Animation (its setting carries over).
 - Harvest Feast Crop Rotation (Events > Harvest Feast, on by default): a HUD in the Garden with the crops in season during the Harvest Feast (or Grand Feast), how long until they rotate, and which crops come in season next and when. This month's rotation is fetched from eliteskyblock.com (Fetch Feast Data, on), and opening Feast Chef Ted's All Crops menu updates it. Show Outside Garden shows it everywhere. Move it in /s2 gui.
 - Show Session XP (Skill Progress > Display, off by default): the Skill Progress display shows how much XP you've gained in the shown skill this session ("Session: +12,345"), since you started the game or switched profile.
@@ -31,6 +32,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- Visitor Timer: "Sixth Visitor Estimate" is now "Next Visitor When Full" and "Sixth Visitor Warning" is "Next Visitor Ready Warning", for any queue size ("Queue Full, next in 2m 3s"). The count no longer adds a phantom extra visitor, the warning title shows once per estimate, and New Visitor Ping no longer pings while the queue is full. Your old choices carry over.
 - Rename "SkyHanni Farming" to "Farming Features".
 - Move the Safari Ticket Reminder from Garden to Foraging (your setting carries over).
 - Remove other mods' and people's names from setting names, descriptions and dropdowns. Some options were renamed: Terminal Solver styles Overlay and Centred Panel, Alternate Device Solvers, Map Styles Classic, Detailed and Minimal, Safari Checklist style Compact, Rare SC party message style Surfaced, Croesus Alternate Colours, and the Cross-Mod Bridge's Melody, Dungeon Data and Secrets Sockets.
@@ -65,6 +67,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Fixed
 - Fix the Garden drop animation playing for other players' dye drops and for player chat.
+- Fix visitors that should keep their chat (like Spaceman) being hidden by Hide Chat, and Item Preview not showing "Unknown" rewards: the visitor data's flags weren't read.
 - Fix enchant colouring skipping a tool's enchant list: Minecraft's own enchant line under the name (like "Efficiency V" on farming tools) got coloured instead. It's now hidden (Hide Vanilla Enchants under Enchant Parsing, on by default), so only Hypixel's enchant list shows and gets coloured.
 - Fix the Sea Creature Tracker showing over /storage: it's hidden in the storage overview, ender chest and backpack pages (and Sky2M's storage screens), and still shows over other menus.
 - Fix Command Tab Complete never learning your friends: Hypixel sends each /f list page as one message, which wasn't read. Opening /f list now fills /pv, /p, /msg and the rest with your friends (and /g online or /g list with your guild).

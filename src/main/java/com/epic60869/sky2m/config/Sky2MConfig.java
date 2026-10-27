@@ -2937,6 +2937,9 @@ public final class Sky2MConfig extends Config {
             moves.add(new String[]{"farming.garden.specialDropAnimation", "combat.rareDrops.totemGardenDrops"});
             // Garden > Safari Ticket Reminder moved to Foraging.
             moves.add(new String[]{"farming.garden.safariTicketReminder", "foraging.safariTicketReminder"});
+            // Visitor Timer: the sixth visitor options became the full queue ones (Max Occupancy, October 2026 update).
+            moves.add(new String[]{"farming.visitors.timer.sixthVisitorEnabled", "farming.visitors.timer.fullQueueEstimate"});
+            moves.add(new String[]{"farming.visitors.timer.sixthVisitorWarning", "farming.visitors.timer.fullQueueWarning"});
             MOVES = moves.toArray(new String[0][]);
         }
 

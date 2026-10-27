@@ -141,14 +141,19 @@ public final class VisitorConfig {
         public boolean enabled = false;
 
         @Expose
-        @ConfigOption(name = "Sixth Visitor Estimate", desc = "Estimate when the sixth visitor in the queue will arrive.\n§eMay be inaccurate with co-op members farming simultaneously.")
-        @ConfigEditorBoolean
-        public boolean sixthVisitorEnabled = true;
+        @ConfigOption(name = "Max Occupancy", desc = "Your Max Occupancy visitor upgrade tier from SkyMart (0 to 5). Each tier adds one visitor to the queue (5 to 10).\n§eThe timer also learns the queue size by itself the first time it sees the queue full.")
+        @ConfigEditorSlider(minValue = 0f, maxValue = 5f, minStep = 1f)
+        public int maxOccupancy = 0;
 
         @Expose
-        @ConfigOption(name = "Sixth Visitor Warning", desc = "Notify when it is believed that the sixth visitor has arrived.\n§eMay be inaccurate with co-op members farming simultaneously.")
+        @ConfigOption(name = "Next Visitor When Full", desc = "While the visitor queue is full, keep counting down to when the next visitor would have arrived, so you know if one is ready to come as soon as you serve a visitor.\n§eAn estimate: may be inaccurate with co-op members farming at the same time.")
         @ConfigEditorBoolean
-        public boolean sixthVisitorWarning = true;
+        public boolean fullQueueEstimate = true;
+
+        @Expose
+        @ConfigOption(name = "Next Visitor Ready Warning", desc = "Show a title when the countdown above runs out while the queue is full.\n§eAn estimate: may be inaccurate with co-op members farming at the same time.")
+        @ConfigEditorBoolean
+        public boolean fullQueueWarning = true;
 
         @Expose
         @ConfigOption(name = "New Visitor Ping", desc = "Ping you when you are less than 10 seconds away from getting a new visitor.\n§eUseful for getting Ephemeral Gratitudes during the Great Spook event.")
@@ -311,7 +316,7 @@ public final class VisitorConfig {
         @ConfigEditorDraggableList
         public List<StatsEntry> textFormat = new ArrayList<>(List.of(
             StatsEntry.TITLE, StatsEntry.TOTAL_VISITORS, StatsEntry.VISITORS_BY_RARITY, StatsEntry.ACCEPTED, StatsEntry.DENIED,
-            StatsEntry.SPACER_1, StatsEntry.COPPER, StatsEntry.FARMING_EXP, StatsEntry.COINS_SPENT, StatsEntry.OVERGROWN_GRASS,
+            StatsEntry.SPACER_1, StatsEntry.COPPER, StatsEntry.FARMING_EXP, StatsEntry.COINS_SPENT, StatsEntry.ECTOPLASM, StatsEntry.OVERGROWN_GRASS,
             StatsEntry.GREEN_BANDANA, StatsEntry.DEDICATION_IV, StatsEntry.COPPER_DYE, StatsEntry.HYPERCHARGE_CHIP,
             StatsEntry.QUICKDRAW_CHIP, StatsEntry.FARMING_EXP_BOOST_EPIC, StatsEntry.UNFULFILLED_JERRYSEED, StatsEntry.VOTER_BADGE,
             StatsEntry.VOTER_BADGE_VIP, StatsEntry.VOTER_BADGE_ELITE, StatsEntry.VOTER_BADGE_SUPREME, StatsEntry.VISITORS_GRATITUDE,
@@ -348,6 +353,7 @@ public final class VisitorConfig {
             BITS("§b4.2k Bits"),
             MITHRIL_POWDER("§220k Mithril Powder"),
             GEMSTONE_POWDER("§d18k Gemstone Powder"),
+            ECTOPLASM("§5240 Ectoplasm"),
             FLOWERING_BOUQUET("§b23 §9Flowering Bouquet"),
             OVERGROWN_GRASS("§b4 §9Overgrown Grass"),
             GREEN_BANDANA("§b2 §5Green Bandana"),

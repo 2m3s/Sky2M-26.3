@@ -742,8 +742,9 @@
     "visitors": {
       "timer": {
         "enabled": true,
-        "sixthVisitorEnabled": true,
-        "sixthVisitorWarning": true,
+        "maxOccupancy": 0,
+        "fullQueueEstimate": true,
+        "fullQueueWarning": true,
         "newVisitorPing": true
       },
       "shoppingList": {
@@ -802,6 +803,7 @@
           "COPPER",
           "FARMING_EXP",
           "COINS_SPENT",
+          "ECTOPLASM",
           "OVERGROWN_GRASS",
           "GREEN_BANDANA",
           "DEDICATION_IV",

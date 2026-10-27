@@ -100,6 +100,7 @@ public final class EventCalendar {
                 list.add(new Event(Sbc.str(o, "id"), Sbc.str(o, "name"), Sbc.lng(o, "start", 0), Sbc.lng(o, "end", 0), Sbc.bool(o, "active"), crops,
                     Sbc.str(o, "requiredMayor"), Sbc.str(o, "requiredPerk")));
             }
+            addBonusSpookyFestivals(list);
             list.sort((a, b) -> Long.compare(a.start(), b.start()));
             events = List.copyOf(list);
             JsonObject sb = Sbc.obj(root, "skyblock");
@@ -113,6 +114,31 @@ public final class EventCalendar {
             // Failed: try again in a minute, not every second.
             if (e != null || loadedAt == 0) loadedAt = System.currentTimeMillis() - REFRESH_MS + 60_000L;
         });
+    }
+
+    /**
+     * Hypixel's bonus Spooky Festivals of October 2026 (Late Autumn 13 and Late Winter 10 of Year 522, Late Spring 7 and
+     * Late Summer 4 of Year 523), which the normal SkyBlock calendar doesn't have: 12:35 AM, 6:35 AM, 12:35 PM and
+     * 6:35 PM Eastern on October 28 to 31. Assumed to last an hour like a normal festival. Skipped when the calendar
+     * already lists a Spooky Festival at that time.
+     */
+    private static final long[] BONUS_SPOOKY_STARTS = {
+        1793162100_000L, // 2026-10-28 04:35 UTC
+        1793270100_000L, // 2026-10-29 10:35 UTC
+        1793378100_000L, // 2026-10-30 16:35 UTC
+        1793486100_000L, // 2026-10-31 22:35 UTC
+    };
+    private static final long SPOOKY_LENGTH_MS = 60 * 60_000L;
+
+    private static void addBonusSpookyFestivals(List<Event> list) {
+        long now = System.currentTimeMillis();
+        for (long start : BONUS_SPOOKY_STARTS) {
+            long end = start + SPOOKY_LENGTH_MS;
+            if (end < now || start - now > 72 * 3_600_000L) continue;
+            boolean listed = list.stream().anyMatch(e -> e.id().equals("spooky") && Math.abs(e.start() - start) < 10 * 60_000L);
+            if (listed) continue;
+            list.add(new Event("spooky", "Bonus Spooky Festival", start, end, now >= start && now < end, List.of(), "", ""));
+        }
     }
 
     private static String nameOf(JsonObject root, String key) {
