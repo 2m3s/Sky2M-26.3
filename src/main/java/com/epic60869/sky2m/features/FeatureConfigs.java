@@ -2163,6 +2163,12 @@ public final class FeatureConfigs {
         public boolean showLevel = true;
 
         @Expose
+        @ConfigOption(name = "Show Session XP", desc = "Show how much XP you've gained in the shown skill this session (since you started the game, or switched profile).")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1201)
+        public boolean showSessionXp = false;
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Progress Bar", desc = "Progress Bar Config.")
         public SkillProgressBar skillProgressBarConfig = new SkillProgressBar();

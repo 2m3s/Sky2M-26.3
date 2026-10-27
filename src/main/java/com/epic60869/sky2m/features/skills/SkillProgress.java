@@ -401,8 +401,14 @@ public final class SkillProgress {
             text.append("§7(§6").append(SkillApi.addSeparators(currentXP)).append("§7/§6").append(SkillApi.addSeparators(currentXPMax)).append("§7)");
         }
         if (c.showActionLeft && percent != 100f) text.append(" - ").append(addActionsLeft(skill, currentXPMax, currentXP));
+        if (c.showSessionXp) text.append(sessionText(activeSkill));
         list.add(text.toString());
         return list;
+    }
+
+    /** Show Session XP: " Session: +12,345" for the XP gained in the skill since the game started (or profile switch). */
+    static String sessionText(SkillType skill) {
+        return " §7Session: §a+" + SkillApi.addSeparators(SkillApi.sessionXp(skill));
     }
 
     private static String addActionsLeft(SkillApi.SkillInfo skill, long currentXPMax, long currentXP) {

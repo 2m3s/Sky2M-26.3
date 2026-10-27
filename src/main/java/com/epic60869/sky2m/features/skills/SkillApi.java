@@ -153,6 +153,33 @@ public final class SkillApi {
 
     static final Map<SkillType, SkillXPInfo> skillXPInfoMap = new EnumMap<>(SkillType.class);
     static final Map<SkillType, SkillInfo> oldSkillInfoMap = new EnumMap<>(SkillType.class);
+    /**
+     * Each skill's total XP just before the first XP it gained this game session (Skill Progress > Show Session XP).
+     * Counted from the total, not by adding up gains, so Hypixel repeating an action bar doesn't count twice.
+     */
+    static final Map<SkillType, Long> sessionStartXp = new EnumMap<>(SkillType.class);
+
+    /** Notes a skill's new total after a gain of {@code gained}: the first one this session sets where the count starts. */
+    static void noteSessionXp(SkillType type, long totalXp, double gained) {
+        if (type == null || totalXp <= 0) return;
+        sessionStartXp.putIfAbsent(type, Math.max(0L, totalXp - Math.round(gained)));
+    }
+
+    private static double parseGain(String gained) {
+        try {
+            return gained == null || gained.isEmpty() ? 0 : formatDouble(gained);
+        } catch (RuntimeException e) {
+            return 0;
+        }
+    }
+
+    /** The XP gained in a skill this game session (on this profile), or 0. */
+    public static long sessionXp(SkillType type) {
+        Long start = sessionStartXp.get(type);
+        SkillInfo info = storage().get(type);
+        if (start == null || info == null) return 0L;
+        return Math.max(0L, info.totalXp - start);
+    }
     static final Map<Integer, Integer> levelingMap = new HashMap<>();
     static final Map<Integer, Integer> exactLevelingMap = new HashMap<>();
     static SkillType activeSkill;
@@ -265,7 +292,10 @@ public final class SkillApi {
         if (ticks % 20 != 0) return;
         // SkyHanni's onProfileJoin.
         String profile = Sky2MStorageSearch.currentProfile();
-        if (lastProfile != null && !lastProfile.equals(profile)) SkillProgress.onProfileJoin();
+        if (lastProfile != null && !lastProfile.equals(profile)) {
+            sessionStartXp.clear();
+            SkillProgress.onProfileJoin();
+        }
         lastProfile = profile;
         if (Sky2MLocation.onSkyblock()) {
             lastTabLines = tabLines();
@@ -391,6 +421,7 @@ public final class SkillApi {
         SkillInfo skillInfo = storage().computeIfAbsent(skillType, k -> new SkillInfo());
         if (skillInfo.totalXp <= 0L) return;
         long roundedTotalXp = Math.round(skillInfo.totalXp + gained);
+        noteSessionXp(skillType, roundedTotalXp, gained);
         SkillLevel skillLevel = calculateSkillLevel(roundedTotalXp, skillType.maxLevel);
         skillInfo.totalXp = roundedTotalXp;
         skillInfo.currentXp = skillLevel.xpCurrent();
@@ -563,6 +594,7 @@ public final class SkillApi {
             long levelXP = (long) calculateLevelXP(level - 1) + current;
             updateSkillInfo(existingLevel, level, current, needed, levelXP, matcher.group("gained"));
         }
+        noteSessionXp(skillType, existingLevel.totalXp, parseGain(matcher.group("gained")));
         storage().put(skillType, existingLevel);
         markDirty();
     }
@@ -605,6 +637,7 @@ public final class SkillApi {
         skillInfo.totalXp = levelXP;
         skillInfo.level = level;
         skillInfo.lastGain = matcher.group("gained");
+        noteSessionXp(skillType, levelXP, parseGain(skillInfo.lastGain));
         storage().put(skillType, skillInfo);
         markDirty();
     }
