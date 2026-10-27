@@ -71,6 +71,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
+- Fix Farming and Mining profit trackers counting compacted items as the raw item: what a compactor turns your drops into (Enchanted or Compacted Moonflower, Mutant Nether Wart, Box of Seeds and the rest) is now shown instead, including compactions straight into your sacks, without counting anything twice.
 - Fix the Garden drop animation playing for other players' dye drops and for player chat.
 - Fix visitors that should keep their chat (like Spaceman) being hidden by Hide Chat, and Item Preview not showing "Unknown" rewards: the visitor data's flags weren't read.
 - Fix enchant colouring skipping a tool's enchant list: Minecraft's own enchant line under the name (like "Efficiency V" on farming tools) got coloured instead. It's now hidden (Hide Vanilla Enchants under Enchant Parsing, on by default), so only Hypixel's enchant list shows and gets coloured.
