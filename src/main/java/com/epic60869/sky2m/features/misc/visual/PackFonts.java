@@ -30,7 +30,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -164,12 +163,12 @@ public final class PackFonts {
         }
 
         @Override
-        public Map<Identifier, Resource> listResources(String path, Predicate<Identifier> filter) {
+        public Map<Identifier, Resource> listResources(String path, Selector filter) {
             return Map.of();
         }
 
         @Override
-        public Map<Identifier, List<Resource>> listResourceStacks(String path, Predicate<Identifier> filter) {
+        public Map<Identifier, List<Resource>> listResourceStacks(String path, Selector filter) {
             return Map.of();
         }
 

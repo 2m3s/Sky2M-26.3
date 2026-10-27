@@ -1,13 +1,13 @@
 package com.epic60869.sky2m.features.garden;
 
 import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.custom.util.Input;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.input.Sky2MMouseLock;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -87,15 +87,10 @@ public final class GardenKeybinds {
         return true;
     }
 
-    /** A MoulConfig key code: keyboard keys as GLFW codes, mouse buttons as -100 + button. */
+    /** A MoulConfig key code: keyboard keys as SDL codes, mouse buttons as -100 + button ({@link Input}). */
     static boolean isKeyDown(int key) {
         if (key == -1 || key == 0) return false;
-        long window = Minecraft.getInstance().getWindow().handle();
-        if (key < 0) {
-            int button = key + 100;
-            return button >= GLFW.GLFW_MOUSE_BUTTON_1 && button <= GLFW.GLFW_MOUSE_BUTTON_LAST
-                && GLFW.glfwGetMouseButton(window, button) == GLFW.GLFW_PRESS;
-        }
-        return key >= GLFW.GLFW_KEY_SPACE && key <= GLFW.GLFW_KEY_LAST && GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS;
+        int mouse = Input.bindMouseButton(key);
+        return mouse >= 0 ? Input.mouseDown(mouse) : Input.keyDown(key);
     }
 }
