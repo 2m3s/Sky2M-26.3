@@ -60,6 +60,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
+- Fix enchant colouring skipping a tool's enchant list: Minecraft's own enchant line under the name (like "Efficiency V" on farming tools) got coloured instead. It's now hidden (Hide Vanilla Enchants under Enchant Parsing, on by default), so only Hypixel's enchant list shows and gets coloured.
 - Fix the Sea Creature Tracker showing over /storage: it's hidden in the storage overview, ender chest and backpack pages (and Sky2M's storage screens), and still shows over other menus.
 - Fix Command Tab Complete never learning your friends: Hypixel sends each /f list page as one message, which wasn't read. Opening /f list now fills /pv, /p, /msg and the rest with your friends (and /g online or /g list with your guild).
 - Fix Estimated Item Value counting master stars on fishing rods and Kuudra armour: Kuudra armour is now priced by its ten essence stars (Crimson Essence and Heavy Pearls), shown star by star in the breakdown, and items with no stars of their own, like fishing rods, get no star cost. Master stars stay for dungeon items.

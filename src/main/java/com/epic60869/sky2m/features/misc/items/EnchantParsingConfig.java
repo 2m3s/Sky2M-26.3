@@ -73,6 +73,11 @@ public final class EnchantParsingConfig {
     public Advanced advancedEnchantColors = new Advanced();
 
     @Expose
+    @ConfigOption(name = "Hide Vanilla Enchants", desc = "Hide Minecraft's own enchant line under the item name (like \"Efficiency V\" on farming tools), so only Hypixel's enchant list shows.")
+    @ConfigEditorBoolean
+    public boolean hideVanillaEnchants = true;
+
+    @Expose
     @ConfigOption(name = "Hide Enchant Description", desc = "Hide the enchant description after each enchant if available.")
     @ConfigEditorBoolean
     public boolean hideEnchantDescriptions = false;

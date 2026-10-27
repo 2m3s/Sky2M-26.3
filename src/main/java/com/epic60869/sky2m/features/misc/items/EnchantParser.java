@@ -10,17 +10,23 @@ import com.google.gson.JsonObject;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,7 +64,9 @@ public final class EnchantParser {
         SkyHanniRepo.loadAsync("Enchants", json -> repo = Repo.read(json));
         ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> {
             EnchantParsingConfig config = config();
-            if (config == null || (!config.colorParsing && !config.hideEnchantDescriptions)) return;
+            if (config == null) return;
+            if (config.hideVanillaEnchants && Compat.isOnSkyblock()) hideVanillaEnchants(stack, lines);
+            if (!config.colorParsing && !config.hideEnchantDescriptions) return;
             // Other mods (REI searching) can ask for tooltips off the render thread, which would break the cache.
             if (!RenderSystem.isOnRenderThread() || !Compat.isOnSkyblock()) return;
             if (!repo.hasData()) return;
@@ -72,6 +80,34 @@ public final class EnchantParser {
                 com.epic60869.sky2m.features.sbc.SbcCrashReports.report(e, "enchant parsing");
             }
         });
+    }
+
+    /**
+     * Removes the vanilla enchantment lines ("Efficiency V" under the name) that Minecraft adds above Hypixel's lore on
+     * some tools, so only Hypixel's own enchant list shows (and gets parsed instead of the vanilla line).
+     */
+    private static void hideVanillaEnchants(ItemStack stack, List<Component> lines) {
+        ItemEnchantments enchantments = stack.get(DataComponents.ENCHANTMENTS);
+        if (enchantments == null || enchantments.isEmpty() || lines.size() < 2) return;
+        Set<String> names = new HashSet<>();
+        for (var entry : enchantments.entrySet()) {
+            names.add(Enchantment.getFullname(entry.getKey(), entry.getIntValue()).getString());
+        }
+        // Vanilla's lines sit between the name and the first lore line.
+        int loreStart = lines.size();
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore != null && !lore.lines().isEmpty()) {
+            String first = lore.lines().get(0).getString();
+            for (int i = 1; i < lines.size(); i++) {
+                if (lines.get(i).getString().equals(first)) {
+                    loreStart = i;
+                    break;
+                }
+            }
+        }
+        for (int i = loreStart - 1; i >= 1; i--) {
+            if (names.contains(lines.get(i).getString())) lines.remove(i);
+        }
     }
 
     // ------------------------------------------------------------------------------------------------ parsing

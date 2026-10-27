@@ -1996,6 +1996,7 @@
         "useAdvancedPoorColor": false,
         "advancedPoorColor": "0:255:255:255:85"
       },
+      "hideVanillaEnchants": true,
       "hideEnchantDescriptions": false,
       "stackingEnchantProgress": true
     },
