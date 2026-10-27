@@ -16,7 +16,7 @@ public final class SocialConfig {
     public boolean partyShortcuts = false;
 
     @Expose
-    @ConfigOption(name = "Chat Waypoints", desc = "Coordinates in any chat message (x: 1, y: 2, z: 3, as sent by /sendcoords, Patcher or SkyHanni) get a clickable [Waypoint] button that makes a waypoint with the sender's name.")
+    @ConfigOption(name = "Chat Waypoints", desc = "Coordinates in any chat message (x: 1, y: 2, z: 3, as sent by /sendcoords or other mods) get a clickable [Waypoint] button that makes a waypoint with the sender's name.")
     @ConfigEditorBoolean
     public boolean chatWaypoints = false;
 

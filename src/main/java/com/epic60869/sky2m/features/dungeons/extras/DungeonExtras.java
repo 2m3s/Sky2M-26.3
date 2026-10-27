@@ -86,7 +86,7 @@ public final class DungeonExtras {
     public static final class Config {
         @Expose
         @Accordion
-        @ConfigOption(name = "Secret Waypoint Types", desc = "Which kinds of secrets the room database draws waypoints for (Skyblocker's): chests, wither essence, levers, bats, redstone keys and item pickups (Candycomb, Decoy, Defuse Kit, Spirit Leap... picked up from the floor, marked found when you pick them up). Turn on Secret Waypoints under Secrets and Routes first.")
+        @ConfigOption(name = "Secret Waypoint Types", desc = "Which kinds of secrets the room database draws waypoints for: chests, wither essence, levers, bats, redstone keys and item pickups (Candycomb, Decoy, Defuse Kit, Spirit Leap... picked up from the floor, marked found when you pick them up). Turn on Secret Waypoints under Secrets and Routes first.")
         public Types secretTypes = new Types();
 
         @Expose
@@ -96,42 +96,42 @@ public final class DungeonExtras {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Spring Boots", desc = "Odin's and SkyHanni's Spring Boots helper: how high your jump will be while you charge it, and a title when it is fully charged.")
+        @ConfigOption(name = "Spring Boots", desc = "How high your jump will be while you charge it, and a title when it is fully charged.")
         public SpringBoots springBoots = new SpringBoots();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Creation Cooldown", desc = "SkyHanni's Dungeon Creation Cooldown: after you start a dungeon, Hypixel won't let you create another for 30 seconds. Shows the time left and can block /joininstance meanwhile.")
+        @ConfigOption(name = "Creation Cooldown", desc = "After you start a dungeon, Hypixel won't let you create another for 30 seconds. Shows the time left and can block /joininstance meanwhile.")
         public CreationCooldown creationCooldown = new CreationCooldown();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Croesus Overlay", desc = "SkyHanni's Croesus Chest Tracker: Croesus's runs coloured by opened or unopened, a check on runs you used a Kismet Feather on, your unopened chests out of Croesus's limit of 60 on screen, and your Kismet Feathers on the Reroll Chest.")
+        @ConfigOption(name = "Croesus Overlay", desc = "Croesus's runs coloured by opened or unopened, a check on runs you used a Kismet Feather on, your unopened chests out of Croesus's limit of 60 on screen, and your Kismet Feathers on the Reroll Chest.")
         public Croesus croesus = new Croesus();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Hide Dungeon Clutter", desc = "SkyHanni's Dungeon Object Hider: hide healer orbs and fairies, blessings, Superboom TNT, Revive Stones, Premium Flesh, skeleton skulls, Soulweaver skulls and Journal Entries.")
+        @ConfigOption(name = "Hide Dungeon Clutter", desc = "Hide healer orbs and fairies, blessings, Superboom TNT, Revive Stones, Premium Flesh, skeleton skulls, Soulweaver skulls and Journal Entries.")
         public Clutter clutter = new Clutter();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Clean End", desc = "SkyHanni's Clean End: once the boss is dead, hide everything except the loot chests and mute the boss music.")
+        @ConfigOption(name = "Clean End", desc = "Once the boss is dead, hide everything except the loot chests and mute the boss music.")
         public CleanEnd cleanEnd = new CleanEnd();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Chat Tweaks", desc = "SkyHanni's solo class message hider and Milestones Display.")
+        @ConfigOption(name = "Chat Tweaks", desc = "Solo class message hider and Milestones Display.")
         public Chat chat = new Chat();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Quick Close", desc = "NoFrills' Quick Close: close dungeon chests (secret and reward chests) by pressing a movement key (W, A, S or D).")
+        @ConfigOption(name = "Quick Close", desc = "Close dungeon chests (secret and reward chests) by pressing a movement key (W, A, S or D).")
         public QuickClose quickClose = new QuickClose();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Shard Score Message", desc = "NoFrills' Shard Score Message: send a message when an attribute gives you Bonus Score by a Prince or a Bat dying.")
+        @ConfigOption(name = "Shard Score Message", desc = "Send a message when an attribute gives you Bonus Score by a Prince or a Bat dying.")
         public ShardScore shardScore = new ShardScore();
     }
 
@@ -178,17 +178,17 @@ public final class DungeonExtras {
 
     public static final class SpringBoots {
         @Expose
-        @ConfigOption(name = "Jump Height HUD", desc = "While you crouch in Spring Boots, a HUD with how many blocks you will jump (Odin's). Move it in /s2 gui.")
+        @ConfigOption(name = "Jump Height HUD", desc = "While you crouch in Spring Boots, a HUD with how many blocks you will jump. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean hud = false;
 
         @Expose
-        @ConfigOption(name = "Height Box", desc = "A red box where you would land the top of the jump (Odin's).")
+        @ConfigOption(name = "Height Box", desc = "A red box where you would land the top of the jump.")
         @ConfigEditorBoolean
         public boolean box = false;
 
         @Expose
-        @ConfigOption(name = "Ready Title", desc = "A title and a beep when the boots are charged (SkyHanni's: in the F7/M7 boss room).")
+        @ConfigOption(name = "Ready Title", desc = "A title and a beep when the boots are charged (in the F7/M7 boss room).")
         @ConfigEditorBoolean
         public boolean readyTitle = false;
     }
@@ -222,22 +222,22 @@ public final class DungeonExtras {
 
     public static final class Croesus {
         @Expose
-        @ConfigOption(name = "SkyHanni Style", desc = "Croesus's list of runs coloured like SkyHanni's: unopened runs dark purple, runs with a chest opened dark aqua, runs you used a key on not coloured, and a check on runs you used a Kismet Feather on. Replaces the colours under Chest Profit while on (the profit colours of a run's chests stay).")
+        @ConfigOption(name = "Alternate Colours", desc = "Croesus's list of runs coloured differently: unopened runs dark purple, runs with a chest opened dark aqua, runs you used a key on not coloured, and a check on runs you used a Kismet Feather on. Replaces the colours under Chest Profit while on (the profit colours of a run's chests stay).")
         @ConfigEditorBoolean
         public boolean skyHanniStyle = true;
 
         @Expose
-        @ConfigOption(name = "Unopened Colour", desc = "Croesus runs with no chest opened yet (SkyHanni Style).")
+        @ConfigOption(name = "Unopened Colour", desc = "Croesus runs with no chest opened yet (Alternate Colours).")
         @ConfigEditorColour
         public String unopenedColour = "0:153:170:0:170";
 
         @Expose
-        @ConfigOption(name = "Opened Colour", desc = "Croesus runs with a chest opened, a key still to use (SkyHanni Style).")
+        @ConfigOption(name = "Opened Colour", desc = "Croesus runs with a chest opened, a key still to use (Alternate Colours).")
         @ConfigEditorColour
         public String openedColour = "0:153:0:170:170";
 
         @Expose
-        @ConfigOption(name = "Unopened Chests Overlay", desc = "SkyHanni's Croesus overlay: \"Chests: n/60\", the dungeon runs you have not opened a chest of, out of Croesus's 60 (older runs, over 3 days, drop off). Shown in the Dungeon Hub, in dungeons and at the Forgotten Skull. Move it in /s2 gui.")
+        @ConfigOption(name = "Unopened Chests Overlay", desc = "\"Chests: n/60\", the dungeon runs you have not opened a chest of, out of Croesus's 60 (older runs, over 3 days, drop off). Shown in the Dungeon Hub, in dungeons and at the Forgotten Skull. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean overlay = false;
 
@@ -283,17 +283,17 @@ public final class DungeonExtras {
 
     public static final class Chat {
         @Expose
-        @ConfigOption(name = "Hide Solo Class Message", desc = "Hide \"Your Mage stats are doubled because you are the only player using this class!\" in dungeons (SkyHanni).")
+        @ConfigOption(name = "Hide Solo Class Message", desc = "Hide \"Your Mage stats are doubled because you are the only player using this class!\" in dungeons.")
         @ConfigEditorBoolean
         public boolean hideSoloClass = false;
 
         @Expose
-        @ConfigOption(name = "Hide Solo Class Stats", desc = "Hide the boosted class stats Hypixel lists when the dungeon starts and you play your class alone (the lines starting with [Mage], [Healer]...) (SkyHanni).")
+        @ConfigOption(name = "Hide Solo Class Stats", desc = "Hide the boosted class stats Hypixel lists when the dungeon starts and you play your class alone (the lines starting with [Mage], [Healer]...).")
         @ConfigEditorBoolean
         public boolean hideSoloStats = false;
 
         @Expose
-        @ConfigOption(name = "Milestones Display", desc = "SkyHanni's Milestones Display: your class milestone (0 to 3) in a HUD, and hides Hypixel's milestone lines from chat. Move it in /s2 gui.")
+        @ConfigOption(name = "Milestones Display", desc = "Your class milestone (0 to 3) in a HUD, and hides Hypixel's milestone lines from chat. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean milestones = false;
     }

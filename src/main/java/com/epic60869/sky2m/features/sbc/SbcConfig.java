@@ -38,7 +38,7 @@ public final class SbcConfig {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Best Friends", desc = "How long you've partied with each player and your dungeon runs together, in /s2 friends' Party Time tab (Killer560's).")
+        @ConfigOption(name = "Best Friends", desc = "How long you've partied with each player and your dungeon runs together, in /s2 friends' Party Time tab.")
         public BestFriendsSettings bestFriends = new BestFriendsSettings();
 
         @Expose

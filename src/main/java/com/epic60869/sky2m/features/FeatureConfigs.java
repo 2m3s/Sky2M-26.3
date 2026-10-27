@@ -70,17 +70,17 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Ghost Counter", desc = "Ghost kills and drop profit in the Mist of the Dwarven Mines (SkyHanni).")
+        @ConfigOption(name = "Ghost Counter", desc = "Ghost kills and drop profit in the Mist of the Dwarven Mines.")
         public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.GhostCounter ghostCounter = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.GhostCounter();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "End Dragons", desc = "Dragon profit tracker, weight and Superior Dragon notification (SkyHanni).")
+        @ConfigOption(name = "End Dragons", desc = "Dragon profit tracker, weight and Superior Dragon notification.")
         public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Dragons dragons = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Dragons();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Ender Node Tracker", desc = "Ender Nodes mined and their loot in the End (SkyHanni).")
+        @ConfigOption(name = "Ender Node Tracker", desc = "Ender Nodes mined and their loot in the End.")
         public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.EnderNodes enderNodes = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.EnderNodes();
 
         @Expose
@@ -100,7 +100,7 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Bestiary Overlay", desc = "SkyHanni's Bestiary Data overlay in the Bestiary menu.")
+        @ConfigOption(name = "Bestiary Overlay", desc = "A Bestiary Data overlay in the Bestiary menu.")
         public Bestiary bestiary = new Bestiary();
 
         @Expose
@@ -123,7 +123,7 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Ashfang", desc = "Ashfang's blazes, Blazing Souls, Gravity Orbs, freeze cooldown and next reset (SkyHanni).")
+        @ConfigOption(name = "Ashfang", desc = "Ashfang's blazes, Blazing Souls, Gravity Orbs, freeze cooldown and next reset.")
         public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Ashfang ashfang = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Ashfang();
     }
 
@@ -322,12 +322,12 @@ public final class FeatureConfigs {
         public boolean showPercentage = true;
 
         @Expose
-        @ConfigOption(name = "Show Lootshare", desc = "How many of each rare mob you lootshared, after it (SBO's [LS: n]).")
+        @ConfigOption(name = "Show Lootshare", desc = "How many of each rare mob you lootshared, after it ([LS: n]).")
         @ConfigEditorBoolean
         public boolean showLootshare = true;
 
         @Expose
-        @ConfigOption(name = "Creatures Since in Chat", desc = "Add how many creatures you dug up since the last one of that kind to Hypixel's \"You dug out a ...\" message, like SkyHanni.")
+        @ConfigOption(name = "Creatures Since in Chat", desc = "Add how many creatures you dug up since the last one of that kind to Hypixel's \"You dug out a ...\" message.")
         @ConfigEditorBoolean
         public boolean sinceInChat = true;
     }
@@ -350,7 +350,7 @@ public final class FeatureConfigs {
     /** SBO's loot announcer and since messages. */
     public static final class DianaDrops {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Announce your Diana RNG drops (Chimera, Wool, Manti-core, Stinger, Brain Food, Stick, Relic, ...) with how many you've had this season and their price, like SBO.")
+        @ConfigOption(name = "Enabled", desc = "Announce your Diana RNG drops (Chimera, Wool, Manti-core, Stinger, Brain Food, Stick, Relic, ...) with how many you've had this season and their price.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -421,7 +421,7 @@ public final class FeatureConfigs {
     /** SBO's Diana achievements. */
     public static final class DianaAchievements {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Unlock SBO's Diana achievements (b2b Chimera, 5k burrows in one event, 100 Inquisitors since Chimera, ...) with a title and a chat message.")
+        @ConfigOption(name = "Enabled", desc = "Unlock Diana achievements (b2b Chimera, 5k burrows in one event, 100 Inquisitors since Chimera, ...) with a title and a chat message.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -476,7 +476,7 @@ public final class FeatureConfigs {
         public boolean burrowsWarpGroup = false;
         @Expose
         @Accordion
-        @ConfigOption(name = "Burrows", desc = "Burrow waypoints from the particles near you, the arrow after each burrow and your spade, like SkyBlock Overhaul (SBO).")
+        @ConfigOption(name = "Burrows", desc = "Burrow waypoints from the particles near you, the arrow after each burrow and your spade.")
         @ConfigAccordionId(id = 401)
         public DianaBurrows burrows = new DianaBurrows();
 
@@ -516,13 +516,13 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Mob HP", desc = "The health of the Diana mobs near you on a HUD, and a low HP alert, like SBO.")
+        @ConfigOption(name = "Mob HP", desc = "The health of the Diana mobs near you on a HUD, and a low HP alert.")
         @ConfigAccordionId(id = 402)
         public DianaMobHealth mobHealth = new DianaMobHealth();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Rare Drop Announcer", desc = "Your Diana RNG drops in chat, as a title and in party chat, with how many mobs they took, like SBO.")
+        @ConfigOption(name = "Rare Drop Announcer", desc = "Your Diana RNG drops in chat, as a title and in party chat, with how many mobs they took.")
         @ConfigAccordionId(id = 402)
         public DianaDrops drops = new DianaDrops();
 
@@ -537,7 +537,7 @@ public final class FeatureConfigs {
         public boolean showPartyMessages = true;
 
         @Expose
-        @ConfigOption(name = "Party Coord Waypoints", desc = "Like SkyHanni: coordinates someone sends in party chat (\"x: -30, y: 87, z: 126\") get a waypoint with their name and how far away it is, for a minute or until you reach it. Rare mob shares keep their own waypoint.")
+        @ConfigOption(name = "Party Coord Waypoints", desc = "Coordinates someone sends in party chat (\"x: -30, y: 87, z: 126\") get a waypoint with their name and how far away it is, for a minute or until you reach it. Rare mob shares keep their own waypoint.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 403)
         public boolean partyCoordWaypoints = true;
@@ -589,19 +589,19 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Profit Tracker", desc = "What each Diana drop was worth, the total profit and the time spent, for this session, this mayor term or all time, like SkyHanni's. Move it in /s2 gui.")
+        @ConfigOption(name = "Profit Tracker", desc = "What each Diana drop was worth, the total profit and the time spent, for this session, this mayor term or all time. Move it in /s2 gui.")
         @ConfigAccordionId(id = 405)
         public DianaProfitTracker profitTracker = new DianaProfitTracker();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Mob Tracker", desc = "How many of each mythological creature you dug up and how many since each rare one, like SkyHanni's Mythological Creature Tracker.")
+        @ConfigOption(name = "Mob Tracker", desc = "How many of each mythological creature you dug up and how many since each rare one.")
         @ConfigAccordionId(id = 405)
         public DianaMobTracker mobTracker = new DianaMobTracker();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Achievements", desc = "SBO's Diana achievements.")
+        @ConfigOption(name = "Achievements", desc = "Diana achievements.")
         @ConfigAccordionId(id = 405)
         public DianaAchievements achievements = new DianaAchievements();
 
@@ -617,7 +617,7 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Lobby Compromised", desc = "Alert when too many non-party players join the lobby while you do Diana, like Skysoft.")
+        @ConfigOption(name = "Lobby Compromised", desc = "Alert when too many non-party players join the lobby while you do Diana.")
         @ConfigAccordionId(id = 406)
         public DianaLobbyCompromised lobbyCompromised = new DianaLobbyCompromised();
     }
@@ -630,27 +630,27 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Dungeon Sim", desc = "Practise dungeon rooms and whole floors in a singleplayer world (Killer560's Dungeon Sim and Map Designer).")
+        @ConfigOption(name = "Dungeon Sim", desc = "Practise dungeon rooms and whole floors in a singleplayer world (Dungeon Sim and Map Designer).")
         public DungeonSim dungeonSim = new DungeonSim();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Cross-Mod Bridge", desc = "Share party dungeon data with Odin, NoammAddons and Devonian users through their own sockets (Killer560's).")
+        @ConfigOption(name = "Cross-Mod Bridge", desc = "Share party dungeon data with teammates who use other dungeon mods, through those mods' own sockets.")
         public CrossModBridge crossModBridge = new CrossModBridge();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Team Melody", desc = "Teammates' Melody progress in P3, and sending yours (Killer560's).")
+        @ConfigOption(name = "Team Melody", desc = "Teammates' Melody progress in P3, and sending yours.")
         public TeamMelody teamMelody = new TeamMelody();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Party Dungeon Data", desc = "Share what you know about the run with teammates running Sky2M, and use what they know (Killer560's).")
+        @ConfigOption(name = "Party Dungeon Data", desc = "Share what you know about the run with teammates running Sky2M, and use what they know.")
         public PartyData partyData = new PartyData();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Custom Mage Beam", desc = "One clean beam in place of the Mage's firework particles (Killer560's, from NoammAddons).")
+        @ConfigOption(name = "Custom Mage Beam", desc = "One clean beam in place of the Mage's firework particles.")
         public MageBeam mageBeam = new MageBeam();
 
         @Expose
@@ -682,42 +682,42 @@ public final class FeatureConfigs {
         @ConfigEditorAccordion(id = 1301)
         public boolean floors46Group = false;
         @Expose
-        @ConfigOption(name = "Spirit Bear (F4/M4)", desc = "Odin's Spirit Bear HUD for the F4 and M4 boss: spirits killed (25 on F4, 30 on M4), then the countdown until the Spirit Bear spawns once the last one dies, then \"Alive!\". Move it in /s2 gui.")
+        @ConfigOption(name = "Spirit Bear (F4/M4)", desc = "A Spirit Bear HUD for the F4 and M4 boss: spirits killed (25 on F4, 30 on M4), then the countdown until the Spirit Bear spawns once the last one dies, then \"Alive!\". Move it in /s2 gui.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1301)
         public boolean spiritBear = true;
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Livid Finder (F5/M5)", desc = "SkyHanni's Livid Finder: once the wool above the arena shows which Livid is real, boxes and labels her, with a line from your crosshair (not while you're blind), and can hide the fake ones.")
+        @ConfigOption(name = "Livid Finder (F5/M5)", desc = "Once the wool above the arena shows which Livid is real, boxes and labels her, with a line from your crosshair (not while you're blind), and can hide the fake ones.")
         @ConfigAccordionId(id = 1301)
         public LividFinder lividFinder = new LividFinder();
 
         @Expose
-        @ConfigOption(name = "Livid Invulnerability (F5/M5)", desc = "Odin's HUD with the server ticks left of Livid's invulnerability after her opening line. Move it in /s2 gui.")
+        @ConfigOption(name = "Livid Invulnerability (F5/M5)", desc = "A HUD with the server ticks left of Livid's invulnerability after her opening line. Move it in /s2 gui.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1301)
         public boolean lividTimer = true;
 
         @Expose
-        @ConfigOption(name = "Terracotta Timer (F6/M6)", desc = "Odin's Terracotta Timer: in the Sadan fight, seconds until each terracotta respawns (15 on F6, 12 on M6), over its flower pot.")
+        @ConfigOption(name = "Terracotta Timer (F6/M6)", desc = "In the Sadan fight, seconds until each terracotta respawns (15 on F6, 12 on M6), over its flower pot.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1301)
         public boolean terracottaTimer = true;
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Blessing Display", desc = "Odin's Blessing Display: the dungeon's blessings and their levels, from the tab list.")
+        @ConfigOption(name = "Blessing Display", desc = "The dungeon's blessings and their levels, from the tab list.")
         public BlessingDisplay blessings = new BlessingDisplay();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Auto Requeue", desc = "NoammAddons' Auto Requeue: start the next run of the same floor by itself when a run ends.")
+        @ConfigOption(name = "Auto Requeue", desc = "Start the next run of the same floor by itself when a run ends.")
         public AutoRequeue autoRequeue = new AutoRequeue();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Party Finder Stats", desc = "Odin's Better Party Finder: stats of players who join your dungeon group, with a kick button and optional auto kick.")
+        @ConfigOption(name = "Party Finder Stats", desc = "Stats of players who join your dungeon group, with a kick button and optional auto kick.")
         public PartyFinderStats partyFinderStats = new PartyFinderStats();
 
         @Expose
@@ -753,7 +753,7 @@ public final class FeatureConfigs {
         public Score score = new Score();
 
         @Expose
-        @Category(name = "Leap Menu", desc = "Odin-style Spirit Leap menu.")
+        @Category(name = "Leap Menu", desc = "A custom Spirit Leap menu.")
         public LeapMenu leapMenu = new LeapMenu();
 
         @Expose
@@ -807,7 +807,7 @@ public final class FeatureConfigs {
         @ConfigEditorAccordion(id = 2001)
         public boolean chestValueGroup = false;
         @Expose
-        @ConfigOption(name = "Dungeon Chest Value", desc = "NoFrills: in a dungeon reward chest (at the end of a run or at Croesus), show what its contents are worth minus its cost, over the chest.")
+        @ConfigOption(name = "Dungeon Chest Value", desc = "In a dungeon reward chest (at the end of a run or at Croesus), show what its contents are worth minus its cost, over the chest.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2001)
         public boolean chestValue = true;
@@ -831,7 +831,7 @@ public final class FeatureConfigs {
         public boolean floorLabel = true;
 
         @Expose
-        @ConfigOption(name = "Croesus Solver", desc = "NoFrills: in Croesus's list of runs, colour each run by whether its chests are unopened, rerolled with a Kismet Feather, opened or opened with a key; in a run's chests, highlight the most profitable one and the second best.")
+        @ConfigOption(name = "Croesus Solver", desc = "In Croesus's list of runs, colour each run by whether its chests are unopened, rerolled with a Kismet Feather, opened or opened with a key; in a run's chests, highlight the most profitable one and the second best.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2001)
         public boolean croesusSolver = true;
@@ -913,7 +913,7 @@ public final class FeatureConfigs {
     public static final class Floor7 {
         @Expose
         @Accordion
-        @ConfigOption(name = "M7 Dragons and Relics", desc = "Master Mode floor 7 dragon phase (P5): spawn alerts with split priority, timers, kill areas and relic spots, like NoFrills' Wither Dragons and Relic Highlight.")
+        @ConfigOption(name = "M7 Dragons and Relics", desc = "Master Mode floor 7 dragon phase (P5): spawn alerts with split priority, timers, kill areas and relic spots.")
         public WitherDragons witherDragons = new WitherDragons();
 
         @Expose
@@ -933,12 +933,12 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Platform Highlight (3x3)", desc = "One big box over the floor 7 3x3 platform (53-55, 63, 113-115), from when Goldor starts, like NoFrills.")
+        @ConfigOption(name = "Platform Highlight (3x3)", desc = "One big box over the floor 7 3x3 platform (53-55, 63, 113-115), from when Goldor starts.")
         public PlatformHighlight platformHighlight = new PlatformHighlight();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "F7 Extras", desc = "Maxor's crystals, boss titles, the Storm lightning timer, the P3 gate and terminal boxes, the Leap Counter and the M7 relic spawn timer (from Odin and NoammAddons).")
+        @ConfigOption(name = "F7 Extras", desc = "Maxor's crystals, boss titles, the Storm lightning timer, the P3 gate and terminal boxes, the Leap Counter and the M7 relic spawn timer.")
         public F7Extras extras = new F7Extras();
     }
 
@@ -1005,7 +1005,7 @@ public final class FeatureConfigs {
         public String gateColour = "0:255:255:85:255";
 
         @Expose
-        @ConfigOption(name = "Terminal Boxes", desc = "Box the hitbox of each inactive terminal in your P3 section (NoammAddons' Terminal Highlight). Odin's Terminal Status shows the terminal's real hitbox the same way.")
+        @ConfigOption(name = "Terminal Boxes", desc = "Box the hitbox of each inactive terminal in your P3 section, using the terminal's real hitbox.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 3012)
         public boolean terminalBoxes = false;
@@ -1045,7 +1045,7 @@ public final class FeatureConfigs {
         public boolean relicsGroup = false;
 
         @Expose
-        @ConfigOption(name = "Relic Spawn Timer", desc = "M7: when Necron dies, count down the 61 server ticks until the relics spawn, in your class colour, big in a HUD you can move in /s2 gui (NoammAddons).")
+        @ConfigOption(name = "Relic Spawn Timer", desc = "M7: when Necron dies, count down the 61 server ticks until the relics spawn, in your class colour, big in a HUD you can move in /s2 gui.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 3013)
         public boolean relicSpawnTimer = false;
@@ -1077,12 +1077,12 @@ public final class FeatureConfigs {
         public boolean copy = true;
 
         @Expose
-        @ConfigOption(name = "Copy RNG Drops", desc = "Copy only RNG drops to your clipboard: PRAY TO RNGESUS and RNG METER drops, and slayer, Diana and fishing RNG items (Skyblocker's list). Not needed with Copy Rare Drops on, which copies these too.")
+        @ConfigOption(name = "Copy RNG Drops", desc = "Copy only RNG drops to your clipboard: PRAY TO RNGESUS and RNG METER drops, and slayer, Diana and fishing RNG items. Not needed with Copy Rare Drops on, which copies these too.")
         @ConfigEditorBoolean
         public boolean copyRng = true;
 
         @Expose
-        @ConfigOption(name = "Copy Slayer Drops", desc = "Copy only slayer drops to your clipboard: anything on a slayer's drop list (SkyHanni's slayer profit tracker lists). Not needed with Copy Rare Drops on.")
+        @ConfigOption(name = "Copy Slayer Drops", desc = "Copy only slayer drops to your clipboard: anything on a slayer's drop list. Not needed with Copy Rare Drops on.")
         @ConfigEditorBoolean
         public boolean copySlayer = true;
 
@@ -1092,12 +1092,12 @@ public final class FeatureConfigs {
         public boolean copyGarden = false;
 
         @Expose
-        @ConfigOption(name = "RNG Drop Totem Animation", desc = "Skyblocker's special effect: RNG drops pop up like a Totem of Undying, with particles and a sound, whatever they are worth (no threshold). Plays for slayer, Diana and fishing RNG items, dyes, and every PRAY TO RNGESUS DROP! or RNG METER DROP! chat message (the item you were filling the RNG Meter for), not for every item listed in the RNG Meter menu.")
+        @ConfigOption(name = "RNG Drop Totem Animation", desc = "RNG drops pop up like a Totem of Undying, with particles and a sound, whatever they are worth (no threshold). Plays for slayer, Diana and fishing RNG items, dyes, and every PRAY TO RNGESUS DROP! or RNG METER DROP! chat message (the item you were filling the RNG Meter for), not for every item listed in the RNG Meter menu.")
         @ConfigEditorBoolean
         public boolean totemAnimation = true;
 
         @Expose
-        @ConfigOption(name = "Drop Chat Message", desc = "SkyHanni's drop tracker message: \"+Drop: Gold Bottle Cap (16.1M)\" in chat for every rare drop you get, with the item and what it is worth.")
+        @ConfigOption(name = "Drop Chat Message", desc = "A drop tracker message: \"+Drop: Gold Bottle Cap (16.1M)\" in chat for every rare drop you get, with the item and what it is worth.")
         @ConfigEditorBoolean
         public boolean dropMessage = false;
 
@@ -1256,7 +1256,7 @@ public final class FeatureConfigs {
         public int bossLineWidth = 3;
 
         @Expose
-        @ConfigOption(name = "Laser Warning", desc = "Like SkyHanni: a \"LASERS!\" title when your Voidgloom Seraph starts its laser phase (it sits on an armour stand and spins its beams around).")
+        @ConfigOption(name = "Laser Warning", desc = "A \"LASERS!\" title when your Voidgloom Seraph starts its laser phase (it sits on an armour stand and spins its beams around).")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 703)
         public boolean laserWarning = false;
@@ -1382,7 +1382,7 @@ public final class FeatureConfigs {
 
     public static final class Garden {
         @Expose
-        @ConfigOption(name = "Greenhouse Preview", desc = "Enables /s2 greenhouse paste: copy a layout link from SkyMutations and preview the greenhouse layout (crops and mutation spots) in a screen, like Skyblocker's greenhouse paste. /s2 greenhouse reopens it.")
+        @ConfigOption(name = "Greenhouse Preview", desc = "Enables /s2 greenhouse paste: copy a layout link from SkyMutations and preview the greenhouse layout (crops and mutation spots) in a screen. /s2 greenhouse reopens it.")
         @ConfigEditorBoolean
         public boolean greenhousePreview = true;
 
@@ -1403,17 +1403,17 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Pest Spawn Timer", desc = "SkyHanni's Pest Spawn Timer: time since the last pest, the pest cooldown and cooldown warnings.")
+        @ConfigOption(name = "Pest Spawn Timer", desc = "Time since the last pest, the pest cooldown and cooldown warnings.")
         public PestTimer pestTimer = new PestTimer();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Pest Spawn", desc = "SkyHanni's pest spawn title, chat format and spawn sound.")
+        @ConfigOption(name = "Pest Spawn", desc = "A pest spawn title, chat format and spawn sound.")
         public PestSpawn pestSpawn = new PestSpawn();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Pest Finder", desc = "SkyHanni's Teleport Hotkey and /shtpinfested: warp to the nearest plot with pests on it.")
+        @ConfigOption(name = "Pest Finder", desc = "A Teleport Hotkey and /shtpinfested: warp to the nearest plot with pests on it.")
         public PestFinder pestFinder = new PestFinder();
 
         @Expose
@@ -1589,7 +1589,7 @@ public final class FeatureConfigs {
         public boolean highlightInfestedPlots = false;
 
         @Expose
-        @ConfigOption(name = "Plot Teleport Panel", desc = "In the Garden, show a map of your plots to the right of your inventory, like Skyblocker's Garden Plots widget: click a plot to /plottp to it. Plots with pests are red with their pest count, locked plots grey, and the plot you're in is outlined. Open Configure Plots (/desk) once so plot names and pests are known.")
+        @ConfigOption(name = "Plot Teleport Panel", desc = "In the Garden, show a map of your plots to the right of your inventory: click a plot to /plottp to it. Plots with pests are red with their pest count, locked plots grey, and the plot you're in is outlined. Open Configure Plots (/desk) once so plot names and pests are known.")
         @ConfigEditorBoolean
         public boolean plotPanel = false;
     }
@@ -1787,7 +1787,7 @@ public final class FeatureConfigs {
         public boolean shareCocooned = false;
 
         @Expose
-        @ConfigOption(name = "Tell Party When Killed", desc = "Says so in party chat when a fishing boss kills you, so your party's Sky2M (or Feesh) alerts them to wait for you.")
+        @ConfigOption(name = "Tell Party When Killed", desc = "Says so in party chat when a fishing boss kills you, so your party's Sky2M alerts them to wait for you.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 902)
         public boolean shareDeath = false;
@@ -2011,7 +2011,7 @@ public final class FeatureConfigs {
         public boolean crystalHollowsMap = true;
 
         @Expose
-        @ConfigOption(name = "Crystal Hollows Waypoints", desc = "Mark Mines of Divan, Jungle Temple, Goblin Queen's Den and other places when you find them, like Skyblocker. /s2 crystalwaypoints add|share|remove|clear.")
+        @ConfigOption(name = "Crystal Hollows Waypoints", desc = "Mark Mines of Divan, Jungle Temple, Goblin Queen's Den and other places when you find them. /s2 crystalwaypoints add|share|remove|clear.")
         @ConfigEditorBoolean
         public boolean crystalWaypoints = true;
 
@@ -2026,7 +2026,7 @@ public final class FeatureConfigs {
         public boolean crystalWaypointsNametags = false;
 
         @Expose
-        @ConfigOption(name = "Share Finds In Party Chat", desc = "When you find a place yourself, post it once per lobby in party chat (\"Place: x, y, z\"), which Sky2M and Skyblocker party members turn into waypoints.")
+        @ConfigOption(name = "Share Finds In Party Chat", desc = "When you find a place yourself, post it once per lobby in party chat (\"Place: x, y, z\"), which Sky2M party members (and users of some other mods) turn into waypoints.")
         @ConfigEditorBoolean
         public boolean crystalWaypointsPartyShare = false;
 
@@ -2056,7 +2056,7 @@ public final class FeatureConfigs {
         public boolean pristineRecord = false;
 
         @Expose
-        @ConfigOption(name = "Drill Fuel HUD", desc = "Show your drill's remaining fuel (from SkyblockAddons). Only shown when the drill has its fuel data. Move it in /s2 gui.")
+        @ConfigOption(name = "Drill Fuel HUD", desc = "Show your drill's remaining fuel. Only shown when the drill has its fuel data. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean drillFuelHud = false;
 
@@ -2226,7 +2226,7 @@ public final class FeatureConfigs {
         public boolean useTexturedBar = false;
 
         @Expose
-        @ConfigOption(name = "Chroma", desc = "Use the SBA like chroma effect on the bar.\n§eIf enabled, ignore the Bar Color setting.")
+        @ConfigOption(name = "Chroma", desc = "Use a chroma effect on the bar.\n§eIf enabled, ignore the Bar Color setting.")
         @ConfigEditorBoolean
         public boolean useChroma = false;
 
@@ -2439,7 +2439,7 @@ public final class FeatureConfigs {
         public boolean beaconReadyAlert = false;
 
         @Expose
-        @ConfigOption(name = "Foraging Extras", desc = "Foraging Tracker, Tree Progress, Clean Tree View, tutorial quest helper, Birries and Hideonleaf highlights, Mute Phantoms, coupon profit and the Honeyhive reminder (SkyHanni).")
+        @ConfigOption(name = "Foraging Extras", desc = "Foraging Tracker, Tree Progress, Clean Tree View, tutorial quest helper, Birries and Hideonleaf highlights, Mute Phantoms, coupon profit and the Honeyhive reminder.")
         @Accordion
         public com.epic60869.sky2m.features.foraging.ForagingExtras.Config extras = new com.epic60869.sky2m.features.foraging.ForagingExtras.Config();
     }
@@ -2631,7 +2631,7 @@ public final class FeatureConfigs {
 
     public static final class CaseOpening {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Open Obsidian and Bedrock reward chests like a CS2 case (SkyOcean's Dungeon Gambling): the items spin past and stop on the best one. Esc skips it.")
+        @ConfigOption(name = "Enabled", desc = "Open Obsidian and Bedrock reward chests like a CS2 case: the items spin past and stop on the best one. Esc skips it.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -2668,7 +2668,7 @@ public final class FeatureConfigs {
         public boolean enabled = false;
 
         @Expose
-        @ConfigOption(name = "Map Style", desc = "Which mod's dungeon map to draw: Skyblocker's, Stella's or Devonian's. The Dungeon Sim draws the same style.")
+        @ConfigOption(name = "Map Style", desc = "Which style of dungeon map to draw. Classic: Hypixel's map with room names and player heads. Detailed: small rooms with run info lines below. Minimal: a faint map with no border or info lines. The Dungeon Sim draws the same style.")
         @ConfigEditorDropdown
         public com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyle style = com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyle.SKYBLOCKER;
 
@@ -2698,38 +2698,38 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Water Board", desc = "The water board solver and its previews.")
         @ConfigEditorAccordion(id = 1401)
         public boolean waterBoardGroup = false;
-        @Expose @ConfigOption(name = "Water Board", desc = "Odin: when to flip each lever, with CLICK ME! and countdowns, and a line to the next lever.") @ConfigEditorBoolean @ConfigAccordionId(id = 1401) public boolean waterBoard = false;
-        @Expose @ConfigOption(name = "Water Board Optimized", desc = "Use Odin's faster Water Board solutions.") @ConfigEditorBoolean @ConfigAccordionId(id = 1401) public boolean waterOptimized = false;
-        @Expose @ConfigOption(name = "Water Board Path Preview", desc = "Skyblocker: show where the water will flow on the board right now.") @ConfigEditorBoolean @ConfigAccordionId(id = 1401) public boolean waterPreviewPath = true;
-        @Expose @ConfigOption(name = "Water Board Lever Preview", desc = "Skyblocker: while looking at a lever, show which blocks flipping it adds (green) and removes (red).") @ConfigEditorBoolean @ConfigAccordionId(id = 1401) public boolean waterPreviewLevers = true;
+        @Expose @ConfigOption(name = "Water Board", desc = "When to flip each lever, with CLICK ME! and countdowns, and a line to the next lever.") @ConfigEditorBoolean @ConfigAccordionId(id = 1401) public boolean waterBoard = false;
+        @Expose @ConfigOption(name = "Water Board Optimized", desc = "Use faster Water Board solutions.") @ConfigEditorBoolean @ConfigAccordionId(id = 1401) public boolean waterOptimized = false;
+        @Expose @ConfigOption(name = "Water Board Path Preview", desc = "Show where the water will flow on the board right now.") @ConfigEditorBoolean @ConfigAccordionId(id = 1401) public boolean waterPreviewPath = true;
+        @Expose @ConfigOption(name = "Water Board Lever Preview", desc = "While looking at a lever, show which blocks flipping it adds (green) and removes (red).") @ConfigEditorBoolean @ConfigAccordionId(id = 1401) public boolean waterPreviewLevers = true;
 
         @ConfigOption(name = "Blaze", desc = "The higher or lower blaze solver.")
         @ConfigEditorAccordion(id = 1402)
         public boolean blazeGroup = false;
-        @Expose @ConfigOption(name = "Blaze", desc = "Odin: the next three blazes to shoot (green, orange, white) with lines between them.") @ConfigEditorBoolean @ConfigAccordionId(id = 1402) public boolean blaze = false;
+        @Expose @ConfigOption(name = "Blaze", desc = "The next three blazes to shoot (green, orange, white) with lines between them.") @ConfigEditorBoolean @ConfigAccordionId(id = 1402) public boolean blaze = false;
         @Expose @ConfigOption(name = "Show All Blazes", desc = "Also box every other blaze.") @ConfigEditorBoolean @ConfigAccordionId(id = 1402) public boolean blazeShowAll = false;
 
         @ConfigOption(name = "Boulder", desc = "The boulder solver.")
         @ConfigEditorAccordion(id = 1403)
         public boolean boulderGroup = false;
-        @Expose @ConfigOption(name = "Boulder", desc = "Odin: the boulder to push next. The box clears when you click its button.") @ConfigEditorBoolean @ConfigAccordionId(id = 1403) public boolean boulder = false;
+        @Expose @ConfigOption(name = "Boulder", desc = "The boulder to push next. The box clears when you click its button.") @ConfigEditorBoolean @ConfigAccordionId(id = 1403) public boolean boulder = false;
         @Expose @ConfigOption(name = "Show All Boulder Clicks", desc = "Show every boulder to push instead of only the next one.") @ConfigEditorBoolean @ConfigAccordionId(id = 1403) public boolean boulderShowAll = false;
 
         @ConfigOption(name = "Ice Fill", desc = "The ice fill solver.")
         @ConfigEditorAccordion(id = 1404)
         public boolean iceFillGroup = false;
-        @Expose @ConfigOption(name = "Ice Fill", desc = "Odin: the path over each Ice Fill floor.") @ConfigEditorBoolean @ConfigAccordionId(id = 1404) public boolean iceFill = false;
-        @Expose @ConfigOption(name = "Ice Fill Optimized Patterns", desc = "Use Odin's shorter (harder) Ice Fill paths.") @ConfigEditorBoolean @ConfigAccordionId(id = 1404) public boolean iceFillOptimized = false;
+        @Expose @ConfigOption(name = "Ice Fill", desc = "The path over each Ice Fill floor.") @ConfigEditorBoolean @ConfigAccordionId(id = 1404) public boolean iceFill = false;
+        @Expose @ConfigOption(name = "Ice Fill Optimized Patterns", desc = "Use shorter (harder) Ice Fill paths.") @ConfigEditorBoolean @ConfigAccordionId(id = 1404) public boolean iceFillOptimized = false;
 
         @ConfigOption(name = "Other Puzzles", desc = "Tic Tac Toe, Three Weirdos, Quiz, Creeper Beams, Silverfish and Teleport Maze.")
         @ConfigEditorAccordion(id = 1405)
         public boolean otherPuzzlesGroup = false;
         @Expose @ConfigOption(name = "Tic Tac Toe", desc = "Show the best move.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean ticTacToe = false;
-        @Expose @ConfigOption(name = "Three Weirdos", desc = "Odin: the chest with the reward in green, wrong chests in red.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean threeWeirdos = false;
-        @Expose @ConfigOption(name = "Quiz", desc = "Odin: a box and beam on the right answer.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean trivia = false;
-        @Expose @ConfigOption(name = "Creeper Beams", desc = "Odin: each pair of lanterns to connect in its own colour, with a line between them.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean creeperBeams = false;
+        @Expose @ConfigOption(name = "Three Weirdos", desc = "The chest with the reward in green, wrong chests in red.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean threeWeirdos = false;
+        @Expose @ConfigOption(name = "Quiz", desc = "A box and beam on the right answer.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean trivia = false;
+        @Expose @ConfigOption(name = "Creeper Beams", desc = "Each pair of lanterns to connect in its own colour, with a line between them.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean creeperBeams = false;
         @Expose @ConfigOption(name = "Silverfish", desc = "Show the path.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean silverfish = false;
-        @Expose @ConfigOption(name = "Teleport Maze", desc = "Odin: visited pads in red, the right pad in green (orange while there are several), and a line to the best next pad.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean teleportMaze = false;
+        @Expose @ConfigOption(name = "Teleport Maze", desc = "Visited pads in red, the right pad in green (orange while there are several), and a line to the best next pad.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean teleportMaze = false;
     }
 
     public static final class LividFinder {
@@ -2768,7 +2768,7 @@ public final class FeatureConfigs {
         public Waypoint.Type waypointType = Waypoint.Type.OUTLINE;
 
         @Expose
-        @ConfigOption(name = "Show Routes", desc = "Show a secret route for the current room: yours if you recorded one, otherwise Stella's. Record with /s2 route start and /s2 route stop; share with /s2 export; import a Stella (or SecretRoutes) export with /s2 route import (clipboard) or /s2 route import <file>.")
+        @ConfigOption(name = "Show Routes", desc = "Show a secret route for the current room: yours if you recorded one, otherwise a bundled one. Record with /s2 route start and /s2 route stop; share with /s2 export; import a route export with /s2 route import (clipboard) or /s2 route import <file>.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1501)
         public boolean routes = true;
@@ -2778,13 +2778,13 @@ public final class FeatureConfigs {
         public boolean secretsDisplayGroup = false;
 
         @Expose
-        @ConfigOption(name = "Secrets Display", desc = "SkyblockAddons' Secrets Display: how many of the room's secrets you've found (2/5), with a chest icon, going from red to green. Move it in /s2 gui.")
+        @ConfigOption(name = "Secrets Display", desc = "How many of the room's secrets you've found (2/5), with a chest icon, going from red to green. Move it in /s2 gui.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1502)
         public boolean secretsDisplay = true;
 
         @Expose
-        @ConfigOption(name = "Hide Secrets In Action Bar", desc = "While the Secrets Display is on, take \"2/5 Secrets\" out of the action bar, like SkyblockAddons.")
+        @ConfigOption(name = "Hide Secrets In Action Bar", desc = "While the Secrets Display is on, take \"2/5 Secrets\" out of the action bar.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1502)
         public boolean hideSecretsInActionBar = true;
@@ -2794,7 +2794,7 @@ public final class FeatureConfigs {
         public boolean secretBoxesGroup = false;
 
         @Expose
-        @ConfigOption(name = "Secret Boxes", desc = "Odin's Secret Boxes: a highlight box on each secret you get for a few seconds (red when the chest is locked).")
+        @ConfigOption(name = "Secret Boxes", desc = "A highlight box on each secret you get for a few seconds (red when the chest is locked).")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1503)
         public boolean secretBoxes = true;
@@ -2840,13 +2840,13 @@ public final class FeatureConfigs {
         public boolean secretChimeGroup = false;
 
         @Expose
-        @ConfigOption(name = "Secret Chime", desc = "Odin's Secret Chime: a sound when you get a secret (a chest, lever, wither essence or redstone key, a dungeon item picked up, or a secret bat killed).")
+        @ConfigOption(name = "Secret Chime", desc = "A sound when you get a secret (a chest, lever, wither essence or redstone key, a dungeon item picked up, or a secret bat killed).")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1504)
         public boolean secretChime = true;
 
         @Expose
-        @ConfigOption(name = "Chime Sound", desc = "The sound's id, like Odin's default entity.blaze.hurt, or entity.experience_orb.pickup, block.note_block.pling...")
+        @ConfigOption(name = "Chime Sound", desc = "The sound's id, like the default entity.blaze.hurt, or entity.experience_orb.pickup, block.note_block.pling...")
         @ConfigEditorText
         @ConfigAccordionId(id = 1504)
         public String secretChimeSound = "entity.blaze.hurt";
@@ -2901,7 +2901,7 @@ public final class FeatureConfigs {
         public boolean roomClearAlertGroup = false;
 
         @Expose
-        @ConfigOption(name = "Room Clear Alert", desc = "Odin's Room Clear: a title and a ding when the room you're in is cleared (white checkmark, \"Room Cleared!\") or has all its secrets done (green checkmark, \"Room Complete!\"). Not for the entrance or fairy room.")
+        @ConfigOption(name = "Room Clear Alert", desc = "A title and a ding when the room you're in is cleared (white checkmark, \"Room Cleared!\") or has all its secrets done (green checkmark, \"Room Complete!\"). Not for the entrance or fairy room.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1506)
         public boolean roomClearAlert = true;
@@ -2997,7 +2997,7 @@ public final class FeatureConfigs {
     }
 
     public enum TerminalStyle {
-        ODIN("Odin"), NOAMM("Noamm");
+        ODIN("Overlay"), NOAMM("Centred Panel");
 
         private final String label;
 
@@ -3028,21 +3028,21 @@ public final class FeatureConfigs {
 
     public static final class Terminals {
         @Expose @ConfigOption(name = "Terminal Solver Enabled", desc = "Solve the F7/M7 terminals (Correct all the panes, Change all to same color, Click in order, What starts with, Select all). Off: terminals look and work like normal.") @ConfigEditorBoolean public boolean enabled = true;
-        @Expose @ConfigOption(name = "Terminal Solver", desc = "Which terminal solver to use. Odin: covers the terminal and shows what to click. NoammAddons: its big centred panel with the terminal's name, slot styles and colours.") @ConfigEditorDropdown public TerminalStyle solverStyle = TerminalStyle.NOAMM;
-        @Expose @ConfigOption(name = "NoammAddons: Scale", desc = "Size of the NoammAddons terminal panel.") @ConfigEditorSlider(minValue = 0.3f, maxValue = 2f, minStep = 0.05f) public float noammScale = 1f;
-        @Expose @ConfigOption(name = "NoammAddons: Slot Style", desc = "How solution slots are drawn in the NoammAddons panel.") @ConfigEditorDropdown public NoammSlotStyle noammSlotStyle = NoammSlotStyle.RECT;
-        @Expose @ConfigOption(name = "NoammAddons: Show Numbers", desc = "Show the number on each slot in Click in order!") @ConfigEditorBoolean public boolean noammShowNumbers = false;
+        @Expose @ConfigOption(name = "Terminal Solver", desc = "Which terminal solver to use. Overlay: covers the terminal and shows what to click. Centred Panel: a big centred panel with the terminal's name, slot styles and colours.") @ConfigEditorDropdown public TerminalStyle solverStyle = TerminalStyle.NOAMM;
+        @Expose @ConfigOption(name = "Centred Panel: Scale", desc = "Size of the centred terminal panel.") @ConfigEditorSlider(minValue = 0.3f, maxValue = 2f, minStep = 0.05f) public float noammScale = 1f;
+        @Expose @ConfigOption(name = "Centred Panel: Slot Style", desc = "How solution slots are drawn in the centred panel.") @ConfigEditorDropdown public NoammSlotStyle noammSlotStyle = NoammSlotStyle.RECT;
+        @Expose @ConfigOption(name = "Centred Panel: Show Numbers", desc = "Show the number on each slot in Click in order!") @ConfigEditorBoolean public boolean noammShowNumbers = false;
         @Expose @ConfigOption(name = "Block Misclicks", desc = "In terminals, ignore clicks on slots that aren't part of the solution (and wrong-button rubix clicks).") @ConfigEditorBoolean public boolean blockMisclicks = true;
         @Expose @ConfigOption(name = "Client Prediction", desc = "Update the solution as soon as you click instead of waiting for the server.") @ConfigEditorBoolean public boolean clickPrediction = true;
         @Expose @ConfigOption(name = "Resolve Timeout (ms)", desc = "How long a predicted click waits for the server before the terminal is re-read.") @ConfigEditorSlider(minValue = 300, maxValue = 1200, minStep = 10) public int resolveTimeout = 600;
-        @Expose @ConfigOption(name = "First Click Protection (ms)", desc = "Clicks this soon after a terminal opens are ignored (Odin recommends 500 minus your ping).") @ConfigEditorSlider(minValue = 350, maxValue = 800, minStep = 10) public int firstClickProt = 500;
+        @Expose @ConfigOption(name = "First Click Protection (ms)", desc = "Clicks this soon after a terminal opens are ignored (500 minus your ping is recommended).") @ConfigEditorSlider(minValue = 350, maxValue = 800, minStep = 10) public int firstClickProt = 500;
         @Expose @ConfigOption(name = "Account For Server Lag", desc = "Also block clicks until the terminal has been open for the ticks below.") @ConfigEditorBoolean public boolean lagProtection = false;
         @Expose @ConfigOption(name = "Lag Protection Ticks", desc = "Server ticks (50ms each) before clicks go through.") @ConfigEditorSlider(minValue = 7, maxValue = 16, minStep = 1) public int lagProtectionTicks = 8;
         @Expose @ConfigOption(name = "Rubix Left Clicks Only", desc = "Only use left clicks for the rubix terminal instead of the fewest clicks.") @ConfigEditorBoolean public boolean rubixLeftClicksOnly = false;
         @Expose @ConfigOption(name = "Melody Solver", desc = "Show the melody solver.") @ConfigEditorBoolean public boolean melodySolver = false;
-        @Expose @ConfigOption(name = "Terminal Click Sound", desc = "Play a sound when you click a right slot in a terminal, and mute Hypixel's terminal click sound (Odin's Terminal Sounds).") @ConfigEditorBoolean public boolean clickSound = false;
+        @Expose @ConfigOption(name = "Terminal Click Sound", desc = "Play a sound when you click a right slot in a terminal, and mute Hypixel's terminal click sound.") @ConfigEditorBoolean public boolean clickSound = false;
         @Expose @ConfigOption(name = "Terminal Complete Sound", desc = "Play a sound when you finish a terminal.") @ConfigEditorBoolean public boolean completeSound = false;
-        @Expose @ConfigOption(name = "Odin Device Solvers", desc = "Odin's Simon Says, Arrow Align and Sharp Shooter (i4) solvers. Off: Skyblocker's. Set this to false if you want the NoammAddons path.") @ConfigEditorBoolean public boolean odinDevices = false;
+        @Expose @ConfigOption(name = "Alternate Device Solvers", desc = "Use the alternate Simon Says, Arrow Align and Sharp Shooter (i4) solvers. Off: the default solvers and paths.") @ConfigEditorBoolean public boolean odinDevices = false;
         @Expose @ConfigOption(name = "SS Block Wrong Clicks", desc = "Simon Says: ignore clicks on any button but the next one. Hold shift to click anyway.") @ConfigEditorBoolean public boolean ssBlockWrong = true;
         @Expose @ConfigOption(name = "SS Announce Progress", desc = "Send \"SS n/4\" to party chat when you click the last button of a round.") @ConfigEditorBoolean public boolean ssAnnounce = false;
         @Expose @ConfigOption(name = "SS First", desc = "") @ConfigEditorColour public String ssFirstColor = "0:128:85:255:85";
@@ -3064,7 +3064,7 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Select", desc = "") @ConfigEditorColour public String selectColor = "0:255:85:255:85";
         @Expose @ConfigOption(name = "Melody Column", desc = "") @ConfigEditorColour public String melodyColumnColor = "0:255:170:0:170";
         @Expose @ConfigOption(name = "Melody Pointer", desc = "") @ConfigEditorColour public String melodyPointerColor = "0:255:85:255:85";
-        @Expose @ConfigOption(name = "Melody Background", desc = "The Melody lanes and buttons that aren't lit (Odin style).") @ConfigEditorColour public String melodyBackgroundColor = "0:255:38:38:38";
+        @Expose @ConfigOption(name = "Melody Background", desc = "The Melody lanes and buttons that aren't lit.") @ConfigEditorColour public String melodyBackgroundColor = "0:255:38:38:38";
         @Expose @ConfigOption(name = "Simon Says", desc = "Highlight the buttons to press.") @ConfigEditorBoolean public boolean simonSays = false;
         @Expose @ConfigOption(name = "Lights On", desc = "Highlight the levers to flip.") @ConfigEditorBoolean public boolean lightsOn = false;
         @Expose @ConfigOption(name = "Arrow Align", desc = "Show how many clicks each frame needs.") @ConfigEditorBoolean public boolean arrowAlign = false;
@@ -3125,24 +3125,24 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Run History", desc = "Save every dungeon run and see them with /s2 runs, with personal bests per floor (Killer560's).")
+        @ConfigOption(name = "Run History", desc = "Save every dungeon run and see them with /s2 runs, with personal bests per floor.")
         public RunHistory runHistory = new RunHistory();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Terminal Timers", desc = "F7/M7 P3 terminal, device, section and phase times in chat and a HUD (Killer560's, from Odin).")
+        @ConfigOption(name = "Terminal Timers", desc = "F7/M7 P3 terminal, device, section and phase times in chat and a HUD.")
         public TerminalTimers terminalTimers = new TerminalTimers();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Rag Axe", desc = "Ragnarock Axe cast, buff and cooldown timers, and \"rag now\" prompts in boss fights (Killer560's).")
+        @ConfigOption(name = "Rag Axe", desc = "Ragnarock Axe cast, buff and cooldown timers, and \"rag now\" prompts in boss fights.")
         public RagAxe ragAxe = new RagAxe();
 
         @ConfigOption(name = "Splits", desc = "Run splits and their messages.")
         @ConfigEditorAccordion(id = 1701)
         public boolean splitsGroup = false;
         @Expose
-        @ConfigOption(name = "Splits", desc = "Odin-style split HUD (Blood Open, Blood Clear, Portal Entry, each boss phase, Total) with personal bests per floor and a chat message after each split.")
+        @ConfigOption(name = "Splits", desc = "A split HUD (Blood Open, Blood Clear, Portal Entry, each boss phase, Total) with personal bests per floor and a chat message after each split.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1701)
         public boolean splits = false;
@@ -3182,25 +3182,25 @@ public final class FeatureConfigs {
         public boolean tickTimers = false;
 
         @Expose
-        @ConfigOption(name = "Maxor Start", desc = "Tick Timers: count down the 83 server ticks from Maxor's first line until the fight starts (NoammAddons).")
+        @ConfigOption(name = "Maxor Start", desc = "Tick Timers: count down the 83 server ticks from Maxor's first line until the fight starts.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1702)
         public boolean maxorStart = true;
 
         @Expose
-        @ConfigOption(name = "Storm Lightning", desc = "Tick Timers: count down the 520 server ticks from Storm's first line until his lightning (Odin).")
+        @ConfigOption(name = "Storm Lightning", desc = "Tick Timers: count down the 520 server ticks from Storm's first line until his lightning.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1702)
         public boolean stormLightning = true;
 
         @Expose
-        @ConfigOption(name = "Goldor Start", desc = "Tick Timers: count down the 64 server ticks from Storm's death until terminals and devices can be done (Odin's Start timer).")
+        @ConfigOption(name = "Goldor Start", desc = "Tick Timers: count down the 64 server ticks from Storm's death until terminals and devices can be done.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1702)
         public boolean goldorStart = true;
 
         @Expose
-        @ConfigOption(name = "Storm PY Timer", desc = "Odin's Storm PY HUD: when Storm calls his lightning (\"ENERGY HEED MY CALL!\" / \"THUNDER LET ME BE YOUR CATALYST!\"), counts down 55 ticks to when to crush him under the purple pillar. Move it in /s2 gui.")
+        @ConfigOption(name = "Storm PY Timer", desc = "A Storm PY HUD: when Storm calls his lightning (\"ENERGY HEED MY CALL!\" / \"THUNDER LET ME BE YOUR CATALYST!\"), counts down 55 ticks to when to crush him under the purple pillar. Move it in /s2 gui.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1702)
         public boolean pyTimer = false;
@@ -3284,13 +3284,13 @@ public final class FeatureConfigs {
         public boolean scoreDisplayGroup = false;
 
         @Expose
-        @ConfigOption(name = "Score Display", desc = "NoammAddons' score HUD: the estimated score, coloured red below 270, yellow below 300 and green at 300.")
+        @ConfigOption(name = "Score Display", desc = "A score HUD: the estimated score, coloured red below 270, yellow below 300 and green at 300.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1801)
         public boolean display = false;
 
         @Expose
-        @ConfigOption(name = "Detailed Score Display", desc = "Also show secrets, crypts, deaths and mimic/prince under the score, like the info under NoammAddons' map.")
+        @ConfigOption(name = "Detailed Score Display", desc = "Also show secrets, crypts, deaths and mimic/prince under the score.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1801)
         public boolean detailed = false;
@@ -3317,7 +3317,7 @@ public final class FeatureConfigs {
         public boolean alert300 = false;
 
         @Expose
-        @ConfigOption(name = "Score Time Message", desc = "Like NoammAddons: a chat message when the run reaches 270 and 300 score, with how long it took and the floor (\"300 score reached in 6m 12s || M7.\"). Only you see it.")
+        @ConfigOption(name = "Score Time Message", desc = "A chat message when the run reaches 270 and 300 score, with how long it took and the floor (\"300 score reached in 6m 12s || M7.\"). Only you see it.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1802)
         public boolean timeMessage = false;
@@ -3355,19 +3355,19 @@ public final class FeatureConfigs {
         public boolean bonusMessagesGroup = false;
 
         @Expose
-        @ConfigOption(name = "Mimic Message", desc = "Skyblocker's: say \"Mimic dead!\" in party chat when the Mimic dies near you, so everyone's score counts it. Only once a run, and not if a teammate already said it.")
+        @ConfigOption(name = "Mimic Message", desc = "Say \"Mimic dead!\" in party chat when the Mimic dies near you, so everyone's score counts it. Only once a run, and not if a teammate already said it.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1804)
         public boolean mimicMessage = false;
 
         @Expose
-        @ConfigOption(name = "Prince Message", desc = "Skyblocker's: say \"Prince dead!\" in party chat when you kill a Prince (Hypixel's \"A Prince falls. +1 Bonus Score\"). Only the first one, and not if a teammate already said it.")
+        @ConfigOption(name = "Prince Message", desc = "Say \"Prince dead!\" in party chat when you kill a Prince (Hypixel's \"A Prince falls. +1 Bonus Score\"). Only the first one, and not if a teammate already said it.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1804)
         public boolean princeMessage = false;
 
         @Expose
-        @ConfigOption(name = "Bat Message", desc = "Skyblocker's: say \"Bat dead!\" in party chat on the first bonus score bat of the run (\"A Bat has been slain. +1 Bonus Score\"), unless a teammate already said it.")
+        @ConfigOption(name = "Bat Message", desc = "Say \"Bat dead!\" in party chat on the first bonus score bat of the run (\"A Bat has been slain. +1 Bonus Score\"), unless a teammate already said it.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1804)
         public boolean batMessage = false;
@@ -3379,7 +3379,7 @@ public final class FeatureConfigs {
         public boolean killTitles = false;
 
         @Expose
-        @ConfigOption(name = "Crypts Message", desc = "Skyblocker's: once the score reaches the threshold below with fewer than 5 crypts, tell your party how many crypts there are, once a run.")
+        @ConfigOption(name = "Crypts Message", desc = "Once the score reaches the threshold below with fewer than 5 crypts, tell your party how many crypts there are, once a run.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1804)
         public boolean cryptsMessage = false;
@@ -3498,7 +3498,7 @@ public final class FeatureConfigs {
         public boolean killTitle = true;
 
         @Expose
-        @ConfigOption(name = "Mob Kill Timers", desc = "Box where each blood mob will land, with a countdown until it spawns, coloured by Beam Time (red when to shoot, aqua once spawned). Like Odin, only heads the Watcher throws are tracked, not the heads on the walls.")
+        @ConfigOption(name = "Mob Kill Timers", desc = "Box where each blood mob will land, with a countdown until it spawns, coloured by Beam Time (red when to shoot, aqua once spawned). Only heads the Watcher throws are tracked, not the heads on the walls.")
         @ConfigEditorBoolean
         public boolean killTimers = true;
 
@@ -3533,7 +3533,7 @@ public final class FeatureConfigs {
         public boolean timeLeft = true;
 
         @Expose
-        @ConfigOption(name = "Beam Time (s)", desc = "When to shoot (your Mage beam) before the mob spawns, like Odin and NoammAddons. The countdown goes green, yellow, then gold, and turns red at this time until the mob spawns (aqua once it has).")
+        @ConfigOption(name = "Beam Time (s)", desc = "When to shoot (your Mage beam) before the mob spawns. The countdown goes green, yellow, then gold, and turns red at this time until the mob spawns (aqua once it has).")
         @ConfigEditorSlider(minValue = 0f, maxValue = 1f, minStep = 0.05f)
         public float beamTime = 0.2f;
 
@@ -3659,12 +3659,12 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Tracer", desc = "Line to your priority spawning dragon.") @ConfigEditorBoolean public boolean tracers = false;
         @Expose @ConfigOption(name = "Stack Waypoints", desc = "Where to stack while a dragon spawns. Simple: one box on the spawn point. Advanced: boxes the shape of the dragon.") @ConfigEditorDropdown public DragonWaypoints waypoints = DragonWaypoints.OFF;
         @Expose @ConfigOption(name = "Dragon Health", desc = "Each alive dragon's health on it.") @ConfigEditorBoolean public boolean health = false;
-        @Expose @ConfigOption(name = "Relic Place Timer", desc = "Once all five relics are placed, a chat line per relic with who placed it and how long after the Wither King appeared, with your PB for your relic (NoammAddons' Place Timer).") @ConfigEditorBoolean public boolean relicTimer = false;
+        @Expose @ConfigOption(name = "Relic Place Timer", desc = "Once all five relics are placed, a chat line per relic with who placed it and how long after the Wither King appeared, with your PB for your relic.") @ConfigEditorBoolean public boolean relicTimer = false;
         @Expose @ConfigOption(name = "Ice Spray Tracker", desc = "Chat line with how many ticks after spawning each dragon was Ice Sprayed.") @ConfigEditorBoolean public boolean trackIceSpray = false;
-        @Expose @ConfigOption(name = "Relic Beacon", desc = "While you hold a relic, a beacon beam in the relic's colour on the cauldron it goes in (Odin's King Relic).") @ConfigEditorBoolean public boolean relicBeacon = false;
-        @Expose @ConfigOption(name = "Relic Tracer", desc = "While you hold a relic, a line to the cauldron it goes in (NoammAddons' Box Relics).") @ConfigEditorBoolean public boolean relicTracer = false;
-        @Expose @ConfigOption(name = "Arrow Stack Indicator", desc = "While a dragon spawns, a marker where to aim so your arrows land on its stack spot, allowing for the arrows' drop over the distance (NoammAddons).") @ConfigEditorBoolean public boolean arrowStack = false;
-        @Expose @ConfigOption(name = "Arrows Hit", desc = "When your priority dragon dies, a chat line with how many of your arrows hit it in its skip window (NoammAddons' Send Arrows Hit).") @ConfigEditorBoolean public boolean arrowsHit = false;
+        @Expose @ConfigOption(name = "Relic Beacon", desc = "While you hold a relic, a beacon beam in the relic's colour on the cauldron it goes in.") @ConfigEditorBoolean public boolean relicBeacon = false;
+        @Expose @ConfigOption(name = "Relic Tracer", desc = "While you hold a relic, a line to the cauldron it goes in.") @ConfigEditorBoolean public boolean relicTracer = false;
+        @Expose @ConfigOption(name = "Arrow Stack Indicator", desc = "While a dragon spawns, a marker where to aim so your arrows land on its stack spot, allowing for the arrows' drop over the distance.") @ConfigEditorBoolean public boolean arrowStack = false;
+        @Expose @ConfigOption(name = "Arrows Hit", desc = "When your priority dragon dies, a chat line with how many of your arrows hit it in its skip window.") @ConfigEditorBoolean public boolean arrowsHit = false;
     }
 
     public enum DragonSoloPriority {
@@ -3700,7 +3700,7 @@ public final class FeatureConfigs {
     /** NoFrills' Egg Hits Display. */
     public static final class EggHitsDisplay {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "While you fight a Tarantula Broodfather, show how many hits each egg sack still needs, big on the egg (NoFrills' Egg Hits Display).")
+        @ConfigOption(name = "Enabled", desc = "While you fight a Tarantula Broodfather, show how many hits each egg sack still needs, big on the egg.")
         @ConfigEditorBoolean
         public boolean enabled = true;
 
@@ -3715,7 +3715,7 @@ public final class FeatureConfigs {
     /** Skysoft's Slayer Target Highlighting. */
     public static final class SlayerTargetHighlight {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Box your slayer boss and the minibosses you spawned while you can see them, not through walls (Skysoft's Slayer Target Highlighting).")
+        @ConfigOption(name = "Enabled", desc = "Box your slayer boss and the minibosses you spawned while you can see them, not through walls.")
         @ConfigEditorBoolean
         public boolean enabled = true;
 
@@ -3724,7 +3724,7 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Target Line", desc = "Draw a line to your boss, or the closest miniboss.") @ConfigEditorBoolean public boolean targetLine = true;
 
         @Expose
-        @ConfigOption(name = "Style", desc = "Box: a box around them. Outline: a glowing outline, like Skysoft's.")
+        @ConfigOption(name = "Style", desc = "Box: a box around them. Outline: a glowing outline.")
         @ConfigEditorDropdown
         public com.epic60869.sky2m.features.slayer.SlayerTargetHighlight.Style style = com.epic60869.sky2m.features.slayer.SlayerTargetHighlight.Style.BOX;
 
@@ -3735,7 +3735,7 @@ public final class FeatureConfigs {
     /** Odin's Etherwarp overlay. */
     public static final class EtherwarpOverlay {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "While you sneak with an etherwarp item, show where you'd teleport to (Odin's Etherwarp).")
+        @ConfigOption(name = "Enabled", desc = "While you sneak with an etherwarp item, show where you'd teleport to.")
         @ConfigEditorBoolean
         public boolean enabled = true;
 
@@ -4177,12 +4177,12 @@ public final class FeatureConfigs {
         @ConfigEditorAccordion(id = 3007)
         public boolean importExportGroup = false;
 
-        @ConfigOption(name = "Import From Clipboard", desc = "Copy a crosshair code, then click this. Works with Valorant codes (0;P;c;5;...), CS2 share codes (CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx), Sky2M and Killer560's Mod codes (KXH1-...), and the path or name of a PNG (it's copied into the crosshairs folder and used as an Image crosshair).")
+        @ConfigOption(name = "Import From Clipboard", desc = "Copy a crosshair code, then click this. Works with Valorant codes (0;P;c;5;...), CS2 share codes (CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx), Sky2M codes (KXH1-...), and the path or name of a PNG (it's copied into the crosshairs folder and used as an Image crosshair).")
         @ConfigEditorButton(buttonText = "IMPORT")
         @ConfigAccordionId(id = 3007)
         public Runnable importCode = com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair::importFromClipboard;
 
-        @ConfigOption(name = "Export To Clipboard", desc = "Copy your crosshair as a code (KXH1-...) to share. Anyone with Sky2M or Killer560's Mod can import it.")
+        @ConfigOption(name = "Export To Clipboard", desc = "Copy your crosshair as a code (KXH1-...) to share. Anyone with Sky2M can import it.")
         @ConfigEditorButton(buttonText = "EXPORT")
         @ConfigAccordionId(id = 3007)
         public Runnable exportCode = com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair::exportToClipboard;
@@ -4398,7 +4398,7 @@ public final class FeatureConfigs {
         public ItemPickupLogValue coinValue = new ItemPickupLogValue();
 
         @Expose
-        @ConfigOption(name = "Alignment", desc = "How the log is aligned at its position, like SkyHanni: Top grows downwards, Bottom grows upwards, Center both ways.")
+        @ConfigOption(name = "Alignment", desc = "How the log is aligned at its position: Top grows downwards, Bottom grows upwards, Center both ways.")
         @ConfigEditorDropdown
         public Alignment alignment = Alignment.TOP;
 
@@ -4546,17 +4546,17 @@ public final class FeatureConfigs {
     /** The Profile Viewer (/s2 pv), in NEU's layout. */
     public static final class ProfileViewer {
         @Expose
-        @ConfigOption(name = "Use /pv", desc = "/pv opens Sky2M's Profile Viewer too, not just /s2 pv. Turn it off if you'd rather NEU or SBPV had /pv. Takes effect when you next join a server.")
+        @ConfigOption(name = "Use /pv", desc = "/pv opens Sky2M's Profile Viewer too, not just /s2 pv. Turn it off if you'd rather another mod had /pv. Takes effect when you next join a server.")
         @ConfigEditorBoolean
         public boolean pvCommand = true;
 
         @Expose
-        @ConfigOption(name = "Profile API", desc = "Where profiles are loaded from, for the Profile Viewer and Party Finder Stats: a public proxy of Hypixel's API, since Sky2M has no API key. Default: Odin's, https://api.odtheking.com/hypixel/")
+        @ConfigOption(name = "Profile API", desc = "Where profiles are loaded from, for the Profile Viewer and Party Finder Stats: a public proxy of Hypixel's API, since Sky2M has no API key. Default: https://api.odtheking.com/hypixel/")
         @ConfigEditorText
         public String apiUrl = com.epic60869.sky2m.features.profileviewer.ProfileApi.DEFAULT_URL;
 
         @Expose
-        @ConfigOption(name = "Overflow Levels", desc = "Show levels past Hypixel's maximum, like SkyHanni: skills (the normal levels up to 60, then 7.6M XP for 61 and more for each after), Catacombs and classes past 50 (200M XP each), the garden level past its max (10,000 garden XP each) and crop milestones past their max (each needing as many crops as the last). Off: everything stops at Hypixel's max. Skill Average always uses the capped levels.")
+        @ConfigOption(name = "Overflow Levels", desc = "Show levels past Hypixel's maximum: skills (the normal levels up to 60, then 7.6M XP for 61 and more for each after), Catacombs and classes past 50 (200M XP each), the garden level past its max (10,000 garden XP each) and crop milestones past their max (each needing as many crops as the last). Off: everything stops at Hypixel's max. Skill Average always uses the capped levels.")
         @ConfigEditorBoolean
         public boolean overflowLevels = true;
     }
@@ -4564,7 +4564,7 @@ public final class FeatureConfigs {
     /** Skysoft's Keep Terrain Loaded. */
     public static final class KeepTerrainLoaded {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "On SkyBlock islands, keep terrain you've visited loaded out to your render distance, past Hypixel's view distance, and remember it on disk for next time (Skysoft's). Not in dungeons or Kuudra. Off when Bobby is installed.")
+        @ConfigOption(name = "Enabled", desc = "On SkyBlock islands, keep terrain you've visited loaded out to your render distance, past Hypixel's view distance, and remember it on disk for next time. Not in dungeons or Kuudra. Off when Bobby is installed.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -4849,14 +4849,14 @@ public final class FeatureConfigs {
 
     public static final class ServerInfoDisplay {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Show your FPS, the server's TPS, your ping and the time on a HUD (Skysoft's Server Info and Real Time Displays). Move it in /s2 gui.")
+        @ConfigOption(name = "Enabled", desc = "Show your FPS, the server's TPS, your ping and the time on a HUD. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
         @Expose @ConfigOption(name = "Show FPS", desc = "Frames per second.") @ConfigEditorBoolean public boolean showFps = true;
         @Expose @ConfigOption(name = "Show TPS", desc = "The server's ticks per second, from how fast its clock moves.") @ConfigEditorBoolean public boolean showTps = true;
         @Expose @ConfigOption(name = "Show Ping", desc = "Your ping, measured once a second.") @ConfigEditorBoolean public boolean showPing = true;
-        @Expose @ConfigOption(name = "Show Time", desc = "Your computer's clock (Skysoft's Real Time Display).") @ConfigEditorBoolean public boolean showTime = true;
+        @Expose @ConfigOption(name = "Show Time", desc = "Your computer's clock.") @ConfigEditorBoolean public boolean showTime = true;
 
         @Expose
         @ConfigOption(name = "Time Format", desc = "12-hour or 24-hour time, with optional seconds.")
@@ -4901,24 +4901,24 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "!promote / !demote", desc = "Promotes or demotes the player who asked, or the player named after it (!promote Name).") @ConfigEditorBoolean public boolean promote = false;
         @Expose @ConfigOption(name = "!kick", desc = "Kicks the player named after it (!kick Name). The name can be just the start of it: !kick nix kicks NixJussid. Never kicks you.") @ConfigEditorBoolean public boolean kick = true;
 
-        @Expose @ConfigOption(name = "!f1 - !f7", desc = "Joins that Catacombs floor (Odin's queue commands). Only while you're leader.") @ConfigEditorBoolean public boolean floors = true;
+        @Expose @ConfigOption(name = "!f1 - !f7", desc = "Joins that Catacombs floor. Only while you're leader.") @ConfigEditorBoolean public boolean floors = true;
         @Expose @ConfigOption(name = "!m1 - !m7", desc = "Joins that Master Mode floor. Only while you're leader.") @ConfigEditorBoolean public boolean masterFloors = true;
         @Expose @ConfigOption(name = "!t1 - !t5", desc = "Joins that Kuudra tier (Basic, Hot, Burning, Fiery, Infernal). Only while you're leader.") @ConfigEditorBoolean public boolean kuudra = true;
-        @Expose @ConfigOption(name = "!fps", desc = "Says your FPS in party chat (Odin's). Works whoever is leader.") @ConfigEditorBoolean public boolean fps = true;
+        @Expose @ConfigOption(name = "!fps", desc = "Says your FPS in party chat. Works whoever is leader.") @ConfigEditorBoolean public boolean fps = true;
         @Expose @ConfigOption(name = "!ping", desc = "Says your ping in party chat. Works whoever is leader.") @ConfigEditorBoolean public boolean ping = true;
         @Expose @ConfigOption(name = "!tps", desc = "Says the server's TPS in party chat. Works whoever is leader.") @ConfigEditorBoolean public boolean tps = true;
-        @Expose @ConfigOption(name = "!carrot", desc = "SBO's Ask Carrot: a magic 8-ball answer in party chat.") @ConfigEditorBoolean public boolean carrot = false;
+        @Expose @ConfigOption(name = "!carrot", desc = "A magic 8-ball answer in party chat.") @ConfigEditorBoolean public boolean carrot = false;
         @Expose @ConfigOption(name = "!time", desc = "Says your time in party chat.") @ConfigEditorBoolean public boolean time = false;
 
         @Expose
-        @ConfigOption(name = "Diana Commands", desc = "SBO's Diana party commands, answered from this season's Diana trackers: !chim, !chimls, !inq, !king, !manti, !sphinx, !relic, !stick, !core, !wool, !food, !stinger, !feathers, !mobs, !burrows, !profit, !playtime, !mf, !stats <you>, !help and !since <chim|inq|relic|stick|king|manti|core|wool|food|...>.")
+        @ConfigOption(name = "Diana Commands", desc = "Diana party commands, answered from this season's Diana trackers: !chim, !chimls, !inq, !king, !manti, !sphinx, !relic, !stick, !core, !wool, !food, !stinger, !feathers, !mobs, !burrows, !profit, !playtime, !mf, !stats <you>, !help and !since <chim|inq|relic|stick|king|manti|core|wool|food|...>.")
         @ConfigEditorBoolean
         public boolean diana = false;
     }
 
     public static final class SacksValue {
         @Expose
-        @ConfigOption(name = "Sacks Value", desc = "Show what everything in your sacks is worth and how many items are in them on a HUD (SkyHanni's Sack Display value). Open your sacks once to fill it; after that it follows the [Sacks] messages and your bazaar insta-sells, so you don't have to reopen them. /s2 resetsacks forgets it. Move it in /s2 gui.")
+        @ConfigOption(name = "Sacks Value", desc = "Show what everything in your sacks is worth and how many items are in them on a HUD. Open your sacks once to fill it; after that it follows the [Sacks] messages and your bazaar insta-sells, so you don't have to reopen them. /s2 resetsacks forgets it. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -5061,7 +5061,7 @@ public final class FeatureConfigs {
         }
 
         @Expose
-        @ConfigOption(name = "Enabled", desc = "A panel of every SkyBlock item, attribute, enchantment, mob, NPC, pet, potion and rune beside your inventory and SkyBlock menus, like SkyBlock Item List. Click an item for its recipes (crafting, Forge, Kat, NPC shops, mob drops), search, type sums in the search bar, and double-click the search bar to highlight matching items in the menu you have open. Items come from the NotEnoughUpdates repo (about 22 MB, downloaded once).")
+        @ConfigOption(name = "Enabled", desc = "A panel of every SkyBlock item, attribute, enchantment, mob, NPC, pet, potion and rune beside your inventory and SkyBlock menus. Click an item for its recipes (crafting, Forge, Kat, NPC shops, mob drops), search, type sums in the search bar, and double-click the search bar to highlight matching items in the menu you have open. Items come from a community item repo (about 22 MB, downloaded once).")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -5282,7 +5282,7 @@ public final class FeatureConfigs {
     /** Rag Axe timer (Killer560's): Ragnarock Axe cast, buff and cooldown timers and "rag now" prompts. */
     public static final class RagAxe {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Spots your Ragnarock Axe casts (by the ability's sound while you hold the axe, like Odin) and times the 3s channel, the 10s Strength buff and the cooldown, in a HUD you can move in /s2 gui. Also \"rag now\" prompts in boss fights, below.")
+        @ConfigOption(name = "Enabled", desc = "Spots your Ragnarock Axe casts (by the ability's sound while you hold the axe) and times the 3s channel, the 10s Strength buff and the cooldown, in a HUD you can move in /s2 gui. Also \"rag now\" prompts in boss fights, below.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -5363,7 +5363,7 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "M7 Wither King Line", desc = "When the Wither King says \"I no longer wish to fight...\" (NoammAddons' M7 rag call).")
+        @ConfigOption(name = "M7 Wither King Line", desc = "When the Wither King says \"I no longer wish to fight...\".")
         public RagPrompt m7Dragons = new RagPrompt();
 
         @Expose
@@ -5399,7 +5399,7 @@ public final class FeatureConfigs {
         public int leadMs = 3000;
 
         @Expose
-        @ConfigOption(name = "Sound", desc = "Play NoammAddons' rising rag tune with the prompt.")
+        @ConfigOption(name = "Sound", desc = "Play a rising rag tune with the prompt.")
         @ConfigEditorBoolean
         public boolean sound = false;
     }
@@ -5407,7 +5407,7 @@ public final class FeatureConfigs {
     /** Custom Mage Beam (Killer560's, from NoammAddons): one clean beam in place of the Mage's firework particles. */
     public static final class MageBeam {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "In dungeons, draw each Mage beam as one clean beam from start to end, in your colour and width, instead of the trail of firework particles (NoammAddons' Mage Beam).")
+        @ConfigOption(name = "Enabled", desc = "In dungeons, draw each Mage beam as one clean beam from start to end, in your colour and width, instead of the trail of firework particles.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -5440,7 +5440,7 @@ public final class FeatureConfigs {
     /** Terminal Timers (Killer560's, from Odin's Terminal Times): P3 terminal, device and section times. */
     public static final class TerminalTimers {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Time F7/M7 P3 (Goldor): each terminal, device and lever, each section and the whole phase, in chat and a HUD you can move in /s2 gui (Odin's Terminal Times).")
+        @ConfigOption(name = "Enabled", desc = "Time F7/M7 P3 (Goldor): each terminal, device and lever, each section and the whole phase, in chat and a HUD you can move in /s2 gui.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -5613,12 +5613,12 @@ public final class FeatureConfigs {
             }
         }
 
-        @ConfigOption(name = "Open Editor", desc = "Set it up in its own screen, like the Custom Scoreboard mod's: drag the lines and events into order, change the title, background and options, and see it change as you go. Also /s2 scoreboard.")
+        @ConfigOption(name = "Open Editor", desc = "Set it up in its own screen: drag the lines and events into order, change the title, background and options, and see it change as you go. Also /s2 scoreboard.")
         @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "Open")
         public Runnable openEditor = com.epic60869.sky2m.features.misc.visual.CustomScoreboard::openEditor;
 
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Replace the sidebar with your own: pick which lines show and in what order, with a background (rounded, bordered, or your own picture or GIF), title and footer, number changes like \"(+12k)\", and lines you can click with chat open. Like j10a1n15's Custom Scoreboard.")
+        @ConfigOption(name = "Enabled", desc = "Replace the sidebar with your own: pick which lines show and in what order, with a background (rounded, bordered, or your own picture or GIF), title and footer, number changes like \"(+12k)\", and lines you can click with chat open.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -6077,7 +6077,7 @@ public final class FeatureConfigs {
         public boolean hud = false;
 
         @Expose
-        @ConfigOption(name = "Mod Conflict Warnings", desc = "Once a session, say in chat when another mod does the same job as a Sky2M feature you have on (Skyblocker's terminal solver, the Custom Scoreboard and SkyBlock Item List mods...).")
+        @ConfigOption(name = "Mod Conflict Warnings", desc = "Once a session, say in chat when another mod does the same job as a Sky2M feature you have on (another terminal solver, scoreboard or item list mod...).")
         @ConfigEditorBoolean
         public boolean conflictWarnings = true;
     }
@@ -6085,7 +6085,7 @@ public final class FeatureConfigs {
     /** Team Melody HUD (Killer560's): teammates' Melody terminal progress in P3. */
     public static final class TeamMelody {
         @Expose
-        @ConfigOption(name = "HUD", desc = "During F7/M7 P3, each teammate's Melody progress, from their Sky2M (Party Dungeon Data), the Cross-Mod Bridge, or the \"Melody 2/4\" lines Odin and NoammAddons users send in party chat. Move it in /s2 gui.")
+        @ConfigOption(name = "HUD", desc = "During F7/M7 P3, each teammate's Melody progress, from their Sky2M (Party Dungeon Data), the Cross-Mod Bridge, or the \"Melody 2/4\" lines users of other mods send in party chat. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean hud = false;
 
@@ -6095,17 +6095,17 @@ public final class FeatureConfigs {
         public boolean showSelf = true;
 
         @Expose
-        @ConfigOption(name = "Send Progress in Party Chat", desc = "Like Odin: when a row of your Melody is done, say \"Melody 2/4 - 50%\" in party chat, which Odin, NoammAddons and Sky2M users all read.")
+        @ConfigOption(name = "Send Progress in Party Chat", desc = "When a row of your Melody is done, say \"Melody 2/4 - 50%\" in party chat, which Sky2M users and users of other dungeon mods read.")
         @ConfigEditorBoolean
         public boolean sendProgress = true;
 
         @Expose
-        @ConfigOption(name = "Send Coords", desc = "Like Odin's Melody Send Coords: when you open Melody in P3, say where you are in party chat (\"x: 1, y: 2, z: 3\").")
+        @ConfigOption(name = "Send Coords", desc = "When you open Melody in P3, say where you are in party chat (\"x: 1, y: 2, z: 3\").")
         @ConfigEditorBoolean
         public boolean sendCoords = false;
 
         @Expose
-        @ConfigOption(name = "Progress Alert", desc = "A title and a sound when a teammate's Melody progress comes in party chat, like \"Steve has 2/3 melody\" (NoammAddons' Melody Display).")
+        @ConfigOption(name = "Progress Alert", desc = "A title and a sound when a teammate's Melody progress comes in party chat, like \"Steve has 2/3 melody\".")
         @ConfigEditorBoolean
         public boolean alert = false;
     }
@@ -6113,22 +6113,22 @@ public final class FeatureConfigs {
     /** Cross-Mod Bridge (Killer560's): share party dungeon data with Odin, NoammAddons and Devonian users. */
     public static final class CrossModBridge {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Talk to the party sockets of Odin (Melody progress), NoammAddons (map rooms, Mimic, Prince, dragons, room secrets) and Devonian (room secrets), so data flows both ways between Sky2M users and users of those mods in your party. Only on Hypixel, only while the grouping applies, never to a mod you have installed yourself (it already holds that connection), and only ever as your own signed-in account. Needs \"Use Teammates' Data\" (Party Dungeon Data) for what comes in.")
+        @ConfigOption(name = "Enabled", desc = "Talk to the party sockets of other dungeon mods (Melody progress; map rooms, Mimic, Prince, dragons and room secrets; room secrets), so data flows both ways between Sky2M users and users of those mods in your party. Only on Hypixel, only while the grouping applies, never to a mod you have installed yourself (it already holds that connection), and only ever as your own signed-in account. Needs \"Use Teammates' Data\" (Party Dungeon Data) for what comes in.")
         @ConfigEditorBoolean
         public boolean enabled = true;
 
         @Expose
-        @ConfigOption(name = "Odin", desc = "Odin's socket (wss://ws.odtheking.com): during F7/M7 P3 until the core opens, Melody progress both ways. No sign-in.")
+        @ConfigOption(name = "Melody Socket", desc = "The socket at wss://ws.odtheking.com: during F7/M7 P3 until the core opens, Melody progress both ways. No sign-in.")
         @ConfigEditorBoolean
         public boolean odin = true;
 
         @Expose
-        @ConfigOption(name = "NoammAddons", desc = "NoammAddons' socket (wss://ws.noamm.org): during dungeon runs with others, rooms, doors, Mimic, Prince, bat, dragons and room secrets both ways. Signs in with your chat-signing key (api.noamm.org).")
+        @ConfigOption(name = "Dungeon Data Socket", desc = "The socket at wss://ws.noamm.org: during dungeon runs with others, rooms, doors, Mimic, Prince, bat, dragons and room secrets both ways. Signs in with your chat-signing key (api.noamm.org).")
         @ConfigEditorBoolean
         public boolean noamm = true;
 
         @Expose
-        @ConfigOption(name = "Devonian", desc = "Devonian's socket (ws://wss.docilelm.top): room secrets both ways, and teammates' secret counts in. Signs in through Mojang like a server login, once everyone in your party is known.")
+        @ConfigOption(name = "Secrets Socket", desc = "The socket at ws://wss.docilelm.top: room secrets both ways, and teammates' secret counts in. Signs in through Mojang like a server login, once everyone in your party is known.")
         @ConfigEditorBoolean
         public boolean devonian = true;
 
@@ -6423,7 +6423,7 @@ public final class FeatureConfigs {
     /** SkyHanni's OrderedWaypointsConfig (LGPL-2.1), which credits Coleweight and SoopyV2. */
     public static final class OrderedWaypoints {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "SkyHanni's ordered waypoints: load a route (Coleweight or Skytils format) from your clipboard with /sho load, and the waypoints show one after another as you reach them. /sho load, unload, save, skip, skipto, unskip, add, delete, export, erase, setupmode. Also /s2 sho.")
+        @ConfigOption(name = "Enabled", desc = "Ordered waypoints: load a route from your clipboard with /sho load, and the waypoints show one after another as you reach them. /sho load, unload, save, skip, skipto, unskip, add, delete, export, erase, setupmode. Also /s2 sho.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -6767,12 +6767,12 @@ public final class FeatureConfigs {
 
     public static final class ItemQuality {
         @Expose
-        @ConfigOption(name = "Quality On Slot", desc = "Like SkyblockAddons: the item quality (base stat boost, 0 to 50%) of dungeon items in the corner of their slot, coloured by how good it is.")
+        @ConfigOption(name = "Quality On Slot", desc = "The item quality (base stat boost, 0 to 50%) of dungeon items in the corner of their slot, coloured by how good it is.")
         @ConfigEditorBoolean
         public boolean slot = true;
 
         @Expose
-        @ConfigOption(name = "Quality As Stack Size", desc = "SkyHanni's and SkyOcean's way: draw the quality like a stack count, in the bottom right corner of the slot at normal size, instead of small in the top left. Needs Quality On Slot.")
+        @ConfigOption(name = "Quality As Stack Size", desc = "Draw the quality like a stack count, in the bottom right corner of the slot at normal size, instead of small in the top left. Needs Quality On Slot.")
         @ConfigEditorBoolean
         public boolean stackSize = false;
 
@@ -6810,7 +6810,7 @@ public final class FeatureConfigs {
     /** Odin's Waypoints settings (BSD-3-Clause). */
     public static final class AreaWaypoints {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Odin's area waypoints: waypoints that only show in one dungeon boss phase, Kuudra tier or island, drawn as a box or a circle with a label. Proximity ones run a command when you walk in, Click ones when you click a block inside. /s2w (or /s2 wp) opens the manager.")
+        @ConfigOption(name = "Enabled", desc = "Area waypoints: waypoints that only show in one dungeon boss phase, Kuudra tier or island, drawn as a box or a circle with a label. Proximity ones run a command when you walk in, Click ones when you click a block inside. /s2w (or /s2 wp) opens the manager.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -6831,7 +6831,7 @@ public final class FeatureConfigs {
     /** Fairy Soul finder (SkyHanni's Fast Fairy Soul Finder / NEU-Souls Pathfinder style, /s2 souls). */
     public static final class FairySouls {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Draw every Fairy Soul you haven't collected on this island as a box with a label, with the nearest ones you still need highlighted, using NEU's soul coordinates. One saved for all profiles. Commands: /s2 souls.")
+        @ConfigOption(name = "Enabled", desc = "Draw every Fairy Soul you haven't collected on this island as a box with a label, with the nearest ones you still need highlighted, using community soul coordinates. One saved for all profiles. Commands: /s2 souls.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -6894,7 +6894,7 @@ public final class FeatureConfigs {
         public boolean title = false;
 
         @Expose
-        @ConfigOption(name = "Replace Hypixel's Titles", desc = "With Title on, hide Hypixel's own \"Name activated a terminal! (3/7)\" subtitles so only Sky2M's shows (Odin's Terminal Titles).")
+        @ConfigOption(name = "Replace Hypixel's Titles", desc = "With Title on, hide Hypixel's own \"Name activated a terminal! (3/7)\" subtitles so only Sky2M's shows.")
         @ConfigEditorBoolean
         public boolean replaceTitles = false;
 
@@ -6904,7 +6904,7 @@ public final class FeatureConfigs {
         public boolean phaseDone = false;
 
         @Expose
-        @ConfigOption(name = "Gate Titles", desc = "With Title on, \"GATE!\" when the gate will open in 5 seconds and \"Gate Destroyed!\" when it's destroyed, instead of Hypixel's subtitles (NoammAddons' F7 Titles).")
+        @ConfigOption(name = "Gate Titles", desc = "With Title on, \"GATE!\" when the gate will open in 5 seconds and \"Gate Destroyed!\" when it's destroyed, instead of Hypixel's subtitles.")
         @ConfigEditorBoolean
         public boolean gateTitles = false;
 
@@ -6936,7 +6936,7 @@ public final class FeatureConfigs {
         public boolean backgroundMusic = true;
 
         @Expose
-        @ConfigOption(name = "Hue Shift", desc = "The screen cycles through every colour while the fever lasts (SkyOcean's shader).")
+        @ConfigOption(name = "Hue Shift", desc = "The screen cycles through every colour while the fever lasts.")
         @ConfigEditorBoolean
         public boolean hueShift = true;
 

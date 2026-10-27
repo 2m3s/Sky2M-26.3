@@ -200,7 +200,7 @@ public final class VisitorConfig {
 
     public static final class Inventory {
         @Expose
-        @ConfigOption(name = "Visitor Price", desc = "Show the Bazaar price of the items required for the visitors, like in NEU.")
+        @ConfigOption(name = "Visitor Price", desc = "Show the Bazaar price of the items required for the visitors.")
         @ConfigEditorBoolean
         public boolean showPrice = false;
 
@@ -328,7 +328,7 @@ public final class VisitorConfig {
         @ConfigEditorBoolean
         public boolean onlyOnBarn = false;
 
-        @ConfigOption(name = "Reset Statistics", desc = "Reset the Visitor Drops Statistics for this profile (SkyHanni's /shresetvisitordrops).")
+        @ConfigOption(name = "Reset Statistics", desc = "Reset the Visitor Drops Statistics for this profile.")
         @ConfigEditorButton(buttonText = "RESET")
         public Runnable reset = GardenVisitors::resetDropStatistics;
 

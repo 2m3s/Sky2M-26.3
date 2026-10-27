@@ -732,7 +732,7 @@ public final class FishingMore {
 
     public static final class Config {
         @Expose
-        @ConfigOption(name = "Totem of Corruption Overlay", desc = "HUD with the time left and owner of the Totem of Corruption near you (SkyHanni). Move it in /s2 gui.")
+        @ConfigOption(name = "Totem of Corruption Overlay", desc = "HUD with the time left and owner of the Totem of Corruption near you. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean totemOverlay = false;
 
@@ -767,7 +767,7 @@ public final class FishingMore {
         public float totemWarnSeconds = 0;
 
         @Expose
-        @ConfigOption(name = "Sea Creature Tracker", desc = "HUD counting the sea creatures you catch, per type, with how many per hour (SkyHanni). Shown while you fish. Reset with /s2fishingreset. Needs Sea Creature Chat in SkyBlock settings.")
+        @ConfigOption(name = "Sea Creature Tracker", desc = "HUD counting the sea creatures you catch, per type, with how many per hour. Shown while you fish. Reset with /s2fishingreset. Needs Sea Creature Chat in SkyBlock settings.")
         @ConfigEditorBoolean
         public boolean seaCreatureTracker = true;
 
@@ -782,12 +782,12 @@ public final class FishingMore {
         public boolean trackerPercentage = true;
 
         @Expose
-        @ConfigOption(name = "Tracker: Display Mode", desc = "Total: every sea creature since the last reset. This Session: only since you started the game. Also switched by clicking \"Display Mode\" on the tracker while your inventory or a menu is open, like SkyHanni.")
+        @ConfigOption(name = "Tracker: Display Mode", desc = "Total: every sea creature since the last reset. This Session: only since you started the game. Also switched by clicking \"Display Mode\" on the tracker while your inventory or a menu is open.")
         @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown
         public TrackerDisplay trackerDisplay = TrackerDisplay.TOTAL;
 
         @Expose
-        @ConfigOption(name = "Golden Fish Timer", desc = "Crimson Isle: when the Golden Fish can spawn after you cast into lava, its interactions and despawn timer (SkyHanni). Move it in /s2 gui.")
+        @ConfigOption(name = "Golden Fish Timer", desc = "Crimson Isle: when the Golden Fish can spawn after you cast into lava, its interactions and despawn timer. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean goldenFishTimer = false;
 
@@ -807,7 +807,7 @@ public final class FishingMore {
         public float goldenFishWarnSeconds = 20;
 
         @Expose
-        @ConfigOption(name = "Sea Creature Health", desc = "HUD listing the health of the sea creatures near you, nearest first (SkyHanni). Move it in /s2 gui.")
+        @ConfigOption(name = "Sea Creature Health", desc = "HUD listing the health of the sea creatures near you, nearest first. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean seaCreatureHealth = false;
 
@@ -817,7 +817,7 @@ public final class FishingMore {
         public float healthLimit = 5;
 
         @Expose
-        @ConfigOption(name = "Barn Fishing Timer", desc = "Time and amount of your own/all sea creatures nearby while barn fishing: Crimson Isle, Crystal Hollows, Jerry's Workshop and the Hub barn (SkyHanni).")
+        @ConfigOption(name = "Barn Fishing Timer", desc = "Time and amount of your own/all sea creatures nearby while barn fishing: Crimson Isle, Crystal Hollows, Jerry's Workshop and the Hub barn.")
         @ConfigEditorBoolean
         public boolean barnTimer = false;
 
@@ -847,17 +847,17 @@ public final class FishingMore {
         public boolean barnWarnGlobal = true;
 
         @Expose
-        @ConfigOption(name = "Shark Fish Counter", desc = "HUD counting the sharks you catch (Nurse, Blue, Tiger, Great White), reset when the Fishing Festival ends (SkyHanni).")
+        @ConfigOption(name = "Shark Fish Counter", desc = "HUD counting the sharks you catch (Nurse, Blue, Tiger, Great White), reset when the Fishing Festival ends.")
         @ConfigEditorBoolean
         public boolean sharkCounter = false;
 
         @Expose
-        @ConfigOption(name = "Odger Waypoint", desc = "Crimson Isle: a waypoint to Odger while you carry trophy fish and don't hold a fishing rod (SkyHanni).")
+        @ConfigOption(name = "Odger Waypoint", desc = "Crimson Isle: a waypoint to Odger while you carry trophy fish and don't hold a fishing rod.")
         @ConfigEditorBoolean
         public boolean odgerWaypoint = false;
 
         @Expose
-        @ConfigOption(name = "Odger Trophy Total", desc = "In Odger's Trophy Fishing menu, adds the total number of each trophy fish you caught to its tooltip (SkyHanni).")
+        @ConfigOption(name = "Odger Trophy Total", desc = "In Odger's Trophy Fishing menu, adds the total number of each trophy fish you caught to its tooltip.")
         @ConfigEditorBoolean
         public boolean odgerTotal = false;
     }

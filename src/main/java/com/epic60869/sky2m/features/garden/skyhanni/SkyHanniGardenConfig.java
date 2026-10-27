@@ -48,7 +48,7 @@ public final class SkyHanniGardenConfig {
 
     public static final class FarmingHud {
         @Expose
-        @ConfigOption(name = "Crop Milestone HUD", desc = "SkyHanni's Crop Milestone display for the crop in your hand: milestone tier and progress (read from the Crop Milestones tab widget), crops per minute, blocks per second and the time to the next tier.\n§eTurn on the Crop Milestones widget in /widget.")
+        @ConfigOption(name = "Crop Milestone HUD", desc = "Crop Milestone display for the crop in your hand: milestone tier and progress (read from the Crop Milestones tab widget), crops per minute, blocks per second and the time to the next tier.\n§eTurn on the Crop Milestones widget in /widget.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -78,7 +78,7 @@ public final class SkyHanniGardenConfig {
         public boolean warnClose = false;
 
         @Expose
-        @ConfigOption(name = "Garden Level HUD", desc = "SkyHanni's Garden Level display: your Garden level and experience. Open the Garden Desk (or the SkyBlock Menu) once to read it; visitor rewards update it.")
+        @ConfigOption(name = "Garden Level HUD", desc = "Garden Level display: your Garden level and experience. Open the Garden Desk (or the SkyBlock Menu) once to read it; visitor rewards update it.")
         @ConfigEditorBoolean
         public boolean gardenLevel = false;
     }
@@ -100,7 +100,7 @@ public final class SkyHanniGardenConfig {
         public boolean medals = false;
 
         @Expose
-        @ConfigOption(name = "Contest Stats Summary", desc = "SkyHanni's Jacob contest summary: when a contest ends, say how many blocks you broke and your average blocks per second in chat.")
+        @ConfigOption(name = "Contest Stats Summary", desc = "Jacob contest summary: when a contest ends, say how many blocks you broke and your average blocks per second in chat.")
         @ConfigEditorBoolean
         public boolean summary = false;
 
@@ -117,7 +117,7 @@ public final class SkyHanniGardenConfig {
 
     public static final class Fortune {
         @Expose
-        @ConfigOption(name = "True Farming Fortune HUD", desc = "SkyHanni's true Farming Fortune: the universal plus crop fortune from the tab list Stats widget, the pest fortune bonus and the loss from pests.\n§eTurn on the Stats widget with the Farming Fortune and Latest Crop Fortune lines in /widget.")
+        @ConfigOption(name = "True Farming Fortune HUD", desc = "True Farming Fortune: the universal plus crop fortune from the tab list Stats widget, the pest fortune bonus and the loss from pests.\n§eTurn on the Stats widget with the Farming Fortune and Latest Crop Fortune lines in /widget.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -144,7 +144,7 @@ public final class SkyHanniGardenConfig {
         public boolean angleHud = false;
 
         @Expose
-        @ConfigOption(name = "Speed HUD", desc = "Show SkyHanni's optimal speed for the crop in your hand next to your current speed.")
+        @ConfigOption(name = "Speed HUD", desc = "Show the optimal speed for the crop in your hand next to your current speed.")
         @ConfigEditorBoolean
         public boolean speedHud = false;
 
@@ -235,7 +235,7 @@ public final class SkyHanniGardenConfig {
         public float warningInterval = 30;
 
         @Expose
-        @ConfigOption(name = "Pest Profit Tracker", desc = "SkyHanni's Pest Profit Tracker: the items you get for killing pests this session, their rare drops and the profit per hour. /s2 pestprofit reset clears it.")
+        @ConfigOption(name = "Pest Profit Tracker", desc = "The items you get for killing pests this session, their rare drops and the profit per hour. /s2 pestprofit reset clears it.")
         @ConfigEditorBoolean
         public boolean profitTracker = false;
 

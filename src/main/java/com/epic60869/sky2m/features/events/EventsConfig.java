@@ -65,7 +65,7 @@ public final class EventsConfig {
 
     public static final class ChocolateFactory {
         @Expose
-        @ConfigOption(name = "Stats Display", desc = "Like SkyHanni: while the Chocolate Factory is open, a HUD with your chocolate, production per second, minute, hour and day, multiplier, barn, Time Tower, leaderboard position, time to prestige and time until the best upgrade. Move it in /s2 gui.")
+        @ConfigOption(name = "Stats Display", desc = "While the Chocolate Factory is open, a HUD with your chocolate, production per second, minute, hour and day, multiplier, barn, Time Tower, leaderboard position, time to prestige and time until the best upgrade. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean stats = true;
 

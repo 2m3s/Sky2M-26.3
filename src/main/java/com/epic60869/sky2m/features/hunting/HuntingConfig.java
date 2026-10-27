@@ -110,12 +110,12 @@ public final class HuntingConfig {
         public boolean showIcons = true;
 
         @Expose
-        @ConfigOption(name = "Checklist Style", desc = "§eUnique Critters§7: a \"Unique Critters\" title, \"Cavern:\" headers and a green ✔ or red ✖ before each critter.\n§eSkyHanni§7: SkyHanni's \"Cavern - 3/9\" headers and \"- (✔) Name\" rows.")
+        @ConfigOption(name = "Checklist Style", desc = "§eUnique Critters§7: a \"Unique Critters\" title, \"Cavern:\" headers and a green ✔ or red ✖ before each critter.\n§eCompact§7: \"Cavern - 3/9\" headers and \"- (✔) Name\" rows.")
         @ConfigEditorDropdown
         public ChecklistStyle style = ChecklistStyle.UNIQUE_CRITTERS;
 
         public enum ChecklistStyle {
-            UNIQUE_CRITTERS("Uniques"), SKYHANNI("SkyHanni");
+            UNIQUE_CRITTERS("Uniques"), SKYHANNI("Compact");
 
             private final String label;
 

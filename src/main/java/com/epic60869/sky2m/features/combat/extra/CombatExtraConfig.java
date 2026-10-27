@@ -56,7 +56,7 @@ public final class CombatExtraConfig {
     /** Vampire Slayer helpers: Skyblocker's rift effigy waypoints and indicators, SkyHanni's ichor highlight. */
     public static final class VampireSlayer {
         @Expose
-        @ConfigOption(name = "Effigy Waypoints", desc = "In the Stillgore Chateau, a waypoint with a beacon on every Blood Effigy you have not broken yet (Skyblocker's rift effigy waypoints).")
+        @ConfigOption(name = "Effigy Waypoints", desc = "In the Stillgore Chateau, a waypoint with a beacon on every Blood Effigy you have not broken yet.")
         @ConfigEditorBoolean
         public boolean effigyWaypoints = false;
 
@@ -86,7 +86,7 @@ public final class CombatExtraConfig {
         public int twinclawsDelay = 6;
 
         @Expose
-        @ConfigOption(name = "Highlight Blood Ichor / Killer Spring", desc = "Box the Blood Ichor and Killer Spring the Bloodfiend throws, within 15 blocks (SkyHanni).")
+        @ConfigOption(name = "Highlight Blood Ichor / Killer Spring", desc = "Box the Blood Ichor and Killer Spring the Bloodfiend throws, within 15 blocks.")
         @ConfigEditorBoolean
         public boolean highlightIchor = false;
     }

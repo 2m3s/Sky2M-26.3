@@ -47,7 +47,7 @@ public final class ChatRules {
         public String rules = "";
 
         @Expose
-        @ConfigOption(name = "Player Format: Hide Level", desc = "Leave the SkyBlock level (\"[123] \") out of other players' all-chat messages, like SkyHanni's player chat format.")
+        @ConfigOption(name = "Player Format: Hide Level", desc = "Leave the SkyBlock level (\"[123] \") out of other players' all-chat messages.")
         @ConfigEditorBoolean
         public boolean hideLevel = false;
 

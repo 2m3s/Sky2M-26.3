@@ -201,7 +201,7 @@ public final class CommandAutofill {
         public boolean recipes = true;
 
         @Expose
-        @ConfigOption(name = "Player Names", desc = "Like SkyHanni: suggest player names and subcommands for /p, /f, /g, /msg, /w, /visit, /pv, /invite, /ah, /boop and /trade (players on your island; party, friends and guild below).")
+        @ConfigOption(name = "Player Names", desc = "Suggest player names and subcommands for /p, /f, /g, /msg, /w, /visit, /pv, /invite, /ah, /boop and /trade (players on your island; party, friends and guild below).")
         @ConfigEditorBoolean
         public boolean players = true;
 

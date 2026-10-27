@@ -59,7 +59,7 @@ public final class Sky2MConfig extends Config {
         public Runnable openGithub = () -> com.mojang.blaze3d.Blaze3D.openUri(java.net.URI.create(Sky2MUpdateChecker.GITHUB_URL));
 
         @Expose
-        @ConfigOption(name = "SkyBlock Only", desc = "Pause every Sky2M feature outside SkyBlock (the Hypixel lobby, other games, other servers): HUDs, highlights, chat features, the custom crosshair and the rest. Singleplayer still works. Settings, commands and Sky2M chat keep working (Killer560's).")
+        @ConfigOption(name = "SkyBlock Only", desc = "Pause every Sky2M feature outside SkyBlock (the Hypixel lobby, other games, other servers): HUDs, highlights, chat features, the custom crosshair and the rest. Singleplayer still works. Settings, commands and Sky2M chat keep working.")
         @ConfigEditorBoolean
         public boolean skyblockOnly = false;
 
@@ -83,7 +83,7 @@ public final class Sky2MConfig extends Config {
         public boolean errorReporter = true;
 
         @Expose
-        @ConfigOption(name = "Warn About Overlapping Mods", desc = "Once, after joining a world, say in chat when other installed mods (SkyHanni, Skyblocker...) do some of the same things as Sky2M, so you can turn one side off. Turn this off to never be told.")
+        @ConfigOption(name = "Warn About Overlapping Mods", desc = "Once, after joining a world, say in chat when other installed mods do some of the same things as Sky2M, so you can turn one side off. Turn this off to never be told.")
         @ConfigEditorBoolean
         public boolean overlapNotice = true;
 
@@ -163,47 +163,47 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Custom Scoreboard", desc = "Your own sidebar: pick the lines and their order, background, title and footer, like j10a1n15's Custom Scoreboard.")
+        @ConfigOption(name = "Custom Scoreboard", desc = "Your own sidebar: pick the lines and their order, background, title and footer.")
         public com.epic60869.sky2m.features.FeatureConfigs.CustomScoreboard customScoreboard = new com.epic60869.sky2m.features.FeatureConfigs.CustomScoreboard();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Tab List Extras", desc = "A compact tab list (SkyHanni) and a tab widgets HUD (Skyblocker).")
+        @ConfigOption(name = "Tab List Extras", desc = "A compact tab list and a tab widgets HUD.")
         public com.epic60869.sky2m.features.qol.QolConfigs.TabListExtras tabListExtras = new com.epic60869.sky2m.features.qol.QolConfigs.TabListExtras();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Status Bars", desc = "Health, mana, defense, XP and speed as movable bars (Skyblocker, SkyHanni).")
+        @ConfigOption(name = "Status Bars", desc = "Health, mana, defense, XP and speed as movable bars.")
         public com.epic60869.sky2m.features.qol.QolConfigs.StatusBars statusBars = new com.epic60869.sky2m.features.qol.QolConfigs.StatusBars();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Server Info Display", desc = "FPS, TPS, ping and time HUD (Skysoft's).")
+        @ConfigOption(name = "Server Info Display", desc = "FPS, TPS, ping and time HUD.")
         public com.epic60869.sky2m.features.FeatureConfigs.ServerInfoDisplay serverInfoDisplay = new com.epic60869.sky2m.features.FeatureConfigs.ServerInfoDisplay();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Speed Display", desc = "SkyblockAddons' Speed Percentage: your speed as a percentage on a HUD.")
+        @ConfigOption(name = "Speed Display", desc = "Your speed as a percentage on a HUD.")
         public SpeedDisplay speedDisplay = new SpeedDisplay();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Inventory HUD", desc = "Your inventory as a HUD you can move and resize in /s2 gui (Killer560's).")
+        @ConfigOption(name = "Inventory HUD", desc = "Your inventory as a HUD you can move and resize in /s2 gui.")
         public com.epic60869.sky2m.features.FeatureConfigs.InventoryHud inventoryHud = new com.epic60869.sky2m.features.FeatureConfigs.InventoryHud();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Radial Menu", desc = "Hold a key for a wheel of commands (Skyblocker).")
+        @ConfigOption(name = "Radial Menu", desc = "Hold a key for a wheel of commands.")
         public com.epic60869.sky2m.features.qol.QolConfigs.RadialMenu radialMenu = new com.epic60869.sky2m.features.qol.QolConfigs.RadialMenu();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Custom Crosshair", desc = "Design your own crosshair, or import a Valorant or CS2 crosshair code or a picture (Killer560's).")
+        @ConfigOption(name = "Custom Crosshair", desc = "Design your own crosshair, or import a Valorant or CS2 crosshair code or a picture.")
         public com.epic60869.sky2m.features.FeatureConfigs.Crosshair crosshair = new com.epic60869.sky2m.features.FeatureConfigs.Crosshair();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "More Slot Labels", desc = "Pet, attribute shard, minion, collection and bestiary levels on slots (SkyHanni).")
+        @ConfigOption(name = "More Slot Labels", desc = "Pet, attribute shard, minion, collection and bestiary levels on slots.")
         public com.epic60869.sky2m.features.qol.QolConfigs.SlotLabels slotLabels = new com.epic60869.sky2m.features.qol.QolConfigs.SlotLabels();
     }
 
@@ -219,7 +219,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Item Price Tooltip", desc = "Add prices to SkyBlock item tooltips, like Skyblocker, and what you paid for items you bought on the auction house.")
+        @ConfigOption(name = "Item Price Tooltip", desc = "Add prices to SkyBlock item tooltips, and what you paid for items you bought on the auction house.")
         @ConfigAccordionId(id = 2301)
         public PriceTooltip priceTooltip = new PriceTooltip();
 
@@ -231,13 +231,13 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Museum & Accessory Tooltips", desc = "Show in item tooltips whether you've donated the item to your museum and whether you're missing an accessory, like Skyblocker.")
+        @ConfigOption(name = "Museum & Accessory Tooltips", desc = "Show in item tooltips whether you've donated the item to your museum and whether you're missing an accessory.")
         @ConfigAccordionId(id = 2301)
         public CollectionTooltips collectionTooltips = new CollectionTooltips();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Enchant Parsing", desc = "SkyHanni's enchant parsing: enchants in tooltips coloured by level (perfect enchants in chroma), sorted, and laid out normal, compressed or stacked.")
+        @ConfigOption(name = "Enchant Parsing", desc = "Enchants in tooltips coloured by level (perfect enchants in chroma), sorted, and laid out normal, compressed or stacked.")
         @ConfigAccordionId(id = 2301)
         public com.epic60869.sky2m.features.misc.items.EnchantParsingConfig enchantParsing = new com.epic60869.sky2m.features.misc.items.EnchantParsingConfig();
 
@@ -254,13 +254,13 @@ public final class Sky2MConfig extends Config {
         public boolean enchantedBookLabels = true;
 
         @Expose
-        @ConfigOption(name = "Revert Master Stars", desc = "Show Master Stars in item names the old way: that many of the item's stars in red, instead of Hypixel's new numbered star after them (Killer560's).")
+        @ConfigOption(name = "Revert Master Stars", desc = "Show Master Stars in item names the old way: that many of the item's stars in red, instead of Hypixel's new numbered star after them.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2301)
         public boolean revertMasterStars = false;
 
         @Expose
-        @ConfigOption(name = "Pack Disabler", desc = "Draw SkyBlock items the way they looked before Hypixel's 2026 resource pack: their old vanilla item (shown by your own resource packs) or old head skin, and new textures for items that never had one. Hypixel's pack still loads, only item looks change. Off when Noamm's PackDisabler is installed (Killer560's).")
+        @ConfigOption(name = "Pack Disabler", desc = "Draw SkyBlock items the way they looked before Hypixel's 2026 resource pack: their old vanilla item (shown by your own resource packs) or old head skin, and new textures for items that never had one. Hypixel's pack still loads, only item looks change. Off when another pack disabler mod is installed.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2301)
         public boolean packDisabler = false;
@@ -273,13 +273,13 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Ability Timers", desc = "Countdowns you start with a key when you use an ability, in a HUD (Killer560's).")
+        @ConfigOption(name = "Ability Timers", desc = "Countdowns you start with a key when you use an ability, in a HUD.")
         @ConfigAccordionId(id = 2301)
         public com.epic60869.sky2m.features.FeatureConfigs.AbilityTimers abilityTimers = new com.epic60869.sky2m.features.FeatureConfigs.AbilityTimers();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Item Quality", desc = "Dungeon item quality (base stat boost) and floor on the slot and in the tooltip, like SkyblockAddons.")
+        @ConfigOption(name = "Item Quality", desc = "Dungeon item quality (base stat boost) and floor on the slot and in the tooltip.")
         @ConfigAccordionId(id = 2301)
         public com.epic60869.sky2m.features.FeatureConfigs.ItemQuality itemQuality = new com.epic60869.sky2m.features.FeatureConfigs.ItemQuality();
 
@@ -291,7 +291,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Tooltip Scroll", desc = "Move tooltips with the mouse wheel and keys so long tooltips can be read (Skysoft's Tooltip Scroll). Off automatically when Skysoft is installed.")
+        @ConfigOption(name = "Tooltip Scroll", desc = "Move tooltips with the mouse wheel and keys so long tooltips can be read. Off automatically when another mod already scrolls tooltips.")
         @ConfigAccordionId(id = 2301)
         public TooltipScroll tooltipScroll = new TooltipScroll();
 
@@ -313,7 +313,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Storage Overlay", desc = "Firmament's storage overlay: /storage, your Ender Chest pages and backpacks as one scrollable view, and its layout and search options.")
+        @ConfigOption(name = "Storage Overlay", desc = "Storage overlay: /storage, your Ender Chest pages and backpacks as one scrollable view, and its layout and search options.")
         @ConfigAccordionId(id = 2302)
         public StorageOverlaySettings storageOverlaySettings = new StorageOverlaySettings();
 
@@ -337,13 +337,13 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Wardrobe & Loadout Hotkeys", desc = "Equip Wardrobe or Loadout slots on the open page with configurable keys, like SkyHanni.")
+        @ConfigOption(name = "Wardrobe & Loadout Hotkeys", desc = "Equip Wardrobe or Loadout slots on the open page with configurable keys.")
         @ConfigAccordionId(id = 2302)
         public com.epic60869.sky2m.features.FeatureConfigs.WardrobeHotkeys wardrobeHotkeys = new com.epic60869.sky2m.features.FeatureConfigs.WardrobeHotkeys();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Loadout Highlight", desc = "SkyHanni's loadout highlighting: the loadout you have equipped is highlighted in the Loadouts menu.")
+        @ConfigOption(name = "Loadout Highlight", desc = "The loadout you have equipped is highlighted in the Loadouts menu.")
         @ConfigAccordionId(id = 2302)
         public com.epic60869.sky2m.features.FeatureConfigs.LoadoutHighlight loadoutHighlight = new com.epic60869.sky2m.features.FeatureConfigs.LoadoutHighlight();
 
@@ -361,7 +361,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Item List", desc = "Every SkyBlock item beside your inventory, with recipes, usages, search, a calculator and favourites, like SkyBlock Item List.")
+        @ConfigOption(name = "Item List", desc = "Every SkyBlock item beside your inventory, with recipes, usages, search, a calculator and favourites.")
         @ConfigAccordionId(id = 2302)
         public com.epic60869.sky2m.features.FeatureConfigs.ItemList itemList = new com.epic60869.sky2m.features.FeatureConfigs.ItemList();
 
@@ -378,7 +378,7 @@ public final class Sky2MConfig extends Config {
         public boolean signEnterConfirms = true;
 
         @Expose
-        @ConfigOption(name = "Bazaar & AH Search", desc = "From Skyblocker: clicking Search in the Bazaar or Auction House opens a search box instead of the sign, suggesting what's sold there as you type (bazaar items and enchantments, or auction items and pets) and your last searches. In the Auction House it can search for max level pets or dungeon items with stars. /ahs and /bzs open it from anywhere.")
+        @ConfigOption(name = "Bazaar & AH Search", desc = "Clicking Search in the Bazaar or Auction House opens a search box instead of the sign, suggesting what's sold there as you type (bazaar items and enchantments, or auction items and pets) and your last searches. In the Auction House it can search for max level pets or dungeon items with stars. /ahs and /bzs open it from anywhere.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2302)
         public boolean searchOverlay = true;
@@ -396,7 +396,7 @@ public final class Sky2MConfig extends Config {
         public com.epic60869.sky2m.features.FeatureConfigs.AuctionGuard auctionGuard = new com.epic60869.sky2m.features.FeatureConfigs.AuctionGuard();
 
         @Expose
-        @ConfigOption(name = "Highlight Auctions", desc = "In Manage Auctions, your sold auctions are green and expired ones red (SkyHanni).")
+        @ConfigOption(name = "Highlight Auctions", desc = "In Manage Auctions, your sold auctions are green and expired ones red.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2302)
         public boolean highlightAuctions = true;
@@ -413,19 +413,19 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Sacks Value", desc = "What everything in your sacks is worth, on a HUD, kept right through bazaar insta-sells without reopening your sacks (SkyHanni's Sack Display value).")
+        @ConfigOption(name = "Sacks Value", desc = "What everything in your sacks is worth, on a HUD, kept right through bazaar insta-sells without reopening your sacks.")
         @ConfigAccordionId(id = 2310)
         public com.epic60869.sky2m.features.FeatureConfigs.SacksValue sacksValue = new com.epic60869.sky2m.features.FeatureConfigs.SacksValue();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Item Pickup Log", desc = "SkyHanni's Item Pickup Log: what goes into and out of your inventory, sacks, Hunting Box and purse.")
+        @ConfigOption(name = "Item Pickup Log", desc = "What goes into and out of your inventory, sacks, Hunting Box and purse.")
         @ConfigAccordionId(id = 2310)
         public com.epic60869.sky2m.features.FeatureConfigs.ItemPickupLog itemPickupLog = new com.epic60869.sky2m.features.FeatureConfigs.ItemPickupLog();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Item Notification", desc = "Show items from your list on a HUD when they go into your sacks or inventory (SkyOcean's Sack Notification as a HUD).")
+        @ConfigOption(name = "Item Notification", desc = "Show items from your list on a HUD when they go into your sacks or inventory.")
         @ConfigAccordionId(id = 2310)
         public com.epic60869.sky2m.features.FeatureConfigs.ItemNotification itemNotification = new com.epic60869.sky2m.features.FeatureConfigs.ItemNotification();
     }
@@ -477,13 +477,13 @@ public final class Sky2MConfig extends Config {
         public boolean chatEmotes = true;
 
         @Expose
-        @ConfigOption(name = "Compact Bestiary", desc = "SkyHanni's compact Bestiary messages: Hypixel's BESTIARY level-up block becomes one line (\"BESTIARY Zombie II➡III\"); hover it for the rewards, click it to open the Bestiary. Milestones get their own line.")
+        @ConfigOption(name = "Compact Bestiary", desc = "Compact Bestiary messages: Hypixel's BESTIARY level-up block becomes one line (\"BESTIARY Zombie II➡III\"); hover it for the rewards, click it to open the Bestiary. Milestones get their own line.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 201)
         public boolean compactBestiary = true;
 
         @Expose
-        @ConfigOption(name = "SkyBlock XP in Chat", desc = "SkyHanni's SkyBlock XP in Chat: also send the \"+5 SkyBlock XP (Accessories) (35/100)\" shown in the action bar to chat.")
+        @ConfigOption(name = "SkyBlock XP in Chat", desc = "Also send the \"+5 SkyBlock XP (Accessories) (35/100)\" shown in the action bar to chat.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 201)
         public boolean skyBlockXpInChat = true;
@@ -496,19 +496,19 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Copy Chat", desc = "Right-click chat messages to copy them, like NoFrills' Chat Tweaks.")
+        @ConfigOption(name = "Copy Chat", desc = "Right-click chat messages to copy them.")
         @ConfigAccordionId(id = 201)
         public CopyChat copyChat = new CopyChat();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Stash Messages", desc = "SkyHanni's compact stash warnings: Hypixel's stash block as one clickable line, without repeats.")
+        @ConfigOption(name = "Stash Messages", desc = "Compact stash warnings: Hypixel's stash block as one clickable line, without repeats.")
         @ConfigAccordionId(id = 201)
         public com.epic60869.sky2m.features.misc.chat.StashCompact.Config stashMessages = new com.epic60869.sky2m.features.misc.chat.StashCompact.Config();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Translator", desc = "SkyHanni's chat translator: click a player's message to translate it, and /s2 translate for your own.")
+        @ConfigOption(name = "Translator", desc = "Click a player's message to translate it, and /s2 translate for your own.")
         @ConfigAccordionId(id = 201)
         public com.epic60869.sky2m.features.FeatureConfigs.Translator translator = new com.epic60869.sky2m.features.FeatureConfigs.Translator();
 
@@ -526,7 +526,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Spam Filters", desc = "SkyHanni's chat filters: hide lobby, warping, profile, Guild EXP, Kill Combo, Bazaar/AH, slayer, fire sale, event and other spam, or move it to the Side Chat.")
+        @ConfigOption(name = "Spam Filters", desc = "Hide lobby, warping, profile, Guild EXP, Kill Combo, Bazaar/AH, slayer, fire sale, event and other spam, or move it to the Side Chat.")
         @ConfigAccordionId(id = 201)
         public com.epic60869.sky2m.features.misc.chat.SpamFilters.Config spamFilters = new com.epic60869.sky2m.features.misc.chat.SpamFilters.Config();
 
@@ -583,7 +583,7 @@ public final class Sky2MConfig extends Config {
         public boolean emojiAutocomplete = true;
 
         @Expose
-        @ConfigOption(name = "Hypixel Item Emojis", desc = "In any chat (all, party, guild, private, Sky2M), :item_id: shows that SkyBlock item's icon, like the SkyHelper Discord: :summoning_eye:, :hyperion:, :enchanted_diamond:. Client side: everyone with Sky2M sees the icon, others see the text. Hover the icon for the item's name.")
+        @ConfigOption(name = "Hypixel Item Emojis", desc = "In any chat (all, party, guild, private, Sky2M), :item_id: shows that SkyBlock item's icon: :summoning_eye:, :hyperion:, :enchanted_diamond:. Client side: everyone with Sky2M sees the icon, others see the text. Hover the icon for the item's name.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 202)
         public boolean itemEmojis = true;
@@ -614,25 +614,25 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Visitors", desc = "SkyHanni's garden visitor features: shopping list, visitor timer, offer prices, reward warning, status highlights, chat options, drop statistics and charmed visitors.")
+        @ConfigOption(name = "Visitors", desc = "Garden visitor features: shopping list, visitor timer, offer prices, reward warning, status highlights, chat options, drop statistics and charmed visitors.")
         @ConfigAccordionId(id = 801)
         public com.epic60869.sky2m.features.garden.visitor.VisitorConfig visitors = new com.epic60869.sky2m.features.garden.visitor.VisitorConfig();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "SkyHanni Farming", desc = "SkyHanni's farming HUD (crop milestones, crops per minute, coins per hour, Garden level), Jacob's Contest, true Farming Fortune, optimal angles and speed, plot borders, pest traps, pest profit and spray display.")
+        @ConfigOption(name = "Farming Features", desc = "Farming HUD (crop milestones, crops per minute, coins per hour, Garden level), Jacob's Contest, true Farming Fortune, optimal angles and speed, plot borders, pest traps, pest profit and spray display.")
         @ConfigAccordionId(id = 801)
         public com.epic60869.sky2m.features.garden.skyhanni.SkyHanniGardenConfig skyhanniGarden = new com.epic60869.sky2m.features.garden.skyhanni.SkyHanniGardenConfig();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Crop Fever Effects", desc = "SkyOcean's crop fever effects: a jackpot sound, music, the screen cycling through colours and coins raining down while you have the CROP FEVER.")
+        @ConfigOption(name = "Crop Fever Effects", desc = "A jackpot sound, music, the screen cycling through colours and coins raining down while you have the CROP FEVER.")
         @ConfigAccordionId(id = 801)
         public com.epic60869.sky2m.features.FeatureConfigs.CropFever cropFever = new com.epic60869.sky2m.features.FeatureConfigs.CropFever();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Garden Helpers", desc = "SkyHanni's composter overlay, Anita shop profit, DNA Analyzer and Phantomleaf solvers, Stereo Harmony and Atmospheric Filter displays and farming weight display.")
+        @ConfigOption(name = "Garden Helpers", desc = "Composter overlay, Anita shop profit, DNA Analyzer and Phantomleaf solvers, Stereo Harmony and Atmospheric Filter displays and farming weight display.")
         @ConfigAccordionId(id = 801)
         public com.epic60869.sky2m.features.garden.helpers.HelperConfig gardenHelpers = new com.epic60869.sky2m.features.garden.helpers.HelperConfig();
 
@@ -726,7 +726,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Ordered Waypoints", desc = "SkyHanni's ordered waypoints (/sho): routes that show one waypoint after another.")
+        @ConfigOption(name = "Ordered Waypoints", desc = "Ordered waypoints (/sho): routes that show one waypoint after another.")
         public com.epic60869.sky2m.features.FeatureConfigs.OrderedWaypoints orderedWaypoints = new com.epic60869.sky2m.features.FeatureConfigs.OrderedWaypoints();
     }
 
@@ -756,7 +756,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Boss Highlight", desc = "Box your slayer boss and your minibosses (Skysoft's).")
+        @ConfigOption(name = "Boss Highlight", desc = "Box your slayer boss and your minibosses.")
         @ConfigAccordionId(id = 501)
         public com.epic60869.sky2m.features.FeatureConfigs.SlayerTargetHighlight targetHighlight = new com.epic60869.sky2m.features.FeatureConfigs.SlayerTargetHighlight();
 
@@ -774,7 +774,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Egg Hits Display", desc = "Hits each Tarantula egg sack still needs, shown on the egg (NoFrills').")
+        @ConfigOption(name = "Egg Hits Display", desc = "Hits each Tarantula egg sack still needs, shown on the egg.")
         @ConfigAccordionId(id = 501)
         public com.epic60869.sky2m.features.FeatureConfigs.EggHitsDisplay eggHitsDisplay = new com.epic60869.sky2m.features.FeatureConfigs.EggHitsDisplay();
 
@@ -806,7 +806,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Items on Ground", desc = "Name, amount and price over items lying on the ground, only while you have a slayer quest in that slayer's area (SkyHanni's).")
+        @ConfigOption(name = "Items on Ground", desc = "Name, amount and price over items lying on the ground, only while you have a slayer quest in that slayer's area.")
         @ConfigAccordionId(id = 503)
         public ItemsOnGround itemsOnGround = new ItemsOnGround();
 
@@ -818,7 +818,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "RNG Meter Display", desc = "A HUD with your quest slayer's selected RNG Meter drop, its progress and the bosses left (SkyHanni's).")
+        @ConfigOption(name = "RNG Meter Display", desc = "A HUD with your quest slayer's selected RNG Meter drop, its progress and the bosses left.")
         @ConfigAccordionId(id = 503)
         public com.epic60869.sky2m.features.FeatureConfigs.SlayerRngMeterDisplay rngMeterDisplay = new com.epic60869.sky2m.features.FeatureConfigs.SlayerRngMeterDisplay();
 
@@ -972,7 +972,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "RNG HUD", desc = "RNG drops (farming, slayer, Diana, fishing...) and Item Notification items as they drop, in their rarity colours, centred like SkyHanni's.")
+        @ConfigOption(name = "RNG HUD", desc = "RNG drops (farming, slayer, Diana, fishing...) and Item Notification items as they drop, in their rarity colours, centred.")
         public RngHud rngHud = new RngHud();
 
         @Expose
@@ -982,12 +982,12 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "SkyBlock Level Guide", desc = "Highlight tasks you have not finished in the SkyBlock Guide menus, like SkyHanni.")
+        @ConfigOption(name = "SkyBlock Level Guide", desc = "Highlight tasks you have not finished in the SkyBlock Guide menus.")
         public com.epic60869.sky2m.features.qol.LevelGuide.Config levelGuide = new com.epic60869.sky2m.features.qol.LevelGuide.Config();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Profile Viewer", desc = "/s2 pv <player>: anyone's SkyBlock profile, laid out like NEU's profile viewer.")
+        @ConfigOption(name = "Profile Viewer", desc = "/s2 pv <player>: anyone's SkyBlock profile.")
         public com.epic60869.sky2m.features.FeatureConfigs.ProfileViewer profileViewer = new com.epic60869.sky2m.features.FeatureConfigs.ProfileViewer();
 
         @ConfigOption(name = "HUDs", desc = "Coins per hour, toggle sprint, the event calendar, the recipe HUD and the GIF player.")
@@ -1018,7 +1018,7 @@ public final class Sky2MConfig extends Config {
         public boolean recipeHUDGroup = false;
 
         @Expose
-        @ConfigOption(name = "Recipe HUD", desc = "While a /s2 recipe is selected, show a movable HUD with the item and the base ingredients you still need (like SkyOcean's craft helper overlay). Move it in /s2 gui.")
+        @ConfigOption(name = "Recipe HUD", desc = "While a /s2 recipe is selected, show a movable HUD with the item and the base ingredients you still need. Move it in /s2 gui.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2304)
         public boolean recipeHud = false;
@@ -1031,7 +1031,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "GIF Player", desc = "GIFs from a folder playing on loop as HUDs (Killer560's).")
+        @ConfigOption(name = "GIF Player", desc = "GIFs from a folder playing on loop as HUDs.")
         @ConfigAccordionId(id = 2303)
         public com.epic60869.sky2m.features.FeatureConfigs.GifPlayer gifPlayer = new com.epic60869.sky2m.features.FeatureConfigs.GifPlayer();
 
@@ -1081,7 +1081,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Player Size", desc = "Make yourself, other players, or both bigger or smaller (client side only), like Odin.")
+        @ConfigOption(name = "Player Size", desc = "Make yourself, other players, or both bigger or smaller (client side only).")
         @ConfigAccordionId(id = 2306)
         public PlayerSize playerSize = new PlayerSize();
 
@@ -1093,7 +1093,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Hit Colour", desc = "Change the colour of the flash when a mob or player gets hit, like Lunar Client's Hit Color.")
+        @ConfigOption(name = "Hit Colour", desc = "Change the colour of the flash when a mob or player gets hit.")
         @ConfigAccordionId(id = 2306)
         public HitColour hitColour = new HitColour();
 
@@ -1105,37 +1105,37 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Held Item", desc = "Move, rotate and scale the item in your hand, change its swing speed and style, and show vanilla textures, globally or per item, ported from Skysoft. Open the editor with /s2 helditem.")
+        @ConfigOption(name = "Held Item", desc = "Move, rotate and scale the item in your hand, change its swing speed and style, and show vanilla textures, globally or per item. Open the editor with /s2 helditem.")
         @ConfigAccordionId(id = 2306)
         public com.epic60869.sky2m.features.helditem.HeldItemConfig heldItem = new com.epic60869.sky2m.features.helditem.HeldItemConfig();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Etherwarp Overlay", desc = "Show where your etherwarp would take you (Odin's).")
+        @ConfigOption(name = "Etherwarp Overlay", desc = "Show where your etherwarp would take you.")
         @ConfigAccordionId(id = 2306)
         public com.epic60869.sky2m.features.FeatureConfigs.EtherwarpOverlay etherwarpOverlay = new com.epic60869.sky2m.features.FeatureConfigs.EtherwarpOverlay();
 
         @Expose
-        @ConfigOption(name = "Hide Status Effects", desc = "Hide potion effects beside inventories and in the top-right of the screen (Skysoft's).")
+        @ConfigOption(name = "Hide Status Effects", desc = "Hide potion effects beside inventories and in the top-right of the screen.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2306)
         public boolean hideStatusEffects = true;
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Keep Terrain Loaded", desc = "Keep visited terrain loaded past Hypixel's view distance (Skysoft's).")
+        @ConfigOption(name = "Keep Terrain Loaded", desc = "Keep visited terrain loaded past Hypixel's view distance.")
         @ConfigAccordionId(id = 2306)
         public com.epic60869.sky2m.features.FeatureConfigs.KeepTerrainLoaded keepTerrainLoaded = new com.epic60869.sky2m.features.FeatureConfigs.KeepTerrainLoaded();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Trail", desc = "A trail of squares behind you as you move (Killer560's).")
+        @ConfigOption(name = "Trail", desc = "A trail of squares behind you as you move.")
         @ConfigAccordionId(id = 2306)
         public com.epic60869.sky2m.features.FeatureConfigs.Trail trail = new com.epic60869.sky2m.features.FeatureConfigs.Trail();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "DVD Screensaver", desc = "Text or a GIF bouncing around your screen like an old DVD player (Killer560's).")
+        @ConfigOption(name = "DVD Screensaver", desc = "Text or a GIF bouncing around your screen like an old DVD player.")
         @ConfigAccordionId(id = 2306)
         public com.epic60869.sky2m.features.FeatureConfigs.Dvd dvd = new com.epic60869.sky2m.features.FeatureConfigs.Dvd();
 
@@ -1144,7 +1144,7 @@ public final class Sky2MConfig extends Config {
         public boolean hypixelCommandsGroup = false;
 
         @Expose
-        @ConfigOption(name = "Auto Join SkyBlock", desc = "Like SkyHanni: when you join Hypixel, go straight into SkyBlock instead of staying in the main lobby. Only once per join, so /lobby still works.")
+        @ConfigOption(name = "Auto Join SkyBlock", desc = "When you join Hypixel, go straight into SkyBlock instead of staying in the main lobby. Only once per join, so /lobby still works.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2307)
         public boolean autoJoinSkyblock = false;
@@ -1168,7 +1168,7 @@ public final class Sky2MConfig extends Config {
         public com.epic60869.sky2m.features.FeatureConfigs.PartyCommands partyCommands = new com.epic60869.sky2m.features.FeatureConfigs.PartyCommands();
 
         @Expose
-        @ConfigOption(name = "Warp Shortcuts", desc = "Type /dhub, /crypts, /garden and other warp names without /warp (SkyHanni's and Skysoft's short warp commands). In the Garden, /home warps to the Garden, /barn goes to the barn and /tp <plot> to a plot.")
+        @ConfigOption(name = "Warp Shortcuts", desc = "Type /dhub, /crypts, /garden and other warp names without /warp. In the Garden, /home warps to the Garden, /barn goes to the barn and /tp <plot> to a plot.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2307)
         public boolean warpShortcuts = true;
@@ -1207,13 +1207,13 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Area Waypoints", desc = "Odin's waypoints for one dungeon boss phase, Kuudra tier or island, that can run commands (/s2w).")
+        @ConfigOption(name = "Area Waypoints", desc = "Waypoints for one dungeon boss phase, Kuudra tier or island, that can run commands (/s2w).")
         @ConfigAccordionId(id = 2309)
         public com.epic60869.sky2m.features.FeatureConfigs.AreaWaypoints areaWaypoints = new com.epic60869.sky2m.features.FeatureConfigs.AreaWaypoints();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Fairy Souls", desc = "A Fairy Soul finder over NEU's coordinates: outlines the ones you haven't collected (SkyHanni style), counts them on a HUD (/s2 souls).")
+        @ConfigOption(name = "Fairy Souls", desc = "A Fairy Soul finder: outlines the ones you haven't collected, counts them on a HUD (/s2 souls).")
         @ConfigAccordionId(id = 2309)
         public com.epic60869.sky2m.features.FeatureConfigs.FairySouls fairySouls = new com.epic60869.sky2m.features.FeatureConfigs.FairySouls();
 
@@ -1263,7 +1263,7 @@ public final class Sky2MConfig extends Config {
     /** Inventory > Inventory Buttons, ported from Skyblocker's Quick Navigation (LGPL-3.0): see features/misc/InventoryButtons. */
     public static final class InventoryButtonsSettings {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Skyblocker's Quick Navigation: up to 14 tabs above and below every SkyBlock menu, like the creative inventory's, that run a command. The tab for the menu you're in is drawn selected. Home, Garden and the hubs need a double click.")
+        @ConfigOption(name = "Enabled", desc = "Up to 14 tabs above and below every SkyBlock menu, like the creative inventory's, that run a command. The tab for the menu you're in is drawn selected. Home, Garden and the hubs need a double click.")
         @ConfigEditorBoolean
         public boolean enabled = true;
 
@@ -1382,7 +1382,7 @@ public final class Sky2MConfig extends Config {
 
     public static final class Screenshots {
         @Expose
-        @ConfigOption(name = "Screenshot Sharing", desc = "After F2, the screenshot message gets an [Upload] button that gives you a link to post in /s2c, like Skysoft. Uploads are public to anyone with the link.")
+        @ConfigOption(name = "Screenshot Sharing", desc = "After F2, the screenshot message gets an [Upload] button that gives you a link to post in /s2c. Uploads are public to anyone with the link.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -1394,7 +1394,7 @@ public final class Sky2MConfig extends Config {
 
     public static final class CollectionTrackerSettings {
         @Expose
-        @ConfigOption(name = "Collection Tracker", desc = "While you mine, farm, forage or fish, show the collection you're gathering, what you've gained this session and per hour, like SkyHanni's farming display. Move it in /s2 gui.")
+        @ConfigOption(name = "Collection Tracker", desc = "While you mine, farm, forage or fish, show the collection you're gathering, what you've gained this session and per hour. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -1406,7 +1406,7 @@ public final class Sky2MConfig extends Config {
 
     public static final class ToggleSprintSettings {
         @Expose
-        @ConfigOption(name = "Toggle Sprint", desc = "Always sprint, like Odin's Auto Sprint. Set a \"Toggle Sprint\" key in Controls to switch it on and off.")
+        @ConfigOption(name = "Toggle Sprint", desc = "Always sprint. Set a \"Toggle Sprint\" key in Controls to switch it on and off.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -1601,7 +1601,7 @@ public final class Sky2MConfig extends Config {
 
     public static final class SlotLocking {
         @Expose
-        @ConfigOption(name = "Slot Binding", desc = "Enable binding hotbar slots to inventory slots (Odin's Slot Binds). Item protection is toggled separately with /s2 protect.")
+        @ConfigOption(name = "Slot Binding", desc = "Enable binding hotbar slots to inventory slots. Item protection is toggled separately with /s2 protect.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -1616,7 +1616,7 @@ public final class Sky2MConfig extends Config {
         public boolean lineOnlyWithShift = false;
 
         @Expose
-        @ConfigOption(name = "Always Show Binds", desc = "In your inventory, always show every bind (a box around both slots and a line between them), not just the one you hover (Killer560's).")
+        @ConfigOption(name = "Always Show Binds", desc = "In your inventory, always show every bind (a box around both slots and a line between them), not just the one you hover.")
         @ConfigEditorBoolean
         public boolean alwaysShowBinds = false;
 
@@ -1659,12 +1659,12 @@ public final class Sky2MConfig extends Config {
         public boolean filledSound = false;
 
         @Expose
-        @ConfigOption(name = "Order Colours", desc = "In your Bazaar orders menu, colour each order's slot by where it stands, like Bazaar Utils: green when it's the best price, yellow when another order matches its price, red when it's outbid. Uses the bazaar prices from Hypixel's API, which can be up to a minute old.")
+        @ConfigOption(name = "Order Colours", desc = "In your Bazaar orders menu, colour each order's slot by where it stands: green when it's the best price, yellow when another order matches its price, red when it's outbid. Uses the bazaar prices from Hypixel's API, which can be up to a minute old.")
         @ConfigEditorBoolean
         public boolean orderColours = false;
 
         @Expose
-        @ConfigOption(name = "Bookmarks", desc = "Bookmark Bazaar items, like Bazaar Utils: click the ★ in the top-left of an item's Bazaar page to bookmark it. Your bookmarks show to the right of the Bazaar; hover one for its instant buy and sell prices, click to open it, shift-click to remove it.")
+        @ConfigOption(name = "Bookmarks", desc = "Bookmark Bazaar items: click the ★ in the top-left of an item's Bazaar page to bookmark it. Your bookmarks show to the right of the Bazaar; hover one for its instant buy and sell prices, click to open it, shift-click to remove it.")
         @ConfigEditorBoolean
         public boolean bookmarks = false;
 
@@ -1675,7 +1675,7 @@ public final class Sky2MConfig extends Config {
 
     public static final class CopyChat {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Copy chat messages, like NoFrills' Chat Tweaks: with chat open, press the Copy Message Key over a message to copy it. Sky2M rank prefixes aren't copied.")
+        @ConfigOption(name = "Enabled", desc = "Copy chat messages: with chat open, press the Copy Message Key over a message to copy it. Sky2M rank prefixes aren't copied.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -1792,7 +1792,7 @@ public final class Sky2MConfig extends Config {
         public float scale = 1.0f;
 
         @Expose
-        @ConfigOption(name = "Drop Colour", desc = "Colour of RNG drop names on the RNG HUD when the item's rarity isn't known (known items use their rarity colour, like SkyHanni).")
+        @ConfigOption(name = "Drop Colour", desc = "Colour of RNG drop names on the RNG HUD when the item's rarity isn't known (known items use their rarity colour).")
         @ConfigEditorColour
         public String dropColour = "0:255:85:255:255";
 
@@ -1839,7 +1839,7 @@ public final class Sky2MConfig extends Config {
         public boolean heldItem = true;
 
         @Expose
-        @ConfigOption(name = "Pet Icon", desc = "Skysoft's pet icon beside the text: your pet's head (its skin, once you've opened the Pets menu) with its held item in the corner.")
+        @ConfigOption(name = "Pet Icon", desc = "A pet icon beside the text: your pet's head (its skin, once you've opened the Pets menu) with its held item in the corner.")
         @ConfigEditorBoolean
         public boolean icon = true;
 
@@ -1920,7 +1920,7 @@ public final class Sky2MConfig extends Config {
         public boolean threeDayAverage = true;
 
         @Expose
-        @ConfigOption(name = "Estimated Item Value", desc = "Below the lowest BIN and 3 day average: the item's price plus what's applied to it (recombobulator, potato books, enchantments, master stars, gemstones, scrolls, dyes, skins and other upgrades), like SkyHanni's Estimated Item Value.")
+        @ConfigOption(name = "Estimated Item Value", desc = "Below the lowest BIN and 3 day average: the item's price plus what's applied to it (recombobulator, potato books, enchantments, master stars, gemstones, scrolls, dyes, skins and other upgrades).")
         @ConfigEditorBoolean
         public boolean estimatedValue = true;
 
@@ -1935,7 +1935,7 @@ public final class Sky2MConfig extends Config {
         public boolean recipeSubCrafts = false;
 
         @Expose
-        @ConfigOption(name = "Price Paid", desc = "Remember what you paid for items you buy on the auction house and show it in their tooltip, like NoFrills.")
+        @ConfigOption(name = "Price Paid", desc = "Remember what you paid for items you buy on the auction house and show it in their tooltip.")
         @ConfigEditorBoolean
         public boolean pricePaid = true;
 
@@ -2074,12 +2074,12 @@ public final class Sky2MConfig extends Config {
     public static final class Fonts {
         /** "Default" (Minecraft's font), "Inter", or a .ttf file name in config/sky2m/fonts. */
         @Expose
-        @ConfigOption(name = "Font", desc = "The font all text is drawn in: Default (Minecraft's), Inter (built in, like Caxton's default) or a .ttf from the fonts folder. Only letters, digits and punctuation change: symbols like Hypixel's stat icons keep their look.")
+        @ConfigOption(name = "Font", desc = "The font all text is drawn in: Default (Minecraft's), Inter (built in) or a .ttf from the fonts folder. Only letters, digits and punctuation change: symbols like Hypixel's stat icons keep their look.")
         @com.epic60869.sky2m.features.misc.visual.CustomFonts.FontDropdown
         public String font = "Default";
 
         @Expose
-        @ConfigOption(name = "Size", desc = "How big Inter or a .ttf font is drawn (7.5 is Caxton's size; Minecraft's text is about 9). Press Apply after changing it.")
+        @ConfigOption(name = "Size", desc = "How big Inter or a .ttf font is drawn (7.5 is the default; Minecraft's text is about 9). Press Apply after changing it.")
         @ConfigEditorSlider(minValue = 6f, maxValue = 16f, minStep = 0.5f)
         public float size = 7.5f;
 
@@ -2176,7 +2176,7 @@ public final class Sky2MConfig extends Config {
         public boolean stats = false;
 
         @Expose
-        @ConfigOption(name = "Show Networth", desc = "\"NW 37.47B\" in the line above your head (SkyHelper's networth, museum included).")
+        @ConfigOption(name = "Show Networth", desc = "\"NW 37.47B\" in the line above your head (museum included).")
         @ConfigEditorBoolean
         public boolean networth = true;
 
@@ -2206,7 +2206,7 @@ public final class Sky2MConfig extends Config {
 
     public static final class SpeedDisplay {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Show your speed (100% is normal walking speed, 400% the cap) on a HUD, like SkyblockAddons. Move it in /s2 gui.")
+        @ConfigOption(name = "Enabled", desc = "Show your speed (100% is normal walking speed, 400% the cap) on a HUD. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean enabled = false;
     }
@@ -2269,7 +2269,7 @@ public final class Sky2MConfig extends Config {
         public boolean hideExplosions = true;
 
         @Expose
-        @ConfigOption(name = "Hide Block Break Particles", desc = "Hide the particles when a block breaks (yours or anyone's) and the bits that fly off a block while you mine it, like SkyHanni's.")
+        @ConfigOption(name = "Hide Block Break Particles", desc = "Hide the particles when a block breaks (yours or anyone's) and the bits that fly off a block while you mine it.")
         @ConfigEditorBoolean
         public boolean hideBlockBreakParticles = true;
 
@@ -2282,7 +2282,7 @@ public final class Sky2MConfig extends Config {
     /** Firmament's storage overlay options (Firmament's StorageOverlay.TConfig). */
     public static final class StorageOverlaySettings {
         @Expose
-        @ConfigOption(name = "Storage Overlay", desc = "Firmament's storage overlay (ported from Firmament): /storage, your Ender Chest pages and backpacks open as one scrollable view of every page, with your inventory and a search box. Click a page to open it; the open page works like the normal menu. \"Edit Pages\" shows the normal Storage menu. /s2 storage opens it even with this off.")
+        @ConfigOption(name = "Storage Overlay", desc = "Storage overlay: /storage, your Ender Chest pages and backpacks open as one scrollable view of every page, with your inventory and a search box. Click a page to open it; the open page works like the normal menu. \"Edit Pages\" shows the normal Storage menu. /s2 storage opens it even with this off.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 

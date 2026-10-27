@@ -403,7 +403,7 @@ public final class FishingExtras {
 
     public static final class Config {
         @Expose
-        @ConfigOption(name = "Failed Cast Alert", desc = "A title when your bobber hasn't reached water or lava a moment after you cast it (Riccio Fishing Utils).")
+        @ConfigOption(name = "Failed Cast Alert", desc = "A title when your bobber hasn't reached water or lava a moment after you cast it.")
         @ConfigEditorBoolean
         public boolean failedCastAlert = false;
 
@@ -423,7 +423,7 @@ public final class FishingExtras {
         public boolean highlightHotspots = false;
 
         @Expose
-        @ConfigOption(name = "Guess Hotspot Radar", desc = "Right-click a Hotspot Radar and the flame trail it shows is followed to the hotspot: a HOTSPOT label and its distance appear there, like SkyHanni's.")
+        @ConfigOption(name = "Guess Hotspot Radar", desc = "Right-click a Hotspot Radar and the flame trail it shows is followed to the hotspot: a HOTSPOT label and its distance appear there.")
         @ConfigEditorBoolean
         public boolean guessHotspotRadar = true;
 
