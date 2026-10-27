@@ -190,6 +190,21 @@ public final class ItemListData {
         return d == null || id == null ? null : d.byId().get(id);
     }
 
+    /**
+     * For an id the list doesn't have but whose variants it does (Hypixel's {@code CAKE_HAT_2026} is only in the repo as
+     * {@code CAKE_HAT_2026_RED}, {@code _PINK}, ...): the first variant, by id. Null when there is none.
+     */
+    public static Entry variant(String id) {
+        Data d = data;
+        if (d == null || id == null || d.byId().containsKey(id)) return null;
+        String prefix = id + "_";
+        Entry best = null;
+        for (Entry e : d.entries()) {
+            if (e.id().startsWith(prefix) && (best == null || e.id().compareTo(best.id()) < 0)) best = e;
+        }
+        return best;
+    }
+
     /** Recipes that make {@code id}. */
     public static List<Recipe> recipes(String id) {
         Data d = data;

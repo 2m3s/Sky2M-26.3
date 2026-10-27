@@ -837,9 +837,24 @@ public final class MissingAccessories {
     private static String name(String id, JsonObject item) {
         String name = string(item, "name");
         if (name == null) name = RepoItems.displayName(id);
+        if (name == null) name = variantName(id);
         if (name == null) return id;
         String plain = ChatFormatting.stripFormatting(name);
         return plain == null ? id : plain.trim();
+    }
+
+    /**
+     * The name of an accessory the item list only has in variants: CAKE_HAT_2026 from CAKE_HAT_2026_RED's "Red 7th
+     * Anniversary Cake Hat", without the variant's word ("7th Anniversary Cake Hat").
+     */
+    static String variantName(String id) {
+        com.epic60869.sky2m.features.itemlist.ItemListData.Entry variant = com.epic60869.sky2m.features.itemlist.ItemListData.variant(id);
+        if (variant == null) return null;
+        String name = ChatFormatting.stripFormatting(variant.name());
+        if (name == null) return null;
+        String suffix = variant.id().substring(id.length() + 1).replace('_', ' ');
+        String trimmed = name.replaceFirst("(?i)^" + java.util.regex.Pattern.quote(suffix) + "\\s+|\\s+" + java.util.regex.Pattern.quote(suffix) + "$", "").trim();
+        return trimmed.isEmpty() ? name.trim() : trimmed;
     }
 
     /** Buying one: the lower of its lowest BIN ("AH") and Bazaar insta-buy ("Bazaar"); cost 0 when neither is known. */

@@ -273,7 +273,7 @@ public final class MissingAccessoriesScreen extends Screen {
                 hovered = row;
             }
             int nameX = c[0];
-            ItemStack icon = ItemListStacks.stack(row.id());
+            ItemStack icon = stack(row.id());
             if (!icon.isEmpty()) {
                 g.pose().pushMatrix();
                 g.pose().translate(c[0], ry - 2);
@@ -320,6 +320,18 @@ public final class MissingAccessoriesScreen extends Screen {
         g.text(font, text, insetLeft() + 1, insetBottom() + 6, Sky2MGuiStyle.DESCRIPTION, true);
     }
 
+    /**
+     * The row's item. Accessories the item list only has in colours (CAKE_HAT_2026 as CAKE_HAT_2026_RED, ...) use the
+     * first colour's icon and tooltip instead of a barrier.
+     */
+    private static ItemStack stack(String id) {
+        if (com.epic60869.sky2m.features.itemlist.ItemListData.entry(id) == null) {
+            com.epic60869.sky2m.features.itemlist.ItemListData.Entry variant = com.epic60869.sky2m.features.itemlist.ItemListData.variant(id);
+            if (variant != null) return ItemListStacks.stack(variant);
+        }
+        return ItemListStacks.stack(id);
+    }
+
     /** The How column: what kind of row it is and how it's paid for. */
     private static String how(MissingAccessories.Row row) {
         String note = row.note() == null ? "" : row.note();
@@ -342,7 +354,7 @@ public final class MissingAccessoriesScreen extends Screen {
             tip.add(Component.literal("Charge your Pulse Ring with " + row.note() + " in an anvil").withStyle(ChatFormatting.GRAY));
             tip.add(Component.literal("to reach " + row.rarity().replace('_', ' ') + ".").withStyle(ChatFormatting.GRAY));
         } else {
-            tip.addAll(Sky2MPriceTooltip.itemListTooltip(ItemListStacks.stack(row.id())));
+            tip.addAll(Sky2MPriceTooltip.itemListTooltip(stack(row.id())));
         }
         tip.add(Component.empty());
         tip.add(Component.literal("+" + row.gain() + " Magical Power").withStyle(ChatFormatting.GREEN));

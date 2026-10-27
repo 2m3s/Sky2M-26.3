@@ -75,6 +75,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
+- Fix /s2 mp showing new accessories the item list only has in colours (the 7th Anniversary Cake Hat) as a barrier named CAKE_HAT_2026: they get the item's icon and name.
 - Fix Farming and Mining profit trackers counting compacted items as the raw item: what a compactor turns your drops into (Enchanted or Compacted Moonflower, Mutant Nether Wart, Box of Seeds and the rest) is now shown instead, including compactions straight into your sacks, without counting anything twice.
 - Fix the Garden drop animation playing for other players' dye drops and for player chat.
 - Fix visitors that should keep their chat (like Spaceman) being hidden by Hide Chat, and Item Preview not showing "Unknown" rewards: the visitor data's flags weren't read.
