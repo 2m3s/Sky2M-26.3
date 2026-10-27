@@ -40,6 +40,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- `/s2 featuresearch [text]` opens the feature search (same as `/s2 find`), and you can describe what a feature does instead of knowing its name: filler words are skipped, word endings don't matter ("pests" finds "pest"), and features matching most of the words are listed after exact matches.
 - Garden plot borders (Sprayonator and the plot border key) are a see-through yellow wall 3 blocks tall at your height instead of a tall blue box with lines across the sky.
 - Sack menus no longer show the Estimated Item Value: not in the Value Breakdown Panel, the Shift breakdown or the Price Tooltip.
 - The old chat-only SkyHanni / Skyblocker import (3 settings) is replaced by the import screen.
