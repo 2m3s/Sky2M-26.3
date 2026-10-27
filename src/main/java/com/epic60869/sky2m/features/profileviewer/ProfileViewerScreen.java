@@ -5,7 +5,7 @@ import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.profileviewer.ProfileItems.PvItem;
 import com.epic60869.sky2m.features.profileviewer.ProfileStats.Level;
 import com.epic60869.sky2m.features.profileviewer.ProfileStats.Pet;
-import com.epic60869.sky2m.mixin.Sky2MInventoryScreenInvoker;
+import com.epic60869.sky2m.mixin.gui.Sky2MInventoryScreenInvoker;
 import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.ChatFormatting;

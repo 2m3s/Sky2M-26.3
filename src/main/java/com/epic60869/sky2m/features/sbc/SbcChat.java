@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.sbc;
 
 import com.epic60869.sky2m.custom.util.Compat;
-import com.epic60869.sky2m.mixin.Sky2MChatComponentAccessor;
+import com.epic60869.sky2m.mixin.chat.Sky2MChatComponentAccessor;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -306,7 +306,7 @@ public final class SbcChat {
         replyTo = id;
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
-            ChatScreen screen = new ChatScreen(com.epic60869.sky2m.Sky2MGlobalChat.isInSky2MChannel() ? "" : "/s2c ", false);
+            ChatScreen screen = new ChatScreen(com.epic60869.sky2m.chat.Sky2MGlobalChat.isInSky2MChannel() ? "" : "/s2c ", false);
             replyScreen = screen;
             Compat.queueOpenScreen(screen);
         });
@@ -364,7 +364,7 @@ public final class SbcChat {
         JsonObject packet = Sbc.packet("message");
         packet.addProperty("message", message == null ? "" : message.trim());
         packet.add("item", item);
-        com.epic60869.sky2m.Sky2MGlobalChat.sendPacket(packet);
+        com.epic60869.sky2m.chat.Sky2MGlobalChat.sendPacket(packet);
     }
 
     private static void viewItem(int key) {

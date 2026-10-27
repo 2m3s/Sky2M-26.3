@@ -4,7 +4,7 @@ import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
-import com.epic60869.sky2m.mixin.Sky2MBossOverlayAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MBossOverlayAccessor;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

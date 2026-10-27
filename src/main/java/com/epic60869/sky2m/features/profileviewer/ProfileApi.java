@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.profileviewer;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

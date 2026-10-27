@@ -14,7 +14,7 @@ import java.util.function.Supplier;
  * SBO's Diana party commands (https://github.com/SkyblockOverhaul/SBO, general/PartyCommands.kt, Apache-2.0): !chim,
  * !inq, !relic, !stick, !since, !burrows, !mobs, !profit and the rest, answered in party chat from this Diana season's
  * mob and drop tracker ({@link DianaTracker}) and profit tracker ({@link DianaProfitTracker}). Asked by anyone in the
- * party, you included; {@link com.epic60869.sky2m.features.misc.PartyCommands} sends the answer.
+ * party, you included; {@link com.epic60869.sky2m.features.misc.chat.PartyCommands} sends the answer.
  */
 public final class DianaPartyCommands {
     public static final List<String> HELP = List.of("!chim", "!chimls", "!inq", "!king", "!manti", "!sphinx", "!stick", "!relic",

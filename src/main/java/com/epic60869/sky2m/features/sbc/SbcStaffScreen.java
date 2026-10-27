@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.sbc;
 
-import com.epic60869.sky2m.Sky2MGuiStyle;
+import com.epic60869.sky2m.gui.Sky2MGuiStyle;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.InputConstants;

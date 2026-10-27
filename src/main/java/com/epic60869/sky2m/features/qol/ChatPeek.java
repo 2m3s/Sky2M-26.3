@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.qol;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MKeyMappings;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.input.Sky2MKeyMappings;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;

@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.sbc;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -39,16 +39,16 @@ public final class Sbc {
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>)) return;
             net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents.allowKeyPress(screen).register((s, event) -> {
-                if (com.epic60869.sky2m.Sky2MKeyMappings.SHARE_ITEM == null
-                    || !com.epic60869.sky2m.Sky2MKeyMappings.SHARE_ITEM.matches(event)) return true;
+                if (com.epic60869.sky2m.input.Sky2MKeyMappings.SHARE_ITEM == null
+                    || !com.epic60869.sky2m.input.Sky2MKeyMappings.SHARE_ITEM.matches(event)) return true;
                 SbcChat.share("");
                 return false;
             });
         });
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             try {
-                while (com.epic60869.sky2m.Sky2MKeyMappings.SHARE_ITEM != null
-                    && com.epic60869.sky2m.Sky2MKeyMappings.SHARE_ITEM.consumeClick()) SbcChat.share("");
+                while (com.epic60869.sky2m.input.Sky2MKeyMappings.SHARE_ITEM != null
+                    && com.epic60869.sky2m.input.Sky2MKeyMappings.SHARE_ITEM.consumeClick()) SbcChat.share("");
             } catch (Exception e) {
                 SbcCrashReports.report(e, "S2C tick");
             }
@@ -72,7 +72,7 @@ public final class Sbc {
                     String message = str(packet, "message");
                     error(message.isBlank() ? "The Sky2M server refused that (" + str(packet, "code") + ")." : message);
                 }
-                case "museumResult" -> com.epic60869.sky2m.features.misc.MuseumTooltip.handle(packet);
+                case "museumResult" -> com.epic60869.sky2m.features.misc.items.MuseumTooltip.handle(packet);
                 case "partyData" -> com.epic60869.sky2m.features.dungeons.party.PartyDungeonData.handle(packet);
                 case "updateAvailable", "announcement", "motd" -> SbcServer.handle(type, packet);
                 case "roomResult", "roomEvent", "rooms", "roomInvite", "roomKicked", "roomBrowse" -> SbcRooms.handle(type, packet);
@@ -110,11 +110,11 @@ public final class Sbc {
         // An old socket closing late (onClose and onError fire for it too) mustn't wipe the newer connection's state.
         if (SbcNet.online()) return;
         try {
-            com.epic60869.sky2m.Sky2MLogin.onDisconnected();
+            com.epic60869.sky2m.social.Sky2MLogin.onDisconnected();
             SbcStaff.onDisconnected();
             SbcSocial.onDisconnected();
             SbcCosmetics.onDisconnected();
-            com.epic60869.sky2m.Sky2MPartyFinder.onDisconnected();
+            com.epic60869.sky2m.social.Sky2MPartyFinder.onDisconnected();
             com.epic60869.sky2m.reports.Reports.onDisconnected();
         } catch (Exception e) {
             SbcCrashReports.report(e, "S2C disconnect");

@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
-import com.epic60869.sky2m.ItemPriceResolver;
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.price.ItemPriceResolver;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -212,13 +212,13 @@ public final class CombatFeatures {
             {
                 // First and on its own, so a problem in the other drop features can't stop it reaching the RNG HUD.
                 try {
-                    com.epic60869.sky2m.FarmingRngTracker.get().onRareDrop(message.component(), dropItem, dropAmount,
+                    com.epic60869.sky2m.tools.FarmingRngTracker.get().onRareDrop(message.component(), dropItem, dropAmount,
                         rng || dropType.startsWith("CRAZY RARE") || dropType.startsWith("INSANE") || dropType.startsWith("INCREDIBLY RARE"));
                 } catch (Exception e) {
                     System.err.println("[Sky2M] RNG HUD: " + e);
                 }
                 onRareDrop(config.rareDrops, dropText, dropItem, dropAmount, rng, slayer, garden,
-                    com.epic60869.sky2m.features.misc.PetDropRarity.label(message.component(), dropItem));
+                    com.epic60869.sky2m.features.misc.chat.PetDropRarity.label(message.component(), dropItem));
                 RareDropTotem.onDrop(dropType, dropItem);
             }
         }
@@ -306,7 +306,7 @@ public final class CombatFeatures {
         if (copy) {
             mc.execute(() -> {
                 mc.keyboardHandler.setClipboard(text);
-                com.epic60869.sky2m.features.misc.CopyChat.showPreview("Drop copied", text);
+                com.epic60869.sky2m.features.misc.chat.CopyChat.showPreview("Drop copied", text);
             });
         }
         if (config.dropMessage) {

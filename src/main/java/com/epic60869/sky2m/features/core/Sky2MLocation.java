@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.core;
 
-import com.epic60869.sky2m.Sky2MTabWidgetManager;
+import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
@@ -221,7 +221,7 @@ public final class Sky2MLocation {
      * From Killer560's Mod's Skyblock Only (MIT).
      */
     public static boolean skyblockOnlyAllows() {
-        com.epic60869.sky2m.Sky2MConfig config = com.epic60869.sky2m.Sky2MConfig.current();
+        com.epic60869.sky2m.config.Sky2MConfig config = com.epic60869.sky2m.config.Sky2MConfig.current();
         if (config == null || !config.general.skyblockOnly || onSkyblock) return true;
         if (Minecraft.getInstance().hasSingleplayerServer()) return true;
         return System.currentTimeMillis() - lastOnSkyblockAt < 10_000L;

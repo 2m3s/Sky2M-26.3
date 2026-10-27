@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.reports;
 
-import com.epic60869.sky2m.Sky2MLogin;
+import com.epic60869.sky2m.social.Sky2MLogin;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.sbc.Flags;
 import com.epic60869.sky2m.features.sbc.Sbc;
@@ -215,7 +215,7 @@ public final class Reports {
      */
     static boolean isAdmin() {
         if (support == Support.YES) return admin;
-        return isOwner() || com.epic60869.sky2m.Sky2MStaff.isReportsAdmin(Minecraft.getInstance().getUser().getProfileId());
+        return isOwner() || com.epic60869.sky2m.social.Sky2MStaff.isReportsAdmin(Minecraft.getInstance().getUser().getProfileId());
     }
 
     private static String version() {

@@ -15,7 +15,7 @@
   "environment": "client",
   "entrypoints": {
     "preLaunch": [
-      "com.epic60869.sky2m.Sky2MMigration"
+      "com.epic60869.sky2m.config.Sky2MMigration"
     ],
     "client": [
       "com.epic60869.sky2m.Sky2MMod"

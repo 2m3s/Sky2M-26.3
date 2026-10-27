@@ -1,11 +1,11 @@
 package com.epic60869.sky2m.features.dungeons.bridge;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.dungeons.party.PartyDungeonState;
 import com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Source;
-import com.epic60869.sky2m.features.misc.PartyCommands;
+import com.epic60869.sky2m.features.misc.chat.PartyCommands;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonPlayerManager;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.Room;

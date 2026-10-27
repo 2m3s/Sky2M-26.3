@@ -1,15 +1,15 @@
 package com.epic60869.sky2m.features.combat;
 
-import com.epic60869.sky2m.ItemPriceResolver;
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.price.ItemPriceResolver;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
-import com.epic60869.sky2m.features.misc.PartyCommands;
+import com.epic60869.sky2m.features.misc.chat.PartyCommands;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;

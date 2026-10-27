@@ -70,7 +70,7 @@ public final class Sky2MHuds {
     public static void init(Path configDir) {
         file = configDir.resolve("sky2m-huds.json");
         // New players start from Sky2M's default HUD layout; an existing file is never replaced.
-        com.epic60869.sky2m.Sky2MConfig.copyBundledDefault(file, "sky2m-huds.json");
+        com.epic60869.sky2m.config.Sky2MConfig.copyBundledDefault(file, "sky2m-huds.json");
         load();
         // Drawn before the tab list, so holding Tab shows the list over the HUDs (like every Sky2M HUD layer).
         HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST, ID, (graphics, delta) -> renderAll(graphics));
@@ -174,7 +174,7 @@ public final class Sky2MHuds {
         // Positions saved before the reference size existed were placed on this screen size.
         if (refWidth <= 0 || refHeight <= 0) setReferenceToScreen();
         Sky2MPerf.frame();
-        boolean stamp = !(mc.gui.screen() instanceof com.epic60869.sky2m.Sky2MHudEditorScreen);
+        boolean stamp = !(mc.gui.screen() instanceof com.epic60869.sky2m.gui.Sky2MHudEditorScreen);
         long now = System.currentTimeMillis();
         if (stamp) lastLiveMs = now;
         for (Element element : ELEMENTS.values()) {
@@ -474,11 +474,11 @@ public final class Sky2MHuds {
             // Backgrounds became opt-in; turn off the ones saved before that, once.
             if (!root.has(BACKGROUNDS_OFF)) {
                 for (Placement p : PLACEMENTS.values()) p.background = false;
-                com.epic60869.sky2m.Sky2MConfig config = com.epic60869.sky2m.Sky2MConfig.current();
+                com.epic60869.sky2m.config.Sky2MConfig config = com.epic60869.sky2m.config.Sky2MConfig.current();
                 if (config != null) {
                     config.mining.commissions.background = false;
                     config.misc.rngHud.background = false;
-                    com.epic60869.sky2m.Sky2MConfig.saveCurrent(config);
+                    com.epic60869.sky2m.config.Sky2MConfig.saveCurrent(config);
                 }
                 save();
             }

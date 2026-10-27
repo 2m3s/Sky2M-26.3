@@ -207,7 +207,7 @@ final class ItemListCard {
                     priced = c.stack().copy();
                     priced.setCount((int) Math.min(amount, Integer.MAX_VALUE));
                 }
-                List<Component> tip = new ArrayList<>(com.epic60869.sky2m.Sky2MPriceTooltip.itemListTooltip(priced));
+                List<Component> tip = new ArrayList<>(com.epic60869.sky2m.price.Sky2MPriceTooltip.itemListTooltip(priced));
                 if (c.amount() > 1) {
                     tip.add(Component.literal("Amount: " + String.format(Locale.ROOT, "%,.0f", c.amount())).withStyle(ChatFormatting.DARK_GRAY)
                         .append(Component.literal(all ? "" : "  (Shift: price for all " + String.format(Locale.ROOT, "%,d", amount) + ")")

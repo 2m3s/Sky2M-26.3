@@ -1,11 +1,11 @@
 package com.epic60869.sky2m.features.portfolio;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
-import com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor;
-import com.epic60869.sky2m.mixin.Sky2MDeferredTooltipAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MDeferredTooltipAccessor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;

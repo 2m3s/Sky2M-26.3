@@ -3,7 +3,7 @@ package com.epic60869.sky2m.features.social;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
-import com.epic60869.sky2m.features.misc.PartyCommands;
+import com.epic60869.sky2m.features.misc.chat.PartyCommands;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -82,7 +82,7 @@ public final class ChatWaypoints {
             Shared shared = parse(message.text());
             if (shared == null || shared.sender().equalsIgnoreCase(Minecraft.getInstance().getUser().getName())) return;
             // Party chat is Diana > Party Coord Waypoints' while that is on.
-            var config = com.epic60869.sky2m.Sky2MConfig.current();
+            var config = com.epic60869.sky2m.config.Sky2MConfig.current();
             if (message.text().startsWith("Party >") && config != null && config.events.diana.partyCoordWaypoints) return;
             add(shared.sender(), shared.note(), new Vec3(shared.x(), shared.y(), shared.z()));
         });

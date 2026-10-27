@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.events;
 
-import com.epic60869.sky2m.Sky2MCalculator;
-import com.epic60869.sky2m.Sky2MTabWidgetManager;
+import com.epic60869.sky2m.tools.Sky2MCalculator;
+import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;

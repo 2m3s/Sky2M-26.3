@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.events;
 
-import com.epic60869.sky2m.ItemPriceResolver;
-import com.epic60869.sky2m.Sky2MSkyblockTime;
+import com.epic60869.sky2m.price.ItemPriceResolver;
+import com.epic60869.sky2m.tools.Sky2MSkyblockTime;
 import com.epic60869.sky2m.features.core.EntityGlow;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;

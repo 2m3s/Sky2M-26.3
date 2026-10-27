@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.fishing;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.combat.CombatFeatures;
 import com.epic60869.sky2m.features.core.EntityGlow;

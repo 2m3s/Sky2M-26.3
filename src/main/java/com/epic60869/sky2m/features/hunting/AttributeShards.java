@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.hunting;
 
-import com.epic60869.sky2m.Sky2MStorageSearch;
+import com.epic60869.sky2m.items.Sky2MStorageSearch;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;

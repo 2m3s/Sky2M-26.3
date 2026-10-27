@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.economy;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.Compat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -168,7 +168,7 @@ public final class ValueBreakdown {
     /** Draws the hovered item's breakdown in a panel beside the menu (left of it, else right, else the screen's edge). */
     static void renderPanel(net.minecraft.client.gui.GuiGraphicsExtractor g, net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
         if (!panelEnabled() || !Compat.isOnSkyblock()) return;
-        var access = (com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor) screen;
+        var access = (com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor) screen;
         net.minecraft.world.inventory.Slot hovered = access.sky2m$getHoveredSlot();
         if (hovered == null || !hovered.hasItem()) return;
         ItemStack stack = hovered.getItem();

@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.sbc;
 
-import com.epic60869.sky2m.Sky2MGuiStyle;
+import com.epic60869.sky2m.gui.Sky2MGuiStyle;
 import com.epic60869.sky2m.features.misc.playasmob.PlayAsMobs;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -364,10 +364,10 @@ public final class SbcCosmeticsScreen extends Screen {
         drawRows(g, mouseX, mouseY, rows, look, id -> {
             look = id;
             // Mobs are kept in your settings so they show straight away, server or not; a model or Player clears it.
-            com.epic60869.sky2m.Sky2MConfig config = com.epic60869.sky2m.Sky2MConfig.current();
+            com.epic60869.sky2m.config.Sky2MConfig config = com.epic60869.sky2m.config.Sky2MConfig.current();
             if (config != null) {
                 config.misc.playAsMob.mob = id.isEmpty() || id.startsWith("model:") ? "" : id;
-                com.epic60869.sky2m.Sky2MConfig.saveCurrent(config);
+                com.epic60869.sky2m.config.Sky2MConfig.saveCurrent(config);
             }
             // Sent too, so other Sky2M players see it (a built-in model only exists on your own client).
             if (SbcNet.online()) SbcCosmetics.selectLook(id.startsWith(com.epic60869.sky2m.features.misc.playasmob.BuiltinModels.PREFIX) ? "" : id);
@@ -375,7 +375,7 @@ public final class SbcCosmeticsScreen extends Screen {
     }
 
     private static String localMob() {
-        com.epic60869.sky2m.Sky2MConfig config = com.epic60869.sky2m.Sky2MConfig.current();
+        com.epic60869.sky2m.config.Sky2MConfig config = com.epic60869.sky2m.config.Sky2MConfig.current();
         String mob = config == null ? null : config.misc.playAsMob.mob;
         return PlayAsMobs.sanitize(mob) == null && com.epic60869.sky2m.features.misc.playasmob.BuiltinModels.sanitize(mob) == null ? "" : mob;
     }

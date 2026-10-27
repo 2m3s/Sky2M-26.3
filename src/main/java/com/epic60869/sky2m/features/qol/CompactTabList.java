@@ -1,9 +1,9 @@
 package com.epic60869.sky2m.features.qol;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.sbc.SbcItems;
-import com.epic60869.sky2m.mixin.Sky2MPlayerTabOverlayAccessor;
+import com.epic60869.sky2m.mixin.player.Sky2MPlayerTabOverlayAccessor;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;

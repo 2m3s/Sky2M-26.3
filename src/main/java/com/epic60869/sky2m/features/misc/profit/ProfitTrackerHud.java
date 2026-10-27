@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.misc.profit;
 
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -439,7 +439,7 @@ final class ProfitTrackerHud {
             if (button == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT) {
                 if (area.control() != Control.ITEM || area.itemId() == null) return false;
                 ProfitItemPrices.cycle(area.itemId(), 1, priceSource(c));
-                com.epic60869.sky2m.Sky2MGuiStyle.click();
+                com.epic60869.sky2m.gui.Sky2MGuiStyle.click();
                 ROW_CACHE.clear();
                 return true;
             }
@@ -461,7 +461,7 @@ final class ProfitTrackerHud {
                 }
             }
             ROW_CACHE.clear();
-            com.epic60869.sky2m.Sky2MConfig.saveCurrent(com.epic60869.sky2m.Sky2MConfig.current());
+            com.epic60869.sky2m.config.Sky2MConfig.saveCurrent(com.epic60869.sky2m.config.Sky2MConfig.current());
             ProfitTracker.markDirty();
             return true;
         }

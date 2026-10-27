@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.profileviewer;
 
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.features.profileviewer.ProfileItems.PvItem;
 import com.google.gson.JsonObject;
 import net.minecraft.ChatFormatting;

@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.dungeons.mapstyle;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.sim.livemap.MapViewSource;
 import com.epic60869.sky2m.sim.roomsim.SimState;

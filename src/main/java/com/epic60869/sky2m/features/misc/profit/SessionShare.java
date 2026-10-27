@@ -1,9 +1,9 @@
 package com.epic60869.sky2m.features.misc.profit;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MGlobalChat;
-import com.epic60869.sky2m.Sky2MLogin;
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.chat.Sky2MGlobalChat;
+import com.epic60869.sky2m.social.Sky2MLogin;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.sbc.Sbc;
 import com.google.gson.JsonArray;

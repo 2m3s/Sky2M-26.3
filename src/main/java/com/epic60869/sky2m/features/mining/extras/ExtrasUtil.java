@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.mining.extras;
 
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.sim.util.TabText;
 import net.minecraft.client.Minecraft;

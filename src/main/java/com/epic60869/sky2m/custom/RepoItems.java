@@ -82,7 +82,7 @@ public final class RepoItems {
 
 	public static void init() {
 		// The item list is downloaded once, by PriceService, and shared with the price features.
-		com.epic60869.sky2m.PriceService.onItems(RepoItems::loadItems);
+		com.epic60869.sky2m.price.PriceService.onItems(RepoItems::loadItems);
 	}
 
 	public static void runAsync(Runnable runnable) {

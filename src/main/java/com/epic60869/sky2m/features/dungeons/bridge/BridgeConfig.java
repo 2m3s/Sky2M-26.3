@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.dungeons.bridge;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 
 /** The Cross-Mod Bridge's switches, read from Sky2M's settings (Dungeons > Cross-Mod Bridge). */

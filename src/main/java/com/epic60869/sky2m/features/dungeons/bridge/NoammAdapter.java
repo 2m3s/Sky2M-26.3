@@ -192,7 +192,7 @@ final class NoammAdapter extends SocketAdapter {
     /** Same field-then-getter fallback as {@code RelayAuth.keyPairManager}. */
     private static ProfileKeyPairManager keyPairManager(Minecraft mc) {
         try {
-            return ((com.epic60869.sky2m.mixin.Sky2MProfileKeysAccessor) (Object) mc).sky2m$getProfileKeyPairManager();
+            return ((com.epic60869.sky2m.mixin.player.Sky2MProfileKeysAccessor) (Object) mc).sky2m$getProfileKeyPairManager();
         } catch (Throwable ignored) {
             return mc.getProfileKeyPairManager();
         }

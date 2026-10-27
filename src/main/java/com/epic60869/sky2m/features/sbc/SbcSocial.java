@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.sbc;
 
-import com.epic60869.sky2m.Sky2MNick;
-import com.epic60869.sky2m.Sky2MLogin;
+import com.epic60869.sky2m.nick.Sky2MNick;
+import com.epic60869.sky2m.social.Sky2MLogin;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.google.gson.JsonElement;
@@ -169,7 +169,7 @@ public final class SbcSocial {
     public static void requestWho(boolean show) {
         if (show) showWhenArrives = true;
         if (!SbcNet.online()) {
-            com.epic60869.sky2m.Sky2MGlobalChat.ensureConnected();
+            com.epic60869.sky2m.chat.Sky2MGlobalChat.ensureConnected();
             if (show) {
                 if (Sbc.config().social.whoScreen) Compat.queueOpenScreen(new SbcWhoScreen());
                 else Sbc.error(SbcNet.OFFLINE);

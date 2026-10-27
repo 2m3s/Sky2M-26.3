@@ -5,7 +5,7 @@
 // CC0 1.0): features/impl/floor7/dragons/DragonCheck.kt and M7Relics.kt.
 package com.epic60869.sky2m.features.dungeons;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -15,7 +15,7 @@ import com.epic60869.sky2m.sb.events.ServerTickCallback;
 import com.epic60869.sky2m.sb.skyblock.dungeon.DungeonClass;
 import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;
 import com.epic60869.sky2m.features.core.Sky2MChat;
-import com.epic60869.sky2m.mixin.Sky2MBossOverlayAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MBossOverlayAccessor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;

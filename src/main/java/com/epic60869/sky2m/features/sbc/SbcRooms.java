@@ -240,7 +240,7 @@ public final class SbcRooms {
         JsonObject p = Sbc.packet("message");
         p.addProperty("message", message.trim());
         p.addProperty("room", room);
-        com.epic60869.sky2m.Sky2MGlobalChat.sendPacket(p);
+        com.epic60869.sky2m.chat.Sky2MGlobalChat.sendPacket(p);
     }
 
     /** The room plain messages go to, or "" for global. Used by SbcChat.outgoing. */

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 package com.epic60869.sky2m.features.misc.storage;
 
-import com.epic60869.sky2m.Sky2MStorageSearch;
+import com.epic60869.sky2m.items.Sky2MStorageSearch;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;

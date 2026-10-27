@@ -1,9 +1,9 @@
 package com.epic60869.sky2m.features.mining.extras;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
-import com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;

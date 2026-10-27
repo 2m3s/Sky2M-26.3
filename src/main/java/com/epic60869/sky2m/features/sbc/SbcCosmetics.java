@@ -85,7 +85,7 @@ public final class SbcCosmetics {
                     parsed.put(uuid, new Entry(symbol(Sbc.obj(o, "tier")), symbol(Sbc.obj(o, "badge")),
                         Sbc.str(cape, "name"), Sbc.str(cape, "url"), Sbc.str(look, "mob"), modelRef(Sbc.obj(look, "model"))));
                 }
-                if (!parsed.equals(table)) com.epic60869.sky2m.Sky2MNick.invalidateCache();
+                if (!parsed.equals(table)) com.epic60869.sky2m.nick.Sky2MNick.invalidateCache();
                 table = Map.copyOf(parsed);
             }
             case "cosmeticsProfile" -> {

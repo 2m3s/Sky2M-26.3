@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 package com.epic60869.sky2m.features.misc.storage;
 
-import com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.input.CharacterEvent;
@@ -68,8 +68,8 @@ public class StorageOverlayCustom extends CustomGui {
         ((CustomGui.Holder) screen).sky2m$setPos(overview.measurements.x, overview.measurements.y);
         // The search box and button belong to the menu, so typing reaches the search box.
         if (!screen.children().contains(overview.searchField)) {
-            ((com.epic60869.sky2m.mixin.Sky2MScreenWidgetsInvoker) screen).sky2m$addWidget(overview.searchField);
-            ((com.epic60869.sky2m.mixin.Sky2MScreenWidgetsInvoker) screen).sky2m$addWidget(overview.editButton);
+            ((com.epic60869.sky2m.mixin.gui.Sky2MScreenWidgetsInvoker) screen).sky2m$addWidget(overview.searchField);
+            ((com.epic60869.sky2m.mixin.gui.Sky2MScreenWidgetsInvoker) screen).sky2m$addWidget(overview.editButton);
         }
     }
 

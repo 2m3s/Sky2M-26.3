@@ -22,3 +22,7 @@ opencode-glm-test.txt
 opencode-tool-test.txt
 *.bak
 .env
+run-bridge/
+run-bridge2/
+run-bridge-gradle.log
+THIRD_PARTY_NOTICES.md

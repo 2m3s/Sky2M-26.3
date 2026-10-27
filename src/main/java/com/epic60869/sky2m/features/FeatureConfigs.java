@@ -21,7 +21,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 /**
  * Config sections for Sky2M's skill features. They are referenced as categories or
- * accordions from {@link com.epic60869.sky2m.Sky2MConfig}. HUD positions and scales are
+ * accordions from {@link com.epic60869.sky2m.config.Sky2MConfig}. HUD positions and scales are
  * set in /s2 gui and stored in sky2m-huds.json.
  */
 // Uses the deprecated old-style accordions on purpose, like Sky2MConfig (moving would reset saved settings).
@@ -3688,7 +3688,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Style", desc = "How the box is drawn.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.EtherwarpOverlay.Style style = com.epic60869.sky2m.features.misc.EtherwarpOverlay.Style.FILLED_OUTLINE;
+        public com.epic60869.sky2m.features.misc.visual.EtherwarpOverlay.Style style = com.epic60869.sky2m.features.misc.visual.EtherwarpOverlay.Style.FILLED_OUTLINE;
 
         @Expose @ConfigOption(name = "Use Server Position", desc = "Work it out from where the server last had you, instead of where you are.") @ConfigEditorBoolean public boolean useServerPosition = false;
         @Expose @ConfigOption(name = "Full Block", desc = "Draw a whole block instead of the block's own shape.") @ConfigEditorBoolean public boolean fullBlock = false;
@@ -4803,22 +4803,22 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Time Format", desc = "12-hour or 24-hour time, with optional seconds.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.ServerInfo.TimeFormat timeFormat = com.epic60869.sky2m.features.misc.ServerInfo.TimeFormat.TWENTY_FOUR_HOUR;
+        public com.epic60869.sky2m.features.misc.system.ServerInfo.TimeFormat timeFormat = com.epic60869.sky2m.features.misc.system.ServerInfo.TimeFormat.TWENTY_FOUR_HOUR;
 
         @Expose
         @ConfigOption(name = "Style", desc = "Simple: one HUD with everything. Split: a separate HUD for each value, each moved on its own.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.ServerInfo.Style style = com.epic60869.sky2m.features.misc.ServerInfo.Style.SIMPLE;
+        public com.epic60869.sky2m.features.misc.system.ServerInfo.Style style = com.epic60869.sky2m.features.misc.system.ServerInfo.Style.SIMPLE;
 
         @Expose
         @ConfigOption(name = "Simple Layout", desc = "Arrange the Simple display vertically or horizontally.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.ServerInfo.Layout layout = com.epic60869.sky2m.features.misc.ServerInfo.Layout.VERTICAL;
+        public com.epic60869.sky2m.features.misc.system.ServerInfo.Layout layout = com.epic60869.sky2m.features.misc.system.ServerInfo.Layout.VERTICAL;
 
         @Expose
         @ConfigOption(name = "Labels", desc = "Show text labels, symbols, or values only.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.ServerInfo.LabelStyle labelStyle = com.epic60869.sky2m.features.misc.ServerInfo.LabelStyle.TEXT;
+        public com.epic60869.sky2m.features.misc.system.ServerInfo.LabelStyle labelStyle = com.epic60869.sky2m.features.misc.system.ServerInfo.LabelStyle.TEXT;
 
         @Expose
         @ConfigOption(name = "Show Icons", desc = "Draw a small pixel icon before each value: signal bars for ping, arrows for TPS, a clock for the time and a bolt for FPS. With Labels on Symbols, the icons replace the symbols.")
@@ -4876,7 +4876,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open Value Graph", desc = "Your sacks' value over time. Also /s2 sacks history.")
         @ConfigEditorButton(buttonText = "Open")
-        public Runnable openHistory = com.epic60869.sky2m.features.misc.SackValueHistory::open;
+        public Runnable openHistory = com.epic60869.sky2m.features.misc.items.SackValueHistory::open;
     }
 
     public enum SacksPriceMode {
@@ -4902,7 +4902,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Items", desc = "Open the list of items to watch for: one per line, with item name suggestions as you type. Also /s2 itemnotify.")
         @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "EDIT")
-        public Runnable editItems = com.epic60869.sky2m.features.misc.ItemNotification::openEditor;
+        public Runnable editItems = com.epic60869.sky2m.features.misc.items.ItemNotification::openEditor;
 
         /** The items, one per line (edited in the Items window). */
         @Expose
@@ -5557,7 +5557,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open Editor", desc = "Set it up in its own screen, like the Custom Scoreboard mod's: drag the lines and events into order, change the title, background and options, and see it change as you go. Also /s2 scoreboard.")
         @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "Open")
-        public Runnable openEditor = com.epic60869.sky2m.features.misc.CustomScoreboard::openEditor;
+        public Runnable openEditor = com.epic60869.sky2m.features.misc.visual.CustomScoreboard::openEditor;
 
         @Expose
         @ConfigOption(name = "Enabled", desc = "Replace the sidebar with your own: pick which lines show and in what order, with a background (rounded, bordered, or your own picture or GIF), title and footer, number changes like \"(+12k)\", and lines you can click with chat open. Like j10a1n15's Custom Scoreboard.")
@@ -5778,7 +5778,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open Picture Folder", desc = "Opens config/sky2m/scoreboard, where pictures for the background go.")
         @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "Open")
-        public Runnable openFolder = com.epic60869.sky2m.features.misc.CustomScoreboard::openFolder;
+        public Runnable openFolder = com.epic60869.sky2m.features.misc.visual.CustomScoreboard::openFolder;
     }
 
     /** Custom Scoreboard: each number line's colour and name, like the Custom Scoreboard mod's custom prefixes. */
@@ -6307,7 +6307,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Show In Chat", desc = "Everything (mayor, minister, perks, the election and the candidates' perks) in chat. Also /s2 mayor.")
         @ConfigEditorButton(buttonText = "Show")
-        public Runnable show = com.epic60869.sky2m.features.misc.MayorDisplay::printToChat;
+        public Runnable show = com.epic60869.sky2m.features.misc.visual.MayorDisplay::printToChat;
     }
 
     public static final class ScathaTracker {
@@ -6562,7 +6562,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Test", desc = "Play it now.")
         @ConfigEditorButton(buttonText = "Play")
-        public Runnable test = () -> com.epic60869.sky2m.features.misc.CustomSounds.play(this);
+        public Runnable test = () -> com.epic60869.sky2m.features.misc.visual.CustomSounds.play(this);
 
         public SoundSetting() {
             this("minecraft:block.note_block.pling", 1f);
@@ -6636,11 +6636,11 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open Graph", desc = "Your networth over time. Also /s2 networth.")
         @ConfigEditorButton(buttonText = "Open")
-        public Runnable open = com.epic60869.sky2m.features.misc.NetworthHistory::open;
+        public Runnable open = com.epic60869.sky2m.features.misc.system.NetworthHistory::open;
 
         @ConfigOption(name = "Snapshot Now", desc = "Save your networth now.")
         @ConfigEditorButton(buttonText = "Save")
-        public Runnable now = () -> com.epic60869.sky2m.features.misc.NetworthHistory.snapshot(true);
+        public Runnable now = () -> com.epic60869.sky2m.features.misc.system.NetworthHistory.snapshot(true);
     }
 
     public static final class SignAutofill {
@@ -6747,7 +6747,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open", desc = "Your achievements and stats, with a tab for each activity. Also /s2 achievements.")
         @ConfigEditorButton(buttonText = "Open")
-        public Runnable open = com.epic60869.sky2m.features.misc.Sky2MAchievements::open;
+        public Runnable open = com.epic60869.sky2m.features.misc.social.Sky2MAchievements::open;
     }
     /** Odin's Waypoints settings (BSD-3-Clause). */
     public static final class AreaWaypoints {

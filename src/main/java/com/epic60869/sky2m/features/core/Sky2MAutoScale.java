@@ -32,7 +32,7 @@ public final class Sky2MAutoScale {
 
     private static boolean wanted(Screen screen) {
         if (screen == null || screen instanceof AbstractContainerScreen<?>) return false;
-        if (screen instanceof com.epic60869.sky2m.Sky2MHudEditorScreen) return false;
+        if (screen instanceof com.epic60869.sky2m.gui.Sky2MHudEditorScreen) return false;
         Minecraft mc = Minecraft.getInstance();
         if (mc.options == null || mc.options.guiScale().get() != 0) return false;
         return screen.getClass().getName().startsWith("com.epic60869.sky2m.");

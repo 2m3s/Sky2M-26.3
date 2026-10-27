@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.misc.clips;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.google.gson.JsonElement;

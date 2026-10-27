@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.misc.profit;
 
-import com.epic60869.sky2m.Sky2MGuiStyle;
+import com.epic60869.sky2m.gui.Sky2MGuiStyle;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import net.minecraft.client.gui.GuiGraphicsExtractor;

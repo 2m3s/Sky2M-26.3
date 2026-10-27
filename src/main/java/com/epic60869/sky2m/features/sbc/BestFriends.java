@@ -2,7 +2,7 @@ package com.epic60869.sky2m.features.sbc;
 
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
-import com.epic60869.sky2m.features.misc.PartyCommands;
+import com.epic60869.sky2m.features.misc.chat.PartyCommands;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonPlayerManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

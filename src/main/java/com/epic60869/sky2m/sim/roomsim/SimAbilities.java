@@ -1,6 +1,6 @@
 /*
  * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
- * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ * Copyright (c) 2026 Killer560.
  */
 package com.epic60869.sky2m.sim.roomsim;
 
@@ -455,7 +455,7 @@ public final class SimAbilities {
         // Once the look has driven the travel into something it stays at the height it settled at for the rest
         // of the walk. Null until that happens.
         Double lockedY = null;
-        var simCfg = com.epic60869.sky2m.Sky2MConfig.current();
+        var simCfg = com.epic60869.sky2m.config.Sky2MConfig.current();
         boolean eyeLine = simCfg == null || simCfg.dungeons.dungeonSim.aotvEyeLine;
         // HOW FAR A SETTLED WALK MAY RUN: to where the EYE's look meets a block, and no further. QUOI's Auto Ice
         // Fill hops one tile at a time by aiming from the eye at the next tile's feet position, which on Hypixel

@@ -83,8 +83,8 @@ public class ContainerSolverManager {
 						++screenId;
 						currentSolver = solver;
 						currentSolver.start(screen);
-						if (com.epic60869.sky2m.Sky2MDebug.roomDebug()) {
-							com.epic60869.sky2m.Sky2MDebug.roomLine("Solver " + solver.getClass().getSimpleName() + " active for \"" + screenName + "\"");
+						if (com.epic60869.sky2m.debug.Sky2MDebug.roomDebug()) {
+							com.epic60869.sky2m.debug.Sky2MDebug.roomLine("Solver " + solver.getClass().getSimpleName() + " active for \"" + screenName + "\"");
 						}
 						markHighlightsDirty();
 						return;

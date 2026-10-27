@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.combat;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;

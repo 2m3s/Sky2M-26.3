@@ -57,7 +57,7 @@ public final class ProfileStats {
 
     /** Profile Viewer > Overflow Levels: levels go past Hypixel's maximum, like SkyHanni's. */
     public static boolean overflow() {
-        com.epic60869.sky2m.Sky2MConfig c = com.epic60869.sky2m.Sky2MConfig.current();
+        com.epic60869.sky2m.config.Sky2MConfig c = com.epic60869.sky2m.config.Sky2MConfig.current();
         return c == null || c.misc.profileViewer.overflowLevels;
     }
 

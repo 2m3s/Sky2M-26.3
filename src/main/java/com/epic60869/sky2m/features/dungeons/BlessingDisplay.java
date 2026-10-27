@@ -1,10 +1,10 @@
 package com.epic60869.sky2m.features.dungeons;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
-import com.epic60869.sky2m.mixin.Sky2MPlayerTabOverlayAccessor;
+import com.epic60869.sky2m.mixin.player.Sky2MPlayerTabOverlayAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 

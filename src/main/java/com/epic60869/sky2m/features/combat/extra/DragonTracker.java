@@ -1,9 +1,9 @@
 package com.epic60869.sky2m.features.combat.extra;
 
-import com.epic60869.sky2m.ItemPriceResolver;
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MPriceTooltip;
-import com.epic60869.sky2m.Sky2MTabWidgetManager;
+import com.epic60869.sky2m.price.ItemPriceResolver;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
+import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;

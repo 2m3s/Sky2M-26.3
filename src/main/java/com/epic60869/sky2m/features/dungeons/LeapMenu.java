@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;

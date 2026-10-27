@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.hunting;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.BindKeys;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -99,7 +99,7 @@ public final class ShardTrackerDisplay {
         // The Select Shard Key, pressed over a shard in a shard menu.
         boolean down = BindKeys.down(config().selectShardKeybind);
         if (down && !keyWasDown && mc.gui.screen() instanceof AbstractContainerScreen<?> screen && AttributeShards.inShardMenu()) {
-            Slot hovered = ((com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor) screen).sky2m$getHoveredSlot();
+            Slot hovered = ((com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor) screen).sky2m$getHoveredSlot();
             AttributeShards.Shard shard = hovered == null ? null : AttributeShards.of(hovered.getItem());
             if (shard != null) toggle(shard.displayName());
         }

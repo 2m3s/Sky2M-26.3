@@ -22,7 +22,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-import com.epic60869.sky2m.mixin.Sky2MModelManagerAccessor;
+import com.epic60869.sky2m.mixin.render.Sky2MModelManagerAccessor;
 import com.epic60869.sky2m.custom.util.AbstractSelectionPopup;
 
 public class ModelSelectionPopup extends AbstractSelectionPopup<ModelSelectionPopup.Widget> {

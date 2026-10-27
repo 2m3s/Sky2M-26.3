@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.dungeons.extras;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.sb.config.SkyblockerConfigManager;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;

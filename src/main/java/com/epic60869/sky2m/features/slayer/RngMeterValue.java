@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.combat.CombatFeatures;
@@ -15,7 +15,7 @@ import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.core.component.DataComponents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor;
 
 import java.util.ArrayList;
 import java.util.List;

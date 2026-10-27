@@ -151,7 +151,7 @@ public final class CocoonTracker {
     }
 
     private static boolean labelOn() {
-        com.epic60869.sky2m.Sky2MConfig config = com.epic60869.sky2m.Sky2MConfig.current();
+        com.epic60869.sky2m.config.Sky2MConfig config = com.epic60869.sky2m.config.Sky2MConfig.current();
         FeatureConfigs.Combat c = config == null ? null : config.combat;
         return c != null && c.cocoonAlert.label;
     }

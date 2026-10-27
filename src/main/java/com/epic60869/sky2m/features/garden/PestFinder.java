@@ -1,8 +1,8 @@
 package com.epic60869.sky2m.features.garden;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MStorageSearch;
-import com.epic60869.sky2m.Sky2MTabWidgetManager;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.items.Sky2MStorageSearch;
+import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;

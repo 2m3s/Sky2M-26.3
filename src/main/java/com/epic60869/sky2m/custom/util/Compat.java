@@ -48,7 +48,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ResolvableProfile;
 
-import com.epic60869.sky2m.Sky2MCustom;
+import com.epic60869.sky2m.misc.Sky2MCustom;
 
 /**
  * Stand-ins for the Skyblocker utilities used by the ported /skyblocker custom code
@@ -110,7 +110,7 @@ public final class Compat {
 
 	/** The tab list name Hypixel sent, without Sky2M's nickname replacement; for reading the tab list. */
 	public static net.minecraft.network.chat.Component rawTabName(net.minecraft.client.multiplayer.PlayerInfo info) {
-		return ((com.epic60869.sky2m.mixin.Sky2MPlayerInfoAccessor) info).sky2m$rawTabListDisplayName();
+		return ((com.epic60869.sky2m.mixin.player.Sky2MPlayerInfoAccessor) info).sky2m$rawTabListDisplayName();
 	}
 
 	public static boolean isOnSkyblock() {
@@ -165,7 +165,7 @@ public final class Compat {
 		CustomData data = stack.get(DataComponents.CUSTOM_DATA);
 		if (data == null) return "";
 		// Read without copying: a new item in a menu copied its whole tag just to read the id.
-		return NEU_NAMES.computeIfAbsent(data, d -> ((com.epic60869.sky2m.mixin.Sky2MCustomDataAccessor) (Object) d).sky2m$getTag().getStringOr("id", ""));
+		return NEU_NAMES.computeIfAbsent(data, d -> ((com.epic60869.sky2m.mixin.items.Sky2MCustomDataAccessor) (Object) d).sky2m$getTag().getStringOr("id", ""));
 	}
 
 	public static CompoundTag getCustomData(ItemStack stack) {
@@ -181,7 +181,7 @@ public final class Compat {
 	 */
 	public static CompoundTag customDataView(ItemStack stack) {
 		CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-		return data == null ? EMPTY_VIEW : ((com.epic60869.sky2m.mixin.Sky2MCustomDataAccessor) (Object) data).sky2m$getTag();
+		return data == null ? EMPTY_VIEW : ((com.epic60869.sky2m.mixin.items.Sky2MCustomDataAccessor) (Object) data).sky2m$getTag();
 	}
 
 	public static List<ItemStack> getArmor(LivingEntity entity) {

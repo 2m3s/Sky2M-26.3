@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 package com.epic60869.sky2m.features.helditem;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;

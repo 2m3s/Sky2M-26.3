@@ -1,8 +1,8 @@
 package com.epic60869.sky2m.features.misc.profit;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MCraftHelper;
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.price.Sky2MCraftHelper;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -351,7 +351,7 @@ public final class ProfitTracker {
                 + (quest.slayerName().equals(SlayerArea.slayerHere()) ? (counting(quest) ? "counting" : "tracker off") : "not this slayer's area");
         if (state.equals(slayerState)) return;
         slayerState = state;
-        if (com.epic60869.sky2m.Sky2MDebug.roomDebug()) System.out.println("[Sky2M] Slayer profit tracker: " + state);
+        if (com.epic60869.sky2m.debug.Sky2MDebug.roomDebug()) System.out.println("[Sky2M] Slayer profit tracker: " + state);
     }
 
     /**

@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.core;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MHudEditorScreen;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.gui.Sky2MHudEditorScreen;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;

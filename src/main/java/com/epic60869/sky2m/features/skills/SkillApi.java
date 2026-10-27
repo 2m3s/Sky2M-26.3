@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.skills;
 
-import com.epic60869.sky2m.Sky2MStorageSearch;
-import com.epic60869.sky2m.Sky2MTabWidgetManager;
+import com.epic60869.sky2m.items.Sky2MStorageSearch;
+import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -272,7 +272,7 @@ public final class SkillApi {
             onSecondPassed();
             // Sky2M's skill achievements follow the levels read from the tab list, action bar and Your Skills menu.
             for (Map.Entry<SkillType, SkillInfo> e : storage().entrySet()) {
-                if (e.getValue() != null) com.epic60869.sky2m.features.misc.Sky2MAchievements.skillLevel(e.getKey().displayName, e.getValue().level);
+                if (e.getValue() != null) com.epic60869.sky2m.features.misc.social.Sky2MAchievements.skillLevel(e.getKey().displayName, e.getValue().level);
             }
             // ItemAddInInventoryEvent: a gift talisman picked up.
             List<ItemStack> items = new ArrayList<>();
@@ -450,7 +450,7 @@ public final class SkillApi {
             int skillLevel = split.length > 1 ? romanToDecimalIfNecessary(split[split.length - 1]) : 0;
             if (skill == null) {
                 // Runecrafting and Social aren't tracked skills, but still count for Sky2M's skill achievements.
-                com.epic60869.sky2m.features.misc.Sky2MAchievements.skillLevel(split[0], skillLevel);
+                com.epic60869.sky2m.features.misc.social.Sky2MAchievements.skillLevel(split[0], skillLevel);
                 continue;
             }
             SkillInfo skillInfo = storage().computeIfAbsent(skill, k -> new SkillInfo());

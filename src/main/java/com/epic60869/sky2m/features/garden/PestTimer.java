@@ -1,12 +1,12 @@
 package com.epic60869.sky2m.features.garden;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
-import com.epic60869.sky2m.mixin.Sky2MChatComponentAccessor;
+import com.epic60869.sky2m.mixin.chat.Sky2MChatComponentAccessor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
@@ -316,7 +316,7 @@ public final class PestTimer {
         ItemStack held = mc.player == null ? ItemStack.EMPTY : mc.player.getMainHandItem();
         for (FeatureConfigs.PestTimer.HeldItem item : c.onlyWhenHolding) {
             boolean holding = switch (item) {
-                case FARMING_TOOL -> com.epic60869.sky2m.Sky2MMouseLock.isFarmingTool(held);
+                case FARMING_TOOL -> com.epic60869.sky2m.input.Sky2MMouseLock.isFarmingTool(held);
                 case VACUUM -> itemCategory(held).endsWith("VACUUM");
                 case LASSO -> itemCategory(held).endsWith("LASSO");
             };

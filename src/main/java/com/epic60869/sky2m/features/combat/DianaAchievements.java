@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.combat;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -119,7 +119,7 @@ public final class DianaAchievements {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("achievements")
                     .executes(c -> {
-                        com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(new com.epic60869.sky2m.features.misc.Sky2MAchievementsScreen(com.epic60869.sky2m.features.misc.Sky2MAchievementsScreen.OVERVIEW));
+                        com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(new com.epic60869.sky2m.features.misc.social.Sky2MAchievementsScreen(com.epic60869.sky2m.features.misc.social.Sky2MAchievementsScreen.OVERVIEW));
                         return 1;
                     })
                     .then(ClientCommands.literal("backtrack").executes(c -> {
@@ -135,7 +135,7 @@ public final class DianaAchievements {
     }
 
     public static void open() {
-        Compat.queueOpenScreen(new com.epic60869.sky2m.features.misc.Sky2MAchievementsScreen(com.epic60869.sky2m.features.misc.Sky2MAchievementsScreen.DIANA));
+        Compat.queueOpenScreen(new com.epic60869.sky2m.features.misc.social.Sky2MAchievementsScreen(com.epic60869.sky2m.features.misc.social.Sky2MAchievementsScreen.DIANA));
     }
 
     private static void lockAll(String confirm) {

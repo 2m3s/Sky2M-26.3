@@ -4,14 +4,14 @@
 // features/impl/boss/TerminalSounds.kt.
 package com.epic60869.sky2m.features.dungeons;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
-import com.epic60869.sky2m.mixin.Sky2MBossOverlayAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MBossOverlayAccessor;
 import com.epic60869.sky2m.sb.events.ServerTickCallback;
 import com.epic60869.sky2m.sb.skyblock.dungeon.DungeonClass;
 import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;

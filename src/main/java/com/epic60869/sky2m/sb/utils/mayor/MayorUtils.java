@@ -8,6 +8,6 @@ public final class MayorUtils {
 
 	/** The mayor's and minister's perk names, from Sky2M's election data (Mayors > Mayor & Election). */
 	public static Set<String> getActivePerks() {
-		return com.epic60869.sky2m.features.misc.MayorDisplay.activePerks();
+		return com.epic60869.sky2m.features.misc.visual.MayorDisplay.activePerks();
 	}
 }
