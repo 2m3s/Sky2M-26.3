@@ -90,10 +90,11 @@ public final class CustomFonts {
     @Target(ElementType.FIELD)
     public @interface FontDropdown {}
 
-    /** "Default", "Inter", then each .ttf in the fonts folder. */
+    /** "Default", "Inter", each .ttf in the fonts folder, then each font resource pack ({@link PackFonts}). */
     public static String[] choices() {
         List<String> out = new ArrayList<>(List.of(DEFAULT, INTER));
         out.addAll(fontFiles());
+        out.addAll(PackFonts.packs().keySet());
         return out.toArray(String[]::new);
     }
 
@@ -107,7 +108,7 @@ public final class CustomFonts {
      */
     public static void init() {
         MsdfFont.init();
-        listed = fontFiles();
+        listed = List.of(choices());
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 20 != 0) return;
             String choice = selected();
@@ -118,7 +119,7 @@ public final class CustomFonts {
             }
             boolean settingsOpen = mc.gui.screen() != null && mc.gui.screen().getClass().getName().contains("moulconfig");
             if (ticks % 100 == 0 && !settingsOpen) {
-                List<String> files = fontFiles();
+                List<String> files = List.of(choices());
                 if (!files.equals(listed)) {
                     listed = files;
                     Sky2MConfig.rebuildEditors();
@@ -155,8 +156,10 @@ public final class CustomFonts {
         String choice = selected();
         if (choice.equals(DEFAULT) || !fonts.containsKey(DEFAULT_FONT)) return fonts;
         Sky2MConfig.Fonts c = config();
+        Path pack = choice.toLowerCase(Locale.ROOT).endsWith(".zip") ? PackFonts.packs().get(choice) : null;
         GlyphProvider ttf = choice.equals(INTER)
             ? MsdfFont.inter(c == null ? 7.5f : c.size, c == null ? 0f : c.height - 1f)
+            : pack != null ? PackFonts.load(pack)
             : loadTtf(choice, () -> Files.newInputStream(folder().resolve(choice)));
         if (ttf == null) return fonts;
         GlyphProvider textOnly = new TextOnly(ttf);
