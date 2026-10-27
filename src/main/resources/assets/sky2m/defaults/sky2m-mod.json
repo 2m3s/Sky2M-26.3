@@ -727,6 +727,7 @@
         "alwaysTp": false,
         "backToGarden": false,
         "highlightInfestedPlots": false,
+        "pestPlotBorders": true,
         "plotPanel": false
       },
       "blocksPerSecond": false,

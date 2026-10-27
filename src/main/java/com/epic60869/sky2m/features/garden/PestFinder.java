@@ -7,6 +7,8 @@ import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
+import com.epic60869.sky2m.features.core.Sky2MWorldRender;
+import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -27,6 +29,8 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerScoreEntry;
@@ -153,6 +157,9 @@ public final class PestFinder {
     private static boolean keyWasDown;
     private static final List<long[]> FIX_PESTS = new ArrayList<>(); // {runAt, loopsLeft}
     private static int ticks;
+    /** The plots with pests, refreshed every tick in the Garden so rendering doesn't recompute them every frame. */
+    private static List<Plot> pestPlots = List.of();
+    private static final float[] PEST_BORDER_RED = {1f, 0.15f, 0.15f};
 
     static {
         int slot = 2;
@@ -181,6 +188,7 @@ public final class PestFinder {
             if (Sky2MLocation.inGarden()) onChat(message.text());
         });
         ClientTickEvents.END_CLIENT_TICK.register(PestFinder::tick);
+        Sky2MWorldRender.register(PestFinder::renderPestPlotBorders);
         ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> save());
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (screen instanceof ContainerScreen container && Sky2MLocation.inGarden()
@@ -216,6 +224,7 @@ public final class PestFinder {
         wasInGarden = inGarden;
         if (!inGarden) {
             keyWasDown = false;
+            pestPlots = List.of();
             return;
         }
 
@@ -257,7 +266,51 @@ public final class PestFinder {
             if (!added.isEmpty()) checkScoreboardLines(added);
             readTabList();
         }
+        pestPlots = getInfestedPlots();
         if (ticks % 1200 == 0) save();
+    }
+
+    /** Pest Plot Borders: a red border around every plot with pests, through blocks. */
+    private static void renderPestPlotBorders(PrimitiveCollector collector) {
+        FeatureConfigs.PestFinder c = config();
+        Minecraft mc = Minecraft.getInstance();
+        List<Plot> plots = pestPlots;
+        if (c == null || !c.pestPlotBorders || plots.isEmpty() || mc.player == null || !Sky2MLocation.inGarden()) return;
+        double y = Math.floor(mc.player.getY());
+        for (Plot plot : plots) {
+            collector.submitOutlinedBox(new AABB(plot.minX(), 0, plot.minZ(), plot.maxX(), 256, plot.maxZ()), PEST_BORDER_RED, 0.8f, 2f, true);
+            // Rings around the player's height, so the border reads from a distance on the flat Garden.
+            for (int level = -1; level <= 5; level += 3) {
+                double yy = y + level;
+                collector.submitLinesFromPoints(new Vec3[] {
+                    new Vec3(plot.minX(), yy, plot.minZ()), new Vec3(plot.maxX(), yy, plot.minZ()), new Vec3(plot.maxX(), yy, plot.maxZ()),
+                    new Vec3(plot.minX(), yy, plot.maxZ()), new Vec3(plot.minX(), yy, plot.minZ())
+                }, PEST_BORDER_RED, 1f, 3f, true);
+            }
+        }
+    }
+
+    /** The ids of the plots Pest Plot Borders outlines (plots with pests). */
+    public static Set<Integer> pestPlotIds() {
+        Set<Integer> ids = new HashSet<>();
+        for (Plot plot : getInfestedPlots()) ids.add(plot.id());
+        return ids;
+    }
+
+    /** Game test hook: feeds a tab list Pests widget line and sidebar lines through the pest tracking. */
+    public static Set<Integer> testPestLines(String tabLine, List<String> sidebarLines) {
+        if (tabLine != null) readTabListLine(tabLine);
+        List<SidebarLine> lines = new ArrayList<>();
+        for (String line : sidebarLines) lines.add(new SidebarLine(line, false));
+        checkScoreboardLines(lines);
+        pestPlots = getInfestedPlots();
+        return pestPlotIds();
+    }
+
+    /** Game test hook: clears every plot's pests. */
+    public static void testClearPests() {
+        resetAllPests();
+        pestPlots = List.of();
     }
 
     static void teleportNearestInfestedPlot() {
@@ -441,33 +494,37 @@ public final class PestFinder {
         for (PlayerInfo info : Sky2MTabWidgetManager.players()) {
             Component name = Compat.rawTabName(info);
             if (name == null) continue;
-            Matcher m = INFESTED_PLOTS_TAB_LIST.matcher(Sky2MLocation.strip(name.getString()));
-            if (!m.matches()) continue;
-            Set<Integer> tabListPlots = new HashSet<>();
-            String plots = m.group("plots").trim();
-            if (plots.equalsIgnoreCase("None")) return;
-            for (String part : plots.split(", ")) {
-                try {
-                    tabListPlots.add(Integer.parseInt(part.trim()));
-                } catch (NumberFormatException e) {
-                    return;
-                }
-            }
-            Set<Integer> apiPlots = new HashSet<>();
-            for (Plot p : getInfestedPlots()) apiPlots.add(p.id());
-            if (tabListPlots.equals(apiPlots)) return;
-            for (Plot plot : PLOTS) {
-                if (tabListPlots.contains(plot.id())) {
-                    if (!plot.data().isPestCountInaccurate && plot.data().pests == 0) plot.data().isPestCountInaccurate = true;
-                } else {
-                    plot.data().pests = 0;
-                    plot.data().isPestCountInaccurate = false;
-                }
-            }
-            dirty = true;
-            updatePests();
-            return;
+            if (readTabListLine(Sky2MLocation.strip(name.getString()))) return;
         }
+    }
+
+    /** One tab list line: whether it was the Pests widget's " Plots: 4, 12, 13" line. */
+    private static boolean readTabListLine(String line) {
+        Matcher m = INFESTED_PLOTS_TAB_LIST.matcher(line);
+        if (!m.matches()) return false;
+        Set<Integer> tabListPlots = new HashSet<>();
+        String plots = m.group("plots").trim();
+        if (plots.equalsIgnoreCase("None")) return true;
+        for (String part : plots.split(", ")) {
+            try {
+                tabListPlots.add(Integer.parseInt(part.trim()));
+            } catch (NumberFormatException e) {
+                return true;
+            }
+        }
+        Set<Integer> apiPlots = pestPlotIds();
+        if (tabListPlots.equals(apiPlots)) return true;
+        for (Plot plot : PLOTS) {
+            if (tabListPlots.contains(plot.id())) {
+                if (!plot.data().isPestCountInaccurate && plot.data().pests == 0) plot.data().isPestCountInaccurate = true;
+            } else {
+                plot.data().pests = 0;
+                plot.data().isPestCountInaccurate = false;
+            }
+        }
+        dirty = true;
+        updatePests();
+        return true;
     }
 
     private record SidebarLine(String text, boolean green) {}

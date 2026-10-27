@@ -1584,6 +1584,11 @@ public final class FeatureConfigs {
         public boolean highlightInfestedPlots = false;
 
         @Expose
+        @ConfigOption(name = "Pest Plot Borders", desc = "Draws a red border around the plots that have pests in them, visible from a distance and through blocks.")
+        @ConfigEditorBoolean
+        public boolean pestPlotBorders = true;
+
+        @Expose
         @ConfigOption(name = "Plot Teleport Panel", desc = "In the Garden, show a map of your plots to the right of your inventory: click a plot to /plottp to it. Plots with pests are red with their pest count, locked plots grey, and the plot you're in is outlined. Open Configure Plots (/desk) once so plot names and pests are known.")
         @ConfigEditorBoolean
         public boolean plotPanel = false;
