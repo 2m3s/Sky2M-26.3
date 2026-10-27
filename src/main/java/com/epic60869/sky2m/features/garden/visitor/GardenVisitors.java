@@ -141,7 +141,7 @@ public final class GardenVisitors {
 
     enum Status {
         NEW("§eNew", 0xFFFF55), WAITING("Waiting", -1), READY("§aItems Ready", 0x55FF55),
-        ACCEPTED("§7Accepted", 0x555555), REFUSED("§cRefused", 0xFF5555);
+        ACCEPTED("§2Accepted", 0x00AA00), REFUSED("§cRefused", 0xFF5555);
 
         final String displayName;
         final int colour;
@@ -1159,6 +1159,7 @@ public final class GardenVisitors {
     private static void changeStatus(Visitor visitor, Status status) {
         if (visitor.status == status) return;
         visitor.status = status;
+        if (status == Status.ACCEPTED || status == Status.REFUSED) markServed(visitor, status);
         if (status == Status.ACCEPTED) onVisitorAccepted(visitor);
         else if (status == Status.REFUSED) {
             update();
@@ -1301,10 +1302,25 @@ public final class GardenVisitors {
     // ------------------------------------------------------------------------------------------------ highlights
 
     private static final Map<Integer, Integer> outsideHighlights = new ConcurrentHashMap<>();
+    /** Visitors just served: entity id -> {colour, until (ms)}. Hypixel drops them from the tab list straight away. */
+    private static final Map<Integer, long[]> served = new ConcurrentHashMap<>();
+    private static final long SERVED_GLOW_MS = 10_000;
+
+    private static void markServed(Visitor visitor, Status status) {
+        if (visitor.entityId < 0) return;
+        served.put(visitor.entityId, new long[]{status.colour, System.currentTimeMillis() + SERVED_GLOW_MS});
+    }
 
     private static int glowColour(Entity entity) {
         VisitorConfig config = config();
         if (config == null) return -1;
+        if (config.servedGlow && !served.isEmpty() && Sky2MLocation.inGarden()) {
+            long[] glow = served.get(entity.getId());
+            if (glow != null) {
+                if (glow[1] > System.currentTimeMillis()) return (int) glow[0];
+                served.remove(entity.getId());
+            }
+        }
         if (Sky2MLocation.inGarden() && config.highlightStatus.color()) {
             for (Visitor visitor : visitors.values()) {
                 if (visitor.entityId == entity.getId()) return visitor.status.colour;

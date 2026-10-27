@@ -66,6 +66,11 @@ public final class VisitorConfig {
     @ConfigEditorDropdown
     public HighlightMode highlightStatus = HighlightMode.DISABLED;
 
+    @Expose
+    @ConfigOption(name = "Accepted / Refused Glow", desc = "A visitor glows green after you accept its offer and red after you refuse it, while it walks off.")
+    @ConfigEditorBoolean
+    public boolean servedGlow = true;
+
     public enum HighlightMode {
         COLOR("Color Only"),
         NAME("Name Only"),
