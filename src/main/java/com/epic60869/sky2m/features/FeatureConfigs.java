@@ -4942,6 +4942,69 @@ public final class FeatureConfigs {
         public Runnable openHistory = com.epic60869.sky2m.features.misc.items.SackValueHistory::open;
     }
 
+    public static final class SackDisplay {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "While a sack menu is open, show a panel beside it listing every item in that sack with how many you have, what one is worth and what they're all worth, and the sack's total value. Click its Price button to pick a different price for that sack alone (left click next, right click back), and Sort to change the order.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Default Price Source", desc = "The price used for sacks you haven't given their own one with the panel's Price button. Sell Offer and Insta-Buy both use the current lowest sell offer. An item with no price from the chosen source uses its lowest BIN, else its NPC sell price (shown with a ~).")
+        @ConfigEditorDropdown
+        public SackPriceSource defaultSource = SackPriceSource.INSTA_SELL;
+
+        @Expose
+        @ConfigOption(name = "Sort By", desc = "The order of the panel's items: by total value, by amount or by name. Also changed with the panel's Sort button.")
+        @ConfigEditorDropdown
+        public SackSort sortBy = SackSort.VALUE;
+
+        @Expose
+        @ConfigOption(name = "Hide Empty Items", desc = "Leave out items you have none of.")
+        @ConfigEditorBoolean
+        public boolean hideEmpty = true;
+
+        @Expose
+        @ConfigOption(name = "Show Capacity", desc = "Show how many of each item the sack can hold next to the amount (1,234/80k).")
+        @ConfigEditorBoolean
+        public boolean showCapacity = true;
+
+        @Expose
+        @ConfigOption(name = "Compact Numbers", desc = "Write amounts and coins short (1.2k, 3.45M) instead of in full.")
+        @ConfigEditorBoolean
+        public boolean compactNumbers = true;
+    }
+
+    public enum SackPriceSource {
+        NPC_SELL("NPC Sell"), INSTA_SELL("Bazaar Insta-Sell"), SELL_OFFER("Bazaar Sell Offer"),
+        INSTA_BUY("Bazaar Insta-Buy"), LOWEST_BIN("Lowest BIN");
+
+        private final String label;
+
+        SackPriceSource(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    public enum SackSort {
+        VALUE("Value"), AMOUNT("Amount"), NAME("Name");
+
+        private final String label;
+
+        SackSort(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
     public enum SacksPriceMode {
         INSTANT_SELL("Instant Sell"), SELL_OFFER("Sell Offer"), RANGE("Range");
 

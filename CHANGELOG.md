@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Sack Display (Inventory > Sacks & Item Tracking, on by default): while a sack is open, a panel beside it lists each item with its icon, amount (and capacity), price and value, and the sack's total. Each sack keeps its own price source: NPC Sell, Bazaar Insta-Sell, Sell Offer, Insta-Buy or Lowest BIN. Click Price on the panel to change it for that sack, or [Default] to use the default again. Sort by value, amount or name, and empty items are hidden.
 - Import settings from other mods in a screen: /s2 import [mod], the Import From Other Mods button in General settings, or the overlapping-mods chat notice. It lists every Sky2M setting the other mod also has, with both values and On / Off / Skip for each. It works with SkyHanni, Skyblocker, Devonian, NoFrills, NoammAddons, Odin, SkyOcean, SBO, Custom Scoreboard, SkyblockAddons, RFU, Stella, SkyblockExtras and NoPo (525 settings). Only SkyBlock mods are listed, and only those with at least one setting Sky2M has. For other SkyBlock mods, settings whose names match are offered as guesses that start on Skip.
 - Click to Open Bazaar (Visitor Shopping List, on by default): while a menu is open, click an item in the shopping list to search the Bazaar for it; the item is highlighted green in the results.
 - Pest Plot Borders (Garden > Pest Finder, on by default): a red border around every plot that has pests, visible from a distance and through blocks.

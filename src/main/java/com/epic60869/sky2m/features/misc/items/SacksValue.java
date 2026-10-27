@@ -255,7 +255,7 @@ public final class SacksValue {
     }
 
     /** The item id for a sack item's name, or null. Unknown names are looked up again once the repo has loaded. */
-    private static String id(String name) {
+    static String id(String name) {
         String cached = IDS.get(name);
         if (cached != null) return cached.isEmpty() ? null : cached;
         String id = RepoItems.idByLooseName(name);

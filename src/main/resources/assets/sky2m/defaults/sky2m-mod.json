@@ -2321,6 +2321,14 @@
       "priceMode": "RANGE",
       "history": false
     },
+    "sackDisplay": {
+      "enabled": true,
+      "defaultSource": "INSTA_SELL",
+      "sortBy": "VALUE",
+      "hideEmpty": true,
+      "showCapacity": true,
+      "compactNumbers": true
+    },
     "itemPickupLog": {
       "enabled": true,
       "compactLines": true,

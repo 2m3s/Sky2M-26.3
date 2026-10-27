@@ -253,6 +253,8 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.misc.items.SackTracker.init(configDir); lap("SackTracker.init");
         // Sacks Value HUD (after SackTracker, whose sack contents it prices).
         com.epic60869.sky2m.features.misc.items.SacksValue.init(); lap("SacksValue.init");
+        // Sack Display: the panel beside an open sack menu, with a price source per sack.
+        com.epic60869.sky2m.features.misc.items.SackDisplay.init(configDir); lap("SackDisplay.init");
         com.epic60869.sky2m.features.misc.chat.StashCompact.init(); lap("StashCompact.init");
         com.epic60869.sky2m.features.misc.chat.CompactBestiary.init(); lap("CompactBestiary.init");
         com.epic60869.sky2m.features.misc.chat.SkyBlockXpChat.init(); lap("SkyBlockXpChat.init");

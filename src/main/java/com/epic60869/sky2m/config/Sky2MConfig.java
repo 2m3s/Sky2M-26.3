@@ -411,7 +411,7 @@ public final class Sky2MConfig extends Config {
         @ConfigAccordionId(id = 2302)
         public boolean highlightAuctionsUnderbid = false;
 
-        @ConfigOption(name = "Sacks & Item Tracking", desc = "Sacks value, the item pickup log and item notifications.")
+        @ConfigOption(name = "Sacks & Item Tracking", desc = "Sacks value, the sack display, the item pickup log and item notifications.")
         @ConfigEditorAccordion(id = 2310)
         public boolean itemTrackingGroup = false;
 
@@ -420,6 +420,12 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Sacks Value", desc = "What everything in your sacks is worth, on a HUD, kept right through bazaar insta-sells without reopening your sacks.")
         @ConfigAccordionId(id = 2310)
         public com.epic60869.sky2m.features.FeatureConfigs.SacksValue sacksValue = new com.epic60869.sky2m.features.FeatureConfigs.SacksValue();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Sack Display", desc = "A panel beside an open sack menu listing its items, their value and the sack's total, with a price source saved for each sack.")
+        @ConfigAccordionId(id = 2310)
+        public com.epic60869.sky2m.features.FeatureConfigs.SackDisplay sackDisplay = new com.epic60869.sky2m.features.FeatureConfigs.SackDisplay();
 
         @Expose
         @Accordion
