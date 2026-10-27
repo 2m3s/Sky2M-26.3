@@ -1584,7 +1584,7 @@ public final class FeatureConfigs {
         public boolean highlightInfestedPlots = false;
 
         @Expose
-        @ConfigOption(name = "Pest Plot Borders", desc = "Draws a red border around the plots that have pests in them, visible from a distance and through blocks.")
+        @ConfigOption(name = "Pest Plot Borders", desc = "Draws a red see-through wall around the plots that have pests in them, visible from a distance and through blocks.")
         @ConfigEditorBoolean
         public boolean pestPlotBorders = true;
 

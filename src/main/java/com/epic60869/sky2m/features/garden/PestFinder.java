@@ -278,15 +278,7 @@ public final class PestFinder {
         if (c == null || !c.pestPlotBorders || plots.isEmpty() || mc.player == null || !Sky2MLocation.inGarden()) return;
         double y = Math.floor(mc.player.getY());
         for (Plot plot : plots) {
-            collector.submitOutlinedBox(new AABB(plot.minX(), 0, plot.minZ(), plot.maxX(), 256, plot.maxZ()), PEST_BORDER_RED, 0.8f, 2f, true);
-            // Rings around the player's height, so the border reads from a distance on the flat Garden.
-            for (int level = -1; level <= 5; level += 3) {
-                double yy = y + level;
-                collector.submitLinesFromPoints(new Vec3[] {
-                    new Vec3(plot.minX(), yy, plot.minZ()), new Vec3(plot.maxX(), yy, plot.minZ()), new Vec3(plot.maxX(), yy, plot.maxZ()),
-                    new Vec3(plot.minX(), yy, plot.maxZ()), new Vec3(plot.minX(), yy, plot.minZ())
-                }, PEST_BORDER_RED, 1f, 3f, true);
-            }
+            com.epic60869.sky2m.features.garden.skyhanni.PlotBorders.drawWall(collector, plot.minX(), plot.minZ(), plot.maxX(), plot.maxZ(), y, PEST_BORDER_RED);
         }
     }
 
