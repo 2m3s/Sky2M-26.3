@@ -459,7 +459,13 @@ public final class Sky2MConfig extends Config {
         public boolean longerChatHistory = true;
 
         @Expose
-        @ConfigOption(name = "Chat History Lines", desc = "How many chat lines Longer Chat History keeps.")
+        @ConfigOption(name = "Unlimited Chat History", desc = "With Longer Chat History on, never delete old chat lines: scroll all the way back to the start of the session. Turn off to keep Chat History Lines lines instead.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 201)
+        public boolean unlimitedChatHistory = true;
+
+        @Expose
+        @ConfigOption(name = "Chat History Lines", desc = "How many chat lines Longer Chat History keeps when Unlimited Chat History is off.")
         @ConfigEditorSlider(minValue = 100, maxValue = 10000, minStep = 100)
         @ConfigAccordionId(id = 201)
         public int chatHistoryLines = 1000;

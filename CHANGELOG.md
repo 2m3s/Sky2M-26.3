@@ -6,7 +6,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Added
 - Chat Emotes (Chat > Chat Tweaks, on by default): Hypixel's MVP++ chat emotes for everyone. o/, <3, :shrug:, :tableflip:, :yes:, :star:, :dab: and the rest turn into the emote when you send them in chat or with /pc, /gc, /ac, /msg and the other chat commands, so everyone sees it. A message that would get too long is sent as typed.
-- Longer Chat History (Chat > Chat Tweaks, on by default): the chat keeps 1000 lines instead of Minecraft's 100, so you can scroll much further back; Chat History Lines sets how many (100 to 10000).
+- Longer Chat History (Chat > Chat Tweaks, on by default): the chat never deletes old lines (Unlimited Chat History, on by default), so you can scroll back to the start of the session instead of Minecraft's last 100. With Unlimited off, Chat History Lines sets how many it keeps (100 to 10000).
 - Garden Custom Keybinds (Garden > Custom Keybinds, off by default): while you hold a farming tool in the Garden with no menu open, attack, use, the movement keys, jump and sneak follow the keys you set here. Keys left as NONE work as normal.
 - Add-ons (bottom of /s2): shows the features of an approved Sky2M add-on when one is installed. Without one the category isn't there.
 - Resource pack fonts (Misc > Fonts): font resource packs in config/sky2m/fonts or your resourcepacks folder show in the Font dropdown next to Default and Inter, and draw all text without turning the pack on. Packs that only replace the font texture (font overlays) work too; spaces and Hypixel's symbols keep Minecraft's look.

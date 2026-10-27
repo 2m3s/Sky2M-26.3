@@ -7,8 +7,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /**
- * Chat > Longer Chat History: the chat keeps Chat History Lines lines (1000 by default) instead of Minecraft's 100,
- * both the messages and the wrapped lines drawn from them.
+ * Chat > Longer Chat History: the chat keeps every line (Unlimited Chat History, on by default) or Chat History Lines
+ * lines instead of Minecraft's 100, both the messages and the wrapped lines drawn from them.
  */
 @Mixin(ChatComponent.class)
 public abstract class Sky2MChatHistoryMixin {
@@ -21,6 +21,7 @@ public abstract class Sky2MChatHistoryMixin {
     private static int limit(int vanilla) {
         Sky2MConfig config = Sky2MConfig.current();
         if (config == null || !config.chat.longerChatHistory) return vanilla;
+        if (config.chat.unlimitedChatHistory) return Integer.MAX_VALUE;
         return Math.max(vanilla, config.chat.chatHistoryLines);
     }
 }
