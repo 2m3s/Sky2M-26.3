@@ -362,7 +362,15 @@ public final class FishingMore {
     private static boolean trackerShown() {
         Config c = config();
         return c != null && c.seaCreatureTracker && !counts.isEmpty()
-            && (holdingRod() || fishing() || System.currentTimeMillis() - lastCatch < 3 * 60_000L);
+            && (holdingRod() || fishing() || System.currentTimeMillis() - lastCatch < 3 * 60_000L)
+            && !inStorage(Minecraft.getInstance().gui.screen());
+    }
+
+    /** Hypixel's /storage menus (the overview, ender chest and backpack pages) and Sky2M's storage screens: no tracker there. */
+    public static boolean inStorage(net.minecraft.client.gui.screens.Screen screen) {
+        return screen != null && (com.epic60869.sky2m.features.misc.storage.StorageBackingHandle.fromScreen(screen) != null
+            || screen instanceof com.epic60869.sky2m.features.misc.storage.StorageOverlayScreen
+            || screen instanceof com.epic60869.sky2m.features.misc.storage.StorageOverviewScreen);
     }
 
     private static boolean session() {
