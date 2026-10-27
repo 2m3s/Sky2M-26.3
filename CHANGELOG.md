@@ -37,6 +37,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- Sack menus no longer show the Estimated Item Value: not in the Value Breakdown Panel, the Shift breakdown or the Price Tooltip.
 - The old chat-only SkyHanni / Skyblocker import (3 settings) is replaced by the import screen.
 - Visitor Timer: "Sixth Visitor Estimate" is now "Next Visitor When Full" and "Sixth Visitor Warning" is "Next Visitor Ready Warning", for any queue size ("Queue Full, next in 2m 3s"). The count no longer adds a phantom extra visitor, the warning title shows once per estimate, and New Visitor Ping no longer pings while the queue is full. Your old choices carry over.
 - Rename "SkyHanni Farming" to "Farming Features".

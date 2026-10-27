@@ -354,7 +354,8 @@ public final class Sky2MPriceTooltip {
             Double price = threeDayAverage().get(apiId);
             if (price != null) lines.add(line("3 Day Avg. Price: ", ChatFormatting.GOLD, price, count));
         }
-        if (config.estimatedValue && !com.epic60869.sky2m.features.economy.ValueBreakdown.panelEnabled()) {
+        if (config.estimatedValue && !com.epic60869.sky2m.features.economy.ValueBreakdown.panelEnabled()
+            && !com.epic60869.sky2m.features.economy.ValueBreakdown.inSackMenu()) {
             double value = EstimatedItemValue.estimate(id, apiId, Compat.customDataView(stack));
             if (value > 0) lines.add(line("Estimated Item Value: ", ChatFormatting.GOLD, value, count));
         }

@@ -165,9 +165,17 @@ public final class ValueBreakdown {
         return c != null && c.breakdownPanel;
     }
 
+    /** A sack menu is open ("Agronomy Sack", "Sack of Sacks", "Large Mining Sack", ...): no Estimated Item Value there. */
+    public static boolean inSackMenu() {
+        net.minecraft.client.gui.screens.Screen screen = net.minecraft.client.Minecraft.getInstance().gui.screen();
+        if (!(screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>)) return false;
+        String title = net.minecraft.ChatFormatting.stripFormatting(screen.getTitle().getString());
+        return title != null && title.matches("(?i).*\\bSacks?\\b.*");
+    }
+
     /** Draws the hovered item's breakdown in a panel beside the menu (left of it, else right, else the screen's edge). */
     static void renderPanel(net.minecraft.client.gui.GuiGraphicsExtractor g, net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
-        if (!panelEnabled() || !Compat.isOnSkyblock()) return;
+        if (!panelEnabled() || !Compat.isOnSkyblock() || inSackMenu()) return;
         var access = (com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor) screen;
         net.minecraft.world.inventory.Slot hovered = access.sky2m$getHoveredSlot();
         if (hovered == null || !hovered.hasItem()) return;
@@ -276,7 +284,7 @@ public final class ValueBreakdown {
     /** Adds the breakdown rows to a tooltip while Shift is held. */
     static void tooltip(ItemStack stack, List<Component> lines) {
         EconomyConfig c = config();
-        if (c == null || !c.breakdownTooltip || !Compat.isOnSkyblock() || !Economy.shiftDown()) return;
+        if (c == null || !c.breakdownTooltip || !Compat.isOnSkyblock() || !Economy.shiftDown() || inSackMenu()) return;
         List<Row> rows = rows(stack);
         if (rows.size() < 2) return;
         lines.add(Component.empty());
