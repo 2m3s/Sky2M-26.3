@@ -132,6 +132,10 @@ public final class Clips {
                     .then(ClientCommands.literal("download").executes(c -> { download(); return 1; }))
                     .then(ClientCommands.literal("folder").executes(c -> { openFolder(); return 1; }))
                     .then(ClientCommands.literal("status").executes(c -> { status(); return 1; }))
+                    .then(ClientCommands.literal("upload").then(ClientCommands.argument("file", StringArgumentType.greedyString())
+                        .executes(c -> { upload(StringArgumentType.getString(c, "file")); return 1; })))
+                    .then(ClientCommands.literal("watch").then(ClientCommands.argument("link", StringArgumentType.greedyString())
+                        .executes(c -> { watch(StringArgumentType.getString(c, "link")); return 1; })))
                     .then(ClientCommands.argument("name", StringArgumentType.greedyString()).executes(c -> {
                         save(StringArgumentType.getString(c, "name"));
                         return 1;
@@ -354,8 +358,118 @@ public final class Clips {
             .withStyle(ChatFormatting.GREEN)
             .append(link("[Open]", ChatFormatting.AQUA, new ClickEvent.OpenFile(file.toAbsolutePath()), file.getFileName().toString()))
             .append(Component.literal(" "))
-            .append(link("[Folder]", ChatFormatting.YELLOW, new ClickEvent.OpenFile(file.toAbsolutePath().getParent()), "Sky2M Clips folder"));
+            .append(link("[Folder]", ChatFormatting.YELLOW, new ClickEvent.OpenFile(file.toAbsolutePath().getParent()), "Sky2M Clips folder"))
+            .append(Component.literal(" "))
+            .append(uploadButton(file));
         say(line);
+    }
+
+    /** [Upload] on a saved clip, like the one on screenshots. */
+    public static MutableComponent uploadButton(Path file) {
+        return Component.literal("[Upload]").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
+            .withClickEvent(new ClickEvent.RunCommand("/s2 clip upload " + file.toAbsolutePath()))
+            .withHoverEvent(new HoverEvent.ShowText(Component.literal("Upload it and get a link to share in /s2c.\n").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal("Anyone with the link can watch it.").withStyle(ChatFormatting.YELLOW)))));
+    }
+
+    /**
+     * /s2 clip upload: gets the clip's link from the clipping mod (it uploads to a free video host, or reuses the
+     * link the clip already has) and shows it with [Send in /s2c], [Copy Link] and [Watch], like screenshots.
+     */
+    static void upload(String path) {
+        Path file;
+        try {
+            file = Path.of(path.trim()).toAbsolutePath().normalize();
+        } catch (Exception e) {
+            say(Component.literal("Couldn't find that clip.").withStyle(ChatFormatting.RED));
+            return;
+        }
+        if (!file.startsWith(folder().toAbsolutePath().normalize()) || !file.toString().toLowerCase(Locale.ROOT).endsWith(".mp4")
+            || !Files.isRegularFile(file)) {
+            say(Component.literal("Couldn't find that clip.").withStyle(ChatFormatting.RED));
+            return;
+        }
+        Object api = clipping != null ? clipping : findClipping();
+        if (api == null) {
+            askToDownload();
+            return;
+        }
+        Object result;
+        try {
+            result = invoke(api, "upload", new Class<?>[]{String.class}, file.toString());
+        } catch (NoSuchMethodException e) {
+            say(Component.literal("Uploading clips needs a newer Sky2M Clipping. ").withStyle(ChatFormatting.YELLOW)
+                .append(link("[GitHub]", ChatFormatting.AQUA, new ClickEvent.OpenUrl(URI.create(RELEASES_URL)), RELEASES_URL)));
+            return;
+        } catch (Exception e) {
+            uploadFailed(file, rootMessage(e));
+            return;
+        }
+        if (!(result instanceof CompletableFuture<?> future)) {
+            uploadFailed(file, "the clipping mod gave no link");
+            return;
+        }
+        say(Component.literal("Uploading " + file.getFileName() + "...").withStyle(ChatFormatting.GRAY));
+        future.whenComplete((value, error) -> Minecraft.getInstance().execute(() -> {
+            if (error != null || value == null) {
+                uploadFailed(file, error == null ? "no link came back" : rootMessage(error));
+                return;
+            }
+            uploaded(value.toString());
+        }));
+    }
+
+    static void uploaded(String link) {
+        say(Component.literal("Clip uploaded: ").withStyle(ChatFormatting.GREEN)
+            .append(Component.literal(link).withStyle(s -> s.withColor(ChatFormatting.AQUA).withUnderlined(true)
+                .withClickEvent(new ClickEvent.OpenUrl(URI.create(link)))))
+            .append(Component.literal("  [Send in /s2c]").withStyle(s -> s.withColor(ChatFormatting.DARK_GREEN).withBold(true)
+                .withClickEvent(new ClickEvent.RunCommand("/s2c " + link))
+                .withHoverEvent(new HoverEvent.ShowText(Component.literal("Post the link in Sky2M chat")))))
+            .append(Component.literal("  [Copy Link]").withStyle(s -> s.withColor(ChatFormatting.YELLOW).withBold(true)
+                .withClickEvent(new ClickEvent.CopyToClipboard(link))
+                .withHoverEvent(new HoverEvent.ShowText(Component.literal("Copy the link")))))
+            .append(Component.literal("  ").append(watchButton(link))));
+    }
+
+    private static void uploadFailed(Path file, String reason) {
+        say(Component.literal("Couldn't upload the clip: " + reason).withStyle(ChatFormatting.RED)
+            .append(Component.literal("  [Retry]").withStyle(s -> s.withColor(ChatFormatting.YELLOW).withBold(true)
+                .withClickEvent(new ClickEvent.RunCommand("/s2 clip upload " + file))
+                .withHoverEvent(new HoverEvent.ShowText(Component.literal("Try uploading it again"))))));
+    }
+
+    /** [Watch] for a clip link: plays it in game with Sky2M Clipping, or opens it in the browser without it. */
+    public static MutableComponent watchButton(String link) {
+        return Component.literal("[Watch]").withStyle(s -> s.withColor(ChatFormatting.AQUA).withBold(true)
+            .withClickEvent(new ClickEvent.RunCommand("/s2 clip watch " + link))
+            .withHoverEvent(new HoverEvent.ShowText(Component.literal("Watch the clip in game\n" + link))));
+    }
+
+    /** Any http(s) link to a video file, which is what clip share links are. */
+    private static final java.util.regex.Pattern CLIP_LINK = java.util.regex.Pattern.compile(
+        "^https?://[^\\s\"'<>]+\\.(mp4|webm|mov|mkv|m4v)(\\?[^\\s\"'<>]*)?$", java.util.regex.Pattern.CASE_INSENSITIVE);
+
+    public static boolean isClipLink(String url) {
+        return url != null && CLIP_LINK.matcher(url).matches();
+    }
+
+    static void watch(String link) {
+        String url = link.trim();
+        if (!isClipLink(url)) {
+            say(Component.literal("That isn't a clip link.").withStyle(ChatFormatting.RED));
+            return;
+        }
+        Object api = clipping != null ? clipping : findClipping();
+        try {
+            if (api != null && Boolean.TRUE.equals(invoke(api, "watch", new Class<?>[]{String.class}, url))) return;
+        } catch (NoSuchMethodException e) {
+            LOGGER.debug("This Sky2M Clipping can't play links", e);
+        } catch (Exception e) {
+            LOGGER.warn("Couldn't play {} in game", url, e);
+        }
+        // No clipping mod (or an old one): the browser plays it instead.
+        com.mojang.blaze3d.Blaze3D.openUri(URI.create(url));
     }
 
     public static void openFolder() {

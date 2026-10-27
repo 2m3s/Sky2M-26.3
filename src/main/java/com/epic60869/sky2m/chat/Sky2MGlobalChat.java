@@ -372,6 +372,12 @@ public final class Sky2MGlobalChat {
                 }
 
                 try {
+                    if (com.epic60869.sky2m.features.misc.clips.Clips.isClipLink(url)) {
+                        // A shared clip: [Watch] plays it in game (checked first: Catbox hosts clips too).
+                        result.append(com.epic60869.sky2m.features.misc.clips.Clips.watchButton(url).withStyle(s -> s.withUnderlined(false)));
+                        last = matcher.end();
+                        continue;
+                    }
                     if (SCREENSHOT_LINK.matcher(url).find()) {
                         // A shared screenshot: a [View] button instead of the raw link.
                         result.append(Component.literal("[View]").setStyle(style.withUnderlined(false).withBold(true)
