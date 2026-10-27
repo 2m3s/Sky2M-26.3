@@ -8,6 +8,7 @@
     "items.Sky2MPackDisablerModelMixin",
     "items.Sky2MPackDisablerHeadMixin",
     "world.Sky2MEntityUseMixin",
+    "world.Sky2MGardenKeybindsMixin",
     "chat.Sky2MCommandCaseMixin",
     "items.Sky2MDyedItemColorMixin",
     "items.Sky2MDataComponentHolderMixin",

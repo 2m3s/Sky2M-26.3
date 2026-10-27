@@ -1333,6 +1333,53 @@ public final class FeatureConfigs {
         public boolean clearView = false;
     }
 
+    public static final class GardenKeybinds {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "While you hold a farming tool in the Garden with no menu open, these keys do the action instead of its normal key. Keys left as NONE keep their normal key.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Attack", desc = "Breaks crops (left click by default).")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        public int attack = -1;
+
+        @Expose
+        @ConfigOption(name = "Use", desc = "Uses the tool (right click by default).")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        public int use = -1;
+
+        @Expose
+        @ConfigOption(name = "Forward", desc = "Walk forward.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        public int forward = -1;
+
+        @Expose
+        @ConfigOption(name = "Left", desc = "Strafe left.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        public int left = -1;
+
+        @Expose
+        @ConfigOption(name = "Back", desc = "Walk back.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        public int back = -1;
+
+        @Expose
+        @ConfigOption(name = "Right", desc = "Strafe right.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        public int right = -1;
+
+        @Expose
+        @ConfigOption(name = "Jump", desc = "Jump.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        public int jump = -1;
+
+        @Expose
+        @ConfigOption(name = "Sneak", desc = "Sneak.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        public int sneak = -1;
+    }
+
     public static final class Garden {
         @Expose
         @ConfigOption(name = "Greenhouse Preview", desc = "Enables /s2 greenhouse paste: copy a layout link from SkyMutations and preview the greenhouse layout (crops and mutation spots) in a screen, like Skyblocker's greenhouse paste. /s2 greenhouse reopens it.")
@@ -1343,6 +1390,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Yaw and Pitch", desc = "HUD showing your yaw, pitch and facing direction.")
         @ConfigEditorBoolean
         public boolean yawPitch = true;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Custom Keybinds", desc = "Different keys for attack, use and movement while you hold a farming tool in the Garden.")
+        public GardenKeybinds keybinds = new GardenKeybinds();
 
         @Expose
         @ConfigOption(name = "Pest Cooldown Time (seconds)", desc = "Your pest spawn cooldown. The Pest Spawn Timer counts down this long from each pest spawn (the tab list isn't used).")

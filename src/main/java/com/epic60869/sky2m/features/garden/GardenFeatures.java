@@ -41,6 +41,7 @@ public final class GardenFeatures {
         });
         Sky2MChat.onChat(GardenFeatures::onChat);
         PestTimer.init();
+        GardenKeybinds.init();
         GardenReminders.init();
         PestFinder.init();
         GardenPlotPanel.init();
