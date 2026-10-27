@@ -58,6 +58,7 @@ public final class EventsFeatures {
         WinterFeatures.init();
         JerryFeatures.init();
         WinterGifting.init();
+        HarvestFeast.init();
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root)

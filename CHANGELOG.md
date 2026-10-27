@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Harvest Feast Crop Rotation (Events > Harvest Feast, on by default): a HUD in the Garden with the crops in season during the Harvest Feast (or Grand Feast), how long until they rotate, and which crops come in season next and when. This month's rotation is fetched from eliteskyblock.com (Fetch Feast Data, on), and opening Feast Chef Ted's All Crops menu updates it. Show Outside Garden shows it everywhere. Move it in /s2 gui.
 - Show Session XP (Skill Progress > Display, off by default): the Skill Progress display shows how much XP you've gained in the shown skill this session ("Session: +12,345"), since you started the game or switched profile.
 - Chat Emotes (Chat > Chat Tweaks, on by default): Hypixel's MVP++ chat emotes for everyone. o/, <3, :shrug:, :tableflip:, :yes:, :star:, :dab: and the rest turn into the emote when you send them in chat or with /pc, /gc, /ac, /msg and the other chat commands, so everyone sees it. A message that would get too long is sent as typed.
 - Longer Chat History (Chat > Chat Tweaks, on by default): the chat never deletes old lines (Unlimited Chat History, on by default), so you can scroll back to the start of the session instead of Minecraft's last 100. With Unlimited off, Chat History Lines sets how many it keeps (100 to 10000).
