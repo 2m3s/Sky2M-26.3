@@ -31,6 +31,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Changed
 - Rename "SkyHanni Farming" to "Farming Features".
+- Move the Safari Ticket Reminder from Garden to Foraging (your setting carries over).
 - Remove other mods' and people's names from setting names, descriptions and dropdowns. Some options were renamed: Terminal Solver styles Overlay and Centred Panel, Alternate Device Solvers, Map Styles Classic, Detailed and Minimal, Safari Checklist style Compact, Rare SC party message style Surfaced, Croesus Alternate Colours, and the Cross-Mod Bridge's Melody, Dungeon Data and Secrets Sockets.
 - Game tests are kept local and no longer pushed to GitHub; the build skips them when the folder is missing.
 - Tidy the source layout: the loose classes, mixins and miscellaneous features are sorted into clearer folders. Nothing changes in game, and the /s2 menu looks the same.

@@ -1440,11 +1440,6 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Composter Low Amount", desc = "Also remind when Organic Matter or Fuel drops below this amount. 0 = only when the composter is out.")
         @ConfigEditorSlider(minValue = 0, maxValue = 20000, minStep = 500)
         public float composterLowAmount = 0;
-
-        @Expose
-        @ConfigOption(name = "Safari Ticket Reminder", desc = "Remind you once per SkyBlock day (every 20 minutes) to get and use your Safari ticket.")
-        @ConfigEditorBoolean
-        public boolean safariTicketReminder = false;
     }
 
     public static final class FishingCatchStreak {
@@ -2437,6 +2432,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Beacon Ready Alert", desc = "Shows a title and chat message when the Moonglade Beacon cooldown in the tab list is over.")
         @ConfigEditorBoolean
         public boolean beaconReadyAlert = false;
+
+        @Expose
+        @ConfigOption(name = "Safari Ticket Reminder", desc = "Remind you once per SkyBlock day (every 20 minutes) to get and use your Safari ticket.")
+        @ConfigEditorBoolean
+        public boolean safariTicketReminder = false;
 
         @Expose
         @ConfigOption(name = "Foraging Extras", desc = "Foraging Tracker, Tree Progress, Clean Tree View, tutorial quest helper, Birries and Hideonleaf highlights, Mute Phantoms, coupon profit and the Honeyhive reminder.")

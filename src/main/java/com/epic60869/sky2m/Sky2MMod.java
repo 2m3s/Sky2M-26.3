@@ -152,6 +152,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.skills.SkillFeatures.init(); lap("SkillFeatures.init");
         com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.init(); lap("ForagingBeaconSolver.init");
         com.epic60869.sky2m.features.foraging.ForagingExtras.init(); lap("ForagingExtras.init");
+        com.epic60869.sky2m.features.foraging.SafariTicketReminder.init(); lap("SafariTicketReminder.init");
         com.epic60869.sky2m.features.skills.SkillProgress.init(); lap("SkillProgress.init");
         // Hunting (SkyHanni's Hunting category).
         com.epic60869.sky2m.features.hunting.IslandGraph.init(); lap("IslandGraph.init");

@@ -2933,6 +2933,8 @@ public final class Sky2MConfig extends Config {
             moves.add(new String[]{"profitTrackers", "misc.profitTrackers"});
             moves.add(new String[]{"clips", "misc.clips"});
             moves.add(new String[]{"farming.rng", "misc.rngHud"});
+            // Garden > Safari Ticket Reminder moved to Foraging.
+            moves.add(new String[]{"farming.garden.safariTicketReminder", "foraging.safariTicketReminder"});
             MOVES = moves.toArray(new String[0][]);
         }
 
