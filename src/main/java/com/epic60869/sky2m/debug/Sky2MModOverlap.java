@@ -1,9 +1,9 @@
 package com.epic60869.sky2m.debug;
 
 import com.epic60869.sky2m.custom.util.Compat;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.epic60869.sky2m.config.importer.ModImportSources;
+import com.epic60869.sky2m.gui.Sky2MModImportScreen;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -12,10 +12,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.commands.SharedSuggestionProvider;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,9 +22,9 @@ import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.social.Sky2MProfiles;
 
 /**
- * Other mods that do some of what Sky2M does: a one-time chat notice listing them, and /s2 import skyhanni|skyblocker
- * to carry over a few obvious on/off settings. Import only reads the other mod's config and writes Sky2M's own, through
- * {@link Sky2MConfig#importJson}.
+ * Other mods that do some of what Sky2M does: a one-time chat notice listing them, and /s2 import [mod], which opens
+ * the import screen ({@link Sky2MModImportScreen}) to pick which of the other mod's settings to carry over. Import only
+ * reads the other mod's config and writes Sky2M's own.
  */
 public final class Sky2MModOverlap {
     /** Installed mod id -> the Sky2M features it overlaps. */
@@ -48,15 +46,6 @@ public final class Sky2MModOverlap {
         NAMES.put(id, name);
     }
 
-    /** {source path in the other mod's config, Sky2M path, label}. Applied only when both are on/off values. */
-    private static final String[][] SKYHANNI = {
-        {"inventory.estimatedItemValues.enabled", "inventory.priceTooltip.estimatedValue", "Estimated Item Value"},
-        {"chat.compactChat", "chat.compactChat", "Compact Chat"},
-    };
-    private static final String[][] SKYBLOCKER = {
-        {"general.itemTooltip.enableLowestBIN", "inventory.priceTooltip.lowestBin", "Lowest BIN in tooltips"},
-    };
-
     private Sky2MModOverlap() {}
 
     /** Ids of the installed mods that overlap Sky2M. */
@@ -71,8 +60,11 @@ public final class Sky2MModOverlap {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("import")
-                    .then(ClientCommands.literal("skyhanni").executes(c -> importFrom("SkyHanni", "skyhanni", new String[]{"config.json"}, SKYHANNI)))
-                    .then(ClientCommands.literal("skyblocker").executes(c -> importFrom("Skyblocker", "skyblocker", new String[]{"skyblocker.json", "config.json"}, SKYBLOCKER)))));
+                    .executes(c -> Compat.queueOpenScreen(new Sky2MModImportScreen(null, null)))
+                    .then(ClientCommands.argument("mod", StringArgumentType.word())
+                        .suggests((c, b) -> SharedSuggestionProvider.suggest(
+                            ModImportSources.all().stream().map(ModImportSources.Source::id).toList(), b))
+                        .executes(c -> Compat.queueOpenScreen(new Sky2MModImportScreen(null, StringArgumentType.getString(c, "mod")))))));
             }
         });
     }
@@ -93,78 +85,11 @@ public final class Sky2MModOverlap {
         Component message = Component.literal(text.toString()).withStyle(ChatFormatting.YELLOW).append(
             Component.literal("[Open /s2]").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent.RunCommand("/s2"))
-                .withHoverEvent(new HoverEvent.ShowText(Component.literal("Open the Sky2M settings. \"Warn About Overlapping Mods\" there silences this.")))));
+                .withHoverEvent(new HoverEvent.ShowText(Component.literal("Open the Sky2M settings. \"Warn About Overlapping Mods\" there silences this.")))))
+            .append(Component.literal(" "))
+            .append(Component.literal("[Import Their Settings]").withStyle(s -> s.withColor(ChatFormatting.AQUA).withBold(true)
+                .withClickEvent(new ClickEvent.RunCommand("/s2 import"))
+                .withHoverEvent(new HoverEvent.ShowText(Component.literal("Pick which of their on/off settings to copy into Sky2M.")))));
         Sky2MProfiles.say(message);
-    }
-
-    private static int importFrom(String name, String dir, String[] files, String[][] mapping) {
-        Path base = FabricLoader.getInstance().getConfigDir().resolve(dir);
-        JsonObject source = null;
-        Path used = null;
-        for (String file : files) {
-            Path path = base.resolve(file);
-            if (!Files.isRegularFile(path)) continue;
-            try {
-                if (Files.size(path) > 20L * 1024 * 1024) continue;
-                JsonElement parsed = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8));
-                if (parsed.isJsonObject()) {
-                    source = parsed.getAsJsonObject();
-                    used = path;
-                    break;
-                }
-            } catch (Exception ignored) {
-                // Try the next candidate.
-            }
-        }
-        if (source == null) {
-            Sky2MProfiles.error("Couldn't find a readable " + name + " config in config/" + dir + ".");
-            return 0;
-        }
-        JsonObject current = Sky2MConfig.exportJson();
-        if (current == null) {
-            Sky2MProfiles.error("Couldn't read your Sky2M settings; nothing was imported.");
-            return 0;
-        }
-        JsonObject updated = current.deepCopy();
-        List<String> done = new ArrayList<>();
-        for (String[] map : mapping) {
-            Boolean value = bool(get(source, map[0]));
-            JsonObject parent = parent(updated, map[1]);
-            String key = map[1].substring(map[1].lastIndexOf('.') + 1);
-            // Only an existing on/off setting in Sky2M is touched; nothing is created.
-            if (value == null || parent == null || bool(parent.get(key)) == null) continue;
-            if (bool(parent.get(key)).booleanValue() != value.booleanValue()) parent.addProperty(key, value);
-            done.add(map[2] + ": " + (value ? "on" : "off"));
-        }
-        if (done.isEmpty()) {
-            Sky2MProfiles.say(Component.literal("Read " + used.getFileName() + " but found none of the settings Sky2M can import.").withStyle(ChatFormatting.GRAY));
-            return 1;
-        }
-        if (!Sky2MConfig.importJson(updated)) {
-            Sky2MProfiles.error("The imported settings couldn't be loaded; your settings were left as they were.");
-            return 0;
-        }
-        Sky2MProfiles.say(Component.literal("Imported from " + name + ": " + String.join(", ", done) + ".").withStyle(ChatFormatting.GREEN));
-        return 1;
-    }
-
-    private static JsonElement get(JsonObject root, String path) {
-        JsonElement at = root;
-        for (String key : path.split("\\.")) {
-            if (at == null || !at.isJsonObject()) return null;
-            at = at.getAsJsonObject().get(key);
-        }
-        return at;
-    }
-
-    private static JsonObject parent(JsonObject root, String path) {
-        int dot = path.lastIndexOf('.');
-        JsonElement parent = dot < 0 ? root : get(root, path.substring(0, dot));
-        return parent != null && parent.isJsonObject() ? parent.getAsJsonObject() : null;
-    }
-
-    private static Boolean bool(JsonElement element) {
-        if (element == null || !element.isJsonPrimitive() || !element.getAsJsonPrimitive().isBoolean()) return null;
-        return element.getAsBoolean();
     }
 }

@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Import settings from other mods in a screen: /s2 import [mod], the Import From Other Mods button in General settings, or the overlapping-mods chat notice. It lists every Sky2M setting the other mod also has, with both values and On / Off / Skip for each. It works with SkyHanni, Skyblocker, Devonian, NoFrills, NoammAddons, Odin, SkyOcean, SBO, Custom Scoreboard, SkyblockAddons, RFU, Stella, SkyblockExtras and NoPo (525 settings). Only SkyBlock mods are listed, and only those with at least one setting Sky2M has. For other SkyBlock mods, settings whose names match are offered as guesses that start on Skip.
 - Click to Open Bazaar (Visitor Shopping List, on by default): while a menu is open, click an item in the shopping list to search the Bazaar for it; the item is highlighted green in the results.
 - Pest Plot Borders (Garden > Pest Finder, on by default): a red border around every plot that has pests, visible from a distance and through blocks.
 - Support the October 27 Garden update: the Visitor Timer handles Max Occupancy queues of up to 10 visitors (it learns the size when the queue is full, or set Max Occupancy 0-5) and shows "7/10 visitors"; the visitor cooldown is learned from the tab list, so Better Advertising is picked up by itself. Ghost Visitors' mutation requests are listed even when the item list doesn't know them, Drops Statistics counts Ectoplasm, Taylor shows as SPECIAL, and the four bonus Spooky Festivals (Oct 28-31) are in the event calendar.
@@ -35,6 +36,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- The old chat-only SkyHanni / Skyblocker import (3 settings) is replaced by the import screen.
 - Visitor Timer: "Sixth Visitor Estimate" is now "Next Visitor When Full" and "Sixth Visitor Warning" is "Next Visitor Ready Warning", for any queue size ("Queue Full, next in 2m 3s"). The count no longer adds a phantom extra visitor, the warning title shows once per estimate, and New Visitor Ping no longer pings while the queue is full. Your old choices carry over.
 - Rename "SkyHanni Farming" to "Farming Features".
 - Move the Safari Ticket Reminder from Garden to Foraging (your setting carries over).

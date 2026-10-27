@@ -99,6 +99,10 @@ public final class Sky2MConfig extends Config {
         @ConfigEditorButton(buttonText = "PASTE")
         public Runnable importSettingsCode = () -> Sky2MConfigCode.importFromGui();
 
+        @ConfigOption(name = "Import From Other Mods", desc = "Copy settings from other SkyBlock mods' config files (/s2 import). Lists each mod found in the config folder and every Sky2M setting it has an equivalent of, with its value and yours; pick On, Off or Skip per setting, then Apply. Settings only matched by name start on Skip.")
+        @ConfigEditorButton(buttonText = "OPEN")
+        public Runnable importFromOtherMods = () -> com.epic60869.sky2m.gui.Sky2MModImportScreen.open(Minecraft.getInstance().gui.screen(), null);
+
         @ConfigOption(name = "Tools & Editors", desc = "The HUD editor, notes, command keys and item customization.")
         @ConfigEditorAccordion(id = 101)
         public boolean toolsEditorsGroup = false;
