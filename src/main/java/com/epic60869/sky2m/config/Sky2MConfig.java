@@ -1469,6 +1469,16 @@ public final class Sky2MConfig extends Config {
     @Category(name = "Misc", desc = "Settings without a category.")
     public Misc misc = new Misc();
 
+    @Expose
+    @Category(name = "Add-ons", desc = "Features from add-on mods installed alongside Sky2M.")
+    public Addons addons = new Addons();
+
+    public static final class Addons {
+        @ConfigOption(name = "Add-ons", desc = "Every installed Sky2M add-on, each with a button that opens its features and settings.")
+        @ConfigEditorButton(buttonText = "OPEN")
+        public Runnable open = () -> com.epic60869.sky2m.gui.Sky2MAddonsScreen.open(Minecraft.getInstance().gui.screen());
+    }
+
     /** Save Clip's default key. */
     private static final int CLIP_KEY = com.mojang.blaze3d.platform.InputConstants.KEY_F8;
 
@@ -2336,7 +2346,20 @@ public final class Sky2MConfig extends Config {
      */
     /** Rebuilds the settings' editors (the Font dropdown lists the fonts folder as it is now). */
     public static void rebuildEditors() {
-        if (managed != null) managed.rebuildConfigProcessor();
+        if (managed == null) return;
+        managed.rebuildConfigProcessor();
+        hideAddonsWithoutAddon();
+    }
+
+    private static io.github.notenoughupdates.moulconfig.gui.MoulConfigEditor<Sky2MConfig> newEditor() {
+        hideAddonsWithoutAddon();
+        return managed.getEditor();
+    }
+
+    /** /s2 > Add-ons only shows while an allowed add-on is installed ({@link com.epic60869.sky2m.api.Sky2MAddons}). */
+    private static void hideAddonsWithoutAddon() {
+        if (!com.epic60869.sky2m.api.Sky2MAddons.list().isEmpty()) return;
+        managed.getProcessor().getAllCategories().keySet().removeIf(key -> key.endsWith(".addons"));
     }
 
     private static io.github.notenoughupdates.moulconfig.gui.GuiOptionEditor buttonEditor(
@@ -2540,14 +2563,14 @@ public final class Sky2MConfig extends Config {
 
     public static void openGui() {
         if (managed == null) return;
-        if (editor == null) editor = managed.getEditor();
+        if (editor == null) editor = newEditor();
         io.github.notenoughupdates.moulconfig.common.IMinecraft.INSTANCE.openWrappedScreen(editor);
     }
 
     /** Opens the settings searched for {@code search} (What's New's settings buttons). */
     public static void openGui(String search) {
         if (managed == null) return;
-        if (editor == null) editor = managed.getEditor();
+        if (editor == null) editor = newEditor();
         editor.search(search);
         io.github.notenoughupdates.moulconfig.common.IMinecraft.INSTANCE.openWrappedScreen(editor);
     }
@@ -2558,7 +2581,7 @@ public final class Sky2MConfig extends Config {
      */
     public static void openGuiOver(net.minecraft.client.gui.screens.Screen parent) {
         if (managed == null) return;
-        if (editor == null) editor = managed.getEditor();
+        if (editor == null) editor = newEditor();
         var context = new io.github.notenoughupdates.moulconfig.gui.GuiContext(
             new io.github.notenoughupdates.moulconfig.gui.GuiElementComponent(editor));
         Minecraft.getInstance().gui.setScreen(new io.github.notenoughupdates.moulconfig.platform.MoulConfigScreenComponent(
