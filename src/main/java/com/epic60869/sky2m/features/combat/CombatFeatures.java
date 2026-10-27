@@ -212,7 +212,7 @@ public final class CombatFeatures {
             {
                 // First and on its own, so a problem in the other drop features can't stop it reaching the RNG HUD.
                 try {
-                    com.epic60869.sky2m.tools.FarmingRngTracker.get().onRareDrop(message.component(), dropItem, dropAmount,
+                    com.epic60869.sky2m.tools.RngHud.get().onRareDrop(message.component(), dropItem, dropAmount,
                         rng || dropType.startsWith("CRAZY RARE") || dropType.startsWith("INSANE") || dropType.startsWith("INCREDIBLY RARE"));
                 } catch (Exception e) {
                     System.err.println("[Sky2M] RNG HUD: " + e);

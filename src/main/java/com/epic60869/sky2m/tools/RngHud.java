@@ -17,8 +17,8 @@ import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 
 /** Sky2M-owned farming RNG detection. Profit tracking remains SkySoft-owned. */
-public final class FarmingRngTracker {
-    private static final FarmingRngTracker INSTANCE = new FarmingRngTracker();
+public final class RngHud {
+    private static final RngHud INSTANCE = new RngHud();
     private static final long SHOW_MILLIS = 3000L;
     private static final Pattern RARE_MESSAGE = Pattern.compile(
         "(?i)^(?:.*?)(?:RARE CROP!|(?:VERY |CRAZY |PRAY TO RNGESUS |RNGESUS INCARNATE )?RARE DROP!?|VERY RARE DROP!?|CRAZY RARE DROP!?|PRAY TO RNGESUS!?|RNGESUS INCARNATE!?)[ ]*(?<item>.+?)\\s*(?:\\(\\+[^)]*\\))?[! ]*$"
@@ -45,8 +45,8 @@ public final class FarmingRngTracker {
     );
 
     private final ConcurrentHashMap<String, Drop> activeDrops = new ConcurrentHashMap<>();
-    private FarmingRngTracker() {}
-    public static FarmingRngTracker get() { return INSTANCE; }
+    private RngHud() {}
+    public static RngHud get() { return INSTANCE; }
 
     public void register() {
         ItemPriceResolver.warmup();

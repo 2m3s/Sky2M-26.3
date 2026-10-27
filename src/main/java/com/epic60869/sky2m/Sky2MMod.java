@@ -46,7 +46,7 @@ import com.epic60869.sky2m.social.Sky2MPlayerNotes;
 import com.epic60869.sky2m.social.Sky2MProfiles;
 import com.epic60869.sky2m.social.Sky2MRivals;
 import com.epic60869.sky2m.social.Sky2MStaff;
-import com.epic60869.sky2m.tools.FarmingRngTracker;
+import com.epic60869.sky2m.tools.RngHud;
 import com.epic60869.sky2m.tools.Sky2MCalculator;
 import com.epic60869.sky2m.tools.Sky2MDateCalculator;
 import com.epic60869.sky2m.update.Sky2MChangelog;
@@ -85,7 +85,7 @@ public final class Sky2MMod implements ClientModInitializer {
         Sky2MRecipeCommand.init(); lap("Sky2MRecipeCommand.init");
         Sky2MCraftHelper.init(configDir); lap("Sky2MCraftHelper.init");
 
-        FarmingRngTracker.get().register();
+        RngHud.get().register();
         Sky2MRngHud.register(config); lap("Sky2MRngHud.register");
         Sky2MCommissionHud.register(config); lap("Sky2MCommissionHud.register");
         // CommandKeys port: /s2 keys. Key mappings must be registered during client init.

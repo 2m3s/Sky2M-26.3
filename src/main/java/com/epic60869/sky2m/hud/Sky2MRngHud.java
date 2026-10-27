@@ -12,7 +12,7 @@ import net.minecraft.resources.Identifier;
 import java.util.List;
 import java.util.Locale;
 import com.epic60869.sky2m.config.Sky2MConfig;
-import com.epic60869.sky2m.tools.FarmingRngTracker;
+import com.epic60869.sky2m.tools.RngHud;
 
 public final class Sky2MRngHud {
     private static final Identifier ID = Identifier.fromNamespaceAndPath("sky2m-mod", "farming_rng");
@@ -61,7 +61,7 @@ public final class Sky2MRngHud {
         List<Line> out = new java.util.ArrayList<>();
         java.util.Set<String> names = new java.util.HashSet<>();
         if (config() != null && config().misc.rngHud.enabled) {
-            for (FarmingRngTracker.Drop drop : FarmingRngTracker.get().active()) {
+            for (RngHud.Drop drop : RngHud.get().active()) {
                 out.add(rngLine(drop.amount(), Component.literal(drop.name()).withColor(rarityColour(drop)),
                     drop.unitPrice() * drop.amount()));
                 names.add(drop.name().toLowerCase(Locale.ROOT));
@@ -153,7 +153,7 @@ public final class Sky2MRngHud {
      * Epic purple), then the colour its name had in the chat message (pets, which the repo lists per rarity), then the
      * Drop Colour.
      */
-    private static int rarityColour(FarmingRngTracker.Drop drop) {
+    private static int rarityColour(RngHud.Drop drop) {
         boolean pets = config() == null || config().misc.rngHud.petRarityColours;
         if (pets && drop.rarity().equals("LEGENDARY")) return 0xFFFFAA00;
         if (pets && drop.rarity().equals("EPIC")) return 0xFFAA00AA;
