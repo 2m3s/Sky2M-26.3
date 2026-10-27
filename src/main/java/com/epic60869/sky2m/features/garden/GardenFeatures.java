@@ -2,8 +2,6 @@ package com.epic60869.sky2m.features.garden;
 
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
-import com.epic60869.sky2m.features.core.Sky2MAlerts;
-import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import net.fabricmc.fabric.api.event.client.player.ClientPlayerBlockBreakEvents;
@@ -16,12 +14,12 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-/** Yaw/pitch, blocks per second and the dye / Ray of Helios animation. The pest timer and alerts are in {@link PestTimer}. */
+/**
+ * Yaw/pitch and blocks per second. The pest timer and alerts are in {@link PestTimer}; the dye / Ray of Helios drop
+ * animation is the shared totem animation ({@link com.epic60869.sky2m.features.combat.RareDropTotem}).
+ */
 public final class GardenFeatures {
-    private static final Pattern SPECIAL_DROP = Pattern.compile("(?<item>[A-Z][\\w' ]* Dye|Ray of Helios)");
     private static final String[] FACINGS = {"South", "South West", "West", "North West", "North", "North East", "East", "South East"};
 
     private static final Deque<Long> BREAKS = new ArrayDeque<>();
@@ -39,7 +37,6 @@ public final class GardenFeatures {
                 BREAKS.addLast(System.currentTimeMillis());
             }
         });
-        Sky2MChat.onChat(GardenFeatures::onChat);
         PestTimer.init();
         GardenKeybinds.init();
         GardenReminders.init();
@@ -87,17 +84,5 @@ public final class GardenFeatures {
             count = BREAKS.size();
         }
         return List.of(kv("BPS: ", String.format(Locale.US, "%.1f", count / 2.0)));
-    }
-
-    private static void onChat(Sky2MChat.Message message) {
-        String text = message.text();
-        FeatureConfigs.Garden config = config();
-        if (config == null || !config.specialDropAnimation || !Sky2MLocation.inGarden()) return;
-        boolean dropMessage = text.contains("DROP!") || text.contains("CROP!") || text.startsWith("WOW!") || text.contains(" found ");
-        if (!dropMessage) return;
-        Matcher m = SPECIAL_DROP.matcher(text);
-        if (m.find()) {
-            Sky2MAlerts.dropAnimation(Component.literal(m.group("item") + "!").withStyle(ChatFormatting.BOLD), 0xFF55FF);
-        }
     }
 }

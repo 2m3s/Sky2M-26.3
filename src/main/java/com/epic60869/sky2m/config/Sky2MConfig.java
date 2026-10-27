@@ -602,7 +602,7 @@ public final class Sky2MConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Garden", desc = "Yaw/pitch, pest cooldown, blocks per second and special drop animations.")
+        @ConfigOption(name = "Garden", desc = "Yaw/pitch, pest cooldown and blocks per second.")
         @ConfigAccordionId(id = 801)
         public com.epic60869.sky2m.features.FeatureConfigs.Garden garden = new com.epic60869.sky2m.features.FeatureConfigs.Garden();
 
@@ -2933,6 +2933,8 @@ public final class Sky2MConfig extends Config {
             moves.add(new String[]{"profitTrackers", "misc.profitTrackers"});
             moves.add(new String[]{"clips", "misc.clips"});
             moves.add(new String[]{"farming.rng", "misc.rngHud"});
+            // Garden > Special Drop Animation became Rare Drops > Garden Drops (the shared totem animation).
+            moves.add(new String[]{"farming.garden.specialDropAnimation", "combat.rareDrops.totemGardenDrops"});
             // Garden > Safari Ticket Reminder moved to Foraging.
             moves.add(new String[]{"farming.garden.safariTicketReminder", "foraging.safariTicketReminder"});
             MOVES = moves.toArray(new String[0][]);

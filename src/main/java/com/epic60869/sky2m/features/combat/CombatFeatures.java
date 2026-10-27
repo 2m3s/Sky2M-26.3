@@ -191,7 +191,9 @@ public final class CombatFeatures {
             }
         }
 
+        boolean rareDropLine = false;
         if ((m = RARE_DROP.matcher(text)).find() && !someoneElsesDrop(text)) {
+            rareDropLine = true;
             String raw = m.group("wrapped") != null ? m.group("wrapped") : m.group("item");
             Matcher words = DROP_WORDS.matcher(raw.trim());
             String item = words.matches() ? words.group("item").trim() : raw.trim();
@@ -207,13 +209,15 @@ public final class CombatFeatures {
             boolean slayer = com.epic60869.sky2m.features.slayer.SlayerBossProfit.isSlayerDrop(item);
             // RARE CROP lines, and anything else that drops in the Garden (pest drops).
             boolean garden = type.contains("CROP") || Sky2MLocation.inGarden();
+            // Dyes and the Ray of Helios from the Garden show on the RNG HUD even when no price is found.
+            boolean gardenSpecial = garden && RareDropTotem.isGardenSpecial(item);
             String dropText = text.trim(), dropItem = item, dropType = m.group("type").trim();
             int dropAmount = amount;
             {
                 // First and on its own, so a problem in the other drop features can't stop it reaching the RNG HUD.
                 try {
                     com.epic60869.sky2m.tools.RngHud.get().onRareDrop(message.component(), dropItem, dropAmount,
-                        rng || dropType.startsWith("CRAZY RARE") || dropType.startsWith("INSANE") || dropType.startsWith("INCREDIBLY RARE"));
+                        rng || gardenSpecial || dropType.startsWith("CRAZY RARE") || dropType.startsWith("INSANE") || dropType.startsWith("INCREDIBLY RARE"));
                 } catch (Exception e) {
                     System.err.println("[Sky2M] RNG HUD: " + e);
                 }
@@ -228,6 +232,22 @@ public final class CombatFeatures {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && ("You".equalsIgnoreCase(name) || name.equalsIgnoreCase(mc.player.getGameProfile().name()))) {
                 RareDropTotem.onDrop("RNG DYE DROP!", m.group("item"));
+            }
+        }
+
+        // Special Garden drops (farming dyes, Ray of Helios) in any Garden drop line, also ones the patterns above
+        // don't read: the totem animation (Rare Drop Totem > Garden Drops) and, if not counted above, the RNG HUD.
+        if (Sky2MLocation.inGarden()) {
+            String special = RareDropTotem.gardenSpecialDrop(text);
+            if (special != null && !someoneElsesDrop(text)) {
+                if (!rareDropLine) {
+                    try {
+                        com.epic60869.sky2m.tools.RngHud.get().onRareDrop(message.component(), special, 1, true);
+                    } catch (Exception e) {
+                        System.err.println("[Sky2M] RNG HUD: " + e);
+                    }
+                }
+                RareDropTotem.onGardenDrop(special);
             }
         }
     }

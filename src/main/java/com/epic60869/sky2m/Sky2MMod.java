@@ -101,7 +101,6 @@ public final class Sky2MMod implements ClientModInitializer {
         // Shared infrastructure for the skill features.
         com.epic60869.sky2m.features.core.Sky2MLocation.init(); lap("Sky2MLocation.init");
         com.epic60869.sky2m.features.core.Sky2MChat.init(); lap("Sky2MChat.init");
-        com.epic60869.sky2m.features.core.Sky2MAlerts.init(); lap("Sky2MAlerts.init");
         Sky2MFoxyScare.init(); lap("Sky2MFoxyScare.init");
         Sky2MLeaderboards.init(); lap("Sky2MLeaderboards.init");
         Sky2MPartyFinder.init(); lap("Sky2MPartyFinder.init");

@@ -1097,6 +1097,11 @@ public final class FeatureConfigs {
         public boolean totemAnimation = true;
 
         @Expose
+        @ConfigOption(name = "Garden Drops", desc = "Also play the totem animation for special Garden drops: farming dyes and the Ray of Helios, in any Garden drop line (RARE DROP!, RARE CROP!, WOW! ... found ...). Needs RNG Drop Totem Animation on.")
+        @ConfigEditorBoolean
+        public boolean totemGardenDrops = false;
+
+        @Expose
         @ConfigOption(name = "Drop Chat Message", desc = "A drop tracker message: \"+Drop: Gold Bottle Cap (16.1M)\" in chat for every rare drop you get, with the item and what it is worth.")
         @ConfigEditorBoolean
         public boolean dropMessage = false;
@@ -1420,11 +1425,6 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Blocks Per Second", desc = "HUD showing how many blocks per second you are breaking.")
         @ConfigEditorBoolean
         public boolean blocksPerSecond = false;
-
-        @Expose
-        @ConfigOption(name = "Special Drop Animation", desc = "Play an animation when you drop a farming dye or a Ray of Helios.")
-        @ConfigEditorBoolean
-        public boolean specialDropAnimation = false;
 
         @Expose
         @ConfigOption(name = "Mute Overflow Drop Sound", desc = "Don't play the nether portal sound with \"OVERFLOW! Your ... has just dropped a ...!\" (e.g. a Tool Exp Capsule).")
