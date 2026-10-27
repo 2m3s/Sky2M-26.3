@@ -178,6 +178,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.reports.Reports.init(); lap("Reports.init");
         Sky2MToggleCommands.init(); lap("Sky2MToggleCommands.init");
         com.epic60869.sky2m.features.misc.chat.CopyChat.init(); lap("CopyChat.init");
+        com.epic60869.sky2m.features.misc.chat.ChatEmotes.init(); lap("ChatEmotes.init");
         com.epic60869.sky2m.features.misc.system.KeyConflicts.init(); lap("KeyConflicts.init");
         com.epic60869.sky2m.features.core.HudEditorKey.init(); lap("HudEditorKey.init");
         com.epic60869.sky2m.features.misc.items.SlotLocking.init(); lap("SlotLocking.init");

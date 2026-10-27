@@ -465,6 +465,12 @@ public final class Sky2MConfig extends Config {
         public int chatHistoryLines = 1000;
 
         @Expose
+        @ConfigOption(name = "Chat Emotes", desc = "Hypixel's MVP++ chat emotes for everyone: o/, <3, :shrug:, :tableflip:, :yes:, :star: and the rest turn into the emote when you send them (in chat, /pc, /gc, /msg...), so everyone sees it.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 201)
+        public boolean chatEmotes = true;
+
+        @Expose
         @ConfigOption(name = "Compact Bestiary", desc = "SkyHanni's compact Bestiary messages: Hypixel's BESTIARY level-up block becomes one line (\"BESTIARY Zombie II➡III\"); hover it for the rewards, click it to open the Bestiary. Milestones get their own line.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 201)
