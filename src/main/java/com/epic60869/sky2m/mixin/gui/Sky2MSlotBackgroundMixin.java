@@ -20,7 +20,7 @@ public abstract class Sky2MSlotBackgroundMixin {
         Sky2MItemBackgrounds.beginContainer((AbstractContainerScreen<?>) (Object) this);
     }
 
-    /** The equipped loadout's, active pet's, bestiary, Bazaar order, shard, infested plot and Item List search highlights, behind the slot's item. */
+    /** The equipped loadout's, active pet's, bestiary, Bazaar order, shard, infested plot, shopping list Bazaar search and Item List search highlights, behind the slot's item. */
     @Inject(method = "extractSlot", at = @At("HEAD"))
     private void sky2m$slotBackground(GuiGraphicsExtractor graphics, net.minecraft.world.inventory.Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
         com.epic60869.sky2m.features.misc.items.LoadoutHighlight.renderSlot(graphics, slot);
@@ -31,6 +31,7 @@ public abstract class Sky2MSlotBackgroundMixin {
         com.epic60869.sky2m.features.misc.items.ShardLevelUpHighlight.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.misc.items.AuctionHighlight.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.garden.PestFinder.renderSlot(graphics, slot);
+        com.epic60869.sky2m.features.garden.visitor.GardenVisitors.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.dungeons.DupeClass.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.itemlist.ItemList.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.renderSlotBackground(graphics, slot);

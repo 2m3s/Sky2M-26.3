@@ -12,6 +12,7 @@ import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
+import com.epic60869.sky2m.features.core.Sky2MTheme;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
 import com.epic60869.sky2m.features.core.SkyHanniRepo;
 import com.epic60869.sky2m.features.misc.items.SackTracker;
@@ -29,6 +30,7 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.fabricmc.fabric.api.event.client.player.ClientPlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
@@ -77,8 +79,8 @@ import java.util.regex.Pattern;
 /**
  * SkyHanni's garden visitor features (features/garden/visitor, LGPL-2.1), in one place: visitors are read from the
  * tab list's Visitors widget, and their offers when you open them. From that come the Visitor Shopping List (with
- * prices, sack counts, "Craftable!" and the item preview for new visitors), the Visitor Timer (with the 6th visitor
- * estimate), prices, copper and garden exp value in the offer's tooltip, the Reward Warning (rare rewards, and
+ * prices, sack counts, "Craftable!", item icons and the item preview for new visitors), the Visitor Timer (with the
+ * queue size from Max Occupancy and the next-visitor estimate while the queue is full), prices, copper and garden exp value in the offer's tooltip, the Reward Warning (rare rewards, and
  * blocking refusing or accepting by copper price or coin loss), status highlights on the visitors, arrival
  * notifications, hidden visitor chat, compact reward messages, the Drops Statistics, Charmed Visitors, the Supercraft
  * button, the Jacob/Anita NPC fix, and highlighting / blocking visitors outside the Garden.
@@ -261,9 +263,22 @@ public final class GardenVisitors {
     private static long lastPing;
 
     // Shopping list, statistics and charmed HUD lines.
-    private static List<Component> shoppingLines = List.of();
+    private static final String SHOPPING_HUD = "visitor_shopping_list";
+    /** A shopping list row: the item's icon (null for a text row), the text after it and the item's id (null when not an item). */
+    private record ShopRow(ItemStack icon, Component text, String id) {}
+    /** The shopping list's rows, with its size worked out once (it changes once a second at most). */
+    private record ShopList(List<ShopRow> rows, List<Component> texts, int width, int height) {}
+    private static final ShopList EMPTY_SHOP_LIST = new ShopList(List.of(), List.of(), 0, 0);
+    private static ShopList shoppingList = EMPTY_SHOP_LIST;
+    private static ShopList previewList;
+    private static String previewKey = "";
+    private static final Map<String, ItemStack> ICONS = new ConcurrentHashMap<>();
     private static List<Component> statsLines = List.of();
     private static List<Component> charmedLines = List.of();
+    // Click to Open Bazaar: the item searched for from the shopping list, highlighted in the Bazaar menus until they close.
+    private static String bazaarSearchName;
+    private static long bazaarSearchSince;
+    private static boolean bazaarSearchSeen;
 
     // Compact chat state.
     private static final List<Component> compactOriginal = new ArrayList<>();
@@ -337,7 +352,9 @@ public final class GardenVisitors {
         });
 
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
-            ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> afterScreen(s, graphics));
+            ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> afterScreen(s, graphics, mouseX, mouseY));
+            // Click to Open Bazaar: a click on a shopping list item drawn over the menu.
+            ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> event.button() != 0 || !clickShopList(s, event.x(), event.y()));
             if (!(screen instanceof AbstractContainerScreen<?> container)) return;
             ScreenKeyboardEvents.allowKeyPress(screen).register((s, event) -> {
                 VisitorConfig config = config();
@@ -348,12 +365,18 @@ public final class GardenVisitors {
         });
 
         Sky2MHuds.setting("visitor_shopping_list", () -> config() != null && config().shoppingList.enabled);
-        Sky2MHuds.register("visitor_shopping_list", "Visitor Shopping List",
-            () -> config() != null && config().shoppingList.enabled && showShoppingList() && !(Minecraft.getInstance().gui.screen() != null),
-            () -> shoppingLines,
-            List.of(SbcItems.parseLegacy("§7Visitor Shopping List: §7(§6125k§7)"), SbcItems.parseLegacy(" §7- §aEnchanted Hay Bale §ex2 §7(§6110k§7)"),
-                SbcItems.parseLegacy(""), SbcItems.parseLegacy("§e1 §7New Visitor:"), SbcItems.parseLegacy(" §7- §9Lazy Miner §7(Enchanted Cobblestone)")),
-            180, 170);
+        Sky2MHuds.registerCustom(SHOPPING_HUD, "Visitor Shopping List",
+            () -> config() != null && config().shoppingList.enabled && showShoppingList() && Minecraft.getInstance().gui.screen() == null,
+            new Sky2MHuds.CustomHud() {
+                @Override public int width() { return shownList(true).width(); }
+                @Override public int height() { return shownList(true).height(); }
+                @Override public boolean visible() { return !shoppingList.rows().isEmpty(); }
+
+                @Override
+                public void render(GuiGraphicsExtractor graphics, boolean preview) {
+                    drawShopList(graphics, shownList(preview), Sky2MHuds.placement(SHOPPING_HUD).background, -1);
+                }
+            }, 180, 170);
         Sky2MHuds.setting("visitor_timer", () -> config() != null && config().timer.enabled);
         Sky2MHuds.register("visitor_timer", "Garden Visitor Timer",
             () -> config() != null && config().timer.enabled && Sky2MLocation.inGarden(),
@@ -471,6 +494,7 @@ public final class GardenVisitors {
     private static void tick(Minecraft mc) {
         ticks++;
         runDelayed();
+        tickBazaarSearch(mc.gui.screen());
         if (dirty && ticks % 200 == 0) save();
         if (mc.level == null || mc.player == null) return;
         VisitorConfig config = config();
@@ -1494,11 +1518,11 @@ public final class GardenVisitors {
 
     // ------------------------------------------------------------------------------------------------ shopping list
 
-    /** SkyHanni's GardenVisitorShoppingList. */
+    /** SkyHanni's GardenVisitorShoppingList, with each item shown as its icon (Item Icons) or its name. */
     private static void updateShoppingList() {
         VisitorConfig config = config();
         if (config == null || !config.shoppingList.enabled) {
-            shoppingLines = List.of();
+            shoppingList = EMPTY_SHOP_LIST;
             return;
         }
         VisitorConfig.ShoppingList list = config.shoppingList;
@@ -1510,37 +1534,39 @@ public final class GardenVisitors {
             if (visitor.ignoreShoppingList()) continue;
             visitor.shoppingList.forEach((id, amount) -> shopping.merge(resolveItem(id), amount, Integer::sum));
         }
-        List<Component> out = new ArrayList<>();
+        List<ShopRow> out = new ArrayList<>();
         if (!shopping.isEmpty()) {
             double totalPrice = 0;
-            out.add(Component.empty());
+            out.add(null);
             for (Map.Entry<String, Integer> e : shopping.entrySet()) {
                 String id = e.getKey();
                 int amount = e.getValue();
-                String name = RepoItems.displayName(id);
-                StringBuilder line = new StringBuilder(" §7- ").append(name == null ? id : name).append(" §ex").append(String.format(Locale.US, "%,d", amount));
+                ItemStack icon = list.itemIcons ? itemIcon(id) : null;
+                StringBuilder line = new StringBuilder();
+                if (icon == null) line.append(" §7- ").append(itemDisplayName(id)).append(" ");
+                line.append("§ex").append(String.format(Locale.US, "%,d", amount));
                 if (list.showPrice) {
                     double price = price(id, amount);
                     totalPrice += price;
                     if (price > 0) line.append(" §7(§6").append(shortFormat(price)).append("§7)");
                 }
                 if (list.showSackCount) line.append(sackData(id, amount));
-                out.add(SbcItems.parseLegacy(line.toString()));
+                out.add(new ShopRow(icon, SbcItems.parseLegacy(line.toString()), id));
             }
-            out.set(0, SbcItems.parseLegacy(totalPrice > 0 ? "§7Visitor Shopping List: §7(§6" + shortFormat(totalPrice) + "§7)" : "§7Visitor Shopping List:"));
+            out.set(0, textRow(totalPrice > 0 ? "§7Visitor Shopping List: §7(§6" + shortFormat(totalPrice) + "§7)" : "§7Visitor Shopping List:"));
         }
         visitorSection(out, newVisitors, "New Visitor", true, list);
         visitorSection(out, knownVisitors, "Visitor", false, list);
-        shoppingLines = out;
+        shoppingList = shopList(out);
     }
 
-    private static void visitorSection(List<Component> out, List<Visitor> section, String header, boolean isNew, VisitorConfig.ShoppingList config) {
+    private static void visitorSection(List<ShopRow> out, List<Visitor> section, String header, boolean isNew, VisitorConfig.ShoppingList config) {
         if (section.isEmpty()) return;
-        if (!out.isEmpty()) out.add(Component.empty());
-        out.add(SbcItems.parseLegacy("§e" + section.size() + " §7" + header + (section.size() == 1 ? "" : "s") + ":"));
+        if (!out.isEmpty()) out.add(textRow(""));
+        out.add(textRow("§e" + section.size() + " §7" + header + (section.size() == 1 ? "" : "s") + ":"));
         for (Visitor visitor : section) {
             if (!isNew) {
-                out.add(SbcItems.parseLegacy(" §7- " + (visitor.ignoreShoppingList() ? "§7§m" + visitor.name : visitor.displayName())));
+                out.add(textRow(" §7- " + (visitor.ignoreShoppingList() ? "§7§m" + visitor.name : visitor.displayName())));
                 continue;
             }
             StringBuilder line = new StringBuilder(" §7- ").append(visitor.displayName());
@@ -1550,8 +1576,113 @@ public final class GardenVisitors {
                 else if (data.needItems().isEmpty()) line.append(data.unknownRewards() ? " §7(§fUnknown§7)" : " §7(§fAny§7)");
                 else line.append(" §7(§f").append(String.join("§7, §f", data.needItems())).append("§7)");
             }
-            out.add(SbcItems.parseLegacy(line.toString()));
+            out.add(textRow(line.toString()));
         }
+    }
+
+    private static ShopRow textRow(String legacy) {
+        return new ShopRow(null, SbcItems.parseLegacy(legacy), null);
+    }
+
+    // Icon rows: the item drawn at 12 pixels (3/4 size) with its amount next to it.
+    private static final int ICON_SIZE = 12, ICON_ROW_HEIGHT = 12;
+
+    private static ShopList shopList(List<ShopRow> rows) {
+        if (rows.isEmpty()) return EMPTY_SHOP_LIST;
+        var font = Minecraft.getInstance().font;
+        List<Component> texts = new ArrayList<>();
+        int width = 0, height = 0;
+        for (ShopRow row : rows) {
+            texts.add(row.text());
+            width = Math.max(width, (row.icon() == null ? 0 : ICON_SIZE + 3) + font.width(row.text()));
+            height += row.icon() == null ? Sky2MHuds.LINE_HEIGHT : ICON_ROW_HEIGHT;
+        }
+        return new ShopList(List.copyOf(rows), List.copyOf(texts), width + Sky2MHuds.PADDING * 2, height + Sky2MHuds.PADDING * 2 - 2);
+    }
+
+    /** The live list, or in the /s2 gui editor (when there is no live list) a sample one. */
+    private static ShopList shownList(boolean preview) {
+        if (!preview || !shoppingList.rows().isEmpty()) return shoppingList;
+        VisitorConfig config = config();
+        boolean icons = config == null || config.shoppingList.itemIcons;
+        String key = icons + ":" + RepoItems.itemsLoaded();
+        if (previewList == null || !key.equals(previewKey)) {
+            previewKey = key;
+            List<ShopRow> rows = new ArrayList<>();
+            rows.add(textRow("§7Visitor Shopping List: §7(§6125k§7)"));
+            if (icons) {
+                rows.add(new ShopRow(iconOr("ENCHANTED_HAY_BALE", Items.HAY_BLOCK), SbcItems.parseLegacy("§ex2 §7(§6110k§7)"), null));
+                rows.add(new ShopRow(iconOr("ENCHANTED_POTATO", Items.POTATO), SbcItems.parseLegacy("§ex96 §7(§615k§7)"), null));
+            } else {
+                rows.add(textRow(" §7- §aEnchanted Hay Bale §ex2 §7(§6110k§7)"));
+                rows.add(textRow(" §7- §aEnchanted Potato §ex96 §7(§615k§7)"));
+            }
+            rows.add(textRow(""));
+            rows.add(textRow("§e1 §7New Visitor:"));
+            rows.add(textRow(" §7- §9Lazy Miner §7(Enchanted Cobblestone)"));
+            previewList = shopList(rows);
+        }
+        return previewList;
+    }
+
+    /** Draws the list at 0, 0; {@code hovered} is the row under the mouse (Click to Open Bazaar), or -1. */
+    private static void drawShopList(GuiGraphicsExtractor graphics, ShopList list, boolean background, int hovered) {
+        if (list.rows().isEmpty()) return;
+        var font = Minecraft.getInstance().font;
+        if (background) graphics.fill(0, 0, list.width(), list.height(), Sky2MTheme.background(0x80000000));
+        if (hovered >= 0 && hovered < list.rows().size()) {
+            int top = rowTop(list, hovered), bottom = top + rowHeight(list.rows().get(hovered));
+            graphics.fill(0, top, list.width(), bottom, 0x3055FF55);
+            graphics.outline(0, top, list.width(), bottom - top, 0xC055FF55);
+        }
+        // HUD theme (colour-blind palettes, high contrast), as on the text HUDs.
+        List<Component> themed = Sky2MTheme.lines(list.texts());
+        int colour = Sky2MTheme.argb(0xFFFFFFFF);
+        int y = Sky2MHuds.PADDING;
+        for (int i = 0; i < list.rows().size(); i++) {
+            ShopRow row = list.rows().get(i);
+            Component text = i < themed.size() ? themed.get(i) : row.text();
+            if (row.icon() == null) {
+                graphics.text(font, text, Sky2MHuds.PADDING, y, colour, true);
+                y += Sky2MHuds.LINE_HEIGHT;
+                continue;
+            }
+            graphics.pose().pushMatrix();
+            graphics.pose().translate((float) Sky2MHuds.PADDING, (float) (y - 1));
+            graphics.pose().scale(ICON_SIZE / 16f, ICON_SIZE / 16f);
+            graphics.item(row.icon(), 0, 0);
+            graphics.pose().popMatrix();
+            graphics.text(font, text, Sky2MHuds.PADDING + ICON_SIZE + 3, y + 1, colour, true);
+            y += ICON_ROW_HEIGHT;
+        }
+    }
+
+    private static int rowHeight(ShopRow row) {
+        return row.icon() == null ? Sky2MHuds.LINE_HEIGHT : ICON_ROW_HEIGHT;
+    }
+
+    /** The top of a row's hover box (one pixel above its text, where the icon starts), in the list's own coordinates. */
+    private static int rowTop(ShopList list, int index) {
+        int y = Sky2MHuds.PADDING;
+        for (int i = 0; i < index; i++) y += rowHeight(list.rows().get(i));
+        return y - 1;
+    }
+
+    /** The item's SkyBlock look from the item list, or null when it isn't known (then its name is shown instead). */
+    private static ItemStack itemIcon(String id) {
+        if (isNamedItem(id)) return null;
+        ItemStack cached = ICONS.get(id);
+        if (cached != null) return cached.isEmpty() ? null : cached;
+        if (!RepoItems.itemsLoaded()) return null;
+        ItemStack stack = RepoItems.itemStack(id);
+        if (stack.is(Items.BARRIER)) stack = ItemStack.EMPTY;
+        ICONS.put(id, stack);
+        return stack.isEmpty() ? null : stack;
+    }
+
+    private static ItemStack iconOr(String id, net.minecraft.world.item.Item fallback) {
+        ItemStack icon = itemIcon(id);
+        return icon != null ? icon : new ItemStack(fallback);
     }
 
     /** "(x1,234 in sacks)" and "(Craftable!)" when your sacks have what it takes to craft the rest. */
@@ -1623,14 +1754,119 @@ public final class GardenVisitors {
         return title.startsWith("Bazaar") || title.contains("Bazaar ➜") || title.startsWith("How many") || title.startsWith("Confirm");
     }
 
-    private static void afterScreen(Screen screen, GuiGraphicsExtractor graphics) {
+    /** Whether the shopping list is drawn over this screen. */
+    private static boolean shopListInScreen(Screen screen, VisitorConfig config) {
+        return config.shoppingList.enabled && showShoppingList() && !shoppingList.rows().isEmpty() && showInScreen(screen)
+            && !com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds();
+    }
+
+    /** The clickable item row under the mouse in the shopping list drawn over a menu, or -1. */
+    private static int hoveredShopRow(ShopList list, Sky2MHuds.Placement p, double mouseX, double mouseY) {
+        VisitorConfig config = config();
+        if (config == null || !config.shoppingList.clickToOpenBazaar || p.scale <= 0) return -1;
+        int x = Sky2MHuds.mapX(p.x, Math.round(list.width() * p.scale)), y = Sky2MHuds.mapY(p.y, Math.round(list.height() * p.scale));
+        double localX = (mouseX - x) / p.scale, localY = (mouseY - y) / p.scale;
+        if (localX < 0 || localX >= list.width() || localY < 0 || localY >= list.height()) return -1;
+        int top = Sky2MHuds.PADDING - 1;
+        for (int i = 0; i < list.rows().size(); i++) {
+            ShopRow row = list.rows().get(i);
+            int bottom = top + rowHeight(row);
+            if (localY >= top && localY < bottom) return onBazaar(row.id()) ? i : -1;
+            top = bottom;
+        }
+        return -1;
+    }
+
+    /** Whether an item can be searched for on the Bazaar: on it, or the Bazaar prices aren't known (then the search is tried). */
+    private static boolean onBazaar(String id) {
+        if (id == null) return false;
+        if (isNamedItem(id)) return true;
+        var bazaar = com.epic60869.sky2m.price.PriceService.bazaar();
+        if (bazaar.buy().isEmpty() && bazaar.sell().isEmpty()) return true;
+        String key = priceKey(id);
+        return bazaar.buy().containsKey(key) || bazaar.sell().containsKey(key);
+    }
+
+    /** The item's plain name, as typed into the Bazaar search. */
+    private static String bazaarName(String id) {
+        return ChatFormatting.stripFormatting(itemDisplayName(id)).trim();
+    }
+
+    /** Click to Open Bazaar: a click on a shopping list item runs /bz with its name. @return true when the click was used. */
+    private static boolean clickShopList(Screen screen, double mouseX, double mouseY) {
+        VisitorConfig config = config();
+        if (config == null || !config.shoppingList.clickToOpenBazaar || !shopListInScreen(screen, config)) return false;
+        ShopList list = shoppingList;
+        int row = hoveredShopRow(list, Sky2MHuds.placement(SHOPPING_HUD), mouseX, mouseY);
+        if (row < 0) return false;
+        String name = bazaarName(list.rows().get(row).id());
+        if (name.isEmpty()) return false;
+        startBazaarSearch(name);
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null) connection.sendCommand("bz " + name);
+        return true;
+    }
+
+    private static void startBazaarSearch(String name) {
+        bazaarSearchName = name;
+        bazaarSearchSince = System.currentTimeMillis();
+        bazaarSearchSeen = false;
+    }
+
+    private static boolean isBazaarTitle(String title) {
+        return title.startsWith("Bazaar") || title.contains("➜");
+    }
+
+    /** Keeps the searched item highlighted while the Bazaar menus are open; clears it once they close (or none opened in 10s). */
+    private static void tickBazaarSearch(Screen screen) {
+        if (bazaarSearchName == null) return;
+        if (screen instanceof AbstractContainerScreen<?> && isBazaarTitle(ChatFormatting.stripFormatting(screen.getTitle().getString()))) {
+            bazaarSearchSeen = true;
+        } else if (bazaarSearchSeen ? screen == null : System.currentTimeMillis() - bazaarSearchSince > 10_000) {
+            bazaarSearchName = null;
+            bazaarSearchSeen = false;
+        }
+    }
+
+    /** Whether this slot holds the item searched for from the shopping list, in a Bazaar menu. */
+    private static boolean isBazaarSearchSlot(Screen screen, Slot slot) {
+        String name = bazaarSearchName;
+        if (name == null || slot == null || !slot.hasItem() || slot.container instanceof net.minecraft.world.entity.player.Inventory) return false;
+        if (!(screen instanceof AbstractContainerScreen<?>) || !isBazaarTitle(ChatFormatting.stripFormatting(screen.getTitle().getString()))) return false;
+        String item = ChatFormatting.stripFormatting(slot.getItem().getHoverName().getString());
+        return item != null && item.trim().equalsIgnoreCase(name);
+    }
+
+    /** The searched item's green highlight behind it (Sky2MSlotBackgroundMixin). */
+    public static void renderSlot(GuiGraphicsExtractor graphics, Slot slot) {
+        if (bazaarSearchName == null || !isBazaarSearchSlot(Minecraft.getInstance().gui.screen(), slot)) return;
+        graphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, 0x9055FF55);
+        graphics.outline(slot.x - 1, slot.y - 1, 18, 18, 0xFF55FF55);
+    }
+
+    private static void afterScreen(Screen screen, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return;
         VisitorConfig config = config();
         if (config == null) return;
-        if (config.shoppingList.enabled && showShoppingList() && !shoppingLines.isEmpty() && showInScreen(screen)) {
-            int[] at = Sky2MHuds.screenPosition("visitor_shopping_list", shoppingLines);
-            Sky2MHuds.Placement p = Sky2MHuds.placement("visitor_shopping_list");
-            Sky2MHuds.render(graphics, shoppingLines, at[0], at[1], p.scale, p.background);
+        ShopList list = shoppingList;
+        if (shopListInScreen(screen, config)) {
+            Sky2MHuds.Placement p = Sky2MHuds.placement(SHOPPING_HUD);
+            int x = Sky2MHuds.mapX(p.x, Math.round(list.width() * p.scale)), y = Sky2MHuds.mapY(p.y, Math.round(list.height() * p.scale));
+            int hovered = hoveredShopRow(list, p, mouseX, mouseY);
+            graphics.pose().pushMatrix();
+            graphics.pose().translate((float) x, (float) y);
+            graphics.pose().scale(p.scale, p.scale);
+            try {
+                drawShopList(graphics, list, p.background, hovered);
+            } finally {
+                graphics.pose().popMatrix();
+            }
+            if (hovered >= 0) {
+                String id = list.rows().get(hovered).id();
+                graphics.setTooltipForNextFrame(Minecraft.getInstance().font,
+                    List.of(SbcItems.parseLegacy(itemDisplayName(id)), SbcItems.parseLegacy("§eClick to search the Bazaar")),
+                    Optional.empty(), mouseX, mouseY);
+            }
         }
         if (!inInventory || openVisitor == null || !(screen instanceof AbstractContainerScreen<?> container)) return;
         AbstractContainerScreenAccessor accessor = (AbstractContainerScreenAccessor) container;
@@ -1808,6 +2044,41 @@ public final class GardenVisitors {
         String number = Math.abs(v) >= 100 ? String.valueOf((long) v) : String.format(Locale.US, "%.1f", v);
         if (number.endsWith(".0")) number = number.substring(0, number.length() - 2);
         return number + suffixes[index];
+    }
+
+    /** For the game tests: as if this item had just been clicked in the shopping list (without running /bz). */
+    public static void testBazaarSearch(String itemName) {
+        startBazaarSearch(itemName);
+    }
+
+    /** For the game tests: the index of the slot highlighted by Click to Open Bazaar in the open menu, or -1. */
+    public static int testBazaarHighlightedSlot() {
+        Screen screen = Minecraft.getInstance().gui.screen();
+        if (bazaarSearchName == null || !(screen instanceof AbstractContainerScreen<?> container)) return -1;
+        for (Slot slot : container.getMenu().slots) {
+            if (isBazaarSearchSlot(screen, slot)) return slot.index;
+        }
+        return -1;
+    }
+
+    /** For the game tests: whether the shopping list item row with this id can be clicked to search the Bazaar. */
+    public static boolean testShopRowClickable(String id) {
+        return onBazaar(id);
+    }
+
+    /**
+     * For the game tests: a visitor (not from the tab list) wanting these items, then the shopping list's rows as
+     * "icon|text" ("-|text" for a row without an icon). The next tab list read in the Garden removes the visitor.
+     */
+    public static List<String> testShoppingList(String visitorName, Map<String, Integer> items) {
+        Visitor visitor = new Visitor(visitorName, "§a");
+        visitor.status = Status.WAITING;
+        visitor.shoppingList.putAll(items);
+        visitors.put(visitorName, visitor);
+        updateShoppingList();
+        List<String> out = new ArrayList<>();
+        for (ShopRow row : shoppingList.rows()) out.add((row.icon() == null ? "-" : "icon") + "|" + row.text().getString());
+        return out;
     }
 
     /** All the known visitors (for the debug command). */

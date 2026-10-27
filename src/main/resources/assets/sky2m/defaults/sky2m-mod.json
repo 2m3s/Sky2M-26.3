@@ -755,6 +755,7 @@
         "showPrice": false,
         "showSackCount": false,
         "showSuperCraft": false,
+        "itemIcons": true,
         "itemPreview": false
       },
       "inventory": {

@@ -5,7 +5,9 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Click to Open Bazaar (Visitor Shopping List, on by default): while a menu is open, click an item in the shopping list to search the Bazaar for it; the item is highlighted green in the results.
 - Support the October 27 Garden update: the Visitor Timer handles Max Occupancy queues of up to 10 visitors (it learns the size when the queue is full, or set Max Occupancy 0-5) and shows "7/10 visitors"; the visitor cooldown is learned from the tab list, so Better Advertising is picked up by itself. Ghost Visitors' mutation requests are listed even when the item list doesn't know them, Drops Statistics counts Ectoplasm, Taylor shows as SPECIAL, and the four bonus Spooky Festivals (Oct 28-31) are in the event calendar.
+- Item Icons for the Visitor Shopping List (on by default): each item shows as its icon with the amount (and price and sack count when those are on) instead of its name.
 - Garden Drops (Combat > Rare Drops, off by default): farming dyes and the Ray of Helios in the Garden play the RNG Drop Totem animation and show on the RNG HUD. This replaces the Garden's separate Special Drop Animation (its setting carries over).
 - Harvest Feast Crop Rotation (Events > Harvest Feast, on by default): a HUD in the Garden with the crops in season during the Harvest Feast (or Grand Feast), how long until they rotate, and which crops come in season next and when. This month's rotation is fetched from eliteskyblock.com (Fetch Feast Data, on), and opening Feast Chef Ted's All Crops menu updates it. Show Outside Garden shows it everywhere. Move it in /s2 gui.
 - Show Session XP (Skill Progress > Display, off by default): the Skill Progress display shows how much XP you've gained in the shown skill this session ("Session: +12,345"), since you started the game or switched profile.

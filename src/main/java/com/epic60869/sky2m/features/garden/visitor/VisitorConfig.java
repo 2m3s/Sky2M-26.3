@@ -198,6 +198,16 @@ public final class VisitorConfig {
         public boolean showSuperCraft = false;
 
         @Expose
+        @ConfigOption(name = "Item Icons", desc = "Show each item as its icon instead of its name (Enchanted Hay Bale x2 becomes the Hay Bale's icon and x2).\nTurn off to list the item names as text.")
+        @ConfigEditorBoolean
+        public boolean itemIcons = true;
+
+        @Expose
+        @ConfigOption(name = "Click to Open Bazaar", desc = "Click an item in the shopping list while a menu is open to search the Bazaar for it; the item is highlighted green.")
+        @ConfigEditorBoolean
+        public boolean clickToOpenBazaar = true;
+
+        @Expose
         @ConfigOption(name = "Item Preview", desc = "Show the base type for the required items next to new visitors.\n§cNote that some visitors may require any crop.")
         @ConfigEditorBoolean
         public boolean itemPreview = false;
