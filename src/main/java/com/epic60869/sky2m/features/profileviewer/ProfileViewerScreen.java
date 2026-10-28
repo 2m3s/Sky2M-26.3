@@ -385,7 +385,7 @@ public final class ProfileViewerScreen extends Screen {
         stat(g, sx, sy += step, "Slayers:", slayers.toString(), VALUE);
         List<Pet> pets = ProfileStats.pets(m);
         Pet active = pets.stream().filter(Pet::active).findFirst().orElse(null);
-        stat(g, sx, sy += step, "Pet:", active == null ? "None" : "[" + active.level() + "] " + active.name(),
+        stat(g, sx, sy += step, "Pet:", active == null ? "None" : "[" + active.shownLevel() + "] " + active.name(),
             active == null ? LABEL : net.minecraft.network.chat.TextColor.fromLegacyFormat(ProfileStats.rarityColour(active.tier())).getValue() | 0xFF000000);
         long joined = (long) Json.num(Json.obj(m, "profile"), "first_join");
         if (joined > 0) stat(g, sx, sy += step, "Joined:", DateTimeFormatter.ofPattern("d MMM yyyy").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(joined)), VALUE);
@@ -765,11 +765,11 @@ public final class ProfileViewerScreen extends Screen {
             ItemStack stack = ProfileItems.icon(pet.itemId());
             if (stack.is(Items.BARRIER)) stack = new ItemStack(Items.BONE);
             g.item(stack, x + 1, y + 1);
-            String lv = String.valueOf(pet.level());
+            String lv = String.valueOf(pet.shownLevel());
             g.pose().pushMatrix();
             g.pose().translate(x + 1, y + 1);
             g.pose().scale(0.6f, 0.6f);
-            g.text(font, lv, 0, 0, pet.level() >= pet.maxLevel() ? GOLD : VALUE, true);
+            g.text(font, lv, 0, 0, pet.overflowLevel() > 0 ? BAR_OVERFLOW : pet.level() >= pet.maxLevel() ? GOLD : VALUE, true);
             g.pose().popMatrix();
             if (in(mouseX, mouseY, x, y, SLOT, SLOT)) tooltip = petTooltip(pet);
         }
@@ -779,12 +779,15 @@ public final class ProfileViewerScreen extends Screen {
 
     private static List<Component> petTooltip(Pet pet) {
         List<Component> tip = new ArrayList<>();
-        tip.add(Component.literal("[Lvl " + pet.level() + "] " + pet.name()).withStyle(ProfileStats.rarityColour(pet.tier())));
+        tip.add(Component.literal("[Lvl " + pet.shownLevel() + "] " + pet.name()).withStyle(ProfileStats.rarityColour(pet.tier())));
         tip.add(Component.literal(pet.tier().charAt(0) + pet.tier().substring(1).toLowerCase(Locale.ROOT).replace('_', ' '))
             .withStyle(ProfileStats.rarityColour(pet.tier()), ChatFormatting.BOLD));
         tip.add(Component.literal("XP: " + ProfileStats.commas(pet.exp())).withStyle(ChatFormatting.GRAY));
         if (pet.level() < pet.maxLevel()) tip.add(Component.literal(String.format(Locale.ROOT, "Progress to %d: %.1f%%", pet.level() + 1, pet.progress() * 100)).withStyle(ChatFormatting.GRAY));
-        else tip.add(Component.literal("MAX LEVEL").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
+        else if (pet.overflowLevel() > 0) {
+            tip.add(Component.literal(String.format(Locale.ROOT, "Progress to %d: %.1f%%", pet.overflowLevel() + 1, pet.progress() * 100)).withStyle(ChatFormatting.GRAY));
+            tip.add(Component.literal("Overflow level, past the max of " + pet.maxLevel()).withStyle(ChatFormatting.LIGHT_PURPLE));
+        } else tip.add(Component.literal("MAX LEVEL").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
         if (!pet.heldItem().isEmpty()) {
             String held = com.epic60869.sky2m.custom.RepoItems.displayName(pet.heldItem());
             tip.add(Component.literal("Held: " + (held == null ? pet.heldItem() : held)).withStyle(ChatFormatting.GOLD));

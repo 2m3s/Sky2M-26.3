@@ -159,7 +159,17 @@ public final class ProfileStats {
 
     // ------------------------------------------------------------------------------------------------ pets
 
-    public record Pet(String type, String tier, double exp, int level, int maxLevel, double progress, String heldItem, boolean active, String skin, int candy) {
+    /**
+     * {@code level} stops at {@code maxLevel}; {@code overflowLevel} is the level past it with Overflow Levels on (0 when
+     * not past it), and {@code progress} is then the progress into the next overflow level.
+     */
+    public record Pet(String type, String tier, double exp, int level, int maxLevel, double progress, String heldItem, boolean active, String skin, int candy,
+                      int overflowLevel) {
+        /** The level to show: the overflow level when there is one. */
+        public int shownLevel() {
+            return overflowLevel > level ? overflowLevel : level;
+        }
+
         public String name() {
             JsonObject names = Json.obj(ProfileApi.pets(), "id_to_display_name");
             String n = Json.str(names, type);
@@ -186,9 +196,10 @@ public final class ProfileStats {
             String held = Json.str(p, "heldItem");
             // A Tier Boost raises the pet's rarity by one.
             if (held.equals("PET_ITEM_TIER_BOOST")) tier = bump(tier);
-            int[] levelInfo = new int[2];
+            int[] levelInfo = new int[3];
             double progress = petLevel(type, tier, exp, levelInfo);
-            out.add(new Pet(type, tier, exp, levelInfo[0], levelInfo[1], progress, held, Json.bool(p, "active"), Json.str(p, "skin"), (int) Json.num(p, "candyUsed")));
+            out.add(new Pet(type, tier, exp, levelInfo[0], levelInfo[1], progress, held, Json.bool(p, "active"), Json.str(p, "skin"), (int) Json.num(p, "candyUsed"),
+                levelInfo[2]));
         }
         out.sort((a, b) -> {
             if (a.active() != b.active()) return a.active() ? -1 : 1;
@@ -200,7 +211,11 @@ public final class ProfileStats {
         return out;
     }
 
-    /** Sets {level, max level} in {@code out} and returns the progress into the next level. */
+    /**
+     * Sets {level, max level, overflow level} in {@code out} and returns the progress into the next level. With Overflow
+     * Levels, XP past the max keeps levelling, each level taking the XP of the last real one (1,886,700 for a Legendary
+     * pet), like the pet display's overflow levels.
+     */
     private static double petLevel(String type, String tier, double exp, int[] out) {
         JsonObject t = ProfileApi.pets();
         if (t == null) {
@@ -219,6 +234,7 @@ public final class ProfileStats {
             if ((int) Json.num(custom, "type") == 1) for (JsonElement e : Json.arr(custom, "pet_levels")) steps.add(e.getAsLong());
         }
         int level = 1;
+        long lastStep = 0;
         for (long step : steps) {
             if (level >= maxLevel) break;
             if (exp < step) {
@@ -227,10 +243,16 @@ public final class ProfileStats {
                 return exp / step;
             }
             exp -= step;
+            lastStep = step;
             level++;
         }
         out[0] = Math.min(level, maxLevel);
         out[1] = maxLevel;
+        if (overflow() && level >= maxLevel && lastStep > 0 && exp >= lastStep) {
+            long extra = (long) (exp / lastStep);
+            out[2] = (int) Math.min(Integer.MAX_VALUE, maxLevel + extra);
+            return (exp - extra * (double) lastStep) / lastStep;
+        }
         return 1;
     }
 

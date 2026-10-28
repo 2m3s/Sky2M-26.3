@@ -40,6 +40,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- Profile viewer Overflow Levels now covers pets: a maxed pet keeps levelling past 100 (or 200), each level taking the XP of its last one, shown in purple on the Pets page and the main page's active pet, with progress to the next level in the tooltip.
 - Custom Wardrobe: a Toggle button under the Wardrobe (below Close and Favourites in the custom one, below the chest in the regular one; green when the custom wardrobe is on, red when off) switches the custom wardrobe on ("Toggle Custom Wardrobe" in the regular Wardrobe) or off ("Toggle Off Custom Wardrobe" in the custom one).
 - `/s2 featuresearch [text]` opens the feature search (same as `/s2 find`), and you can describe what a feature does instead of knowing its name: filler words are skipped, word endings don't matter ("pests" finds "pest"), and features matching most of the words are listed after exact matches.
 - Garden plot borders (Sprayonator and the plot border key) are a see-through yellow wall 3 blocks tall at your height instead of a tall blue box with lines across the sky.

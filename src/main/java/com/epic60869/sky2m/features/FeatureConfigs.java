@@ -4561,7 +4561,7 @@ public final class FeatureConfigs {
         public String apiUrl = com.epic60869.sky2m.features.profileviewer.ProfileApi.DEFAULT_URL;
 
         @Expose
-        @ConfigOption(name = "Overflow Levels", desc = "Show levels past Hypixel's maximum: skills (the normal levels up to 60, then 7.6M XP for 61 and more for each after), Catacombs and classes past 50 (200M XP each), the garden level past its max (10,000 garden XP each) and crop milestones past their max (each needing as many crops as the last). Off: everything stops at Hypixel's max. Skill Average always uses the capped levels.")
+        @ConfigOption(name = "Overflow Levels", desc = "Show levels past Hypixel's maximum: skills (the normal levels up to 60, then 7.6M XP for 61 and more for each after), Catacombs and classes past 50 (200M XP each), the garden level past its max (10,000 garden XP each) crop milestones past their max (each needing as many crops as the last) and pets past level 100 or 200 (each taking the XP of the last level). Off: everything stops at Hypixel's max. Skill Average always uses the capped levels.")
         @ConfigEditorBoolean
         public boolean overflowLevels = true;
     }
