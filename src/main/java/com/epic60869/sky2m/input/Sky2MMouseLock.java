@@ -46,8 +46,12 @@ public final class Sky2MMouseLock {
         registered = cfg;
     }
 
+    /**
+     * No open-screen check: the camera can't turn while a screen is open anyway, and requiring none let the mouse turn
+     * the camera for up to a tick after a GUI closed, before the next tick turned the lock back on.
+     */
     public static void tick(Minecraft mc) {
-        locked = config() != null && config().farming.mouseLock.enabled && mc.player != null && mc.gui.screen() == null
+        locked = config() != null && config().farming.mouseLock.enabled && mc.player != null
             && (!config().farming.mouseLock.groundOnly || mc.player.onGround())
             && (!config().farming.mouseLock.gardenOnly || com.epic60869.sky2m.features.core.Sky2MLocation.inGarden())
             && !(com.epic60869.sky2m.features.core.Sky2MLocation.inGarden() && isInBarn(mc.player))
