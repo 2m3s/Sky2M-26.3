@@ -196,6 +196,13 @@ public final class SkillApi {
             levelingMap.put(i + 1, LEVEL_ARRAY[i]);
             exactLevelingMap.put(LEVEL_ARRAY[i], i + 1);
         }
+        // Levels past 60 (Farming since the October 2026 Garden update): the action bar's "needed" XP follows the
+        // overflow curve, so it identifies the level too. Without these, level 73 read as 60.
+        for (int level = 61; ; level++) {
+            long needed = xpRequiredForLevel(level) - xpRequiredForLevel(level - 1);
+            if (needed > Integer.MAX_VALUE) break;
+            exactLevelingMap.putIfAbsent((int) needed, level);
+        }
     }
 
     private SkillApi() {}
@@ -586,7 +593,8 @@ public final class SkillApi {
         int level = tablistLevel;
         if (isPercentPatternFound) {
             double levelXP = calculateLevelXP(level - 1);
-            double nextLevelDiff = level >= 0 && level < LEVEL_ARRAY.length ? LEVEL_ARRAY[level] : 7_600_000.0;
+            double nextLevelDiff = level >= 0 && level < LEVEL_ARRAY.length ? LEVEL_ARRAY[level]
+                : xpRequiredForLevel(level + 1) - xpRequiredForLevel(level);
             double nextLevelProgress = nextLevelDiff * xpPercentage / 100;
             double totalXP = levelXP + nextLevelProgress;
             updateSkillInfo(existingLevel, level, (long) nextLevelProgress, (long) nextLevelDiff, (long) totalXP, matcher.group("gained"));
@@ -601,7 +609,8 @@ public final class SkillApi {
 
     private static void updateSkillInfo(SkillInfo existingLevel, int level, long currentXP, long maxXP, long totalXP, String gained) {
         Integer cap = activeSkill == null ? null : activeSkill.maxLevel;
-        long add = cap != null && level >= cap ? xpRequiredForLevel(cap) : 0;
+        // Only when the total is missing the XP up to the cap; levels past 60 already include it.
+        long add = cap != null && level >= cap && totalXP < xpRequiredForLevel(cap) ? xpRequiredForLevel(cap) : 0;
         SkillLevel overflow = calculateSkillLevel(totalXP + add, cap == null ? 60 : cap);
         existingLevel.totalXp = totalXP;
         existingLevel.currentXp = currentXP;
@@ -668,6 +677,7 @@ public final class SkillApi {
     }
 
     static double calculateLevelXP(int level) {
+        if (level + 1 > LEVEL_ARRAY.length) return xpRequiredForLevel(level + 1);
         double sum = 0;
         for (int i = 0; i < Math.min(level + 1, LEVEL_ARRAY.length); i++) sum += LEVEL_ARRAY[i];
         return sum;
