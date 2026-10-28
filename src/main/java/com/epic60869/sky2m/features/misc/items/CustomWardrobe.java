@@ -26,7 +26,6 @@ import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -47,10 +46,9 @@ public final class CustomWardrobe {
     private static final int FIRST_BUTTON = 36;
     private static final int PREVIOUS_PAGE = 45, BACK = 48, CLOSE = 49, NEXT_PAGE = 53;
     private static final int GAP = 6, PAD = 8, HEADER = 20, FOOTER = 24, BUTTON_H = 16;
-    /** The on/off button, centred under the custom wardrobe's panel or the regular Wardrobe chest. */
-    private static final int TOGGLE = 20, TOGGLE_GAP = 4;
-    /** Made on first draw: item stacks can't be built while the mod loads. */
-    private static ItemStack toggleIcon;
+    /** The on/off button, centred under the custom wardrobe's panel or the regular Wardrobe chest: green on, red off. */
+    private static final String TOGGLE = "Toggle";
+    private static final int TOGGLE_GAP = 4, TOGGLE_ON = 0xFF55FF55, TOGGLE_OFF = 0xFFFF5555;
     /** Where the toggle was last drawn, {x, y}; the client game test clicks it. */
     public static final int[] toggleAt = new int[2];
 
@@ -109,7 +107,7 @@ public final class CustomWardrobe {
             ScreenEvents.afterExtract(screen).register((s, g, mouseX, mouseY, delta) -> {
                 if (isWardrobe(container) && !isActive(container)) {
                     int[] at = chestToggle(container);
-                    drawToggle(g, Minecraft.getInstance().font, false, at[0], at[1], 0xC0202020, 0xE0404040, 0xFF8B8B8B, mouseX, mouseY);
+                    drawToggle(g, Minecraft.getInstance().font, false, at[0], at[1], 0xC0202020, 0xE0404040, true, mouseX, mouseY);
                 }
             });
         });
@@ -305,34 +303,39 @@ public final class CustomWardrobe {
             bx += buttonWidths[i] + 4;
         }
 
-        int toggleX = px + (panelW - TOGGLE) / 2, toggleY = Math.min(py + panelH + TOGGLE_GAP, height - TOGGLE);
-        drawToggle(g, font, true, toggleX, toggleY, t.card(), t.hover(), t.border(), mouseX, mouseY);
-        HITS.add(new Hit(toggleX, toggleY, TOGGLE, TOGGLE, CustomWardrobe::toggle));
+        int toggleW = toggleWidth(font);
+        int toggleX = px + (panelW - toggleW) / 2, toggleY = Math.min(py + panelH + TOGGLE_GAP, height - BUTTON_H);
+        drawToggle(g, font, true, toggleX, toggleY, t.card(), t.hover(), t.shadow(), mouseX, mouseY);
+        HITS.add(new Hit(toggleX, toggleY, toggleW, BUTTON_H, CustomWardrobe::toggle));
 
         if (tooltip != null) g.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
     }
 
-    /** The toggle: an armour icon, with what clicking it does as its tooltip. */
-    private static void drawToggle(GuiGraphicsExtractor g, Font font, boolean on, int x, int y, int fill, int hover, int border,
+    /** The toggle, drawn like the bottom buttons, with what clicking it does as its tooltip. */
+    private static void drawToggle(GuiGraphicsExtractor g, Font font, boolean on, int x, int y, int fill, int hover, boolean shadow,
                                    int mouseX, int mouseY) {
         toggleAt[0] = x;
         toggleAt[1] = y;
-        boolean over = in(mouseX, mouseY, x, y, TOGGLE, TOGGLE);
-        g.fill(x, y, x + TOGGLE, y + TOGGLE, over ? hover : fill);
-        g.outline(x, y, TOGGLE, TOGGLE, border);
-        if (toggleIcon == null) toggleIcon = new ItemStack(Items.DIAMOND_CHESTPLATE);
-        g.item(toggleIcon, x + 2, y + 2);
+        int w = toggleWidth(font), colour = on ? TOGGLE_ON : TOGGLE_OFF;
+        boolean over = in(mouseX, mouseY, x, y, w, BUTTON_H);
+        g.fill(x, y, x + w, y + BUTTON_H, over ? hover : fill);
+        g.outline(x, y, w, BUTTON_H, colour);
+        g.text(font, TOGGLE, x + (w - font.width(TOGGLE)) / 2, y + 4, colour, shadow);
         if (over) {
             g.setComponentTooltipForNextFrame(font, List.of(Component.literal(on ? "Toggle Off Custom Wardrobe" : "Toggle Custom Wardrobe")),
                 mouseX, mouseY);
         }
     }
 
+    private static int toggleWidth(Font font) {
+        return font.width(TOGGLE) + 12;
+    }
+
     /** {x, y} of the toggle under the regular Wardrobe chest. */
     private static int[] chestToggle(AbstractContainerScreen<?> screen) {
         Sky2MContainerScreenAccessor chest = (Sky2MContainerScreenAccessor) screen;
-        int x = chest.sky2m$getLeftPos() + (chest.sky2m$getImageWidth() - TOGGLE) / 2;
-        int y = Math.min(chest.sky2m$getTopPos() + chest.sky2m$getImageHeight() + TOGGLE_GAP, screen.height - TOGGLE);
+        int x = chest.sky2m$getLeftPos() + (chest.sky2m$getImageWidth() - toggleWidth(Minecraft.getInstance().font)) / 2;
+        int y = Math.min(chest.sky2m$getTopPos() + chest.sky2m$getImageHeight() + TOGGLE_GAP, screen.height - BUTTON_H);
         return new int[]{x, y};
     }
 
@@ -463,7 +466,7 @@ public final class CustomWardrobe {
     public static boolean clickToggle(AbstractContainerScreen<?> screen, double mouseX, double mouseY) {
         if (isActive(screen) || !isWardrobe(screen)) return false;
         int[] at = chestToggle(screen);
-        if (!in(mouseX, mouseY, at[0], at[1], TOGGLE, TOGGLE)) return false;
+        if (!in(mouseX, mouseY, at[0], at[1], toggleWidth(Minecraft.getInstance().font), BUTTON_H)) return false;
         toggle();
         return true;
     }
