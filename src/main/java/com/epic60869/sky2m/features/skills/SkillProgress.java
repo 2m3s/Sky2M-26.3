@@ -304,6 +304,9 @@ public final class SkillProgress {
         if (skillInfoLast == null) return list;
         SkillApi.oldSkillInfoMap.put(activeSkill, skillInfo);
         int level = c.overflowConfig.enableInEtaDisplay || c.customGoalConfig.enableInETADisplay ? skillInfo.overflowLevel : skillInfo.level;
+        // A maxed skill has no next level but its overflow one, and the time below already counts towards that: Farming
+        // 73 (maxed at 60) showed "60➜61" with the time to 74.
+        if (level >= activeSkill.maxLevel) level = Math.max(level, skillInfo.overflowLevel);
 
         boolean useCustomGoalLevel = skillInfo.customGoalLevel != 0 && skillInfo.customGoalLevel > skillInfo.overflowLevel
             && c.customGoalConfig.enableInETADisplay;

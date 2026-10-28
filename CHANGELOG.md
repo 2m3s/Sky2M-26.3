@@ -79,7 +79,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
-- Fix Skill Progress showing Farming above level 60 as 60➜61 (the ETA, XP and level-up messages followed the wrong level): levels past 60 from the action bar and tab list are read correctly.
+- Fix the Skill ETA display showing a maxed skill as 60➜61 (Farming at overflow level 73) while timing the overflow level: it shows the overflow level it counts towards (73➜74), also with ETA overflow off.
 - Fix Mouse Lock letting the camera turn for a split second after closing a menu while holding a farming tool.
 - Fix /s2 mp showing new accessories the item list only has in colours (the 7th Anniversary Cake Hat) as a barrier named CAKE_HAT_2026: they get the item's icon and name.
 - Fix Farming and Mining profit trackers counting compacted items as the raw item: what a compactor turns your drops into (Enchanted or Compacted Moonflower, Mutant Nether Wart, Box of Seeds and the rest) is now shown instead, including compactions straight into your sacks, without counting anything twice.
