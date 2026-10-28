@@ -383,7 +383,21 @@ public final class KeepTerrainLoaded {
                 break;
             }
         }
+        // A full scoreboard (Jacob's Contest and pests in the Garden) drops the date and server line at its top, which
+        // kept terrain from ever being kept there; the tab list names the server too.
+        if (server == null) server = tabServer();
         return server == null ? null : new Session(island, server);
+    }
+
+    /** The tab list's "Server: m24W", or null. */
+    private static String tabServer() {
+        for (net.minecraft.client.multiplayer.PlayerInfo info : com.epic60869.sky2m.misc.Sky2MTabWidgetManager.players()) {
+            net.minecraft.network.chat.Component name = com.epic60869.sky2m.custom.util.Compat.rawTabName(info);
+            if (name == null) continue;
+            String text = Sky2MLocation.strip(name.getString()).trim();
+            if (text.startsWith("Server: ") && text.length() > 8) return text.substring(8).trim();
+        }
+        return null;
     }
 
     /** The feature is on and this island's terrain is kept (it's one of the islands and isn't left out). */

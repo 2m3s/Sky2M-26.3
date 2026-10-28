@@ -82,6 +82,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Fixed
 - Fix protected items (/s2 protect) being blocked in the Farming and Hunting Toolkits and the Abiphone, so protected tools couldn't be swapped.
+- Fix Keep Terrain Loaded never turning on when the scoreboard is too full to show the server line (the Garden during Jacob's Contest): it reads the server from the tab list instead.
 - Fix the Skill ETA display showing a maxed skill as 60➜61 (Farming at overflow level 73) while timing the overflow level: it shows the overflow level it counts towards (73➜74), also with ETA overflow off.
 - Fix Mouse Lock letting the camera turn for a split second after closing a menu while holding a farming tool.
 - Fix /s2 mp showing new accessories the item list only has in colours (the 7th Anniversary Cake Hat) as a barrier named CAKE_HAT_2026: they get the item's icon and name.
