@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Draws Sky2M's Custom Wardrobe instead of the Wardrobe chest and handles its clicks. */
+/** Draws Sky2M's Custom Wardrobe instead of the Wardrobe chest and handles its clicks, and the regular Wardrobe's toggle button. */
 @Mixin(AbstractContainerScreen.class)
 public abstract class Sky2MCustomWardrobeMixin {
     @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true)
@@ -24,6 +24,10 @@ public abstract class Sky2MCustomWardrobeMixin {
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void sky2m$clickWardrobe(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+        if (event.button() == 0 && CustomWardrobe.clickToggle(screen, event.x(), event.y())) {
+            cir.setReturnValue(true);
+            return;
+        }
         if (!CustomWardrobe.isActive(screen)) return;
         if (event.button() == 0) CustomWardrobe.click(screen, event.x(), event.y());
         cir.setReturnValue(true);

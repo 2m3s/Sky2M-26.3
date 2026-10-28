@@ -8,6 +8,7 @@ import com.epic60869.sky2m.features.FeatureConfigs.CustomWardrobe.WardrobeTheme;
 import com.epic60869.sky2m.mixin.gui.Sky2MInventoryScreenInvoker;
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -24,6 +25,7 @@ import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -44,6 +46,10 @@ public final class CustomWardrobe {
     private static final int FIRST_BUTTON = 36;
     private static final int PREVIOUS_PAGE = 45, BACK = 48, CLOSE = 49, NEXT_PAGE = 53;
     private static final int GAP = 6, PAD = 8, HEADER = 20, FOOTER = 24, BUTTON_H = 16;
+    /** The on/off button in the screen's bottom-right corner, in both the custom and the regular Wardrobe. */
+    private static final int TOGGLE = 20, TOGGLE_MARGIN = 4;
+    /** Made on first draw: item stacks can't be built while the mod loads. */
+    private static ItemStack toggleIcon;
 
     /** A theme's colours (ARGB). */
     private record Theme(int background, int card, int hover, int border, int equipped, int favourite, int accent, int text) {
@@ -94,12 +100,26 @@ public final class CustomWardrobe {
                 click(screen, targetPage < page[0] ? PREVIOUS_PAGE : NEXT_PAGE);
             }
         });
+        // The toggle button in the regular Wardrobe (clicked through clickToggle); the custom one draws its own in render().
+        ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
+            if (!(screen instanceof AbstractContainerScreen<?> container)) return;
+            ScreenEvents.afterExtract(screen).register((s, g, mouseX, mouseY, delta) -> {
+                if (isWardrobe(container) && !isActive(container)) {
+                    drawToggle(g, Minecraft.getInstance().font, false, 0xC0202020, 0xE0404040, 0xFF8B8B8B, mouseX, mouseY);
+                }
+            });
+        });
     }
 
     /** Whether the custom wardrobe replaces this screen. */
     public static boolean isActive(AbstractContainerScreen<?> screen) {
         FeatureConfigs.CustomWardrobe c = config();
-        if (c == null || !c.enabled || !(Compat.isOnSkyblock() || forceForTests)) return false;
+        return c != null && c.enabled && isWardrobe(screen);
+    }
+
+    /** Whether this screen is the Wardrobe menu, custom wardrobe on or off. */
+    private static boolean isWardrobe(AbstractContainerScreen<?> screen) {
+        if (config() == null || !(Compat.isOnSkyblock() || forceForTests)) return false;
         return TITLE.matcher(ChatFormatting.stripFormatting(screen.getTitle().getString()).trim()).matches()
             && screen.getMenu().slots.size() > NEXT_PAGE;
     }
@@ -281,7 +301,37 @@ public final class CustomWardrobe {
             bx += buttonWidths[i] + 4;
         }
 
+        drawToggle(g, font, true, t.card(), t.hover(), t.border(), mouseX, mouseY);
+        HITS.add(new Hit(width - TOGGLE - TOGGLE_MARGIN, height - TOGGLE - TOGGLE_MARGIN, TOGGLE, TOGGLE, CustomWardrobe::toggle));
+
         if (tooltip != null) g.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
+    }
+
+    /** The bottom-right toggle: an armour icon, with what clicking it does as its tooltip. */
+    private static void drawToggle(GuiGraphicsExtractor g, Font font, boolean on, int fill, int hover, int border, int mouseX, int mouseY) {
+        int x = g.guiWidth() - TOGGLE - TOGGLE_MARGIN, y = g.guiHeight() - TOGGLE - TOGGLE_MARGIN;
+        boolean over = overToggle(mouseX, mouseY);
+        g.fill(x, y, x + TOGGLE, y + TOGGLE, over ? hover : fill);
+        g.outline(x, y, TOGGLE, TOGGLE, border);
+        if (toggleIcon == null) toggleIcon = new ItemStack(Items.DIAMOND_CHESTPLATE);
+        g.item(toggleIcon, x + 2, y + 2);
+        if (over) {
+            g.setComponentTooltipForNextFrame(font, List.of(Component.literal(on ? "Toggle Off Custom Wardrobe" : "Toggle Custom Wardrobe")),
+                mouseX, mouseY);
+        }
+    }
+
+    private static boolean overToggle(double mouseX, double mouseY) {
+        Minecraft mc = Minecraft.getInstance();
+        int width = mc.getWindow().getGuiScaledWidth(), height = mc.getWindow().getGuiScaledHeight();
+        return in(mouseX, mouseY, width - TOGGLE - TOGGLE_MARGIN, height - TOGGLE - TOGGLE_MARGIN, TOGGLE, TOGGLE);
+    }
+
+    private static void toggle() {
+        FeatureConfigs.CustomWardrobe c = config();
+        if (c == null) return;
+        c.enabled = !c.enabled;
+        save();
     }
 
     /** One armour set's card; returns the tooltip of the piece under the mouse, if any. */
@@ -398,6 +448,13 @@ public final class CustomWardrobe {
                 return;
             }
         }
+    }
+
+    /** A click on the regular Wardrobe's toggle button turns the custom wardrobe on; returns whether it was one. */
+    public static boolean clickToggle(AbstractContainerScreen<?> screen, double mouseX, double mouseY) {
+        if (isActive(screen) || !isWardrobe(screen) || !overToggle(mouseX, mouseY)) return false;
+        toggle();
+        return true;
     }
 
     private static void click(AbstractContainerScreen<?> screen, int slot) {
