@@ -33,6 +33,7 @@ public abstract class Sky2MSlotBackgroundMixin {
         com.epic60869.sky2m.features.garden.PestFinder.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.garden.visitor.GardenVisitors.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.dungeons.DupeClass.renderSlot(graphics, slot);
+        com.epic60869.sky2m.features.dungeons.PartyFinderHelper.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.itemlist.ItemList.renderSlot(graphics, slot);
         com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.renderSlotBackground(graphics, slot);
         com.epic60869.sky2m.features.mining.dwarven.HotxOverlay.renderSlotBackground(graphics, slot);
@@ -49,6 +50,7 @@ public abstract class Sky2MSlotBackgroundMixin {
         com.epic60869.sky2m.features.foraging.ForagingBeaconSolver.renderSlotLabel(graphics, slot);
         com.epic60869.sky2m.features.mining.dwarven.HotxOverlay.renderSlotLabel(graphics, slot);
         com.epic60869.sky2m.features.skills.SkillProgress.renderSlotLabel(graphics, slot);
+        com.epic60869.sky2m.features.dungeons.PartyFinderHelper.renderSlotLabel(graphics, slot);
     }
 
     @Inject(method = "extractContents", at = @At("RETURN"))

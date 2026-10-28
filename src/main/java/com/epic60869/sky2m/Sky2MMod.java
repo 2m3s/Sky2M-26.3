@@ -288,6 +288,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.dungeons.DragonSplits.init(configDir); lap("DragonSplits.init");
         com.epic60869.sky2m.features.dungeons.CataCalculator.init(configDir); lap("CataCalculator.init");
         com.epic60869.sky2m.features.dungeons.DupeClass.init(); lap("DupeClass.init");
+        com.epic60869.sky2m.features.dungeons.PartyFinderHelper.init(); lap("PartyFinderHelper.init");
         com.epic60869.sky2m.features.mining.ScathaTracker.init(configDir); lap("ScathaTracker.init");
         com.epic60869.sky2m.features.mining.GemstoneTracker.init(configDir); lap("GemstoneTracker.init");
         com.epic60869.sky2m.features.mining.extras.MiningExtras.init(configDir); lap("MiningExtras.init");

@@ -675,6 +675,11 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Party Finder", desc = "Party Finder group highlights (can't join, carries, non-PUGs, low class levels, missing your class), missing classes and coloured member lines in the tooltip, and the floor on each item.")
+        public PartyFinderHelper partyFinderHelper = new PartyFinderHelper();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Catacombs Calculator", desc = "/s2 catacalc: how many runs until a Catacombs level.")
         public CataCalculator cataCalculator = new CataCalculator();
 
@@ -6344,6 +6349,49 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Join Warning Sound", desc = "Also play a sound with the join warning.")
         @ConfigEditorBoolean
         public boolean sound = true;
+    }
+
+    /** SkyHanni's Party Finder features (DungeonFinderFeatures), for the parts Duplicate Class Warning doesn't cover. */
+    public static final class PartyFinderHelper {
+        @Expose
+        @ConfigOption(name = "Mark Ineligible Groups", desc = "Groups you can't join (\"Requires ...\", \"You don't meet the requirement!\", \"Complete previous floor first!\") get a dark red slot.")
+        @ConfigEditorBoolean
+        public boolean markIneligible = true;
+
+        @Expose
+        @ConfigOption(name = "Mark Paid Carries", desc = "Groups whose note offers a paid carry (a price like 500k or 2m and \"carry\", \"comp\" or \"to cata 40\") get a red slot.")
+        @ConfigEditorBoolean
+        public boolean markPaidCarries = false;
+
+        @Expose
+        @ConfigOption(name = "Mark Non-PUGs", desc = "Groups whose note says \"perm\", \"vc\" or \"discord\" get a purple slot.")
+        @ConfigEditorBoolean
+        public boolean markNonPugs = false;
+
+        @Expose
+        @ConfigOption(name = "Mark Low Class Level", desc = "Groups with a member at or below this class level get a yellow slot. 0 turns it off.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 50, minStep = 1)
+        public int markBelowClassLevel = 0;
+
+        @Expose
+        @ConfigOption(name = "Mark Missing Your Class", desc = "Groups where nobody plays your class get a green slot. Your class is the one set under Duplicate Class Warning, else the one you last picked or played.")
+        @ConfigEditorBoolean
+        public boolean markMissingClass = true;
+
+        @Expose
+        @ConfigOption(name = "Show Missing Classes", desc = "A \"Missing:\" line in each group's tooltip listing the classes nobody plays yet, yours in green.")
+        @ConfigEditorBoolean
+        public boolean showMissingClasses = true;
+
+        @Expose
+        @ConfigOption(name = "Coloured Class Levels", desc = "Member lines in the tooltip in colour: the name in aqua, the class in yellow and the level coloured by how high it is.")
+        @ConfigEditorBoolean
+        public boolean colouredClassLevel = true;
+
+        @Expose
+        @ConfigOption(name = "Floor As Stack Size", desc = "The floor (F7, M5, E for Entrance) on each group in the Party Finder and on the floors in the Catacombs Gate and Select Floor menus.")
+        @ConfigEditorBoolean
+        public boolean floorAsStackSize = true;
     }
 
     public static final class CataCalculator {

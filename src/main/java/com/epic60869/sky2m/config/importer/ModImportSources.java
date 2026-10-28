@@ -136,6 +136,10 @@ public final class ModImportSources {
             .m("slayer.slayerTimeMessages.questComplete", "slayers.personalBest.questComplete")
             .same("dungeon.lividFinder.", "dungeons.lividFinder.", "enabled", "hideWrong")
             .m("dungeon.cleanEnd.enabled", "dungeons.dungeonExtras.cleanEnd.enabled")
+            .same("dungeon.partyFinder.", "dungeons.partyFinderHelper.", "markPaidCarries", "markNonPugs", "markBelowClassLevel",
+                "markMissingClass", "showMissingClasses", "floorAsStackSize")
+            .m("dungeon.partyFinder.markIneligibleGroups", "dungeons.partyFinderHelper.markIneligible")
+            .m("dungeon.partyFinder.coloredClassLevel", "dungeons.partyFinderHelper.colouredClassLevel")
             .same("dungeon.creationCooldown.", "dungeons.dungeonExtras.creationCooldown.", "enabled", "showOutside", "entranceOnly")
             .m("inventory.estimatedItemValues.enabled", "inventory.priceTooltip.estimatedValue")
             .same("inventory.enchantParsing.", "inventory.enchantParsing.", "colorParsing", "boldPerfectEnchant",
