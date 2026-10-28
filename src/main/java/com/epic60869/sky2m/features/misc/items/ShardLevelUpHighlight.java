@@ -29,7 +29,8 @@ import java.util.regex.Pattern;
 public final class ShardLevelUpHighlight {
     private static final Pattern HUNTING_BOX = Pattern.compile("^(?:\\(\\d+/\\d+\\) )?Hunting Box");
     private static final Pattern ATTRIBUTE_MENU = Pattern.compile("^(?:\\(\\d+/\\d+\\) )?Attribute Menu");
-    private static final Pattern SYPHON = Pattern.compile("Syphon (\\d+) shards? to (?:level up|unlock)!");
+    // "Syphon 3 shards to level up!", or since October 2026 "Syphon 2 more to level up!".
+    private static final Pattern SYPHON = Pattern.compile("Syphon (\\d+) (?:shards?|more) to (?:level up|unlock)!");
     private static final Pattern OWNED = Pattern.compile("Owned: ([\\d,]+) Shards?");
     /** The Hunting Box's lore line naming the attribute: "Veil (Combat)", "Yummy X (Foraging)". */
     private static final Pattern BOX_NAME = Pattern.compile("^(.+?)(?: [IVXL]+)? \\(\\w+\\)$");

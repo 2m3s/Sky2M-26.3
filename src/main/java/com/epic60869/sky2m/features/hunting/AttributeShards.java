@@ -86,7 +86,8 @@ public final class AttributeShards {
     private static final Pattern SEARCH_QUERY = Pattern.compile("^Query: .+");
     private static final Pattern MENU_NAME = Pattern.compile("^(?<name>.+?) ?(?<tier>[IVXL]+)?$");
     private static final Pattern STATE = Pattern.compile("^Enabled: (?<state>.+)");
-    private static final Pattern SYPHON_AMOUNT = Pattern.compile("Syphon (?<amount>\\d+) shards? to (?:level up|unlock)!");
+    // "Syphon 3 shards to level up!", or since October 2026 "Syphon 2 more to level up!".
+    private static final Pattern SYPHON_AMOUNT = Pattern.compile("Syphon (?<amount>\\d+) (?:shards?|more) to (?:level up|unlock)!");
     private static final Pattern LORE_NAME = Pattern.compile("^(?<name>.+?) ?(?<tier>[IVXL]+)? \\(\\w+\\)$");
     private static final Pattern OWNED = Pattern.compile("Owned: (?<amount>[\\d,]+) Shards?");
     private static final Pattern REQUIRED_TO_FUSE = Pattern.compile("Required to fuse: (?<amount>\\d+)");
