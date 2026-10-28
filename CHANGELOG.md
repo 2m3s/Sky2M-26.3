@@ -83,6 +83,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Fixed
 - Fix dungeon map player heads stacking on top of another teammate or not showing, in all three map styles: a teammate out of render distance could be given a nearby teammate's map marker. Nearby teammates now claim their own marker first.
+- Fix the Minimal dungeon map drawing player heads away from the room they're in (further off towards the map's edges).
 - Fix protected items (/s2 protect) being blocked in the Farming and Hunting Toolkits and the Abiphone, so protected tools couldn't be swapped.
 - Fix Keep Terrain Loaded never turning on when the scoreboard is too full to show the server line (the Garden during Jacob's Contest): it reads the server from the tab list instead.
 - Fix Shard Level Up Highlight and the shard tracker missing Hypixel's new "Syphon 2 more to level up!" lore, so shards you had enough of weren't highlighted.
