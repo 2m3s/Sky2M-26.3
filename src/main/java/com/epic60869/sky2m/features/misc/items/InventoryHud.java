@@ -120,6 +120,7 @@ public final class InventoryHud {
                     graphics.pose().scale(0.5f, 0.5f);
                     x = y = 0;
                 }
+                if (c.rarityBackground) com.epic60869.sky2m.items.Sky2MItemBackgrounds.drawRarity(graphics, stack, x, y);
                 item(graphics, stack, x, y, c.animation ? stack.getPopTime() - partial : 0);
                 if (c.showCounts) graphics.itemDecorations(mc.font, stack, x, y);
                 graphics.pose().popMatrix();

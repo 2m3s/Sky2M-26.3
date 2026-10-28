@@ -4292,6 +4292,11 @@ public final class FeatureConfigs {
         public float opacity = 0.8f;
 
         @Expose
+        @ConfigOption(name = "Rarity Background", desc = "A background in each SkyBlock item's rarity colour, in the shape and opacity set under Item Rarity (Inventory > Items & Tooltips). Works with Item Rarity off too.")
+        @ConfigEditorBoolean
+        public boolean rarityBackground = true;
+
+        @Expose
         @ConfigOption(name = "Animation", desc = "Items bounce when they're picked up, like on the hotbar.")
         @ConfigEditorBoolean
         public boolean animation = false;

@@ -71,7 +71,14 @@ public final class Sky2MItemBackgrounds {
 
     public static void draw(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y) {
         Sky2MConfig config = Sky2MConfig.current();
-        if (config == null || !config.inventory.itemRarity.enabled || stack == null || stack.isEmpty()) return;
+        if (config == null || !config.inventory.itemRarity.enabled) return;
+        drawRarity(graphics, stack, x, y);
+    }
+
+    /** The rarity background in Item Rarity's style and opacity, whether or not Item Rarity is on (the Inventory HUD has its own toggle). */
+    public static void drawRarity(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y) {
+        Sky2MConfig config = Sky2MConfig.current();
+        if (config == null || stack == null || stack.isEmpty()) return;
         if (!Compat.isOnSkyblock()) return;
 
         Sky2MItemRarity rarity = CACHE.computeIfAbsent(stack, Sky2MItemBackgrounds::rarity);
