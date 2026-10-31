@@ -152,12 +152,6 @@
     "dungeonSim": {
       "titleButton": false
     },
-    "crossModBridge": {
-      "enabled": true,
-      "odin": true,
-      "noamm": true,
-      "devonian": true
-    },
     "teamMelody": {
       "hud": true,
       "showSelf": true,

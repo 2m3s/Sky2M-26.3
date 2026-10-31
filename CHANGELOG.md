@@ -51,7 +51,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Visitor Timer: "Sixth Visitor Estimate" is now "Next Visitor When Full" and "Sixth Visitor Warning" is "Next Visitor Ready Warning", for any queue size ("Queue Full, next in 2m 3s"). The count no longer adds a phantom extra visitor, the warning title shows once per estimate, and New Visitor Ping no longer pings while the queue is full. Your old choices carry over.
 - Rename "SkyHanni Farming" to "Farming Features".
 - Move the Safari Ticket Reminder from Garden to Foraging (your setting carries over).
-- Remove other mods' and people's names from setting names, descriptions and dropdowns. Some options were renamed: Terminal Solver styles Overlay and Centred Panel, Alternate Device Solvers, Map Styles Classic, Detailed and Minimal, Safari Checklist style Compact, Rare SC party message style Surfaced, Croesus Alternate Colours, and the Cross-Mod Bridge's Melody, Dungeon Data and Secrets Sockets.
+- Remove other mods' and people's names from setting names, descriptions and dropdowns. Some options were renamed: Terminal Solver styles Overlay and Centred Panel, Alternate Device Solvers, Map Styles Classic, Detailed and Minimal, Safari Checklist style Compact, Rare SC party message style Surfaced and Croesus Alternate Colours.
 - The same item dropping twice within 3 seconds plays the RNG Drop Totem animation once.
 - Game tests are kept local and no longer pushed to GitHub; the build skips them when the folder is missing.
 - Tidy the source layout: the loose classes, mixins and miscellaneous features are sorted into clearer folders. Nothing changes in game, and the /s2 menu looks the same.
@@ -74,6 +74,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - GitHub releases and their download are named "Sky2M Mod" instead of "SkyBalls Mod".
 
 ### Removed
+- Remove the Cross-Mod Bridge (Dungeons): Sky2M no longer connects to Odin's, NoammAddons' or Devonian's party sockets, and no longer signs in to them. Teammates' Melody progress still comes from their Sky2M or from party chat, and the dungeon map no longer shows rooms and doors other mods' users reported.
 - Remove THIRD_PARTY_NOTICES.md and the links to it from the README and source file headers.
 - Remove the built-in Generic Man model from Play as Mob.
 - Remove the Inquisitor Gamble (the on-screen shot when an Inquisitor dies, and /s2 inqgamble): Chimera drops, their chat line and achievement popups now show straight away.

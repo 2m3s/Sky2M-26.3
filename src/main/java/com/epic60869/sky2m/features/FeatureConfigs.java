@@ -635,11 +635,6 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Cross-Mod Bridge", desc = "Share party dungeon data with teammates who use other dungeon mods, through those mods' own sockets.")
-        public CrossModBridge crossModBridge = new CrossModBridge();
-
-        @Expose
-        @Accordion
         @ConfigOption(name = "Team Melody", desc = "Teammates' Melody progress in P3, and sending yours.")
         public TeamMelody teamMelody = new TeamMelody();
 
@@ -6199,7 +6194,7 @@ public final class FeatureConfigs {
     /** Team Melody HUD (Killer560's): teammates' Melody terminal progress in P3. */
     public static final class TeamMelody {
         @Expose
-        @ConfigOption(name = "HUD", desc = "During F7/M7 P3, each teammate's Melody progress, from their Sky2M (Party Dungeon Data), the Cross-Mod Bridge, or the \"Melody 2/4\" lines users of other mods send in party chat. Move it in /s2 gui.")
+        @ConfigOption(name = "HUD", desc = "During F7/M7 P3, each teammate's Melody progress, from their Sky2M (Party Dungeon Data) or the \"Melody 2/4\" lines users of other mods send in party chat. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean hud = false;
 
@@ -6222,37 +6217,6 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Progress Alert", desc = "A title and a sound when a teammate's Melody progress comes in party chat, like \"Steve has 2/3 melody\".")
         @ConfigEditorBoolean
         public boolean alert = false;
-    }
-
-    /** Cross-Mod Bridge (Killer560's): share party dungeon data with Odin, NoammAddons and Devonian users. */
-    public static final class CrossModBridge {
-        @Expose
-        @ConfigOption(name = "Enabled", desc = "Talk to the party sockets of other dungeon mods (Melody progress; map rooms, Mimic, Prince, dragons and room secrets; room secrets), so data flows both ways between Sky2M users and users of those mods in your party. Only on Hypixel, only while the grouping applies, never to a mod you have installed yourself (it already holds that connection), and only ever as your own signed-in account. Needs \"Use Teammates' Data\" (Party Dungeon Data) for what comes in.")
-        @ConfigEditorBoolean
-        public boolean enabled = true;
-
-        @Expose
-        @ConfigOption(name = "Melody Socket", desc = "The socket at wss://ws.odtheking.com: during F7/M7 P3 until the core opens, Melody progress both ways. No sign-in.")
-        @ConfigEditorBoolean
-        public boolean odin = true;
-
-        @Expose
-        @ConfigOption(name = "Dungeon Data Socket", desc = "The socket at wss://ws.noamm.org: during dungeon runs with others, rooms, doors, Mimic, Prince, bat, dragons and room secrets both ways. Signs in with your chat-signing key (api.noamm.org).")
-        @ConfigEditorBoolean
-        public boolean noamm = true;
-
-        @Expose
-        @ConfigOption(name = "Secrets Socket", desc = "The socket at ws://wss.docilelm.top: room secrets both ways, and teammates' secret counts in. Signs in through Mojang like a server login, once everyone in your party is known.")
-        @ConfigEditorBoolean
-        public boolean devonian = true;
-
-        @ConfigOption(name = "Show Status", desc = "Say in chat how each connection is doing: connected, signed in, waiting, skipped (the mod is installed here), or gave up after failed sign-ins. Also /s2 bridge.")
-        @ConfigEditorButton(buttonText = "Show")
-        public Runnable showStatus = com.epic60869.sky2m.features.dungeons.bridge.BridgeFeature::printStatus;
-
-        @ConfigOption(name = "Retry Now", desc = "Forget a failed sign-in or a wait between retries and try again now.")
-        @ConfigEditorButton(buttonText = "Retry")
-        public Runnable retry = com.epic60869.sky2m.features.dungeons.bridge.BridgeFeature::onSettingsChanged;
     }
 
     /** Dungeon Sim (Killer560's): practise dungeon rooms and whole floors in a singleplayer world of your own. */

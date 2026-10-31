@@ -526,20 +526,6 @@ public final class WitherDragons {
         return out;
     }
 
-    /** A dragon's spawn or death this run, for the Cross-Mod Bridge: {@code count} is which one (1 for the first). */
-    public record DragonEvent(String colour, boolean alive, int count) {}
-
-    /** Every dragon spawn and death seen this run, lower-case colours. */
-    public static List<DragonEvent> dragonEvents() {
-        List<DragonEvent> out = new java.util.ArrayList<>();
-        for (Dragon dragon : DRAGONS) {
-            String colour = dragon.name.toLowerCase(java.util.Locale.ROOT);
-            for (int i = 1; i <= dragon.spawns; i++) out.add(new DragonEvent(colour, true, i));
-            for (int i = 1; i <= dragon.deaths; i++) out.add(new DragonEvent(colour, false, i));
-        }
-        return out;
-    }
-
     private static final class Dragon {
         final String name;
         final String relicId;
@@ -553,8 +539,6 @@ public final class WitherDragons {
         int spawnTicks;
         int spawnedAt;
         boolean iceSprayed;
-        /** Times this dragon has spawned and died this run, for the Cross-Mod Bridge's events. */
-        int spawns, deaths;
         /** NoammAddons' skip window (server ticks after spawning) and arrow stack spot (x, z). */
         int skipTicks;
         double stackX, stackZ;
@@ -595,17 +579,13 @@ public final class WitherDragons {
             entity = dragon;
             health = dragon.getHealth();
             maxHealth = dragon.getAttributeBaseValue(Attributes.MAX_HEALTH);
-            if (spawnedAt == 0) {
-                spawnedAt = tickCounter;
-                spawns++;
-            }
+            if (spawnedAt == 0) spawnedAt = tickCounter;
         }
 
         void tick() {
             if (spawnTicks > 0) spawnTicks--;
             if (!hasEntity()) {
                 if (entity != null) {
-                    deaths++;
                     if (spawnedAt > 0) DragonSplits.onDragonDeath(name, colour, tickCounter - spawnedAt);
                     FeatureConfigs.WitherDragons config = config();
                     if (wasPriority && config != null && config.arrowsHit) {
@@ -629,8 +609,6 @@ public final class WitherDragons {
             maxHealth = 200;
             spawnTicks = 0;
             spawnedAt = 0;
-            spawns = 0;
-            deaths = 0;
             wasPriority = false;
             arrows = 0;
         }

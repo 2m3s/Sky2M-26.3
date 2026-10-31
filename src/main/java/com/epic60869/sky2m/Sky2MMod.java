@@ -274,8 +274,6 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.dungeons.party.PartyDungeonData.init(); lap("PartyDungeonData.init");
         com.epic60869.sky2m.features.dungeons.party.ModConflictWarnings.init(); lap("ModConflictWarnings.init");
         com.epic60869.sky2m.features.dungeons.party.TeamMelody.init(); lap("TeamMelody.init");
-        com.epic60869.sky2m.features.dungeons.bridge.BridgeFeature.register(); lap("BridgeFeature.register");
-        com.epic60869.sky2m.features.dungeons.bridge.BridgeFeature.registerCommand(); lap("BridgeFeature.registerCommand");
         com.epic60869.sky2m.features.misc.visual.EventCalendar.init(); lap("EventCalendar.init");
         com.epic60869.sky2m.features.garden.PestHighlight.init(); lap("PestHighlight.init");
         com.epic60869.sky2m.features.garden.CropFeverEffects.init(); lap("CropFeverEffects.init");

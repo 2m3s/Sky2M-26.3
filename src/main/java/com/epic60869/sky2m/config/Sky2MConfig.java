@@ -2856,9 +2856,7 @@ public final class Sky2MConfig extends Config {
             changed = true;
         }
         if (defaults < 3) {
-            // Dungeons > Cross-Mod Bridge is on by default, with all three sockets.
-            JsonObject bridge = childObject(childObject(root, "dungeons"), "crossModBridge");
-            for (String key : new String[]{"enabled", "odin", "noamm", "devonian"}) bridge.addProperty(key, true);
+            // Was: Dungeons > Cross-Mod Bridge on by default. The bridge is gone; the step only bumps the version.
             general.addProperty("defaultsVersion", 3);
             changed = true;
         }

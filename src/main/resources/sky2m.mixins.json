@@ -60,7 +60,6 @@
     "world.Sky2MHideExplosionsMixin", "world.Sky2MHideBlockBreakParticlesMixin", "world.Sky2MHideAdvancementToastsMixin",
     "world.Sky2MWitherDragonsMixin",
     "world.Sky2MMageBeamMixin",
-    "player.Sky2MProfileKeysAccessor",
     "gui.Sky2MLeapMenuMixin",
     "gui.Sky2MLeapMenuBackgroundMixin",
     "gui.Sky2MCustomWardrobeMixin",
