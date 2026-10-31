@@ -74,6 +74,8 @@ public final class ItemPickupLog {
     private static final Map<String, Entry> ADDED = new LinkedHashMap<>();
     private static final Map<String, Entry> REMOVED = new LinkedHashMap<>();
     private static Map<String, Integer> lastCounts;
+    /** What was in your armor slots last tick, counted apart from {@link #lastCounts}. */
+    private static Map<String, Integer> lastArmor;
     private static Map<String, ItemStack> lastStacks = Map.of();
     private static Object lastLevel;
     private static long worldChangedAt;
@@ -185,18 +187,27 @@ public final class ItemPickupLog {
         if (!inMenu) {
             Map<String, Integer> counts = new HashMap<>();
             Map<String, ItemStack> stacks = new HashMap<>();
+            // Armor slots are counted on their own: an item only logs when your inventory itself changed, so swapping sets
+            // in the Wardrobe (armor slots only) logs nothing, nor does putting on armor from your inventory (-1 there,
+            // +1 worn). Counting worn armor with everything else logged every Wardrobe swap as +1s and -1s.
+            Map<String, Integer> armor = new HashMap<>();
             Inventory inventory = mc.player.getInventory();
-            for (int i = 0; i < inventory.getContainerSize(); i++) count(inventory.getItem(i), counts, stacks);
+            for (int i = 0; i < inventory.getContainerSize(); i++) {
+                boolean armorSlot = i >= Inventory.INVENTORY_SIZE && i < Inventory.SLOT_OFFHAND;
+                count(inventory.getItem(i), armorSlot ? armor : counts, stacks);
+            }
             // The item on your cursor in your inventory is still yours, so moving things around doesn't log anything.
             if (mc.gui.screen() instanceof InventoryScreen screen) {
                 ItemStack carried = screen.getMenu().getCarried();
                 if (lastCounts != null && !carried.isEmpty() && lastCounts.containsKey(key(carried))) count(carried, counts, stacks);
             }
-            if (lastCounts != null && afterWorldChange()) {
+            if (lastCounts != null && lastArmor != null && afterWorldChange()) {
                 java.util.Set<String> keys = new java.util.HashSet<>(counts.keySet());
                 keys.addAll(lastCounts.keySet());
                 for (String key : keys) {
-                    int delta = counts.getOrDefault(key, 0) - lastCounts.getOrDefault(key, 0);
+                    int inventoryDelta = counts.getOrDefault(key, 0) - lastCounts.getOrDefault(key, 0);
+                    if (inventoryDelta == 0) continue;
+                    int delta = inventoryDelta + armor.getOrDefault(key, 0) - lastArmor.getOrDefault(key, 0);
                     if (delta == 0) continue;
                     ItemStack stack = stacks.getOrDefault(key, lastStacks.get(key));
                     if (stack == null) continue;
@@ -205,6 +216,7 @@ public final class ItemPickupLog {
                 }
             }
             lastCounts = counts;
+            lastArmor = armor;
             lastStacks = stacks;
         }
         if (c.coins) trackPurse();
