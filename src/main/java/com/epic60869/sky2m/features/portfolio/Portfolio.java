@@ -48,7 +48,8 @@ import java.util.regex.Pattern;
 
 /**
  * Portfolio / net worth tracker. You add items; their quantity is counted from your inventory and the Ender Chest and
- * backpack pages Sky2M has seen (Storage Search), plus an optional extra amount you type for items it can't see.
+ * backpack pages Sky2M has seen (Storage Search), plus an optional extra amount you type for items it can't see, unless
+ * you set the quantity yourself.
  * Prices come live from Hypixel's bazaar API and the lowest BIN / 3-day average API Skyblocker uses (hysky.de); rune
  * names and textures come from the NEU repo. Items are keyed by their price key (runes: AXE_SHATTER_RUNE_3).
  * Value snapshots are saved to config/sky2m/portfolio/history.json for the graph and CSV export, and auction/bazaar
@@ -101,14 +102,23 @@ public final class Portfolio {
     public static final class Entry {
         public String id;
         public String name;
-        /** Price paid per item, or 0 when not set. */
+        /** Price paid per item, or 0 when not set. With {@link #lots} it is their average. */
         public double buyPrice;
+        /** Copies bought at different prices ("2x1.5m + 1x1.2m"); null when one price was typed. */
+        public List<Lot> lots;
         /** Extra copies Sky2M can't see (applied skins, pets, museum...). */
         public int extra;
+        /** Quantity you typed in yourself, replacing the counted one; null counts it automatically. */
+        public Integer quantity;
         /** When the item was added, for profit per hour. */
         public long addedAt;
         /** The buy price is filled in with the lowest BIN once prices have loaded. */
         public boolean buyPricePending;
+    }
+
+    public static final class Lot {
+        public int amount;
+        public double price;
     }
 
     public static final class Sale {
@@ -135,9 +145,10 @@ public final class Portfolio {
         boolean autoRemove = false;
     }
 
-    public record Count(int inventory, int storage, int extra) {
+    /** {@code manual} is the quantity you set yourself, or null when it's counted. */
+    public record Count(int inventory, int storage, int extra, Integer manual) {
         public int total() {
-            return inventory + storage + extra;
+            return manual != null ? manual : inventory + storage + extra;
         }
     }
 
@@ -384,7 +395,7 @@ public final class Portfolio {
     // ----- Quantities -----
 
     public static Count count(Entry entry) {
-        return new Count(inventoryCounts.getOrDefault(entry.id, 0), storageCounts.getOrDefault(entry.id, 0), entry.extra);
+        return new Count(inventoryCounts.getOrDefault(entry.id, 0), storageCounts.getOrDefault(entry.id, 0), entry.extra, entry.quantity);
     }
 
     public static void recount() {
@@ -528,6 +539,57 @@ public final class Portfolio {
         return entry;
     }
 
+    private static final Pattern LOT = Pattern.compile("^(\\d[\\d,]*)\\s*[x*@]\\s*(.+)$", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Sets the buy price from "1.5m", or from lots bought at different prices like "2x1.5m + 1x1.2m" (also split by ;),
+     * which are kept and averaged. Returns false when the text can't be read.
+     */
+    public static boolean setBuyPrice(Entry entry, String text) {
+        String[] parts = text.split("[+;]");
+        if (parts.length == 1 && !LOT.matcher(text.trim()).matches()) {
+            double p = parse(text);
+            if (p < 0) return false;
+            entry.buyPrice = p;
+            entry.lots = null;
+        } else {
+            List<Lot> lots = new ArrayList<>();
+            int amount = 0;
+            double cost = 0;
+            for (String part : parts) {
+                Matcher m = LOT.matcher(part.trim());
+                Lot lot = new Lot();
+                if (m.matches()) {
+                    lot.amount = (int) parse(m.group(1));
+                    lot.price = parse(m.group(2));
+                } else {
+                    lot.amount = 1;
+                    lot.price = parse(part);
+                }
+                if (lot.amount <= 0 || lot.price < 0) return false;
+                lots.add(lot);
+                amount += lot.amount;
+                cost += lot.amount * lot.price;
+            }
+            entry.lots = lots;
+            entry.buyPrice = cost / amount;
+        }
+        entry.buyPricePending = false;
+        save();
+        return true;
+    }
+
+    /** The buy price as you'd type it back in: "2x1.5M + 1x1.2M", or the single price. */
+    public static String buyPriceText(Entry entry) {
+        if (entry.lots == null || entry.lots.isEmpty()) return entry.buyPrice > 0 ? coins(entry.buyPrice) : "";
+        StringBuilder out = new StringBuilder();
+        for (Lot lot : entry.lots) {
+            if (!out.isEmpty()) out.append(" + ");
+            out.append(lot.amount).append('x').append(coins(lot.price));
+        }
+        return out.toString();
+    }
+
     public static void remove(Entry entry) {
         data.entries.remove(entry);
         save();
@@ -632,7 +694,8 @@ public final class Portfolio {
         sale.buyPrice = entry.buyPrice;
         sale.time = System.currentTimeMillis();
         data.sold.add(sale);
-        if (entry.extra > 0) entry.extra = Math.max(0, entry.extra - amount);
+        if (entry.quantity != null) entry.quantity = Math.max(0, entry.quantity - amount);
+        else if (entry.extra > 0) entry.extra = Math.max(0, entry.extra - amount);
         if (removeRow) data.entries.remove(entry);
         save();
         String profit = entry.buyPrice > 0 && price > 0 ? " (profit " + coins(price - entry.buyPrice * amount) + ")" : "";

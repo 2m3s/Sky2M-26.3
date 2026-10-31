@@ -5,6 +5,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -35,7 +36,7 @@ public final class PortfolioScreen extends Screen {
     private Portfolio.Entry selected;
     private Portfolio.Sale selectedSale;
     private int scroll;
-    private EditBox addBox, buyBox, extraBox;
+    private EditBox addBox, buyBox, extraBox, qtyBox;
     private String status = "";
     /** Sorted column (-1 = the order you added them in) and direction, per tab. */
     private int sortColumn = -1;
@@ -139,17 +140,13 @@ public final class PortfolioScreen extends Screen {
                 int bx = left() + 8 + Math.min(220, font.width(selected.name) + 12);
                 buyBox = new EditBox(font, bx, by, 90, 20, Component.literal("Buy price each"));
                 buyBox.setHint(Component.literal("Buy price each").withStyle(ChatFormatting.DARK_GRAY));
-                if (selected.buyPrice > 0) buyBox.setValue(Portfolio.coins(selected.buyPrice));
+                buyBox.setMaxLength(200);
+                buyBox.setValue(Portfolio.buyPriceText(selected));
+                buyBox.setTooltip(Tooltip.create(Component.literal("One price (1.5m), or copies bought at different prices: 2x1.5m + 1x1.2m")));
                 addRenderableWidget(buyBox);
                 addRenderableWidget(Button.builder(Component.literal("Set buy"), b -> {
-                    double p = Portfolio.parse(buyBox.getValue());
-                    if (p < 0) status = "Type a price like 1.5m, 200k or 1,234,567.";
-                    else {
-                        selected.buyPrice = p;
-                        selected.buyPricePending = false;
-                        Portfolio.changed();
-                        status = "Buy price set.";
-                    }
+                    if (!Portfolio.setBuyPrice(selected, buyBox.getValue())) status = "Type a price like 1.5m, or 2x1.5m + 1x1.2m for different prices.";
+                    else status = selected.lots != null ? "Buy prices set (average " + Portfolio.coins(selected.buyPrice) + " each)." : "Buy price set.";
                 }).bounds(bx + 94, by, 56, 20).build());
                 bx += 156;
                 extraBox = new EditBox(font, bx, by, 50, 20, Component.literal("Extra"));
@@ -166,6 +163,26 @@ public final class PortfolioScreen extends Screen {
                     }
                 }).bounds(bx + 54, by, 60, 20).build());
                 bx += 120;
+                qtyBox = new EditBox(font, bx, by, 50, 20, Component.literal("Qty"));
+                qtyBox.setHint(Component.literal("Auto").withStyle(ChatFormatting.DARK_GRAY));
+                if (selected.quantity != null) qtyBox.setValue(String.valueOf(selected.quantity));
+                addRenderableWidget(qtyBox);
+                addRenderableWidget(Button.builder(Component.literal("Set qty"), b -> {
+                    if (qtyBox.getValue().isBlank()) {
+                        selected.quantity = null;
+                        Portfolio.changed();
+                        status = "Quantity is counted automatically again.";
+                        return;
+                    }
+                    double v = Portfolio.parse(qtyBox.getValue());
+                    if (v < 0) status = "Type a whole number, or leave it empty to count automatically.";
+                    else {
+                        selected.quantity = (int) v;
+                        Portfolio.changed();
+                        status = "Quantity set to " + (int) v + " (clear the box and Set qty to count automatically).";
+                    }
+                }).bounds(bx + 54, by, 50, 20).build());
+                bx += 110;
                 addRenderableWidget(Button.builder(Component.literal("Log sale"), b -> {
                     Portfolio.recordSale(selected, Math.max(1, Portfolio.count(selected).total()), Portfolio.value(selected), true);
                     selected = null;
@@ -302,8 +319,8 @@ public final class PortfolioScreen extends Screen {
         }
         return new String[]{
             e.name,
-            count.total() + " (" + count.inventory() + "/" + count.storage() + "/" + count.extra() + ")",
-            e.buyPrice > 0 ? Portfolio.coins(e.buyPrice) : (e.buyPricePending ? "..." : "-"),
+            count.manual() != null ? count.total() + " (set)" : count.total() + " (" + count.inventory() + "/" + count.storage() + "/" + count.extra() + ")",
+            e.buyPrice > 0 ? Portfolio.coins(e.buyPrice) + (e.lots != null ? " avg" : "") : (e.buyPricePending ? "..." : "-"),
             price > 0 ? Portfolio.coins(price) : "?",
             Portfolio.coins(count.total() * price),
             profit
