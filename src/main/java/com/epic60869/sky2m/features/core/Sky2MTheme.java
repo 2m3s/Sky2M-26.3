@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.core;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;

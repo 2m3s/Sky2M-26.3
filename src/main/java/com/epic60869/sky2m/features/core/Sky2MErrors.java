@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.core;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MSelfTest;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.debug.Sky2MSelfTest;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.sbc.SbcCrashReports;
 import com.epic60869.sky2m.features.sbc.SbcInfo;

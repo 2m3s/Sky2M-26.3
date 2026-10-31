@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.garden;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -15,22 +15,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Composter reminder (SkyHanni's composter notifications: the Garden tab list Composter widget) and a once per
- * SkyBlock day Safari ticket reminder.
+ * Composter reminder (SkyHanni's composter notifications: the Garden tab list Composter widget). The Safari ticket
+ * reminder moved to {@link com.epic60869.sky2m.features.foraging.SafariTicketReminder}.
  */
 public final class GardenReminders {
     private static final Pattern ORGANIC = Pattern.compile("^\\s*Organic Matter:\\s*(?<amount>[\\d.,]+[kKmM]?)\\s*/");
     private static final Pattern FUEL = Pattern.compile("^\\s*Fuel:\\s*(?<amount>[\\d.,]+[kKmM]?)\\s*/");
     private static final Pattern TIME_LEFT = Pattern.compile("^\\s*Time Left:\\s*(?<time>.+?)\\s*$");
 
-    /** SkyBlock year 1 began at this real time; a SkyBlock day is 20 real minutes. */
-    private static final long SKYBLOCK_EPOCH_MS = 1_560_275_700_000L;
-    private static final long SKYBLOCK_DAY_MS = 1_200_000L;
     private static final long COMPOSTER_COOLDOWN_MS = 5 * 60_000L;
 
     private static int ticks;
     private static long lastComposterWarning;
-    private static long lastSafariDay = -1;
     private static boolean wasOnSkyblock;
 
     private GardenReminders() {}
@@ -53,18 +49,7 @@ public final class GardenReminders {
         if (++ticks % 40 != 0) return;
         FeatureConfigs.Garden c = config();
         if (c == null) return;
-        if (c.safariTicketReminder) checkSafari();
         if (c.composterReminder && Sky2MLocation.inGarden()) checkComposter(mc, c);
-    }
-
-    // ---------------------------------------------------------------------------------------------- Safari
-
-    private static void checkSafari() {
-        long day = Math.floorDiv(System.currentTimeMillis() - SKYBLOCK_EPOCH_MS, SKYBLOCK_DAY_MS);
-        if (day == lastSafariDay) return;
-        lastSafariDay = day;
-        Sky2MAlerts.title(Component.literal("§6Safari Ticket"), Component.literal("§eA new SkyBlock day started: get your Safari ticket!"));
-        Sky2MAlerts.chat(Component.literal("§eA new SkyBlock day started: don't forget your §6Safari ticket§e!"));
     }
 
     // ---------------------------------------------------------------------------------------------- Composter

@@ -1,6 +1,6 @@
 /*
  * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
- * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ * Copyright (c) 2026 Killer560.
  */
 package com.epic60869.sky2m.sim.util;
 
@@ -40,10 +40,7 @@ import java.util.concurrent.CompletableFuture;
  * <ul>
  *   <li>{@code hypixel} - api.hypixel.net: auctions, bazaar, items, collections, skills, election, profiles,
  *       museum, garden, player</li>
- *   <li>{@code noamm} - api.noamm.org: room database version/download and the bridge auth</li>
- *   <li>{@code noamm-ws} - ws.noamm.org: the NoammAddons bridge socket</li>
- *   <li>{@code odin-ws} - ws.odtheking.com: the Odin bridge socket</li>
- *   <li>{@code devonian-ws} - wss.docilelm.top: the Devonian bridge socket</li>
+ *   <li>{@code noamm} - api.noamm.org: room database version/download</li>
  *   <li>{@code pv-backend} - skyblock-pv.thatgravyboat.tech: the Profile Viewer's keyless backend,
  *       also the Party Finder Overlay's member stats</li>
  *   <li>{@code mojang} - api.mojang.com and sessionserver.mojang.com: name and profile lookups</li>

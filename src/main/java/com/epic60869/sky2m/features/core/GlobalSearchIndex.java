@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.core;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
 import io.github.notenoughupdates.moulconfig.annotations.Category;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigAccordionId;
@@ -79,6 +79,7 @@ public final class GlobalSearchIndex {
         COMMAND_INFO.put("notes", "Open your notes");
         COMMAND_INFO.put("search", "Search storage (with text: search the settings)");
         COMMAND_INFO.put("find", "Search settings, HUDs and commands");
+        COMMAND_INFO.put("featuresearch", "Search every feature by name or by describing what it does");
         COMMAND_INFO.put("calc", "Calculate an expression");
         COMMAND_INFO.put("chat", "Sky2M chat");
         COMMAND_INFO.put("discord", "Link to the Sky2M Discord");
@@ -91,7 +92,7 @@ public final class GlobalSearchIndex {
         COMMAND_INFO.put("selftest", "Self-test report");
         COMMAND_INFO.put("protect", "Protect the held or hovered item");
     }
-    private static final List<String> FALLBACK_COMMANDS = List.of("settings", "gui", "huds", "notes", "search", "find", "calc",
+    private static final List<String> FALLBACK_COMMANDS = List.of("settings", "gui", "huds", "notes", "search", "find", "featuresearch", "calc",
         "chat", "discord", "debug", "whatsnew", "perf", "keyconflicts", "errors", "selftest", "protect", "recipe", "nick");
 
     private GlobalSearchIndex() {}
@@ -227,7 +228,7 @@ public final class GlobalSearchIndex {
             }
             return out.size() > limit ? out.subList(0, limit) : out;
         }
-        String[] tokens = q.split("\\s+");
+        String[] tokens = meaningful(q.split("\\s+"));
         List<Object[]> scored = new ArrayList<>();
         for (Entry e : all) {
             int s = score(e, q, tokens);
@@ -252,21 +253,56 @@ public final class GlobalSearchIndex {
         else if (name.contains(q)) whole = 500;
         else whole = 0;
         int total = 0;
+        int missed = 0;
         for (String t : tokens) {
             int s;
+            String stem = stem(t);
             if (name.equals(t)) s = 300;
             else if (name.startsWith(t)) s = 200;
             else if (hasWordPrefix(name, t)) s = 150;
             else if (name.contains(t)) s = 100;
             else if (path.contains(t)) s = 50;
             else if (desc.contains(t)) s = 30;
+            // A description of the feature rather than its name: "pests" finds "pest", "showing" finds "shows".
+            else if (stem.length() >= 3 && (name.contains(stem) || path.contains(stem))) s = 40;
+            else if (stem.length() >= 3 && desc.contains(stem)) s = 20;
             else if (tokens.length == 1 && t.length() >= 3 && subsequence(name, t)) s = 10;
-            else return whole;
+            else {
+                missed++;
+                continue;
+            }
             total += s;
+        }
+        if (missed > 0) {
+            // Every word matching ranks first; otherwise most of them must (2 of 3, 3 of 4, ...), ranked lower.
+            int matched = tokens.length - missed;
+            if (tokens.length < 3 || matched * 3 < tokens.length * 2) return whole;
+            total = total * matched / tokens.length / 2;
         }
         // Categories and sections rank just above plain options of the same quality.
         int bonus = e.kind() == Kind.CATEGORY ? 5 : e.kind() == Kind.SECTION ? 3 : 0;
         return whole + total + bonus;
+    }
+
+    /** Words that say nothing about which feature is meant ("a HUD that shows when my pests spawn"). */
+    private static final java.util.Set<String> FILLER = java.util.Set.of(
+        "a", "an", "the", "to", "of", "for", "in", "on", "at", "by", "from", "with", "and", "or", "it", "its", "my", "me",
+        "i", "you", "your", "is", "are", "be", "that", "this", "which", "what", "when", "where", "how", "do", "does",
+        "can", "thing", "feature", "something", "makes", "make", "lets", "let", "there", "some", "any");
+
+    private static String[] meaningful(String[] words) {
+        List<String> out = new ArrayList<>();
+        for (String w : words) if (!w.isEmpty() && !FILLER.contains(w)) out.add(w);
+        // A query that is only filler ("what is it") is searched as typed.
+        return out.isEmpty() ? words : out.toArray(new String[0]);
+    }
+
+    /** "pests" -> "pest", "showing" -> "show", "highlighted" -> "highlight". */
+    private static String stem(String word) {
+        for (String end : new String[] {"ing", "ed", "es", "s"}) {
+            if (word.length() > end.length() + 2 && word.endsWith(end)) return word.substring(0, word.length() - end.length());
+        }
+        return word;
     }
 
     private static boolean hasWordPrefix(String text, String prefix) {

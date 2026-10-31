@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.fishing;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.sbc.SbcItems;
@@ -160,7 +160,7 @@ public final class FishingHookTimer {
         @Expose
         @ConfigOption(name = "Start on Liquid Touch", desc = "Start the timer when the bobber touches the water/lava, instead of when it is cast.")
         @ConfigEditorBoolean
-        public boolean startOnLiquidTouch = true;
+        public boolean startOnLiquidTouch = false;
     }
 
     /** SkyHanni's FishingHookDisplayConfig. */
@@ -178,6 +178,6 @@ public final class FishingHookTimer {
         @Expose
         @ConfigOption(name = "Hide Armor Stand", desc = "Hide the original armor stand from Hypixel when the display is enabled.")
         @ConfigEditorBoolean
-        public boolean hideArmorStand = true;
+        public boolean hideArmorStand = false;
     }
 }

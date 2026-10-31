@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.misc.profit;
 
-import com.epic60869.sky2m.Sky2MGuiStyle;
+import com.epic60869.sky2m.gui.Sky2MGuiStyle;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -43,6 +43,10 @@ public final class SessionTrackerScreen extends Screen {
     private record Hit(int x0, int y0, int x1, int y1, Runnable action) {}
 
     private final List<Hit> hits = new ArrayList<>();
+    /** What right-clicking does where it's drawn: a drop's row cycles its price source. */
+    private final List<Hit> rightHits = new ArrayList<>();
+    /** The Price Source the drops were last priced by (what an item's Default means). */
+    private FeatureConfigs.ProfitPriceSource priceSource = FeatureConfigs.ProfitPriceSource.INSTANT_SELL;
 
     /** The profit and item values, worked out again every Price Refresh seconds. */
     private long pricedAt;
@@ -92,6 +96,7 @@ public final class SessionTrackerScreen extends Screen {
         pricedAt = now;
         dayProfits.clear();
         FeatureConfigs.ProfitPriceSource source = c == null || c.priceSource == null ? FeatureConfigs.ProfitPriceSource.INSTANT_SELL : c.priceSource;
+        priceSource = source;
         items.clear();
         SessionTracker.Session s = session();
         for (int i = 0; i < TOTAL; i++) {
@@ -103,7 +108,7 @@ public final class SessionTrackerScreen extends Screen {
             List<Item> list = new ArrayList<>();
             if (stats != null) {
                 for (Map.Entry<String, Long> e : stats.items.entrySet()) {
-                    double unit = com.epic60869.sky2m.Sky2MPriceTooltip.price(e.getKey(), source);
+                    double unit = ProfitItemPrices.price(e.getKey(), source);
                     list.add(new Item(e.getKey(), ProfitTrackerHud.name(e.getKey()), e.getValue(), unit > 0 ? unit * e.getValue() : -1));
                 }
             }
@@ -203,6 +208,7 @@ public final class SessionTrackerScreen extends Screen {
         Sky2MGuiStyle.panel(g, left(), top(), panelWidth(), panelHeight(), true);
         Sky2MGuiStyle.header(g, font, left() + 4, top() + 5, panelWidth() - 9, Sky2MGuiStyle.title("Session"));
         hits.clear();
+        rightHits.clear();
         drawToolbar(g, mouseX, mouseY);
 
         Sky2MGuiStyle.panel(g, left() + 4, contentTop(), panelWidth() - 9, insetBottom() + 5 - contentTop(), false);
@@ -533,17 +539,22 @@ public final class SessionTrackerScreen extends Screen {
         for (int i = scroll; i < list.size() && i - scroll < visible; i++) {
             Item item = list.get(i);
             int iy = y + (i - scroll) * DROP_ROW;
-            // Click a drop to change how many there are or remove it (this day only).
+            // Click a drop to change how many there are or remove it (this day only), or its price; right-click it to
+            // cycle its price source.
             Hit hit = new Hit(rowLeft(), iy, rowRight(), iy + DROP_ROW, () -> minecraft.gui.setScreen(new ProfitItemEditScreen(this,
-                item.id(), item.amount(), List.of(stats), "Changes apply to this day of /s2 session.", () -> {
+                item.id(), item.amount(), List.of(stats), priceSource, "Amounts change on this day of /s2 session.", () -> {
                     SessionTracker.markDirty();
                     reprice(true);
                 })));
             hits.add(hit);
+            rightHits.add(new Hit(hit.x0(), hit.y0(), hit.x1(), hit.y1(), () -> {
+                ProfitItemPrices.cycle(item.id(), 1, priceSource);
+                reprice(true);
+            }));
             if (inside(hit, mouseX, mouseY)) g.fill(rowLeft(), iy, rowRight(), iy + DROP_ROW, Sky2MGuiStyle.ROW_HOVER);
             else if (i % 2 == 1) g.fill(rowLeft(), iy, rowRight(), iy + DROP_ROW, Sky2MGuiStyle.ROW);
             g.item(RepoItems.itemStack(item.id()), x, iy + 1);
-            String value = item.value() < 0 ? "§8Unknown" : "§6" + ProfitTrackerHud.coins(item.value());
+            String value = (item.value() < 0 ? "§8Unknown" : "§6" + ProfitTrackerHud.coins(item.value())) + ProfitItemPrices.tag(item.id(), priceSource);
             int valueX = rowRight() - 4 - font.width(value);
             String amount = "§7x" + String.format(Locale.US, "%,d", item.amount());
             int amountAt = Math.min(amountX, valueX - 8 - font.width(amount));
@@ -617,6 +628,16 @@ public final class SessionTrackerScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (super.mouseClicked(event, doubleClick)) return true;
+        if (event.button() == InputConstants.MOUSE_BUTTON_RIGHT) {
+            for (Hit hit : List.copyOf(rightHits)) {
+                if (inside(hit, event.x(), event.y())) {
+                    Sky2MGuiStyle.click();
+                    hit.action().run();
+                    return true;
+                }
+            }
+            return false;
+        }
         if (event.button() != InputConstants.MOUSE_BUTTON_LEFT) return false;
         // Tabs, buttons, bars and rows, where they were drawn last frame.
         for (Hit hit : List.copyOf(hits)) {

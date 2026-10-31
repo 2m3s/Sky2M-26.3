@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.foraging;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.ChromaColours;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.EntityGlow;
@@ -532,7 +532,7 @@ public final class ForagingExtras {
 
     public static final class Config {
         @Expose
-        @ConfigOption(name = "Foraging Tracker", desc = "HUD for the tree gifts you collect: trees felled, gifts per hour, rewards, Foraging and HOTF experience and Forest Whispers (SkyHanni). Item profit is in the Foraging profit tracker. Reset with /s2foragingreset. Move it in /s2 gui.")
+        @ConfigOption(name = "Foraging Tracker", desc = "HUD for the tree gifts you collect: trees felled, gifts per hour, rewards, Foraging and HOTF experience and Forest Whispers. Item profit is in the Foraging profit tracker. Reset with /s2foragingreset. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean tracker = false;
 
@@ -542,7 +542,7 @@ public final class ForagingExtras {
         public boolean trackerWholeTrees = true;
 
         @Expose
-        @ConfigOption(name = "Tree Progress", desc = "HUD with the progress of the tree you are cutting (SkyHanni). Move it in /s2 gui.")
+        @ConfigOption(name = "Tree Progress", desc = "HUD with the progress of the tree you are cutting. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean treeProgress = false;
 
@@ -557,22 +557,22 @@ public final class ForagingExtras {
         public boolean treeProgressOnlyAxe = true;
 
         @Expose
-        @ConfigOption(name = "Clean Tree View: Hide Tree Blocks", desc = "Hides the floating blocks that fly off Galatea trees while you cut them (SkyHanni).")
+        @ConfigOption(name = "Clean Tree View: Hide Tree Blocks", desc = "Hides the floating blocks that fly off Galatea trees while you cut them.")
         @ConfigEditorBoolean
         public boolean hideTreeBlocks = false;
 
         @Expose
-        @ConfigOption(name = "Clean Tree View: Hide Rune Effects", desc = "Hides the tree-shaped block effects of axe runes on Galatea (SkyHanni).")
+        @ConfigOption(name = "Clean Tree View: Hide Rune Effects", desc = "Hides the tree-shaped block effects of axe runes on Galatea.")
         @ConfigEditorBoolean
         public boolean hideRuneEffects = false;
 
         @Expose
-        @ConfigOption(name = "Tutorial Quest Helper", desc = "Waypoints for the Foraging Tutorial quest line: to the NPC of the quest you are asked to start, and to the portal after a quest ends (SkyHanni). Covers the first five quests.")
+        @ConfigOption(name = "Tutorial Quest Helper", desc = "Waypoints for the Foraging Tutorial quest line: to the NPC of the quest you are asked to start, and to the portal after a quest ends. Covers the first five quests.")
         @ConfigEditorBoolean
         public boolean questHelper = false;
 
         @Expose
-        @ConfigOption(name = "Highlight Birries", desc = "Glows Birries near you on Galatea (SkyHanni).")
+        @ConfigOption(name = "Highlight Birries", desc = "Glows Birries near you on Galatea.")
         @ConfigEditorBoolean
         public boolean birriesHighlight = false;
 
@@ -582,7 +582,7 @@ public final class ForagingExtras {
         public String birriesColour = "0:255:255:255:85";
 
         @Expose
-        @ConfigOption(name = "Highlight Hideonleaf", desc = "Glows Hideonleaf near you on Galatea (SkyHanni).")
+        @ConfigOption(name = "Highlight Hideonleaf", desc = "Glows Hideonleaf near you on Galatea.")
         @ConfigEditorBoolean
         public boolean hideonleafHighlight = false;
 
@@ -592,17 +592,17 @@ public final class ForagingExtras {
         public String hideonleafColour = "0:255:85:255:85";
 
         @Expose
-        @ConfigOption(name = "Mute Phantoms", desc = "Mutes the sounds of Phantoms on Galatea (SkyHanni).")
+        @ConfigOption(name = "Mute Phantoms", desc = "Mutes the sounds of Phantoms on Galatea.")
         @ConfigEditorBoolean
         public boolean mutePhantoms = false;
 
         @Expose
-        @ConfigOption(name = "Agatha & Miria Coupon Profit", desc = "In Agatha's and Miria's shops, adds the sell price, item cost, profit and profit per coupon to an item's tooltip (SkyHanni's Starlyn sister coupon profit). Cost items without a price are skipped.")
+        @ConfigOption(name = "Agatha & Miria Coupon Profit", desc = "In Agatha's and Miria's shops, adds the sell price, item cost, profit and profit per coupon to an item's tooltip. Cost items without a price are skipped.")
         @ConfigEditorBoolean
         public boolean couponProfit = false;
 
         @Expose
-        @ConfigOption(name = "Honeyhive Reminder", desc = "After you loot a Honeyhive on the Torrhus Canyon, a title and message when the time below has passed (SkyHanni).")
+        @ConfigOption(name = "Honeyhive Reminder", desc = "After you loot a Honeyhive on the Torrhus Canyon, a title and message when the time below has passed.")
         @ConfigEditorBoolean
         public boolean honeyhiveReminder = false;
 

@@ -1,6 +1,6 @@
 /*
  * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
- * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ * Copyright (c) 2026 Killer560.
  */
 package com.epic60869.sky2m.sim.livemap;
 
@@ -164,22 +164,62 @@ public final class InteractiveMapFeature {
                 markers.add(m);
             }
         }
+        // Teammates in render distance claim the map marker nearest them first; the markers left over go, in Hypixel's
+        // order, to the ones out of range. Handing markers out purely by list position put a far-away teammate's head
+        // on a nearby one's marker (two heads stacked, one missing) whenever the lists' orders didn't line up.
+        boolean[] used = new boolean[markers.size()];
+        for (String name : names) {
+            Player entity = entities.get(name.toLowerCase(Locale.US));
+            if (entity == null || PartyTracker.isDead(name)) {
+                continue;
+            }
+            int nearest = nearestMarker(markers, used, entity.getX(), entity.getZ());
+            if (nearest >= 0) {
+                used[nearest] = true;
+            }
+        }
         int markerIdx = 0;
         for (String name : names) {
             if (PartyTracker.isDead(name)) {
                 continue;
             }
-            double[] marker = markerIdx < markers.size() ? markers.get(markerIdx) : null;
-            markerIdx++;
             Player entity = entities.get(name.toLowerCase(Locale.US));
             DungeonClass cls = PartyTracker.classOf(name);
             if (entity != null) {
                 out.add(new MapPlayer(name, entity.getX(), entity.getZ(), entity.getYRot(), false, cls));
-            } else if (marker != null) {
+                continue;
+            }
+            while (markerIdx < markers.size() && used[markerIdx]) {
+                markerIdx++;
+            }
+            if (markerIdx < markers.size()) {
+                double[] marker = markers.get(markerIdx);
+                used[markerIdx++] = true;
                 out.add(new MapPlayer(name, marker[0], marker[1], (float) marker[2], false, cls));
             }
         }
         return out;
+    }
+
+    /** Max distance, in blocks, between a loaded teammate and the map marker taken as theirs (a map pixel is ~1.6). */
+    private static final double MARKER_MATCH_DISTANCE = 8;
+
+    /** The unused marker nearest {@code (x, z)} within {@link #MARKER_MATCH_DISTANCE}, or -1. */
+    private static int nearestMarker(List<double[]> markers, boolean[] used, double x, double z) {
+        int best = -1;
+        double bestDistance = MARKER_MATCH_DISTANCE * MARKER_MATCH_DISTANCE;
+        for (int i = 0; i < markers.size(); i++) {
+            if (used[i]) {
+                continue;
+            }
+            double dx = markers.get(i)[0] - x, dz = markers.get(i)[1] - z;
+            double distance = dx * dx + dz * dz;
+            if (distance <= bestDistance) {
+                bestDistance = distance;
+                best = i;
+            }
+        }
+        return best;
     }
 
     /** Same rule as {@code teammates.TeammatesFeature.isTeammate} (that class is not mine to import from - it's

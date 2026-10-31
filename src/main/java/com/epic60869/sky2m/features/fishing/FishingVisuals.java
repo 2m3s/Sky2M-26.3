@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.fishing;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
@@ -81,7 +81,7 @@ public final class FishingVisuals {
 
     public static final class Config {
         @Expose
-        @ConfigOption(name = "Lava Replacement", desc = "Draws lava with the water texture, so sea creatures in lava are easier to see (SkyHanni).")
+        @ConfigOption(name = "Lava Replacement", desc = "Draws lava with the water texture, so sea creatures in lava are easier to see.")
         @ConfigEditorBoolean
         public boolean lavaReplacement = false;
 
@@ -91,12 +91,12 @@ public final class FishingVisuals {
         public boolean lavaEverywhere = true;
 
         @Expose
-        @ConfigOption(name = "Hide Other Bobbers", desc = "Don't draw other players' fishing bobbers (SkyOcean).")
+        @ConfigOption(name = "Hide Other Bobbers", desc = "Don't draw other players' fishing bobbers.")
         @ConfigEditorBoolean
         public boolean hideOtherBobbers = false;
 
         @Expose
-        @ConfigOption(name = "Fix Bobber", desc = "Stops your bobber from snapping back to your hand or sinking in lava, a Hypixel quirk (SkyOcean).")
+        @ConfigOption(name = "Fix Bobber", desc = "Stops your bobber from snapping back to your hand or sinking in lava, a Hypixel quirk.")
         @ConfigEditorBoolean
         public boolean fixBobber = false;
     }

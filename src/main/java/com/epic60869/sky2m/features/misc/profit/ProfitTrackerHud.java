@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.misc.profit;
 
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -168,11 +168,11 @@ final class ProfitTrackerHud {
         if (c == null) return rows;
         ProfitTracker.Period period = period(preset);
         ProfitTracker.Stats stats = ProfitTracker.stats(preset, period);
-        FeatureConfigs.ProfitPriceSource source = c.settings.priceSource == null ? FeatureConfigs.ProfitPriceSource.INSTANT_SELL : c.settings.priceSource;
+        FeatureConfigs.ProfitPriceSource source = priceSource(c);
 
         List<Item> items = new ArrayList<>();
         for (Map.Entry<String, Long> e : stats.items.entrySet()) {
-            double unit = Sky2MPriceTooltip.price(e.getKey(), source);
+            double unit = ProfitItemPrices.price(e.getKey(), source);
             items.add(new Item(e.getKey(), name(e.getKey()), RepoItems.itemStack(e.getKey()), e.getValue(), unit > 0 ? unit * e.getValue() : null));
         }
         items.sort(Comparator.comparingDouble((Item i) -> i.value() == null ? -1 : i.value()).reversed());
@@ -180,7 +180,7 @@ final class ProfitTrackerHud {
         double kernel = 0;
         boolean kernelUnknown = false;
         if (preset == ProfitTracker.Preset.FARMING && stats.kernels > 0) {
-            double book = Sky2MPriceTooltip.price(KERNEL_ITEM, source);
+            double book = ProfitItemPrices.price(KERNEL_ITEM, source);
             kernel = book * stats.kernels / KERNELS_PER_ITEM;
             kernelUnknown = book <= 0;
         }
@@ -216,7 +216,7 @@ final class ProfitTrackerHud {
                 boolean highlighted = c.details.highlightChanges && ProfitTracker.HIGHLIGHTS.containsKey(preset.name() + ":" + item.id());
                 String count = "§7x" + (highlighted ? "§a§l" : "") + String.format(Locale.US, "%,d", item.amount());
                 int countWidth = textWidth("§7x§a§l" + String.format(Locale.US, "%,d", item.amount()));
-                String value = item.value() == null ? "§8Unknown" : "§6" + coins(item.value());
+                String value = (item.value() == null ? "§8Unknown" : "§6" + coins(item.value())) + ProfitItemPrices.tag(item.id(), source);
                 rows.add(new Row(name, quantityLeft ? null : count, value, c.details.showItemIcons ? item.stack() : null,
                     ITEM_ROW_HEIGHT, ITEM_TEXT_Y, inventoryOpen ? Control.ITEM : null, null, false, quantityLeft ? count : null, countWidth,
                     quantityLeft ? textWidth(name) : nameColumn, item.id()));
@@ -274,6 +274,11 @@ final class ProfitTrackerHud {
             }
         }
         return rows;
+    }
+
+    /** The tracker's Price Source, which items left on Default are priced by. */
+    private static FeatureConfigs.ProfitPriceSource priceSource(FeatureConfigs.ProfitTrackerSettings c) {
+        return c.settings.priceSource == null ? FeatureConfigs.ProfitPriceSource.INSTANT_SELL : c.settings.priceSource;
     }
 
     /** Says once per tracker and period (a new one each day for Today) when its goal is reached. */
@@ -419,8 +424,11 @@ final class ProfitTrackerHud {
         boundsPreset = preset;
     }
 
-    /** A click on one of the tracker's controls; true if it was one (the menu doesn't get it). */
-    static boolean click(double mouseX, double mouseY) {
+    /**
+     * A click on one of the tracker's controls; true if it was one (the menu doesn't get it). Right-clicking an item
+     * cycles its own price source; any other right-click is left to the menu.
+     */
+    static boolean click(double mouseX, double mouseY, int button) {
         if (com.epic60869.sky2m.features.misc.storage.StorageOverlay.hidesOtherHuds()) return false;
         ProfitTracker.Preset preset = boundsPreset;
         if (preset == null || bounds == null) return false;
@@ -428,6 +436,13 @@ final class ProfitTrackerHud {
         if (c == null) return false;
         for (Area area : areas) {
             if (!area.contains(mouseX, mouseY)) continue;
+            if (button == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT) {
+                if (area.control() != Control.ITEM || area.itemId() == null) return false;
+                ProfitItemPrices.cycle(area.itemId(), 1, priceSource(c));
+                com.epic60869.sky2m.gui.Sky2MGuiStyle.click();
+                ROW_CACHE.clear();
+                return true;
+            }
             switch (area.control()) {
                 case PERIOD -> c.period = ProfitTracker.Period.values()[(period(preset).ordinal() + 1) % ProfitTracker.Period.values().length];
                 case PRICE_SOURCE -> {
@@ -446,7 +461,7 @@ final class ProfitTrackerHud {
                 }
             }
             ROW_CACHE.clear();
-            com.epic60869.sky2m.Sky2MConfig.saveCurrent(com.epic60869.sky2m.Sky2MConfig.current());
+            com.epic60869.sky2m.config.Sky2MConfig.saveCurrent(com.epic60869.sky2m.config.Sky2MConfig.current());
             ProfitTracker.markDirty();
             return true;
         }
@@ -467,7 +482,9 @@ final class ProfitTrackerHud {
         if (today != null) targets.add(today.get(preset));
         long amount = targets.getFirst().items.getOrDefault(id, 0L);
         Screen parent = Minecraft.getInstance().gui.screen();
-        com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(new ProfitItemEditScreen(parent, id, amount, targets,
+        FeatureConfigs.ProfitTrackerSettings c = config(preset);
+        FeatureConfigs.ProfitPriceSource source = c == null ? FeatureConfigs.ProfitPriceSource.INSTANT_SELL : priceSource(c);
+        com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(new ProfitItemEditScreen(parent, id, amount, targets, source,
             "Changes apply to Session, Today, Total and /s2 session.", () -> {
                 ROW_CACHE.clear();
                 ProfitTracker.markDirty();
@@ -511,7 +528,7 @@ final class ProfitTrackerHud {
     private static double profit(ProfitTracker.Stats stats, FeatureConfigs.ProfitPriceSource source) {
         double revenue = stats.coins;
         for (Map.Entry<String, Long> e : stats.items.entrySet()) {
-            double unit = Sky2MPriceTooltip.price(e.getKey(), source);
+            double unit = ProfitItemPrices.price(e.getKey(), source);
             if (unit > 0) revenue += unit * e.getValue();
         }
         return revenue - stats.costs;

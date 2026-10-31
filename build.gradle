@@ -23,14 +23,36 @@ loom {
 }
 
 // Client game tests (src/gametest): `gradle runClientGameTest` starts a client, opens a test world and checks Sky2M's
-// screens, saving screenshots to build/run/clientGameTest/screenshots. Not part of the mod jar.
-fabricApi {
-    configureTests {
-        createSourceSet = true
-        modId = "sky2m-gametest"
-        enableGameTests = false
-        enableClientGameTests = true
-        eula = true
+// screens, saving screenshots to build/run/clientGameTest/screenshots. Not part of the mod jar. The folder is kept
+// local (it is not pushed to GitHub), so everything that needs it is skipped when it is missing.
+def hasGameTests = file('src/gametest').directory
+
+if (hasGameTests) {
+    fabricApi {
+        configureTests {
+            createSourceSet = true
+            modId = "sky2m-gametest"
+            enableGameTests = false
+            enableClientGameTests = true
+            eula = true
+        }
+    }
+}
+
+// The game tests with your own Sky2M settings: gradlew runClientGameTest -Psky2mTestConfig="<instance>/minecraft/config".
+// Copied in after the test client's run folder is cleared. Settings only: the feature settings, HUD positions,
+// customisations and Command Keys macros, not profit trackers, PBs, drop counts or any other data.
+if (project.hasProperty('sky2mTestConfig')) {
+    tasks.matching { it.name == 'runClientGameTest' }.configureEach {
+        doFirst {
+            copy {
+                from(project.property('sky2mTestConfig')) {
+                    include 'sky2m-mod.json', 'sky2m-huds.json', 'sky2m-cheats.json', 'sky2m-clipping.json', 'sky2m-custom.json',
+                        'sky2m_commandkeys.json'
+                }
+                into layout.buildDirectory.dir('run/clientGameTest/config')
+            }
+        }
     }
 }
 
@@ -38,6 +60,13 @@ fabricApi {
 // silently (sky2m.mixins.json isn't "required"), so Sky2MOfflineScreensGameTest's Mixin audit reports it.
 loom.runs.matching { it.name == 'clientGameTest' }.configureEach {
     vmArg '-Dmixin.debug.countInjections=true'
+}
+
+// The game tests with add-on mods loaded too: gradlew runClientGameTest -Psky2mAddons="<addon.jar>[;<another.jar>]".
+if (project.hasProperty('sky2mAddons')) {
+    tasks.matching { it.name == 'runClientGameTest' }.configureEach {
+        jvmArgs "-Dfabric.addMods=${project.property('sky2mAddons')}"
+    }
 }
 
 repositories {

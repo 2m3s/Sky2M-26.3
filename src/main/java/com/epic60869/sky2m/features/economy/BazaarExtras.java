@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.economy;
 
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;

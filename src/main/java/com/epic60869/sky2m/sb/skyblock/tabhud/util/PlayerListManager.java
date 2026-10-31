@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 
-import com.epic60869.sky2m.Sky2MTabWidgetManager;
+import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 
 /** Reads the ordered tab list through Sky2M's tab widget manager. */
 public final class PlayerListManager {

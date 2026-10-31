@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.misc.profit;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.google.gson.Gson;
@@ -345,12 +345,12 @@ public final class SessionTracker {
         FeatureConfigs.ProfitPriceSource source = c == null || c.priceSource == null ? FeatureConfigs.ProfitPriceSource.INSTANT_SELL : c.priceSource;
         double total = s.coins - s.costs;
         for (Map.Entry<String, Long> e : s.items.entrySet()) {
-            double unit = Sky2MPriceTooltip.price(e.getKey(), source);
+            double unit = ProfitItemPrices.price(e.getKey(), source);
             if (unit > 0) total += unit * e.getValue();
             else if (unknown != null) unknown[0] = true;
         }
         if (preset == ProfitTracker.Preset.FARMING && s.kernels > 0) {
-            total += Sky2MPriceTooltip.price(ProfitTrackerHud.KERNEL_ITEM, source) * s.kernels / ProfitTrackerHud.KERNELS_PER_ITEM;
+            total += ProfitItemPrices.price(ProfitTrackerHud.KERNEL_ITEM, source) * s.kernels / ProfitTrackerHud.KERNELS_PER_ITEM;
         }
         return total;
     }

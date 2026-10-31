@@ -1,6 +1,6 @@
 /*
  * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
- * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ * Copyright (c) 2026 Killer560.
  */
 package com.epic60869.sky2m.sim.livemap;
 
@@ -226,7 +226,6 @@ public final class LiveMapFeature {
         resetGeneration++;
         foundSecretsByRoom.clear();
         DungeonMapScanner.reset();
-        PartyMapIntel.reset();
         bossLatched = false;
         LOGGER.info("[LiveMap] {} - grid reset (floor={})", reason, DungeonState.getFloor());
     }
@@ -1255,7 +1254,6 @@ public final class LiveMapFeature {
             // door (fps report 2026-09-20).
             DungeonLayout layout = fitLayout;
             MapPainter.drawDoors(graphics, layout, cfg, ox, oy, ppu, -1);
-            MapPainter.drawReportedDoors(graphics, cfg, ox, oy, ppu);
 
             // killer560, 2026-09-20: "remove the current-room colour changer" - every revealed room just draws its
             // real colour now, current room or not.
@@ -1271,16 +1269,7 @@ public final class LiveMapFeature {
             }
             roomRects.submit();
 
-            // killer560s-mod-relay task (2026-09-21): teammate-reported rooms this client has not scanned
-            // itself yet - PartyMapIntel already dropped any cell local scanning has since taken over.
-            for (PartyMapIntel.ReportedRoom rr : PartyMapIntel.reportedRoomsView()) {
-                MapPainter.drawReportedRoom(graphics, rr, cfg, ox, oy, ppu);
-            }
-
             MapPainter.drawLabels(graphics, client.font, cfg.getRoomLabels(), cfg, ox, oy, ppu);
-            for (PartyMapIntel.ReportedRoom rr : PartyMapIntel.reportedRoomsView()) {
-                MapPainter.drawReportedLabel(graphics, client.font, cfg.getRoomLabels(), cfg, rr, ox, oy, ppu);
-            }
 
             // Real arrow/head markers at the exact world position instead of a whole cell filled yellow. The list is
             // cached per tick - it used to run a fresh level.players() party scan every frame.

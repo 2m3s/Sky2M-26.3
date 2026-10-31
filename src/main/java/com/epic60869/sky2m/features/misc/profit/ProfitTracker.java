@@ -1,8 +1,8 @@
 package com.epic60869.sky2m.features.misc.profit;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MCraftHelper;
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.price.Sky2MCraftHelper;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -67,7 +67,8 @@ import java.util.regex.Pattern;
  * mob kill coins (purse gains with no menu open for 2 seconds), the spawn cost actually paid (or taken from the bank
  * by auto-slayer) and a boss for each "SLAYER QUEST COMPLETE!".
  * Items count when they come into your inventory (not from a chest or menu) or your sacks, if the preset tracks them;
- * crops Replenish takes back and items a compactor turns into enchanted ones are taken off again. Coins (Bountiful,
+ * crops Replenish takes back are taken off again, and items a compactor (or supercrafting) turns into enchanted or
+ * compacted ones move over to what they became, down every one-input recipe in the NEU repo. Coins (Bountiful,
  * mob kills), quest costs, Kernels, the activity's actions (pests vacuumed, catches, burrows dug, bosses killed),
  * profit per hour and uptime (paused when you stop) are kept for this session, today and in total. The HUD is drawn
  * by {@link ProfitTrackerHud}.
@@ -170,6 +171,13 @@ public final class ProfitTracker {
     /** Item quantities that just changed: "PRESET:ITEM" -> when. */
     static final Map<String, Long> HIGHLIGHTS = new ConcurrentHashMap<>();
     private static final Map<String, Conversion> conversions = new ConcurrentHashMap<>();
+    /** Every item a preset's list names, the bottom of the compaction chains. */
+    private static final Set<String> PRESET_ITEMS = new HashSet<>();
+    /** Items whose recipe was looked up to see if they're compacted from a tracked item: id -> lookup finished. */
+    private static final Map<String, Boolean> lookups = new ConcurrentHashMap<>();
+    /** An item that came in before its recipe was known (maybe a compactor's Enchanted Moonflower), waiting for it. */
+    private record Pending(Preset preset, String id, long amount, long at) {}
+    private static final List<Pending> pendingGains = new ArrayList<>();
     private static final Map<String, Integer> replenishCosts = new HashMap<>();
     private static final Map<String, long[]> removals = new HashMap<>();
 
@@ -231,6 +239,7 @@ public final class ProfitTracker {
 
     public static void init(Path configDir) {
         file = configDir.resolve("sky2m").resolve("profit-trackers.json");
+        ProfitItemPrices.init(configDir);
         loadPresets();
         loadSkyHanniItems();
         SlayerArea.init();
@@ -269,6 +278,7 @@ public final class ProfitTracker {
                 }
                 Set<String> items = new LinkedHashSet<>();
                 if (data.has("items")) for (String item : strings(data.getAsJsonArray("items"))) items.add(item.replace('-', ':'));
+                PRESET_ITEMS.addAll(items);
                 PRESETS.put(preset, new PresetData(data.has("anyIsland") && data.get("anyIsland").getAsBoolean(),
                     data.has("islands") ? strings(data.getAsJsonArray("islands")) : Set.of(),
                     data.has("areas") ? strings(data.getAsJsonArray("areas")) : Set.of(), islandAreas, items));
@@ -350,7 +360,7 @@ public final class ProfitTracker {
                 + (quest.slayerName().equals(SlayerArea.slayerHere()) ? (counting(quest) ? "counting" : "tracker off") : "not this slayer's area");
         if (state.equals(slayerState)) return;
         slayerState = state;
-        System.out.println("[Sky2M] Slayer profit tracker: " + state);
+        if (com.epic60869.sky2m.debug.Sky2MDebug.roomDebug()) System.out.println("[Sky2M] Slayer profit tracker: " + state);
     }
 
     /**
@@ -367,6 +377,16 @@ public final class ProfitTracker {
         return false;
     }
 
+    /**
+     * Fishing, by the Sea Creature Tracker's rule: a rod in your hand, your bobber out, or a catch in the last 3
+     * minutes. Otherwise the Fishing tracker doesn't follow you to Kuudra, the End or the Rift.
+     */
+    private static boolean fishingNow(Minecraft mc) {
+        if (mc.player.fishing != null || mc.player.getMainHandItem().getItem() instanceof net.minecraft.world.item.FishingRodItem) return true;
+        Long last = lastActivity.get(Preset.FISHING);
+        return last != null && System.currentTimeMillis() - last < 3 * 60_000L;
+    }
+
     /** What you're doing, if it has a tracker that's turned on. */
     static Preset currentPreset() {
         Minecraft mc = Minecraft.getInstance();
@@ -376,7 +396,7 @@ public final class ProfitTracker {
         if (slayer != null && counting(slayer)) return slayer;
         Preset preferred = null;
         if (counting(Preset.MYTHOLOGICAL_RITUAL) && island.equals("Hub") && spadeInHotbar(mc)) preferred = Preset.MYTHOLOGICAL_RITUAL;
-        if (preferred == null && counting(Preset.FISHING) && (mc.player.fishing != null || !paused(Preset.FISHING, System.currentTimeMillis()) && lastActivity.containsKey(Preset.FISHING))) {
+        if (preferred == null && counting(Preset.FISHING) && fishingNow(mc)) {
             preferred = Preset.FISHING;
         }
         Preset preset = forLocation(island, area, preferred);
@@ -441,7 +461,26 @@ public final class ProfitTracker {
             }
             default -> { }
         }
-        return trackedItems(preset).contains(id) || conversions.containsKey(id) && trackedItems(preset).contains(conversions.get(id).input());
+        return trackedItems(preset).contains(id) || compactedFrom(preset, id);
+    }
+
+    /**
+     * Whether {@code id} is crafted from one of the preset's items, down a chain of one-input recipes: Enchanted
+     * Moonflower from Moonflower, Compacted Moonflower from that, Box of Seeds from Enchanted Seeds from Seeds.
+     */
+    private static boolean compactedFrom(Preset preset, String id) {
+        Set<String> items = trackedItems(preset);
+        Conversion conversion = conversions.get(id);
+        for (int depth = 0; conversion != null && depth < 6; depth++) {
+            if (items.contains(conversion.input())) return true;
+            conversion = conversions.get(conversion.input());
+        }
+        return false;
+    }
+
+    /** The presets that count the items their list names (and what those compact into); the rest follow SkyHanni's lists. */
+    private static boolean usesItemList(Preset preset) {
+        return preset == Preset.FARMING || preset == Preset.MINING;
     }
 
     // ------------------------------------------------------------------------------------------------ stats
@@ -514,18 +553,20 @@ public final class ProfitTracker {
 
     /**
      * Crafting: {@code consumed} of {@code input} became {@code produced} of {@code output}. Only inputs the tracker
-     * counted turn into the output (per period), so crafting with items from before adds nothing.
+     * counted turn into the output (per period), so crafting with items from before adds nothing. Only whole
+     * recipes' worth move over: inputs counted short of one more output (a stack you had before the tracker started)
+     * stay as they are rather than vanishing.
      */
     private static void convert(Preset preset, String input, long consumed, String output, long produced) {
         if (consumed <= 0 || produced <= 0) return;
         for (Stats stats : targets(preset)) {
             long had = stats.items.getOrDefault(input, 0L);
-            long used = Math.min(had, consumed);
-            if (used <= 0) continue;
+            long made = produced * Math.min(had, consumed) / consumed;
+            if (made <= 0) continue;
+            long used = Math.min(had, (made * consumed + produced - 1) / produced);
             if (used == had) stats.items.remove(input);
             else stats.items.put(input, had - used);
-            long made = produced * used / consumed;
-            if (made > 0) stats.items.merge(output, made, Long::sum);
+            stats.items.merge(output, made, Long::sum);
         }
         HIGHLIGHTS.put(preset.name() + ":" + output, System.currentTimeMillis());
         activity(preset);
@@ -554,7 +595,10 @@ public final class ProfitTracker {
             found += used;
         }
         if (found < required) found += crafted(preset, input, required - found, taken, depth + 1);
-        long made = amount * found / required;
+        if (found <= 0) return 0;
+        // Short of the full recipe: the rest came in and was compacted at once, never seen (a compactor turns the
+        // 160th Moonflower into an Enchanted Moonflower in the same tick), so it still counts as one.
+        long made = found >= required ? amount : Math.max(1, (amount * found + required - 1) / required);
         convert(preset, input, found, output, made);
         return made;
     }
@@ -653,20 +697,76 @@ public final class ProfitTracker {
             Preset target = current != null ? current
                 : previousPreset != null && System.currentTimeMillis() - previousPresetLeftAt < SACK_WINDOW_MS && counting(previousPreset) ? previousPreset : null;
             if (target == null) return;
-            Map<String, Long> gains = new LinkedHashMap<>();
-            Map<String, Long> taken = new HashMap<>();
+            Map<String, Long> changes = new LinkedHashMap<>();
             for (Map.Entry<String, Long> e : SlayerBossProfit.sackGains(component).entrySet()) {
                 String id = normalise(RepoItems.idByLooseName(e.getKey()));
-                if (!tracked(target, id)) continue;
-                if (e.getValue() > 0) gains.merge(id, e.getValue(), Long::sum);
-                else if (e.getValue() < 0) taken.merge(id, -e.getValue(), Long::sum);
+                if (id != null) changes.merge(id, e.getValue(), Long::sum);
             }
-            // Supercrafting takes the inputs out of your sacks and puts what it made in: that's the same profit.
-            boolean crafting = craftedLately(System.currentTimeMillis());
-            for (Map.Entry<String, Long> e : gains.entrySet()) {
-                long rest = e.getValue() - crafted(target, e.getKey(), e.getValue(), taken, 0);
-                if (rest > 0 && !(crafting && conversions.containsKey(e.getKey()))) addItem(target, e.getKey(), rest);
+            countSacks(target, changes, System.currentTimeMillis());
+        }
+    }
+
+    /** A "[Sacks]" message's changes, by item id (+ added, - taken out). */
+    private static void countSacks(Preset target, Map<String, Long> changes, long now) {
+        Map<String, Long> gains = new LinkedHashMap<>();
+        Map<String, Long> taken = new HashMap<>();
+        for (Map.Entry<String, Long> e : changes.entrySet()) {
+            String id = e.getKey();
+            if (!tracked(target, id)) {
+                // Maybe compacted from a tracked item (a compactor's Enchanted Moonflower): find out, then count it.
+                if (e.getValue() > 0) awaitRecipe(target, id, e.getValue(), now);
+                continue;
             }
+            if (e.getValue() > 0) gains.merge(id, e.getValue(), Long::sum);
+            else if (e.getValue() < 0) taken.merge(id, -e.getValue(), Long::sum);
+        }
+        // Supercrafting takes the inputs out of your sacks and puts what it made in: that's the same profit.
+        for (Map.Entry<String, Long> e : gains.entrySet()) gained(target, e.getKey(), e.getValue(), taken, now);
+        // Inputs taken out that nothing here explains: what they were compacted into may come in later.
+        for (Map.Entry<String, Long> e : taken.entrySet()) if (e.getValue() > 0) removed(e.getKey(), e.getValue(), now);
+    }
+
+    /**
+     * {@code amount} of {@code id} came in: what crafting (a compactor, supercrafting) made from items counted
+     * before moves them over, the rest is new, unless it's crafted and you were in a crafting menu lately.
+     */
+    private static void gained(Preset preset, String id, long amount, Map<String, Long> taken, long now) {
+        long rest = amount - crafted(preset, id, amount, taken, 0);
+        if (rest > 0 && !(craftedLately(now) && conversions.containsKey(id))) addItem(preset, id, rest);
+    }
+
+    /**
+     * An item the preset doesn't track (yet) came in: look up its recipe (once), and if it's compacted from a tracked
+     * item, count it when the lookup is done. Removed inputs are remembered for a minute, so the compaction still
+     * finds them.
+     */
+    private static void awaitRecipe(Preset preset, String id, long amount, long now) {
+        if (!usesItemList(preset) || id == null || isBait(id) || Boolean.TRUE.equals(lookups.get(id))) return;
+        if (lookups.putIfAbsent(id, false) == null) {
+            RepoItems.runAsync(() -> {
+                try {
+                    discover(id, 0);
+                } catch (Exception ignored) {
+                } finally {
+                    lookups.put(id, true);
+                }
+            });
+        }
+        if (pendingGains.size() < 200) pendingGains.add(new Pending(preset, id, amount, now));
+    }
+
+    /** Items that waited for their recipe: count those that turned out to be compacted from a tracked item. */
+    private static void countPending(long now) {
+        if (pendingGains.isEmpty()) return;
+        for (var it = pendingGains.iterator(); it.hasNext(); ) {
+            Pending p = it.next();
+            if (now - p.at() > COMPACTION_WINDOW_MS) {
+                it.remove();
+                continue;
+            }
+            if (!Boolean.TRUE.equals(lookups.get(p.id()))) continue;
+            it.remove();
+            if (tracked(p.preset(), p.id()) && counting(p.preset())) gained(p.preset(), p.id(), p.amount(), new HashMap<>(), now);
         }
     }
 
@@ -704,6 +804,7 @@ public final class ProfitTracker {
         if (current != null && mc.isWindowActive() && !paused(current, now)) {
             for (Stats stats : profitTargets(current)) stats.activeMs += delta;
         }
+        countPending(now);
         removals.values().removeIf(r -> r[1] < now);
         trackPurse(mc, current, now);
         if (mc.gui.screen() != null) {
@@ -739,8 +840,12 @@ public final class ProfitTracker {
         Set<String> ids = new HashSet<>(current.keySet());
         ids.addAll(lastInventory.keySet());
         for (String id : ids) {
-            if (!tracked(preset, id)) continue;
             long change = current.getOrDefault(id, 0) - lastInventory.getOrDefault(id, 0);
+            if (!tracked(preset, id)) {
+                // Maybe compacted from a tracked item (a compactor's Enchanted Moonflower): find out, then count it.
+                if (change > 0) awaitRecipe(preset, id, change, now);
+                continue;
+            }
             if (change > 0) changes.put(id, change);
             else if (change < 0) removed(id, -change, now);
         }
@@ -819,19 +924,33 @@ public final class ProfitTracker {
         return id == null ? null : id.replace('-', ':');
     }
 
-    /** Crafting recipes with one kind of input between items a preset tracks, from the NEU repo. Blocking. */
+    /**
+     * Crafting recipes with one kind of input down to items a preset tracks, from the NEU repo, with the steps between
+     * (Compacted Moonflower needs Enchanted Moonflower, which needs Moonflower). Blocking.
+     */
     private static void loadConversions() {
-        Set<String> all = new HashSet<>();
-        for (PresetData data : PRESETS.values()) all.addAll(data.items());
-        for (String output : all) {
+        for (String output : PRESET_ITEMS) {
             try {
-                Sky2MCraftHelper.Recipe recipe = Sky2MCraftHelper.recipeOf(output);
-                if (recipe == null || !recipe.type().equals("crafting") || recipe.inputs().size() != 1) continue;
-                Sky2MCraftHelper.Input input = recipe.inputs().getFirst();
-                String inputId = normalise(input.id());
-                if (all.contains(inputId)) conversions.put(output, new Conversion(inputId, input.amount(), recipe.outputCount()));
+                discover(output, 0);
             } catch (Exception ignored) {}
         }
+    }
+
+    /**
+     * Whether {@code id} is a preset's item or crafted from one through one-input crafting recipes (the NEU repo's,
+     * which is how compactors and supercrafting compact). Adds the conversions found on the way. Blocking.
+     */
+    private static boolean discover(String id, int depth) {
+        if (conversions.containsKey(id)) return true;
+        if (depth > 5) return false;
+        Sky2MCraftHelper.Recipe recipe = Sky2MCraftHelper.recipeOf(id);
+        if (recipe == null || !recipe.type().equals("crafting") || recipe.inputs().size() != 1) return false;
+        Sky2MCraftHelper.Input input = recipe.inputs().getFirst();
+        String inputId = normalise(input.id());
+        if (inputId == null || inputId.equals(id) || input.amount() <= 0) return false;
+        if (!PRESET_ITEMS.contains(inputId) && !discover(inputId, depth + 1)) return false;
+        conversions.put(id, new Conversion(inputId, input.amount(), recipe.outputCount()));
+        return true;
     }
 
     /** What Replenish takes back to replant a crop, or null if it doesn't. */
@@ -907,6 +1026,54 @@ public final class ProfitTracker {
         return ticks;
     }
 
+    /**
+     * Game test: the Farming tracker (on a scratch copy, with the Moonflower recipes in place of the NEU repo's) sees
+     * the inventory go through {@code inventories} with no menu open, then each "[Sacks]" message's changes in
+     * {@code sacks}.
+     * Returns the session's items. The real stats, recipes and inventory are put back after.
+     */
+    public static Map<String, Long> testFarmingInventory(List<Map<String, Integer>> inventories, List<Map<String, Long>> sacks) {
+        Preset preset = Preset.FARMING;
+        FeatureConfigs.ProfitTrackerSettings c = config(preset);
+        if (c == null) return Map.of();
+        boolean wasEnabled = c.enabled;
+        Stats session = SESSION.get(preset);
+        Saved saved = SAVED.get(preset);
+        Map<String, Integer> inventory = lastInventory;
+        Map<String, long[]> oldRemovals = new HashMap<>(removals);
+        Map<String, Conversion> oldConversions = new HashMap<>(conversions);
+        long craftingAt = lastCraftingAt;
+        boolean wasDirty = dirty;
+        try {
+            c.enabled = true;
+            SESSION.put(preset, new Stats());
+            SAVED.put(preset, new Saved());
+            removals.clear();
+            lastCraftingAt = 0;
+            conversions.put("ENCHANTED_MOONFLOWER", new Conversion("MOONFLOWER", 160, 1));
+            conversions.put("COMPACTED_MOONFLOWER", new Conversion("ENCHANTED_MOONFLOWER", 160, 1));
+            long now = System.currentTimeMillis();
+            lastInventory = null;
+            for (Map<String, Integer> next : inventories) {
+                if (lastInventory != null) countInventory(preset, next, now);
+                lastInventory = next;
+            }
+            for (Map<String, Long> message : sacks) countSacks(preset, message, now);
+            return new LinkedHashMap<>(SESSION.get(preset).items);
+        } finally {
+            c.enabled = wasEnabled;
+            SESSION.put(preset, session);
+            SAVED.put(preset, saved);
+            lastInventory = inventory;
+            removals.clear();
+            removals.putAll(oldRemovals);
+            conversions.clear();
+            conversions.putAll(oldConversions);
+            lastCraftingAt = craftingAt;
+            dirty = wasDirty;
+        }
+    }
+
     static void markDirty() {
         dirty = true;
     }
@@ -920,7 +1087,7 @@ public final class ProfitTracker {
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof AbstractContainerScreen<?>)) return;
             ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> ProfitTrackerHud.renderInScreen(graphics, mouseX, mouseY));
-            ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> !ProfitTrackerHud.click(event.x(), event.y()));
+            ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> !ProfitTrackerHud.click(event.x(), event.y(), event.button()));
             ScreenMouseEvents.allowMouseScroll(screen).register((s, mouseX, mouseY, horizontal, vertical) -> !ProfitTrackerHud.scroll(mouseX, mouseY, vertical));
         });
     }

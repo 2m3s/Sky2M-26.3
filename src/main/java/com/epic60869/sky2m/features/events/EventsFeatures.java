@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.events;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -58,6 +58,7 @@ public final class EventsFeatures {
         WinterFeatures.init();
         JerryFeatures.init();
         WinterGifting.init();
+        HarvestFeast.init();
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root)

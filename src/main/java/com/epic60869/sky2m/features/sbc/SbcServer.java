@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.sbc;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MUpdateChecker;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.update.Sky2MUpdateChecker;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -129,7 +129,7 @@ public final class SbcServer {
                 .withClickEvent(new ClickEvent.OpenUrl(URI.create(u.url())))
                 .withHoverEvent(new HoverEvent.ShowText(Component.literal("Download Sky2M " + u.version())))));
         } catch (Exception ignored) {}
-        line.append(com.epic60869.sky2m.Sky2MUpdateChecker.githubLink());
+        line.append(com.epic60869.sky2m.update.Sky2MUpdateChecker.githubLink());
         if (!u.notes().isBlank() || !u.title().isBlank()) {
             MutableComponent notes = Component.literal(u.title().isBlank() ? "Changelog" : u.title()).withStyle(ChatFormatting.GOLD);
             if (!u.notes().isBlank()) notes.append(Component.literal("\n" + u.notes()).withStyle(ChatFormatting.GRAY));

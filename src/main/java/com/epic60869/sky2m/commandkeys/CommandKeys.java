@@ -60,7 +60,7 @@ public class CommandKeys {
             .append(Component.literal("] ").withStyle(ChatFormatting.DARK_GRAY))
             .withStyle(ChatFormatting.GRAY);
     // Sky2M change: Command Keys' binds are in the Sky2M key category.
-    public static final KeyMapping.Category CATEGORY = com.epic60869.sky2m.Sky2MKeyMappings.CATEGORY;
+    public static final KeyMapping.Category CATEGORY = com.epic60869.sky2m.input.Sky2MKeyMappings.CATEGORY;
     public static final KeyMapping CONFIG_KEY = new KeyMapping(
             translationKey("key", "main.edit"),
             InputConstants.Type.KEYBOARD,

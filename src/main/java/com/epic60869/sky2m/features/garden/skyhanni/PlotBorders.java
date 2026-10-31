@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.garden.skyhanni;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
@@ -19,7 +19,6 @@ import net.minecraft.world.phys.Vec3;
 public final class PlotBorders {
     private static final double PLOT_SIZE = 96.0;
     private static final float[] YELLOW = {1f, 1f, 0.2f};
-    private static final float[] BLUE = {0.2f, 0.3f, 1f};
 
     private static boolean show;
     private static boolean keyWasDown;
@@ -65,14 +64,31 @@ public final class PlotBorders {
         double maxX = minX + PLOT_SIZE;
         double maxZ = minZ + PLOT_SIZE;
 
-        collector.submitOutlinedBox(new AABB(minX, 0, minZ, maxX, 256, maxZ), BLUE, 2f, true);
-        double y = Math.floor(mc.player.getY());
-        for (int level = -2; level <= 6; level += 2) {
-            double yy = y + level;
-            collector.submitLinesFromPoints(new Vec3[] {
-                new Vec3(minX, yy, minZ), new Vec3(maxX, yy, minZ), new Vec3(maxX, yy, maxZ), new Vec3(minX, yy, maxZ), new Vec3(minX, yy, minZ)
-            }, YELLOW, 1f, level == 0 ? 3f : 1.5f, true);
-        }
+        drawWall(collector, minX, minZ, maxX, maxZ, Math.floor(mc.player.getY()), YELLOW);
+    }
+
+    /** How tall the border walls are, from the ground up. */
+    private static final double WALL_HEIGHT = 3;
+    private static final double WALL_THICKNESS = 0.06;
+
+    /**
+     * A plot border: a see-through wall {@link #WALL_HEIGHT} blocks tall along the plot's edge, from the ground at
+     * {@code y}, with a solid line along the bottom and a fainter one along the top. Drawn through blocks so it reads
+     * across the crops. Also used by Pest Plot Borders.
+     */
+    public static void drawWall(PrimitiveCollector collector, double minX, double minZ, double maxX, double maxZ, double y, float[] colour) {
+        double top = y + WALL_HEIGHT;
+        double t = WALL_THICKNESS;
+        collector.submitFilledBox(new AABB(minX, y, minZ - t, maxX, top, minZ + t), colour, 0.18f, true);
+        collector.submitFilledBox(new AABB(minX, y, maxZ - t, maxX, top, maxZ + t), colour, 0.18f, true);
+        collector.submitFilledBox(new AABB(minX - t, y, minZ, minX + t, top, maxZ), colour, 0.18f, true);
+        collector.submitFilledBox(new AABB(maxX - t, y, minZ, maxX + t, top, maxZ), colour, 0.18f, true);
+        collector.submitLinesFromPoints(ring(minX, minZ, maxX, maxZ, y), colour, 1f, 3f, true);
+        collector.submitLinesFromPoints(ring(minX, minZ, maxX, maxZ, top), colour, 0.6f, 1.5f, true);
+    }
+
+    private static Vec3[] ring(double minX, double minZ, double maxX, double maxZ, double y) {
+        return new Vec3[] {new Vec3(minX, y, minZ), new Vec3(maxX, y, minZ), new Vec3(maxX, y, maxZ), new Vec3(minX, y, maxZ), new Vec3(minX, y, minZ)};
     }
 
     private static int cell(double value) {

@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MGlobalChat;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.chat.Sky2MGlobalChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;

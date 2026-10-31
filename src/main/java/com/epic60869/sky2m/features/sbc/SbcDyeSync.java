@@ -1,8 +1,8 @@
 package com.epic60869.sky2m.features.sbc;
 
 import com.google.gson.JsonArray;
-import com.epic60869.sky2m.Sky2MGlobalChat;
-import com.epic60869.sky2m.Sky2MLogin;
+import com.epic60869.sky2m.chat.Sky2MGlobalChat;
+import com.epic60869.sky2m.social.Sky2MLogin;
 import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.ChatFormatting;

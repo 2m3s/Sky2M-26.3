@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.skills;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -98,6 +98,30 @@ public final class SkillProgress {
         new Line("§7XP/h: §e1,520,000 "), new Line("§7Session: §e1h 2m 3s "));
     private static final List<Line> ALL_PREVIEW = List.of(new Line("§aCombat 45 §7(§b1,234,567§6/§b2,600,000§7)"),
         new Line("§2Farming 60 §7(§b5,000,000§7)"));
+
+    // ---------------------------------------------------------------------------------------------- Your Skills menu
+
+    /** Each skill's level on its icon in the Your Skills menu, like a stack size; the overflow level past the max (Sky2MSlotBackgroundMixin). */
+    public static void renderSlotLabel(GuiGraphicsExtractor graphics, net.minecraft.world.inventory.Slot slot) {
+        FeatureConfigs.SkillProgress c = config();
+        if (c == null || !c.skillLevelStackSize || !slot.hasItem() || slot.container instanceof net.minecraft.world.entity.player.Inventory) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.gui.screen() == null || !mc.gui.screen().getTitle().getString().equals("Your Skills") || !Sky2MLocation.onSkyblock()) return;
+        ItemStack stack = slot.getItem();
+        String[] split = Sky2MLocation.strip(stack.getHoverName().getString()).trim().split(" ");
+        if (split.length < 2) return;
+        SkillType skill = SkillType.getByNameOrNull(split[0]);
+        if (skill == null && !split[0].equals("Runecrafting") && !split[0].equals("Social")) return;
+        if (SkillApi.lore(stack).stream().noneMatch(l -> l.contains("Click to view!"))) return;
+        int level = SkillApi.romanToDecimalIfNecessary(split[split.length - 1]);
+        if (skill != null && c.overflowConfig.enableInSkillMenuAsStackSize) {
+            SkillApi.SkillInfo info = SkillApi.storage().get(skill);
+            if (info != null && level >= skill.maxLevel) level = Math.max(level, info.overflowLevel);
+        }
+        if (level <= 0) return;
+        String text = String.valueOf(level);
+        graphics.text(mc.font, text, slot.x + 17 - mc.font.width(text), slot.y + 9, 0xFFFFFFFF, true);
+    }
 
     // ---------------------------------------------------------------------------------------------- events
 
@@ -280,6 +304,9 @@ public final class SkillProgress {
         if (skillInfoLast == null) return list;
         SkillApi.oldSkillInfoMap.put(activeSkill, skillInfo);
         int level = c.overflowConfig.enableInEtaDisplay || c.customGoalConfig.enableInETADisplay ? skillInfo.overflowLevel : skillInfo.level;
+        // A maxed skill has no next level but its overflow one, and the time below already counts towards that: Farming
+        // 73 (maxed at 60) showed "60➜61" with the time to 74.
+        if (level >= activeSkill.maxLevel) level = Math.max(level, skillInfo.overflowLevel);
 
         boolean useCustomGoalLevel = skillInfo.customGoalLevel != 0 && skillInfo.customGoalLevel > skillInfo.overflowLevel
             && c.customGoalConfig.enableInETADisplay;
@@ -377,8 +404,14 @@ public final class SkillProgress {
             text.append("§7(§6").append(SkillApi.addSeparators(currentXP)).append("§7/§6").append(SkillApi.addSeparators(currentXPMax)).append("§7)");
         }
         if (c.showActionLeft && percent != 100f) text.append(" - ").append(addActionsLeft(skill, currentXPMax, currentXP));
+        if (c.showSessionXp) text.append(sessionText(activeSkill));
         list.add(text.toString());
         return list;
+    }
+
+    /** Show Session XP: " Session: +12,345" for the XP gained in the skill since the game started (or profile switch). */
+    static String sessionText(SkillType skill) {
+        return " §7Session: §a+" + SkillApi.addSeparators(SkillApi.sessionXp(skill));
     }
 
     private static String addActionsLeft(SkillApi.SkillInfo skill, long currentXPMax, long currentXP) {
@@ -511,13 +544,13 @@ public final class SkillProgress {
         @Override
         public int width() {
             FeatureConfigs.SkillProgressBar bar = config().skillProgressBarConfig;
-            return bar.useTexturedBar ? 182 : bar.regularBar.width;
+            return bar.useTexturedBar ? bar.texturedBar.width : bar.regularBar.width;
         }
 
         @Override
         public int height() {
             FeatureConfigs.SkillProgressBar bar = config().skillProgressBarConfig;
-            return bar.useTexturedBar ? 5 : bar.regularBar.height;
+            return bar.useTexturedBar ? bar.texturedBar.height : bar.regularBar.height;
         }
 
         @Override
@@ -531,9 +564,13 @@ public final class SkillProgress {
             double fraction = preview && display.isEmpty() ? 0.457 : Math.min(1.0, skillExpPercentage);
             int start = colour(bar.barStartColor);
             if (bar.useTexturedBar) {
-                maxWidth = 182;
+                // The texture is 182x5 (like the XP bar), stretched to the Width and Height chosen.
+                maxWidth = bar.texturedBar.width;
                 int progress = (int) (Math.max(0, fraction) * 182);
+                graphics.pose().pushMatrix();
+                graphics.pose().scale(bar.texturedBar.width / 182f, bar.texturedBar.height / 5f);
                 renderTextured(graphics, bar.texturedBar.usedTexture, progress, bar.useChroma);
+                graphics.pose().popMatrix();
             } else {
                 maxWidth = bar.regularBar.width;
                 int width = bar.regularBar.width;

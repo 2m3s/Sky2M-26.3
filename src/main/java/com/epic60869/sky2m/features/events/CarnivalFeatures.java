@@ -1,11 +1,11 @@
 package com.epic60869.sky2m.features.events;
 
-import com.epic60869.sky2m.Sky2MSkyblockTime;
+import com.epic60869.sky2m.tools.Sky2MSkyblockTime;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
-import com.epic60869.sky2m.features.misc.MayorDisplay;
+import com.epic60869.sky2m.features.misc.visual.MayorDisplay;
 import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

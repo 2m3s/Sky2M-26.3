@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.qol;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
@@ -47,7 +47,7 @@ public final class ChatRules {
         public String rules = "";
 
         @Expose
-        @ConfigOption(name = "Player Format: Hide Level", desc = "Leave the SkyBlock level (\"[123] \") out of other players' all-chat messages, like SkyHanni's player chat format.")
+        @ConfigOption(name = "Player Format: Hide Level", desc = "Leave the SkyBlock level (\"[123] \") out of other players' all-chat messages.")
         @ConfigEditorBoolean
         public boolean hideLevel = false;
 

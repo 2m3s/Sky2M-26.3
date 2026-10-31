@@ -1,8 +1,8 @@
 package com.epic60869.sky2m.features.slayer;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MGlobalChat;
-import com.epic60869.sky2m.Sky2MLogin;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.chat.Sky2MGlobalChat;
+import com.epic60869.sky2m.social.Sky2MLogin;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

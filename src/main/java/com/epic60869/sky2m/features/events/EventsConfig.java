@@ -41,6 +41,27 @@ public final class EventsConfig {
     @Category(name = "Winter", desc = "Jyrre, Frozen Treasure and Reindrake.")
     public Winter winter = new Winter();
 
+    @Expose
+    @Category(name = "Harvest Feast", desc = "In-season crops and the crop rotation.")
+    public HarvestFeast harvestFeast = new HarvestFeast();
+
+    public static final class HarvestFeast {
+        @Expose
+        @ConfigOption(name = "Crop Rotation Display", desc = "During the Harvest Feast (or Grand Feast), a HUD with the crops in season now, how long until they rotate, and which crops come in season next and when. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean display = true;
+
+        @Expose
+        @ConfigOption(name = "Show Outside Garden", desc = "Also show the Harvest Feast display outside the Garden.")
+        @ConfigEditorBoolean
+        public boolean showOutsideGarden = false;
+
+        @Expose
+        @ConfigOption(name = "Fetch Feast Data", desc = "Get this month's rotation from eliteskyblock.com (shared by other players), so the display works without opening Feast Chef Ted's menu. Opening his All Crops menu always updates it too.")
+        @ConfigEditorBoolean
+        public boolean fetchAutomatically = true;
+    }
+
     public static final class Hoppity {
         @Expose
         @ConfigOption(name = "Egg Waypoints", desc = "While a Chocolate Egg is waiting to be found (after its \"has appeared\" message), shows every known egg location on the island you are on. The Egglocator still tells you which one it is. Locations you already collected a rabbit from are hidden.")
@@ -64,6 +85,11 @@ public final class EventsConfig {
     }
 
     public static final class ChocolateFactory {
+        @Expose
+        @ConfigOption(name = "Stats Display", desc = "While the Chocolate Factory is open, a HUD with your chocolate, production per second, minute, hour and day, multiplier, barn, Time Tower, leaderboard position, time to prestige and time until the best upgrade. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean stats = true;
+
         @Expose
         @ConfigOption(name = "Upgrade Advice", desc = "In the Chocolate Factory, highlights the best upgrade (cheapest per extra chocolate per second) and the best one you can afford now, and lists them in a HUD with how long they take to pay for themselves. Move it in /s2 gui.\n§7Only rabbits and Coach Jackrabbit are compared; the Time Tower is not counted.")
         @ConfigEditorBoolean

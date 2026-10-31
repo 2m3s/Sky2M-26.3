@@ -838,17 +838,17 @@ public class DungeonManager {
 
 	/** /s2 debug room line: one chat line whenever the sim room under the player (or whether it is matched) changes. */
 	private static void simDebug(String simName, @Nullable Room room) {
-		if (!com.epic60869.sky2m.Sky2MDebug.roomDebug()) return;
+		if (!com.epic60869.sky2m.debug.Sky2MDebug.roomDebug()) return;
 		String key = simName + "|" + (room != null && room.isMatched()) + "|" + (room == null ? "" : room.simFailure());
 		if (key.equals(simDebugKey)) return;
 		simDebugKey = key;
 		if (room == null) {
-			com.epic60869.sky2m.Sky2MDebug.roomLine("Sim room: " + simName);
+			com.epic60869.sky2m.debug.Sky2MDebug.roomLine("Sim room: " + simName);
 			return;
 		}
-		com.epic60869.sky2m.Sky2MConfig config = com.epic60869.sky2m.Sky2MConfig.current();
+		com.epic60869.sky2m.config.Sky2MConfig config = com.epic60869.sky2m.config.Sky2MConfig.current();
 		String settings = config == null ? "" : " | Secret Waypoints " + (config.dungeons.secrets.secretWaypoints ? "on" : "OFF") + ", Routes " + (config.dungeons.secrets.routes ? "on" : "OFF");
-		com.epic60869.sky2m.Sky2MDebug.roomLine("Sim room: " + simName + " (" + room.getType() + ") | matched: " + (room.isMatched() ? "yes as " + room.getName() + " " + room.getDirection() : "no") + (room.isMatched() || room.simFailure().isEmpty() ? "" : " | failed: " + room.simFailure()) + " | secret waypoints loaded: " + room.secretWaypoints.size() + settings);
+		com.epic60869.sky2m.debug.Sky2MDebug.roomLine("Sim room: " + simName + " (" + room.getType() + ") | matched: " + (room.isMatched() ? "yes as " + room.getName() + " " + room.getDirection() : "no") + (room.isMatched() || room.simFailure().isEmpty() ? "" : " | failed: " + room.simFailure()) + " | secret waypoints loaded: " + room.secretWaypoints.size() + settings);
 	}
 
 	private static void updateAllRoomCheckmarks() {

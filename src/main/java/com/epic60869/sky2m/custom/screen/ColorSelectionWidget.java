@@ -41,8 +41,8 @@ import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.item.equipment.Equippable;
 
 import com.epic60869.sky2m.custom.CustomConfigManager;
-import com.epic60869.sky2m.mixin.Sky2MCheckboxAccessor;
-import com.epic60869.sky2m.mixin.Sky2MEntityRenderDispatcherAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MCheckboxAccessor;
+import com.epic60869.sky2m.mixin.render.Sky2MEntityRenderDispatcherAccessor;
 import com.epic60869.sky2m.custom.CustomArmorAnimatedDyes;
 import com.epic60869.sky2m.custom.util.ARGBTextInput;
 import com.epic60869.sky2m.custom.util.ColorPickerWidget;

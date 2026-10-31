@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.portfolio;
 
-import com.epic60869.sky2m.Sky2MGuiStyle;
+import com.epic60869.sky2m.gui.Sky2MGuiStyle;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;

@@ -84,7 +84,7 @@ public final class SkyHelperNetworth {
     /** Starts loading the prices and Hypixel's item list in the background, so the first networth doesn't wait on them. */
     public static void warm() {
         prices();
-        com.epic60869.sky2m.PriceService.requestItems();
+        com.epic60869.sky2m.price.PriceService.requestItems();
     }
 
     /**
@@ -92,7 +92,7 @@ public final class SkyHelperNetworth {
      * PriceService (downloaded once per start). Fails if the download fails; asking again retries.
      */
     public static CompletableFuture<Map<String, JsonObject>> items() {
-        return com.epic60869.sky2m.PriceService.loadItems();
+        return com.epic60869.sky2m.price.PriceService.loadItems();
     }
 
     private static CompletableFuture<String> get(String url) {

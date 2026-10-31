@@ -26,8 +26,7 @@ public final class BuiltinModels {
     public record Entry(String id, String name, String resource) {
     }
 
-    public static final List<Entry> ALL = List.of(
-            new Entry("generic_man", "Generic Man", "/assets/sky2m/playasmob/generic-man/generic-man.bbmodel"));
+    public static final List<Entry> ALL = List.of();
 
     /** How a bundled model is placed: its own size, fitted to the player's height, facing the way the player does. */
     private static final CustomModels.ServerModelPlacement PLACEMENT = new CustomModels.ServerModelPlacement(1f, 0f, true);
@@ -39,7 +38,7 @@ public final class BuiltinModels {
     private BuiltinModels() {
     }
 
-    /** {@code value} ("builtin:generic_man") when it names a bundled model, else null. */
+    /** {@code value} ("builtin:<id>") when it names a bundled model, else null. */
     public static String sanitize(String value) {
         Entry e = entry(value);
         return e == null ? null : PREFIX + e.id();
@@ -52,7 +51,7 @@ public final class BuiltinModels {
         return null;
     }
 
-    /** The model's name ("Generic Man"), or the value itself when it is not a bundled model. */
+    /** The model's name ("Name"), or the value itself when it is not a bundled model. */
     public static String displayName(String value) {
         Entry e = entry(value);
         return e == null ? String.valueOf(value) : e.name();

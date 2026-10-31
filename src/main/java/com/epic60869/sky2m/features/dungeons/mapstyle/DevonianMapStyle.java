@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.dungeons.mapstyle;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -309,12 +309,20 @@ public final class DevonianMapStyle implements MapStyleRenderer {
     // ---------------------------------------------------------------- players
 
     private static void drawPlayers(GuiGraphicsExtractor g, MapView view, Geo geo, boolean heads) {
+        // Heads come in map-item pixels; this style lays rooms out on its own padded grid, so they're moved onto it
+        // (a room slot's pixels span [col, col + roomSize/pitch] cells there, offset by the room inset). Drawn at the
+        // map-item pixel, heads sat away from the room they were in, further the nearer the map's edge.
+        double pitch = view.roomSize() + view.gap();
+        double roomOffset = (1.0 - ROOM_WIDTH) * 0.5;
         // Devonian draws your own marker on top; keep the same order (others first).
         for (int pass = 0; pass < 2; pass++) {
             for (MapView.Head head : view.heads()) {
                 if (head.self() != (pass == 1)) continue;
+                double col = (head.x() - view.startX()) / pitch;
+                double row = (head.y() - view.startY()) / pitch;
                 g.pose().pushMatrix();
-                g.pose().translate(head.x(), head.y());
+                g.pose().translate((float) (col * geo.cell() + geo.ox() + roomOffset * geo.cell()),
+                    (float) (row * geo.cell() + geo.oy() + roomOffset * geo.cell()));
                 g.pose().rotate((float) Math.toRadians(head.yaw() + 180f));
                 if (!head.self() && heads && head.skin() != null) {
                     // 2.5 head scale: a face about 10 per cent of the map wide

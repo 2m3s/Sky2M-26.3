@@ -60,6 +60,7 @@ public final class SbcCommands {
             new Help("/s2 calendar", "Upcoming SkyBlock events"),
             new Help("/s2 portfolio", "Your portfolio"),
             new Help("/s2 collections", "How much your collections went up"),
+            new Help("/s2 mp", "Missing accessories, cheapest Magical Power first"),
             new Help("/s2 trackcollection", "Track a collection"),
             new Help("/s2 itemnotify", "Item notifications"),
             new Help("/s2 helditem", "Held item editor"),

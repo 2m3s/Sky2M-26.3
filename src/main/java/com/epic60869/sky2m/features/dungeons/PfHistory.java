@@ -1,10 +1,10 @@
 package com.epic60869.sky2m.features.dungeons;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MPlayerNotes;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.social.Sky2MPlayerNotes;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
-import com.epic60869.sky2m.features.misc.PartyCommands;
+import com.epic60869.sky2m.features.misc.chat.PartyCommands;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -238,7 +238,7 @@ public final class PfHistory {
         }
         out.append(Component.literal(String.join(" · ", parts)).withStyle(ChatFormatting.WHITE));
         // On a join the note shows by itself (Sky2MPlayerNotes); /s2 pfhistory <name> includes it.
-        String note = always ? com.epic60869.sky2m.Sky2MPlayerNotes.note(name) : null;
+        String note = always ? com.epic60869.sky2m.social.Sky2MPlayerNotes.note(name) : null;
         if (note != null) out.append(Component.literal("  Note: ").withStyle(ChatFormatting.GOLD)).append(Component.literal(note).withStyle(ChatFormatting.YELLOW));
         return out;
     }

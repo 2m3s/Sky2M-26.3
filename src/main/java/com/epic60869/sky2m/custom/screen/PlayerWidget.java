@@ -17,7 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
-import com.epic60869.sky2m.mixin.Sky2MInventoryScreenInvoker;
+import com.epic60869.sky2m.mixin.gui.Sky2MInventoryScreenInvoker;
 
 public class PlayerWidget extends AbstractWidget {
 	private static final Identifier INNER_SPACE_TEXTURE = Compat.id("menu_inner_space");

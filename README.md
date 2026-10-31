@@ -27,4 +27,4 @@ An all-in-one Fabric mod for Hypixel SkyBlock on Minecraft 26.3. Formerly SkyBal
 
 ## Credits
 
-Sky2M includes code from other open-source mods; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Sky2M includes code from other open-source mods.

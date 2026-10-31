@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.qol;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
@@ -150,7 +150,7 @@ public final class VisualTweaks {
         public float farDistance = 48;
 
         @Expose
-        @ConfigOption(name = "Armor Hider", desc = "Don't draw armor on players, like SkyHanni's hide armor: only yours, other players', or everyone's. Choose the pieces below.")
+        @ConfigOption(name = "Armor Hider", desc = "Don't draw armor on players: only yours, other players', or everyone's. Choose the pieces below.")
         @ConfigEditorDropdown
         public ArmorHide armor = ArmorHide.OFF;
 
@@ -170,7 +170,7 @@ public final class VisualTweaks {
         public String particleList = "";
 
         @Expose
-        @ConfigOption(name = "Disconnect Fix", desc = "NoFrills' fix: an entity data packet Hypixel sends in a broken form is skipped instead of kicking you with \"Network Protocol Error\".")
+        @ConfigOption(name = "Disconnect Fix", desc = "An entity data packet Hypixel sends in a broken form is skipped instead of kicking you with \"Network Protocol Error\".")
         @ConfigEditorBoolean
         public boolean disconnectFix = false;
     }

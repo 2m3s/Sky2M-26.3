@@ -70,7 +70,7 @@ public final class SbcInventoryScreen extends Screen {
         if (item == null) return 0;
         String id = Sbc.str(item, "id");
         if (id.isEmpty()) return 0;
-        double each = com.epic60869.sky2m.Sky2MPriceTooltip.price(id, com.epic60869.sky2m.features.FeatureConfigs.ProfitPriceSource.INSTANT_SELL);
+        double each = com.epic60869.sky2m.price.Sky2MPriceTooltip.price(id, com.epic60869.sky2m.features.FeatureConfigs.ProfitPriceSource.INSTANT_SELL);
         return each <= 0 ? 0 : each * Math.max(1, Sbc.lng(item, "count", 1));
     }
 

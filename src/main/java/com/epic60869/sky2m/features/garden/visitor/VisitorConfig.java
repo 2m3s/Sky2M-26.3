@@ -49,22 +49,27 @@ public final class VisitorConfig {
     @Expose
     @ConfigOption(name = "Notification Chat", desc = "Show in chat when a new visitor is visiting your island.")
     @ConfigEditorBoolean
-    public boolean notificationChat = false;
+    public boolean notificationChat = true;
 
     @Expose
     @ConfigOption(name = "Compact Chat", desc = "Compact reward summary messages when you accept an offer.")
     @ConfigEditorBoolean
-    public boolean compactRewardChat = false;
+    public boolean compactRewardChat = true;
 
     @Expose
     @ConfigOption(name = "Notification Title", desc = "Show a title when a new visitor is visiting your island.")
     @ConfigEditorBoolean
-    public boolean notificationTitle = false;
+    public boolean notificationTitle = true;
 
     @Expose
     @ConfigOption(name = "Highlight Status", desc = "Highlight the status for visitors with a text above or with color.")
     @ConfigEditorDropdown
     public HighlightMode highlightStatus = HighlightMode.DISABLED;
+
+    @Expose
+    @ConfigOption(name = "Accepted / Refused Glow", desc = "A visitor glows green after you accept its offer and red after you refuse it, while it walks off.")
+    @ConfigEditorBoolean
+    public boolean servedGlow = true;
 
     public enum HighlightMode {
         COLOR("Color Only"),
@@ -95,12 +100,12 @@ public final class VisitorConfig {
     @Expose
     @ConfigOption(name = "Hypixel Message", desc = "Hide the chat message from Hypixel that a new visitor has arrived at your garden.")
     @ConfigEditorBoolean
-    public boolean hypixelArrivedMessage = false;
+    public boolean hypixelArrivedMessage = true;
 
     @Expose
     @ConfigOption(name = "Hide Chat", desc = "Hide chat messages from the visitors in the garden. (Except those with long dialogues)")
     @ConfigEditorBoolean
-    public boolean hideChat = false;
+    public boolean hideChat = true;
 
     @Expose
     @ConfigOption(name = "Accept Hotkey", desc = "Accept a visitor when you press this keybind while in the visitor GUI.\n§eUseful for getting Ephemeral Gratitudes during the Great Spook event.")
@@ -141,19 +146,24 @@ public final class VisitorConfig {
         public boolean enabled = false;
 
         @Expose
-        @ConfigOption(name = "Sixth Visitor Estimate", desc = "Estimate when the sixth visitor in the queue will arrive.\n§eMay be inaccurate with co-op members farming simultaneously.")
-        @ConfigEditorBoolean
-        public boolean sixthVisitorEnabled = true;
+        @ConfigOption(name = "Max Occupancy", desc = "Your Max Occupancy visitor upgrade tier from SkyMart (0 to 5). Each tier adds one visitor to the queue (5 to 10).\n§eThe timer also learns the queue size by itself the first time it sees the queue full.")
+        @ConfigEditorSlider(minValue = 0f, maxValue = 5f, minStep = 1f)
+        public int maxOccupancy = 0;
 
         @Expose
-        @ConfigOption(name = "Sixth Visitor Warning", desc = "Notify when it is believed that the sixth visitor has arrived.\n§eMay be inaccurate with co-op members farming simultaneously.")
+        @ConfigOption(name = "Next Visitor When Full", desc = "While the visitor queue is full, keep counting down to when the next visitor would have arrived, so you know if one is ready to come as soon as you serve a visitor.\n§eAn estimate: may be inaccurate with co-op members farming at the same time.")
         @ConfigEditorBoolean
-        public boolean sixthVisitorWarning = true;
+        public boolean fullQueueEstimate = true;
+
+        @Expose
+        @ConfigOption(name = "Next Visitor Ready Warning", desc = "Show a title when the countdown above runs out while the queue is full.\n§eAn estimate: may be inaccurate with co-op members farming at the same time.")
+        @ConfigEditorBoolean
+        public boolean fullQueueWarning = true;
 
         @Expose
         @ConfigOption(name = "New Visitor Ping", desc = "Ping you when you are less than 10 seconds away from getting a new visitor.\n§eUseful for getting Ephemeral Gratitudes during the Great Spook event.")
         @ConfigEditorBoolean
-        public boolean newVisitorPing = false;
+        public boolean newVisitorPing = true;
     }
 
     public static final class ShoppingList {
@@ -165,12 +175,12 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Only when Close", desc = "Only show the shopping list when close to the visitors.")
         @ConfigEditorBoolean
-        public boolean onlyWhenClose = false;
+        public boolean onlyWhenClose = true;
 
         @Expose
         @ConfigOption(name = "Bazaar Alley", desc = "Show the Visitor Items List while inside the Bazaar Alley in the Hub.\n§eHelps in buying the correct amount when not having a §6Booster Cookie §ebuff active.")
         @ConfigEditorBoolean
-        public boolean inBazaarAlley = true;
+        public boolean inBazaarAlley = false;
 
         @Expose
         @ConfigOption(name = "Farming Areas", desc = "Show the Visitor Shopping List while on the Farming Islands or inside the Farm in the Hub.\n§eHelps in farming the correct amount, especially when in the early game.")
@@ -185,7 +195,7 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Show Sack Count", desc = "Show the amount of this item that you already have in your sacks.\n§eOnly updates on sack change messages and when you look in your sacks.")
         @ConfigEditorBoolean
-        public boolean showSackCount = true;
+        public boolean showSackCount = false;
 
         @Expose
         @ConfigOption(name = "Show Super Craft", desc = "Show super craft button if there are enough materials to make in the sack.")
@@ -193,14 +203,24 @@ public final class VisitorConfig {
         public boolean showSuperCraft = false;
 
         @Expose
+        @ConfigOption(name = "Item Icons", desc = "Show each item as its icon instead of its name (Enchanted Hay Bale x2 becomes the Hay Bale's icon and x2).\nTurn off to list the item names as text.")
+        @ConfigEditorBoolean
+        public boolean itemIcons = true;
+
+        @Expose
+        @ConfigOption(name = "Click to Open Bazaar", desc = "Click an item in the shopping list while a menu is open to search the Bazaar for it; the item is highlighted green.")
+        @ConfigEditorBoolean
+        public boolean clickToOpenBazaar = true;
+
+        @Expose
         @ConfigOption(name = "Item Preview", desc = "Show the base type for the required items next to new visitors.\n§cNote that some visitors may require any crop.")
         @ConfigEditorBoolean
-        public boolean itemPreview = true;
+        public boolean itemPreview = false;
     }
 
     public static final class Inventory {
         @Expose
-        @ConfigOption(name = "Visitor Price", desc = "Show the Bazaar price of the items required for the visitors, like in NEU.")
+        @ConfigOption(name = "Visitor Price", desc = "Show the Bazaar price of the items required for the visitors.")
         @ConfigEditorBoolean
         public boolean showPrice = false;
 
@@ -212,7 +232,7 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Copper Price", desc = "Show the price per copper inside the visitor GUI.")
         @ConfigEditorBoolean
-        public boolean copperPrice = true;
+        public boolean copperPrice = false;
 
         @Expose
         @ConfigOption(name = "Copper Time", desc = "Show the time required per copper inside the visitor GUI.")
@@ -287,7 +307,7 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Block Refusing New Visitors", desc = "Prevents refusing a visitor you've never completed an offer with.\n§eDisabled while on bingo.")
         @ConfigEditorBoolean
-        public boolean preventRefusingNew = true;
+        public boolean preventRefusingNew = false;
 
         @Expose
         @ConfigOption(name = "Transparency", desc = "How transparent the offer buttons should be when blocked.")
@@ -297,7 +317,7 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Outline", desc = "Add a red/green line around the best offer buttons.")
         @ConfigEditorBoolean
-        public boolean optionOutline = true;
+        public boolean optionOutline = false;
     }
 
     public static final class DropsStatistics {
@@ -311,7 +331,7 @@ public final class VisitorConfig {
         @ConfigEditorDraggableList
         public List<StatsEntry> textFormat = new ArrayList<>(List.of(
             StatsEntry.TITLE, StatsEntry.TOTAL_VISITORS, StatsEntry.VISITORS_BY_RARITY, StatsEntry.ACCEPTED, StatsEntry.DENIED,
-            StatsEntry.SPACER_1, StatsEntry.COPPER, StatsEntry.FARMING_EXP, StatsEntry.COINS_SPENT, StatsEntry.OVERGROWN_GRASS,
+            StatsEntry.SPACER_1, StatsEntry.COPPER, StatsEntry.FARMING_EXP, StatsEntry.COINS_SPENT, StatsEntry.ECTOPLASM, StatsEntry.OVERGROWN_GRASS,
             StatsEntry.GREEN_BANDANA, StatsEntry.DEDICATION_IV, StatsEntry.COPPER_DYE, StatsEntry.HYPERCHARGE_CHIP,
             StatsEntry.QUICKDRAW_CHIP, StatsEntry.FARMING_EXP_BOOST_EPIC, StatsEntry.UNFULFILLED_JERRYSEED, StatsEntry.VOTER_BADGE,
             StatsEntry.VOTER_BADGE_VIP, StatsEntry.VOTER_BADGE_ELITE, StatsEntry.VOTER_BADGE_SUPREME, StatsEntry.VISITORS_GRATITUDE,
@@ -321,14 +341,14 @@ public final class VisitorConfig {
         @Expose
         @ConfigOption(name = "Display Numbers First", desc = "Whether the number or drop name displays first.\n§eNote: Will not update the preview above!")
         @ConfigEditorBoolean
-        public boolean displayNumbersFirst = true;
+        public boolean displayNumbersFirst = false;
 
         @Expose
         @ConfigOption(name = "Only on Barn Plot", desc = "Only show the overlay while on the Barn plot.")
         @ConfigEditorBoolean
-        public boolean onlyOnBarn = true;
+        public boolean onlyOnBarn = false;
 
-        @ConfigOption(name = "Reset Statistics", desc = "Reset the Visitor Drops Statistics for this profile (SkyHanni's /shresetvisitordrops).")
+        @ConfigOption(name = "Reset Statistics", desc = "Reset the Visitor Drops Statistics for this profile.")
         @ConfigEditorButton(buttonText = "RESET")
         public Runnable reset = GardenVisitors::resetDropStatistics;
 
@@ -348,6 +368,7 @@ public final class VisitorConfig {
             BITS("§b4.2k Bits"),
             MITHRIL_POWDER("§220k Mithril Powder"),
             GEMSTONE_POWDER("§d18k Gemstone Powder"),
+            ECTOPLASM("§5240 Ectoplasm"),
             FLOWERING_BOUQUET("§b23 §9Flowering Bouquet"),
             OVERGROWN_GRASS("§b4 §9Overgrown Grass"),
             GREEN_BANDANA("§b2 §5Green Bandana"),

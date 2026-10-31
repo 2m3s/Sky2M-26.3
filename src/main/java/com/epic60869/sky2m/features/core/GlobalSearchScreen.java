@@ -1,8 +1,8 @@
 package com.epic60869.sky2m.features.core;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MHudEditorScreen;
-import com.epic60869.sky2m.Sky2MKeyMappings;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.gui.Sky2MHudEditorScreen;
+import com.epic60869.sky2m.input.Sky2MKeyMappings;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -25,7 +25,8 @@ import java.util.List;
 
 /**
  * Global search overlay: one search box over every setting, category, section, HUD and /s2 command.
- * Opened by /s2 find [text], /s2 search &lt;text&gt; or an (unbound by default) key. Click a result to open the
+ * Opened by /s2 featuresearch [text], /s2 find [text], /s2 search &lt;text&gt; or an (unbound by default) key. The text can
+ * be a feature's name or a description of what it does. Click a result to open the
  * settings at it; click a setting's switch to turn it on or off right here.
  */
 public final class GlobalSearchScreen extends Screen {
@@ -85,6 +86,10 @@ public final class GlobalSearchScreen extends Screen {
                         .executes(c -> Compat.queueOpenScreen(new GlobalSearchScreen(null, "")))
                         .then(ClientCommands.argument("text", StringArgumentType.greedyString())
                             .executes(c -> Compat.queueOpenScreen(new GlobalSearchScreen(null, StringArgumentType.getString(c, "text"))))))
+                    .then(ClientCommands.literal("featuresearch")
+                        .executes(c -> Compat.queueOpenScreen(new GlobalSearchScreen(null, "")))
+                        .then(ClientCommands.argument("text", StringArgumentType.greedyString())
+                            .executes(c -> Compat.queueOpenScreen(new GlobalSearchScreen(null, StringArgumentType.getString(c, "text"))))))
                     .then(ClientCommands.literal("search")
                         .then(ClientCommands.argument("text", StringArgumentType.greedyString())
                             .executes(c -> Compat.queueOpenScreen(new GlobalSearchScreen(null, StringArgumentType.getString(c, "text")))))));
@@ -109,7 +114,7 @@ public final class GlobalSearchScreen extends Screen {
     @Override
     protected void init() {
         box = new EditBox(font, left() + 8, top() + 14, panelW() - 16, 18, Component.literal("Search"));
-        box.setHint(Component.literal("Search settings, HUDs and commands").withStyle(ChatFormatting.DARK_GRAY));
+        box.setHint(Component.literal("Search by name, or describe what it does").withStyle(ChatFormatting.DARK_GRAY));
         box.setMaxLength(100);
         box.setValue(query);
         box.setResponder(text -> {

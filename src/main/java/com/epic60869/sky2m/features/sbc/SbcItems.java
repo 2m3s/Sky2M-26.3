@@ -1,9 +1,9 @@
 package com.epic60869.sky2m.features.sbc;
 
-import com.epic60869.sky2m.Sky2MGlobalChat;
+import com.epic60869.sky2m.chat.Sky2MGlobalChat;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
-import com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -269,7 +269,7 @@ public final class SbcItems {
         SHARE_DATA.put(key, own);
         if (!SbcNet.online()) return;
         JsonObject send = packet;
-        mc.execute(() -> com.epic60869.sky2m.Sky2MLogin.whenLoggedIn(() -> Sky2MGlobalChat.send(send)));
+        mc.execute(() -> com.epic60869.sky2m.social.Sky2MLogin.whenLoggedIn(() -> Sky2MGlobalChat.send(send)));
     }
 
     /** Asks the server for a key's items once (answers arrive in {@link #onSharePacket}). */

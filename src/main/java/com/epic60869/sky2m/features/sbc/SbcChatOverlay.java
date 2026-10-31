@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.sbc;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.epic60869.sky2m.mixin.Sky2MChatComponentAccessor;
+import com.epic60869.sky2m.mixin.chat.Sky2MChatComponentAccessor;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;

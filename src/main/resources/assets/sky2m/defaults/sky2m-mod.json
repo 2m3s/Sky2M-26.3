@@ -5,7 +5,7 @@
     "warnKeyConflicts": true,
     "performanceWarnings": true,
     "errorReporter": true,
-    "defaultsVersion": 4,
+    "defaultsVersion": 8,
     "updateNotifications": true
   },
   "chat": {
@@ -107,6 +107,9 @@
       "bazaar": true,
       "auctionHouse": true,
       "recipes": true
+    },
+    "social": {
+      "profileIcons": true
     }
   },
   "online": {
@@ -148,12 +151,6 @@
   "dungeons": {
     "dungeonSim": {
       "titleButton": false
-    },
-    "crossModBridge": {
-      "enabled": true,
-      "odin": true,
-      "noamm": true,
-      "devonian": true
     },
     "teamMelody": {
       "hud": true,
@@ -593,9 +590,7 @@
     },
     "huds": {
       "phaseDisplay": false,
-      "showMinibosses": true,
-      "t5PhaseTimes": false,
-      "t5PhaseSummary": false
+      "showMinibosses": true
     },
     "targetHighlight": {
       "enabled": true,
@@ -617,11 +612,6 @@
       "enabled": true,
       "colour": "0:255:255:255:255",
       "scale": 2
-    },
-    "phaseTimer": {
-      "enabled": false,
-      "chat": false,
-      "phaseAlerts": false
     },
     "personalBest": {
       "timeToKill": true,
@@ -656,16 +646,17 @@
     "zealotCounter": false,
     "legionDisplay": false,
     "cocoonAlert": {
-      "enabled": true
+      "enabled": true,
+      "label": true,
+      "onlyImportant": true
     },
     "rareDrops": {
       "copy": true,
       "copyRng": true,
       "copySlayer": true,
       "copyGarden": false,
-      "animation": true,
-      "thresholdMillions": 5,
-      "totemAnimation": true
+      "totemAnimation": true,
+      "totemGardenDrops": false
     },
     "bestiary": {
       "enabled": true,
@@ -730,10 +721,10 @@
         "alwaysTp": false,
         "backToGarden": false,
         "highlightInfestedPlots": false,
+        "pestPlotBorders": true,
         "plotPanel": false
       },
       "blocksPerSecond": false,
-      "specialDropAnimation": false,
       "muteOverflowDropSound": false
     },
     "pestHighlight": {
@@ -746,8 +737,9 @@
     "visitors": {
       "timer": {
         "enabled": true,
-        "sixthVisitorEnabled": true,
-        "sixthVisitorWarning": true,
+        "maxOccupancy": 0,
+        "fullQueueEstimate": true,
+        "fullQueueWarning": true,
         "newVisitorPing": true
       },
       "shoppingList": {
@@ -758,6 +750,7 @@
         "showPrice": false,
         "showSackCount": false,
         "showSuperCraft": false,
+        "itemIcons": true,
         "itemPreview": false
       },
       "inventory": {
@@ -806,6 +799,7 @@
           "COPPER",
           "FARMING_EXP",
           "COINS_SPENT",
+          "ECTOPLASM",
           "OVERGROWN_GRASS",
           "GREEN_BANDANA",
           "DEDICATION_IV",
@@ -850,16 +844,6 @@
       "coinRain": false,
       "coinRainSeconds": 3,
       "coinMultiplier": "AUTO"
-    },
-    "rng": {
-      "enabled": true,
-      "background": false,
-      "scale": 1.2,
-      "dropColour": "0:255:85:255:255",
-      "petRarityColours": true,
-      "valueColour": "0:255:255:170:0",
-      "x": 381,
-      "y": 106
     },
     "mouseLock": {
       "enabled": true,
@@ -1137,6 +1121,7 @@
   },
   "skills": {
     "enabled": true,
+    "skillLevelStackSize": true,
     "textAlignmentProperty": "CENTERED",
     "hideInActionBar": true,
     "alwaysShow": false,
@@ -1732,6 +1717,16 @@
         },
         "period": "SESSION"
       }
+    },
+    "rngHud": {
+      "enabled": true,
+      "background": false,
+      "scale": 1.2,
+      "dropColour": "0:255:85:255:255",
+      "petRarityColours": true,
+      "valueColour": "0:255:255:170:0",
+      "x": 381,
+      "y": 106
     }
   },
   "gui": {
@@ -1978,6 +1973,11 @@
       "museum": false,
       "accessories": true
     },
+    "missingAccessories": {
+      "enabled": true,
+      "includeUpgrades": true,
+      "priceSource": "CHEAPEST"
+    },
     "enchantParsing": {
       "colorParsing": true,
       "format": "NORMAL",
@@ -1999,6 +1999,7 @@
         "useAdvancedPoorColor": false,
         "advancedPoorColor": "0:255:255:255:85"
       },
+      "hideVanillaEnchants": true,
       "hideEnchantDescriptions": false,
       "stackingEnchantProgress": true
     },
@@ -2277,7 +2278,7 @@
       "itemSize": 18,
       "hideWhen": "SEARCH",
       "leftClick": "RECIPE",
-      "rightClick": "WIKI",
+      "rightClick": "USAGE",
       "middleClick": "NOTHING",
       "hideVanilla": true,
       "prefixFirst": false,
@@ -2318,6 +2319,14 @@
       "enabled": false,
       "priceMode": "RANGE",
       "history": false
+    },
+    "sackDisplay": {
+      "enabled": true,
+      "defaultSource": "INSTA_SELL",
+      "sortBy": "VALUE",
+      "hideEmpty": true,
+      "showCapacity": true,
+      "compactNumbers": true
     },
     "itemPickupLog": {
       "enabled": true,
@@ -2418,7 +2427,6 @@
         "sinceMessages": false,
         "announceCocoon": false
       },
-      "inquisitorGamble": false,
       "showPartyMessages": true,
       "partyCoordWaypoints": true,
       "partyCheckmarks": true,

@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.social;
 
 import com.epic60869.sky2m.features.core.Sky2MChat;
-import com.epic60869.sky2m.features.misc.PartyCommands;
+import com.epic60869.sky2m.features.misc.chat.PartyCommands;
 import com.epic60869.sky2m.sim.util.ModChat;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;

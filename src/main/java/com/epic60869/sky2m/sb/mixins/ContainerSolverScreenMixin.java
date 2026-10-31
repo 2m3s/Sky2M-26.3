@@ -39,12 +39,12 @@ public abstract class ContainerSolverScreenMixin {
 	@Inject(method = "slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V", at = @At("HEAD"), cancellable = true)
 	private void sky2m$onSlotClicked(Slot slot, int slotId, int button, ContainerInput input, CallbackInfo ci) {
 		// Sky2M: locked slots and slot binds.
-		if (com.epic60869.sky2m.features.misc.SlotLocking.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot, button, input)) {
+		if (com.epic60869.sky2m.features.misc.items.SlotLocking.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot, button, input)) {
 			ci.cancel();
 			return;
 		}
 		// Sky2M: Auction Price Guard stops listing far too cheap or buying far too dear until you click again.
-		if (com.epic60869.sky2m.features.misc.AuctionGuard.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot)) {
+		if (com.epic60869.sky2m.features.misc.items.AuctionGuard.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot)) {
 			ci.cancel();
 			return;
 		}
@@ -58,7 +58,7 @@ public abstract class ContainerSolverScreenMixin {
 			ci.cancel();
 			return;
 		}
-		com.epic60869.sky2m.features.misc.PricePaid.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot);
+		com.epic60869.sky2m.features.misc.items.PricePaid.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot);
 		// Sky2M: Party Finder Stats remembers the floor of the group you join or create.
 		com.epic60869.sky2m.features.dungeons.PartyFinderStats.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot);
 		// Sky2M: visitor reward warning (blocked offer buttons) and the Supercraft button.

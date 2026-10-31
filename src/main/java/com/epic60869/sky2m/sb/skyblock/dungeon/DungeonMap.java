@@ -108,6 +108,11 @@ public class DungeonMap {
 	private static @Nullable UUID extractPlayerHeads(GuiGraphicsExtractor graphics, Level level, MapItemSavedData state, double mouseX, double mouseY, @Nullable UUID enlarge) {
 		if (!DungeonManager.isClearingDungeon()) return null;
 
+		// Sky2M: players in render distance claim the decoration nearest them first, and the decorations left over go to
+		// the rest in player list order. Handing decorations out purely in order drew a far-away teammate's head on a
+		// nearby one's marker (two heads stacked, one missing) whenever the two orders didn't line up.
+		DungeonPlayerManager.DungeonPlayer[] players = DungeonPlayerManager.getPlayers();
+		Map<String, DungeonPlayerManager.DungeonPlayer> claimed = claimDecorations(level, state, players);
 		// Used to index through the player list to find which dungeon player corresponds to which map decoration.
 		// Start at 1 because the first entry in the player list is the self player.
 		int i = 1;
@@ -118,10 +123,16 @@ public class DungeonMap {
 			// If the map decoration is the self player, use the first player in this list. The self player is always the first player in the list.
 			if (mapDecoration.getValue().type().value().equals(MapDecorationTypes.FRAME.value())) {
 				if (!SkyblockerConfigManager.get().dungeons.dungeonMap.showSelfHead) continue;
-				dungeonPlayer = DungeonPlayerManager.getPlayers()[0];
-			} else while (i < DungeonPlayerManager.getPlayers().length && (dungeonPlayer == null || !dungeonPlayer.alive())) { // Find the next alive player in the player list.
-				dungeonPlayer = DungeonPlayerManager.getPlayers()[i];
+				dungeonPlayer = players[0];
+			} else if (claimed.containsKey(mapDecoration.getKey())) {
+				dungeonPlayer = claimed.get(mapDecoration.getKey());
+			} else while (i < players.length && (dungeonPlayer == null || !dungeonPlayer.alive() || claimed.containsValue(dungeonPlayer))) { // Find the next alive, unclaimed player in the player list.
+				dungeonPlayer = players[i];
 				i++;
+			}
+			if (dungeonPlayer != null && claimed.containsValue(dungeonPlayer) && !claimed.containsKey(mapDecoration.getKey())) {
+				// Every player left is already drawn at their own marker: this decoration has nobody.
+				continue;
 			}
 
 			// If we still didn't find a valid dungeon player after searching though the entire player list, something is wrong.
@@ -156,6 +167,34 @@ public class DungeonMap {
 			graphics.pose().popMatrix();
 		}
 		return hovered;
+	}
+
+	/** Max distance, in map pixels, between a loaded player and the decoration taken as theirs. */
+	private static final double CLAIM_DISTANCE = 5;
+
+	/** Sky2M: for each alive teammate in render distance, the non-self decoration nearest them (by decoration key). */
+	private static Map<String, DungeonPlayerManager.DungeonPlayer> claimDecorations(Level level, MapItemSavedData state, DungeonPlayerManager.DungeonPlayer[] players) {
+		Map<String, DungeonPlayerManager.DungeonPlayer> claimed = new java.util.HashMap<>();
+		Map<String, MapDecoration> decorations = ((MapItemSavedDataAccessor) state).getDecorations();
+		for (int p = 1; p < players.length; p++) {
+			DungeonPlayerManager.DungeonPlayer player = players[p];
+			if (player == null || !player.alive() || player.uuid() == null) continue;
+			Player entity = level.getPlayerByUUID(player.uuid());
+			if (entity == null) continue;
+			Vector2dc pos = DungeonMapUtils.getMapPosFromPhysical(DungeonManager.getPhysicalEntrancePos(), DungeonManager.getMapEntrancePos(), DungeonManager.getMapRoomSize(), entity.position());
+			String best = null;
+			double bestDistance = CLAIM_DISTANCE * CLAIM_DISTANCE;
+			for (Map.Entry<String, MapDecoration> e : decorations.entrySet()) {
+				if (claimed.containsKey(e.getKey()) || e.getValue().type().value().equals(MapDecorationTypes.FRAME.value())) continue;
+				double distance = pos.distanceSquared(e.getValue().x() / 2d + 64, e.getValue().y() / 2d + 64);
+				if (distance <= bestDistance) {
+					bestDistance = distance;
+					best = e.getKey();
+				}
+			}
+			if (best != null) claimed.put(best, player);
+		}
+		return claimed;
 	}
 
 	/** When each decoration's error was last logged: it is hit every frame while the tab list's party is missing. */

@@ -1,6 +1,6 @@
 /*
  * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
- * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ * Copyright (c) 2026 Killer560.
  */
 package com.epic60869.sky2m.sim.roomdatabase;
 
@@ -67,10 +67,7 @@ public final class RoomDatabase {
     private static final long MAX_EXTRACTED_BYTES = 256L * 1024 * 1024;
 
     private static volatile Map<Integer, RoomEntry> byCoreHash;
-    /** Same entries as {@link #byCoreHash}, keyed by {@link RoomEntry#name} instead - added for
-     *  {@code com.epic60869.sky2m.sim.livemap.PartyMapIntel} (2026-09-21), which resolves a teammate-REPORTED room
-     *  name to the same real database entry local scanning would have found, so it draws with the same real
-     *  type/secrets-total instead of a guess. Built alongside {@code byCoreHash} in {@link #loadBlocking()};
+    /** Same entries as {@link #byCoreHash}, keyed by {@link RoomEntry#name} instead. Built alongside {@code byCoreHash} in {@link #loadBlocking()};
      *  read-only, additive - nothing about hash lookup changed. */
     private static volatile Map<String, RoomEntry> byName;
     private static final AtomicBoolean loading = new AtomicBoolean(false);

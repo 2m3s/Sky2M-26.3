@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.core;
 
-import com.epic60869.sky2m.Sky2MTabWidgetManager;
+import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
@@ -160,6 +160,7 @@ public final class Sky2MLocation {
             if (text.startsWith("Area: ")) { newArea = text.substring(6).trim(); break; }
             if (text.startsWith("Dungeon: ")) { newArea = text.substring(9).trim(); break; }
         }
+        if (testArea != null) newArea = testArea;
         // The sidebar's floor, or (when it can't be read) the one from the run's start message or the F7 bosses.
         floor = !newFloor.isEmpty() ? newFloor : newArea.equals("Catacombs") || newArea.isEmpty() ? chatFloor : "";
         setArea(newArea);
@@ -206,6 +207,9 @@ public final class Sky2MLocation {
         return stripped == null ? "" : stripped;
     }
 
+    /** The tab list's "Area: ..." for the fake-SkyBlock game test (singleplayer has no Hypixel tab list); null in play. */
+    public static volatile String testArea;
+
     public static boolean onSkyblock() { return onSkyblock; }
 
     private static long lastOnSkyblockAt;
@@ -217,7 +221,7 @@ public final class Sky2MLocation {
      * From Killer560's Mod's Skyblock Only (MIT).
      */
     public static boolean skyblockOnlyAllows() {
-        com.epic60869.sky2m.Sky2MConfig config = com.epic60869.sky2m.Sky2MConfig.current();
+        com.epic60869.sky2m.config.Sky2MConfig config = com.epic60869.sky2m.config.Sky2MConfig.current();
         if (config == null || !config.general.skyblockOnly || onSkyblock) return true;
         if (Minecraft.getInstance().hasSingleplayerServer()) return true;
         return System.currentTimeMillis() - lastOnSkyblockAt < 10_000L;

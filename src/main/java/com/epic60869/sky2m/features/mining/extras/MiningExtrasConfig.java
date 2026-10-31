@@ -11,12 +11,12 @@ public final class MiningExtrasConfig {
 
     public static final class GlaciteMineshaft {
         @Expose
-        @ConfigOption(name = "Corpse Finder", desc = "Mark Lapis, Tungsten, Umber and Vanguard corpses with a waypoint once you have seen them (not through walls), and turn the waypoint green when you loot them. Based on SkyHanni's Corpse Locator.")
+        @ConfigOption(name = "Corpse Finder", desc = "Mark Lapis, Tungsten, Umber and Vanguard corpses with a waypoint once you have seen them (not through walls), and turn the waypoint green when you loot them.")
         @ConfigEditorBoolean
         public boolean corpseFinder = false;
 
         @Expose
-        @ConfigOption(name = "Corpse Profit", desc = "After looting a corpse, a chat message with its profit: the loot's value minus the key it used (Resourceful saves count). Hover for the items. Based on SkyHanni's Profit per Corpse.")
+        @ConfigOption(name = "Corpse Profit", desc = "After looting a corpse, a chat message with its profit: the loot's value minus the key it used (Resourceful saves count). Hover for the items.")
         @ConfigEditorBoolean
         public boolean corpseProfit = false;
 
@@ -81,7 +81,7 @@ public final class MiningExtrasConfig {
 
     public static final class FossilExcavator {
         @Expose
-        @ConfigOption(name = "Solver", desc = "In the Fossil Excavator, highlight the best tile to chisel next and show its chance and which fossils are still possible. Based on SkyHanni's Fossil Excavator Solver.")
+        @ConfigOption(name = "Solver", desc = "In the Fossil Excavator, highlight the best tile to chisel next and show its chance and which fossils are still possible.")
         @ConfigEditorBoolean
         public boolean solver = false;
 
@@ -91,7 +91,7 @@ public final class MiningExtrasConfig {
         public boolean showChance = true;
 
         @Expose
-        @ConfigOption(name = "Profit Tracker", desc = "HUD with the loot of your fossil excavations in the Fossil Research Center, their value, and the profit after the Suspicious Scrap each one used. Based on SkyHanni's Excavator Profit Tracker. Move it in /s2 gui.")
+        @ConfigOption(name = "Profit Tracker", desc = "HUD with the loot of your fossil excavations in the Fossil Research Center, their value, and the profit after the Suspicious Scrap each one used. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean profitTracker = false;
 

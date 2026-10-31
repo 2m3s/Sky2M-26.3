@@ -44,7 +44,7 @@ public final class HelperConfig {
 
     public static final class Composter {
         @Expose
-        @ConfigOption(name = "Overlay", desc = "SkyHanni's Composter Overlay: while the Composter or Composter Upgrades menu is open, show the time per compost, what a compost costs with the cheapest Organic Matter and Fuel, how much to buy to fill it up, the profit per hour and, in the upgrades menu, what the upgrade you hover would change. Open Composter Upgrades once so your upgrade levels are known.")
+        @ConfigOption(name = "Overlay", desc = "While the Composter or Composter Upgrades menu is open, show the time per compost, what a compost costs with the cheapest Organic Matter and Fuel, how much to buy to fill it up, the profit per hour and, in the upgrades menu, what the upgrade you hover would change. Open Composter Upgrades once so your upgrade levels are known.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -61,7 +61,7 @@ public final class HelperConfig {
 
     public static final class Stereo {
         @Expose
-        @ConfigOption(name = "Display", desc = "SkyHanni's Stereo Harmony Display: HUD with the vinyl your Vacuum is playing and which pest it attracts. Open the Stereo Harmony menu or hold the Vacuum once so it is known.")
+        @ConfigOption(name = "Display", desc = "HUD with the vinyl your Vacuum is playing and which pest it attracts. Open the Stereo Harmony menu or hold the Vacuum once so it is known.")
         @ConfigEditorBoolean
         public boolean display = false;
 
@@ -71,14 +71,14 @@ public final class HelperConfig {
         public boolean hideWhenNone = true;
 
         @Expose
-        @ConfigOption(name = "Vinyl Helper", desc = "Skyblocker's Stereo Harmony helper: in the Stereo Harmony menu, outline the vinyl that attracts the pest of the crop you are farming (the farming tool you hold): green to pick it, yellow when it is already playing.")
+        @ConfigOption(name = "Vinyl Helper", desc = "In the Stereo Harmony menu, outline the vinyl that attracts the pest of the crop you are farming (the farming tool you hold): green to pick it, yellow when it is already playing.")
         @ConfigEditorBoolean
         public boolean helper = false;
     }
 
     public static final class Filter {
         @Expose
-        @ConfigOption(name = "Display", desc = "SkyHanni's Atmospheric Filter Display: HUD with the current season and the perk the Atmospheric Filter gives for it.")
+        @ConfigOption(name = "Display", desc = "HUD with the current season and the perk the Atmospheric Filter gives for it.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -105,31 +105,31 @@ public final class HelperConfig {
 
     public static final class Greenhouse {
         @Expose
-        @ConfigOption(name = "DNA Analyzer Solver", desc = "SkyHanni's DNA Analyzer solver: in the DNA menu, outline the next two DNA pieces to swap. The solver finds the fewest swaps; the count shows in a HUD. Does not click for you.")
+        @ConfigOption(name = "DNA Analyzer Solver", desc = "In the DNA menu, outline the next two DNA pieces to swap. The solver finds the fewest swaps; the count shows in a HUD. Does not click for you.")
         @ConfigEditorBoolean
         public boolean dnaSolver = false;
 
         @Expose
-        @ConfigOption(name = "Phantomleaf Solver", desc = "SkyHanni's Phantomleaf solver: after \"Phantomleaf: Poof! Try and find me!\", stand still and the beacon marks where it hides, worked out from the note block's volume. If several spots are possible, move a little to narrow it down.")
+        @ConfigOption(name = "Phantomleaf Solver", desc = "After \"Phantomleaf: Poof! Try and find me!\", stand still and the beacon marks where it hides, worked out from the note block's volume. If several spots are possible, move a little to narrow it down.")
         @ConfigEditorBoolean
         public boolean phantomleaf = false;
     }
 
     public static final class Anita {
         @Expose
-        @ConfigOption(name = "Extra Farming Fortune", desc = "SkyHanni's Anita Extra Farming Fortune: on the Extra Farming Fortune item in Anita's shop, show the Jacob's Tickets and Gold Medals needed to max it, and what the tickets cost.")
+        @ConfigOption(name = "Extra Farming Fortune", desc = "On the Extra Farming Fortune item in Anita's shop, show the Jacob's Tickets and Gold Medals needed to max it, and what the tickets cost.")
         @ConfigEditorBoolean
         public boolean extraFarmingFortune = false;
 
         @Expose
-        @ConfigOption(name = "Medal Profit", desc = "SkyHanni's Anita Medal Profit: in Anita's shop, show the profit per Bronze Medal of every item you can buy (the sell price minus any extra items it costs, divided by the medals it costs). Silver counts as 2 bronze and Gold as 8.")
+        @ConfigOption(name = "Medal Profit", desc = "In Anita's shop, show the profit per Bronze Medal of every item you can buy (the sell price minus any extra items it costs, divided by the medals it costs). Silver counts as 2 bronze and Gold as 8.")
         @ConfigEditorBoolean
         public boolean medalProfit = false;
     }
 
     public static final class Weight {
         @Expose
-        @ConfigOption(name = "Display", desc = "SkyHanni's farming weight display: HUD with your Elite (elitebot.dev) farming weight, kept up to date as you break crops and the weight you gain per hour, with the time to reach your goal. Gains between Elite's updates are an estimate from your Farming Fortune.")
+        @ConfigOption(name = "Display", desc = "HUD with your Elite (elitebot.dev) farming weight, kept up to date as you break crops and the weight you gain per hour, with the time to reach your goal. Gains between Elite's updates are an estimate from your Farming Fortune.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 

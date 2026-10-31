@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.fishing;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -90,7 +90,7 @@ public final class FishingExtras {
 
     private FishingExtras() {}
 
-    private static Config config() {
+    static Config config() {
         Sky2MConfig c = Sky2MConfig.current();
         return c == null || c.fishing == null ? null : c.fishing.extras;
     }
@@ -403,7 +403,7 @@ public final class FishingExtras {
 
     public static final class Config {
         @Expose
-        @ConfigOption(name = "Failed Cast Alert", desc = "A title when your bobber hasn't reached water or lava a moment after you cast it (Riccio Fishing Utils).")
+        @ConfigOption(name = "Failed Cast Alert", desc = "A title when your bobber hasn't reached water or lava a moment after you cast it.")
         @ConfigEditorBoolean
         public boolean failedCastAlert = false;
 
@@ -421,6 +421,16 @@ public final class FishingExtras {
         @ConfigOption(name = "Highlight Hotspots", desc = "A coloured box around fishing hotspots, visible through walls.")
         @ConfigEditorBoolean
         public boolean highlightHotspots = false;
+
+        @Expose
+        @ConfigOption(name = "Guess Hotspot Radar", desc = "Right-click a Hotspot Radar and the flame trail it shows is followed to the hotspot: a HOTSPOT label and its distance appear there.")
+        @ConfigEditorBoolean
+        public boolean guessHotspotRadar = true;
+
+        @Expose
+        @ConfigOption(name = "Line to Hotspot", desc = "Draw a line from your crosshair to the guessed hotspot. Needs Guess Hotspot Radar.")
+        @ConfigEditorBoolean
+        public boolean lineToHotspot = true;
 
         @Expose
         @ConfigOption(name = "Hotspot Colour", desc = "Colour of the hotspot highlight.")

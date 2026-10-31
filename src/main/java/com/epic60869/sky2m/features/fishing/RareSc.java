@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.fishing;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -55,7 +55,7 @@ public final class RareSc {
     private static final Pattern NAMETAG = Pattern.compile("^(?:﴾ )?\\[Lv\\d+] \\S+ (.+) ([\\d.,]+[kKmMbB]?)/([\\d.,]+[kKmMbB]?)❤(?: ﴿)?( ✯)?.*$");
 
     public enum PartyStyle {
-        CLASSIC("Sky2M Classic"), RFU("Riccio (RFU)"), CUSTOM("Custom");
+        CLASSIC("Sky2M Classic"), RFU("Surfaced"), CUSTOM("Custom");
 
         private final String displayName;
 
@@ -125,7 +125,7 @@ public final class RareSc {
         public boolean filledLootshareRange = true;
 
         @Expose
-        @ConfigOption(name = "Party Message Style", desc = "How your shared sea creature catches look in party chat. Sky2M Classic: \"--> A YETI has spawned <--\" (understood by Sky2M and Feesh users). Riccio Fishing Utils: \"WOAH! A Yeti just surfaced! Catch #12 after 2h 5m!\" (understood by Sky2M and RFU users). Custom Template: the two messages below.")
+        @ConfigOption(name = "Party Message Style", desc = "How your shared sea creature catches look in party chat. Sky2M Classic: \"--> A YETI has spawned <--\" (understood by Sky2M and some other fishing mods). Surfaced: \"WOAH! A Yeti just surfaced! Catch #12 after 2h 5m!\" (understood by Sky2M and some other fishing mods). Custom Template: the two messages below.")
         @ConfigEditorDropdown
         public PartyStyle partyStyle = PartyStyle.CLASSIC;
 

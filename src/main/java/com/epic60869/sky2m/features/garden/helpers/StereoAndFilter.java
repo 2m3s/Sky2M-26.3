@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.garden.helpers;
 
-import com.epic60869.sky2m.Sky2MSkyblockTime;
-import com.epic60869.sky2m.Sky2MMouseLock;
+import com.epic60869.sky2m.tools.Sky2MSkyblockTime;
+import com.epic60869.sky2m.input.Sky2MMouseLock;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.garden.Crops;

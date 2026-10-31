@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.misc.storage;
 
-import com.epic60869.sky2m.Sky2MPriceTooltip;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;

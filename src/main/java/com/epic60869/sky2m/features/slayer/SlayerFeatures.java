@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.slayer;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -59,17 +59,14 @@ public final class SlayerFeatures {
         Sky2MHuds.register("slayer_phase", "Slayer Boss Phase",
             () -> config() != null && config().phaseDisplay,
             () -> bossLines,
-            List.of(Component.literal("☠ Voidgloom Seraph 45M❤").withStyle(ChatFormatting.RED),
-                Component.literal("Phase 1: ").withStyle(ChatFormatting.YELLOW).append(Component.literal("18.1s").withStyle(ChatFormatting.WHITE)),
-                Component.literal("Downtime: ").withStyle(ChatFormatting.DARK_AQUA).append(Component.literal("3.4s").withStyle(ChatFormatting.WHITE)),
-                Component.literal("Phase 2: ").withStyle(ChatFormatting.GREEN).append(Component.literal("6.2s").withStyle(ChatFormatting.WHITE))),
+            List.of(Component.literal("☠ Voidgloom Seraph 45M❤").withStyle(ChatFormatting.RED)),
             8, 220);
     }
 
     private static void tick(Minecraft mc) {
         FeatureConfigs.Slayer config = config();
         boolean needed = (config != null && config.phaseDisplay) || SlayerTimes.enabled()
-            || EndermanSlayer.needsBoss() || BlazeSlayer.needsBoss() || SlayerPhaseTimer.needsBoss() || VoidgloomLasers.needsBoss();
+            || EndermanSlayer.needsBoss() || BlazeSlayer.needsBoss() || VoidgloomLasers.needsBoss();
         // Without an explicit target, only scan during your quest; a selected player's boss can be observed separately.
         if (mc.player == null || mc.level == null || !needed || !Sky2MLocation.onSkyblock()
             || (selectedBossOwner == null && !onSlayerQuest())) {
@@ -98,7 +95,11 @@ public final class SlayerFeatures {
 
     private static boolean isOwnerTag(String text, String name) {
         String owner = ownerName(text);
-        return owner != null && owner.equalsIgnoreCase(name);
+        if (owner == null) return false;
+        if (owner.equalsIgnoreCase(name)) return true;
+        // "Spawned by: [MVP+] Name" or a trailing symbol: the name is one of its words.
+        for (String word : owner.split("[\\s\\[\\]]+")) if (word.equalsIgnoreCase(name)) return true;
+        return false;
     }
 
     private static String ownerName(String text) {
@@ -155,17 +156,36 @@ public final class SlayerFeatures {
     private static void updateBossLines(Minecraft mc) {
         String name = mc.player.getGameProfile().name().toLowerCase(Locale.ROOT);
         List<Entity> owners = ownerTags(mc);
-        Entity ownOwner = owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), name)).findFirst().orElse(null);
-        if (ownOwner == null) ownOwner = unclaimedBossLabel(mc, owners);
+        // Your "Spawned by" tag with your boss's health next to it. One without (a cocoon's leftover tag, while the
+        // boss that hatched from it has none) doesn't count, and doesn't hide the boss's label from the search below.
+        Entity ownOwner = null;
+        List<Component> ownLines = List.of();
+        List<Entity> others = new ArrayList<>();
+        for (Entity entity : owners) {
+            if (!isOwnerTag(nametag(entity).getString(), name)) {
+                others.add(entity);
+            } else if (ownLines.isEmpty()) {
+                List<Component> health = bossHealthLines(mc, entity);
+                if (!health.isEmpty()) {
+                    ownOwner = entity;
+                    ownLines = health;
+                }
+            }
+        }
+        if (ownOwner == null) {
+            ownOwner = unclaimedBossLabel(mc, others);
+            if (ownOwner != null) ownLines = bossHealthLines(mc, ownOwner);
+        }
         boss = ownOwner == null ? null : mobNear(mc, ownOwner);
-        List<Component> ownLines = ownOwner == null ? List.of() : bossHealthLines(mc, ownOwner);
         String ownText = ownLines.isEmpty() ? null : Sky2MLocation.strip(ownLines.get(0).getString());
         SlayerTimes.onBoss(ownText);
-        SlayerPhaseTimer.onBoss(ownText);
 
-        String targetOwner = selectedBossOwner == null ? name : selectedBossOwner;
-        Entity owner = targetOwner.equals(name) ? ownOwner
-            : owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), targetOwner)).findFirst().orElse(null);
+        String picked = selectedBossOwner == null ? name : selectedBossOwner;
+        Entity pickedOwner = picked.equals(name) ? ownOwner
+            : owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), picked)).findFirst().orElse(null);
+        // The player picked with the cycle key has no boss here (killed, gone, left): show yours instead.
+        String targetOwner = pickedOwner == null ? name : picked;
+        Entity owner = pickedOwner == null ? ownOwner : pickedOwner;
         List<Component> lines = new ArrayList<>();
         if (owner != null) {
             // Someone else's boss picked with the cycle key: everything that follows "the boss" follows theirs.
@@ -184,8 +204,6 @@ public final class SlayerFeatures {
             phaseBoss = "";
         }
         FeatureConfigs.Slayer config = config();
-        // Outside the owner check: the phase times keep showing while a Tier 5 Tarantula is gone between phases.
-        if (config != null && config.t5PhaseTimes && targetOwner.equals(name)) lines.addAll(SlayerPhaseTimer.t5Lines());
         if (config != null && config.showMinibosses) addMinibossLines(mc, lines);
         bossLines = lines;
     }
@@ -202,13 +220,16 @@ public final class SlayerFeatures {
             Component tag = nametag(e);
             if (tag == null) return false;
             for (Component line : splitLines(tag)) {
-                if (Sky2MLocation.strip(line.getString()).trim().equalsIgnoreCase("SLAYER BOSS")) return true;
+                if (isLabel(line, "SLAYER BOSS")) return true;
             }
             return false;
         });
         labels.sort(Comparator.comparingDouble(mc.player::distanceToSqr));
         for (Entity label : labels) {
-            if (owners.stream().anyMatch(owner -> owner.distanceToSqr(label) < 4 * 4)) continue;
+            // Someone else's boss: a "Spawned by" line is next to it and closer to it than to any other boss label.
+            // Being near another player's boss alone doesn't make yours theirs.
+            if (owners.stream().anyMatch(owner -> owner.distanceToSqr(label) < 4 * 4
+                && labels.stream().allMatch(other -> owner.distanceToSqr(label) <= owner.distanceToSqr(other)))) continue;
             if (!bossHealthLines(mc, label).isEmpty()) return label;
         }
         return null;
@@ -219,10 +240,18 @@ public final class SlayerFeatures {
         AABB area = anchor.getBoundingBox().inflate(1.5, 3, 1.5);
         for (Entity e : mc.level.getEntities((Entity) null, area, e -> nametag(e) != null)) {
             for (Component line : splitLines(nametag(e))) {
-                if (Sky2MLocation.strip(line.getString()).trim().equalsIgnoreCase(label)) return line;
+                if (isLabel(line, label)) return line;
             }
         }
         return null;
+    }
+
+    /**
+     * Whether a nametag line is Hypixel's "SLAYER BOSS" / "SLAYER MINIBOSS" label. Hypixel puts an icon in front of
+     * it now, so only the end of the line is compared ("SLAYER MINIBOSS" doesn't end in "SLAYER BOSS").
+     */
+    private static boolean isLabel(Component line, String label) {
+        return Sky2MLocation.strip(line.getString()).trim().toUpperCase(Locale.ROOT).endsWith(label);
     }
 
     /**
@@ -236,7 +265,7 @@ public final class SlayerFeatures {
         for (Entity tagEntity : tags) {
             List<Component> parts = splitLines(nametag(tagEntity));
             for (int i = 0; i < parts.size(); i++) {
-                if (!Sky2MLocation.strip(parts.get(i).getString()).trim().equalsIgnoreCase("SLAYER MINIBOSS")) continue;
+                if (!isLabel(parts.get(i), "SLAYER MINIBOSS")) continue;
                 Component health = i + 1 < parts.size() ? parts.get(i + 1) : healthBelow(mc, tagEntity);
                 if (health == null) continue;
                 lines.add(parts.get(i));
@@ -282,7 +311,6 @@ public final class SlayerFeatures {
         maxHealth = 0;
         phaseBoss = "";
         SlayerTimes.onBoss(null);
-        SlayerPhaseTimer.onBoss(null);
     }
 
     /** The lower-case name in a "Spawned by: Name" nametag, or null (for the Carry Tracker). */

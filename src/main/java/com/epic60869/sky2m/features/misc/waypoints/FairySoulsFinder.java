@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.misc.waypoints;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.ChromaColours;
 import com.epic60869.sky2m.custom.util.Compat;

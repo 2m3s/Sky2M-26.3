@@ -1,10 +1,10 @@
 /*
  * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), mobskin/MobSkinRender. MIT License,
- * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ * Copyright (c) 2026 Killer560.
  */
 package com.epic60869.sky2m.features.misc.playasmob;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.sbc.SbcCosmetics;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -111,7 +111,7 @@ public final class PlayAsMobRender {
     /** The downloaded model selected by a player, for the first-person hand renderer. */
     public static Drawn modelForPlayer(AbstractClientPlayer player) {
         if (player == null || !shows(player)) return null;
-        // A model bundled with the mod ("builtin:generic_man"), picked in /s2 cosmetics and kept in your settings.
+        // A model bundled with the mod ("builtin:<name>"), picked in /s2 cosmetics and kept in your settings.
         String bundled = player == Minecraft.getInstance().player ? ownMob() : SbcCosmetics.mobFor(player.getUUID());
         if (bundled != null && bundled.startsWith(BuiltinModels.PREFIX)) return BuiltinModels.drawn(bundled);
         SbcCosmetics.ModelRef ref = SbcCosmetics.modelFor(player.getUUID());

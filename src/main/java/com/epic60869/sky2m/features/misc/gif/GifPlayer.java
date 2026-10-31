@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.misc.gif;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;

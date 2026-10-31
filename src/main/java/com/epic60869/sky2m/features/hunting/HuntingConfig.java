@@ -39,7 +39,7 @@ public final class HuntingConfig {
     @Expose
     @ConfigOption(name = "Lasso Display", desc = "Displays your lasso progress on screen. Move it in /s2 gui.")
     @ConfigEditorBoolean
-    public boolean lassoDisplay = true;
+    public boolean lassoDisplay = false;
 
     @Expose
     @ConfigOption(name = "Fusion Keybinds", desc = "")
@@ -64,7 +64,7 @@ public final class HuntingConfig {
     @Expose
     @ConfigOption(name = "Fusion Display", desc = "Displays the shard you are fusing and how many you have, in the Fusion Box. Move it in /s2 gui.")
     @ConfigEditorBoolean
-    public boolean fusionDisplay = true;
+    public boolean fusionDisplay = false;
 
     public static final class Safari {
         @Expose
@@ -75,7 +75,7 @@ public final class HuntingConfig {
         @Expose
         @ConfigOption(name = "Hideyho Finder", desc = "Helps you find where Hideyho is hiding: once he says \"No peeking!\", a route leads you past every spot he can hide.")
         @ConfigEditorBoolean
-        public boolean hideyhoFinder = true;
+        public boolean hideyhoFinder = false;
 
         @Expose
         @ConfigOption(name = "Safari Checklist", desc = "Displays the Critter Safari unique shards caught during the current run.")
@@ -102,7 +102,7 @@ public final class HuntingConfig {
         @Expose
         @ConfigOption(name = "Hide Caught Shards", desc = "Hide shards already caught during the current Critter Safari run.")
         @ConfigEditorBoolean
-        public boolean hideCaught = true;
+        public boolean hideCaught = false;
 
         @Expose
         @ConfigOption(name = "Show Shard Icons", desc = "Display an item icon next to each shard in the checklist.")
@@ -110,12 +110,12 @@ public final class HuntingConfig {
         public boolean showIcons = true;
 
         @Expose
-        @ConfigOption(name = "Checklist Style", desc = "§eUnique Critters§7: a \"Unique Critters\" title, \"Cavern:\" headers and a green ✔ or red ✖ before each critter.\n§eSkyHanni§7: SkyHanni's \"Cavern - 3/9\" headers and \"- (✔) Name\" rows.")
+        @ConfigOption(name = "Checklist Style", desc = "§eUnique Critters§7: a \"Unique Critters\" title, \"Cavern:\" headers and a green ✔ or red ✖ before each critter.\n§eCompact§7: \"Cavern - 3/9\" headers and \"- (✔) Name\" rows.")
         @ConfigEditorDropdown
         public ChecklistStyle style = ChecklistStyle.UNIQUE_CRITTERS;
 
         public enum ChecklistStyle {
-            UNIQUE_CRITTERS("Uniques"), SKYHANNI("SkyHanni");
+            UNIQUE_CRITTERS("Uniques"), SKYHANNI("Compact");
 
             private final String label;
 
@@ -213,7 +213,7 @@ public final class HuntingConfig {
         @Expose
         @ConfigOption(name = "Show When Pickup", desc = "Show the hunting tracker for a couple of seconds after hunting something.\n§eIgnored if Always Show is enabled.")
         @ConfigEditorBoolean
-        public boolean showWhenPickup = true;
+        public boolean showWhenPickup = false;
 
         @Expose
         @ConfigOption(name = "Always Show", desc = "Always show the tracker, regardless of what you are holding.\n§eIf enabled, ignore the Show When Pickup setting.")

@@ -1,6 +1,6 @@
 /*
  * From Killer560's Mod (https://github.com/Killer560-OG/killer560s-mod), part of the Dungeon Sim. MIT License,
- * Copyright (c) 2026 Killer560; see THIRD_PARTY_NOTICES.md.
+ * Copyright (c) 2026 Killer560.
  */
 package com.epic60869.sky2m.sim.livemap;
 
@@ -38,10 +38,6 @@ public final class LiveMapConfig {
     private boolean enabled = false;
     private boolean showTeammates = true;
     private boolean classRecolorTeammates = true;
-    /** killer560s-mod-relay task (2026-09-21): dim/mark a room or door PartyRoomIntel reported but this
-     *  client has not scanned itself. Default ON, unlike most new settings - it only ever adds what a
-     *  teammate's own mod legitimately shared, same as the merge itself. */
-    private boolean markReportedRooms = true;
     /** killer560, 2026-10-07: "make an option to have people's symbols be by player head for the default ones. It
      *  should work on your own head as well." Both maps draw each player as their skin's face (with an orbiting
      *  heading tick) instead of the arrow; a player whose skin is not known falls back to the arrow. Default OFF.
@@ -112,7 +108,7 @@ public final class LiveMapConfig {
     private float iconScale = 1f;
     /** killer560, 2026-09-27: "for the extra info it needs to show things like bat, mimic, prince. Also it
      *  needs to tell me s+ secrets ..." - the Interactive Map legend's own readout of what
-     *  {@code ScoreCalculatorFeature} already tracks for the run. Default ON like Mark Reported Rooms - it
+     *  {@code ScoreCalculatorFeature} already tracks for the run. Default ON - it
      *  only ever adds information, never changes what's drawn. */
     private boolean showExtraInfo = true;
 
@@ -175,7 +171,6 @@ public final class LiveMapConfig {
                 cfg.enabled = ConfigJson.getBool(obj, "enabled", false);
                 cfg.showTeammates = ConfigJson.getBool(obj, "showTeammates", true);
                 cfg.classRecolorTeammates = ConfigJson.getBool(obj, "classRecolorTeammates", true);
-                cfg.markReportedRooms = ConfigJson.getBool(obj, "markReportedRooms", true);
                 cfg.playerHeads = ConfigJson.getBool(obj, "playerHeadMarkers", false);
                 // Migration: the old uniform "cellSize" (4..16, default 8) was one grid step; a room is now two
                 // of those, so an existing config keeps roughly the map size it had.
@@ -264,7 +259,6 @@ public final class LiveMapConfig {
             obj.addProperty("enabled", enabled);
             obj.addProperty("showTeammates", showTeammates);
             obj.addProperty("classRecolorTeammates", classRecolorTeammates);
-            obj.addProperty("markReportedRooms", markReportedRooms);
             obj.addProperty("playerHeadMarkers", playerHeads);
             obj.addProperty("roomPx", roomPx);
             obj.addProperty("roomLabels", roomLabels);
@@ -372,14 +366,6 @@ public final class LiveMapConfig {
 
     public void setClassRecolorTeammates(boolean classRecolorTeammates) {
         this.classRecolorTeammates = classRecolorTeammates;
-    }
-
-    public boolean isMarkReportedRooms() {
-        return markReportedRooms;
-    }
-
-    public void setMarkReportedRooms(boolean markReportedRooms) {
-        this.markReportedRooms = markReportedRooms;
     }
 
     public boolean isPlayerHeads() {

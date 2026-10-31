@@ -4,7 +4,7 @@ import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
-import com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;
@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Chocolate Factory helpers: the best upgrade to buy, the Time Tower and the Stray Rabbit timer. Ported from
+ * Chocolate Factory helpers: SkyHanni's stats display, the best upgrade to buy, the Time Tower and the Stray Rabbit timer. Ported from
  * SkyHanni's chocolate factory features (https://github.com/hannibal002/SkyHanni, features/inventory/chocolatefactory/,
  * LGPL-2.1). The advice compares cost per extra chocolate per second like SkyHanni does for the rabbits and Coach
  * Jackrabbit, but does not factor the Time Tower in.
@@ -33,13 +33,18 @@ public final class ChocolateFactoryFeatures {
     private static final String ADVICE_HUD = "events_cf_advice";
     private static final String STRAY_HUD = "events_cf_stray";
     private static final String TOWER_HUD = "events_cf_tower";
+    private static final String STATS_HUD = "events_cf_stats";
     private static final int INFO_SLOT = 13;
+    private static final int PRESTIGE_SLOT = 27;
+    private static final int BARN_SLOT = 35;
+    private static final int LEADERBOARD_SLOT = 52;
     private static final int TOWER_SLOT = 38;
     private static final int COACH_SLOT = 41;
     private static final int FIRST_RABBIT_SLOT = 28;
     private static final int LAST_RABBIT_SLOT = 34;
     private static final long STRAY_MS = 30_000L;
     private static final long TOWER_WARNING_MS = 5 * 60 * 1000L;
+    private static final long TOWER_CHARGE_MS = 8 * 60 * 60 * 1000L;
 
     private static final Pattern PER_SECOND = Pattern.compile("([\\d.,]+) per second");
     private static final Pattern MULTIPLIER = Pattern.compile("Total Multiplier: ([\\d.,]+)x");
@@ -47,6 +52,15 @@ public final class ChocolateFactoryFeatures {
     private static final Pattern COST = Pattern.compile("^([\\d,]+) Chocolate$");
     private static final Pattern CHARGES = Pattern.compile("Charges: (\\d+)/(\\d+)");
     private static final Pattern STATUS = Pattern.compile("Status: (INACTIVE|ACTIVE)\\s*(.*)");
+    private static final Pattern NEXT_CHARGE = Pattern.compile("Next Charge: (.+)");
+    private static final Pattern ALL_TIME = Pattern.compile("All-time Chocolate: ([\\d,]+)");
+    private static final Pattern PRESTIGE = Pattern.compile("^Chocolate Factory ([IVX]+)$");
+    private static final Pattern THIS_PRESTIGE = Pattern.compile("Chocolate this Prestige: ([\\d,]+)");
+    private static final Pattern FOR_PRESTIGE = Pattern.compile("Requires ([\\d.]+[kMBT]?) Chocolate this");
+    private static final Pattern BARN = Pattern.compile("Your Barn: (\\d+)/(\\d+) Rabbits");
+    private static final Pattern POSITION = Pattern.compile("You are #([\\d,]+)");
+    private static final Pattern PERCENTILE = Pattern.compile("You are in the top ([\\d.]+)% of players");
+    private static final Pattern DURATION_PART = Pattern.compile("(\\d+)([dhms])");
 
     /** What the last look at the open factory found. */
     private record Option(int slot, String name, long cost, double extraPerSecond) {
@@ -60,10 +74,18 @@ public final class ChocolateFactoryFeatures {
     private static volatile double chocolate;
     private static volatile double perSecond;
 
+    /** The factory's numbers from the last look, for the stats display; null before the factory was opened. */
+    private record Stats(double current, double perSecond, double multiplier, long allTime, int prestige, long thisPrestige,
+                         long forPrestige, int rabbits, int maxRabbits, String position, String percentile) {}
+
+    private static volatile Stats stats;
+
     private static volatile int towerCharges = -1;
     private static volatile int towerMax;
     private static volatile String towerStatus = "";
     private static volatile long towerSeenAt;
+    private static volatile long towerNextChargeAt;
+    private static volatile boolean towerActive;
     private static long lastTowerWarning;
 
     private static boolean strayArmed;
@@ -105,6 +127,15 @@ public final class ChocolateFactoryFeatures {
             Component.literal("24.50s").withStyle(ChatFormatting.AQUA)), 10, 80);
         Sky2MHuds.setSettingsSearch(STRAY_HUD, "Stray Rabbit Timer");
         Sky2MHuds.setting(STRAY_HUD, () -> config() != null && config().strayTimer);
+
+        ScreenHuds.register(STATS_HUD, ChocolateFactoryFeatures::statsLines);
+        Sky2MHuds.register(STATS_HUD, "Chocolate Factory Stats", () -> false, List::of, List.of(
+            Component.literal("§6§lChocolate Factory §7(Prestige V)"), Component.literal("§7Chocolate §f5,272,230"),
+            Component.literal("§7All-time §f641,119,115 §8· §7this prestige §f483,023,853"),
+            Component.literal("§7Production §f3,780.72§7/s §8· §f226,843.2§7/m"),
+            Component.literal("§7Multiplier §f1.77x §8· §7Barn §f171/190")), 10, 130);
+        Sky2MHuds.setSettingsSearch(STATS_HUD, "Stats Display");
+        Sky2MHuds.setting(STATS_HUD, () -> config() != null && config().stats);
 
         Sky2MHuds.register(TOWER_HUD, "Time Tower", () -> {
             EventsConfig.ChocolateFactory c = config();
@@ -151,7 +182,7 @@ public final class ChocolateFactoryFeatures {
         }
         strayLastTick = now;
 
-        if (factory && ++ticks % 5 == 0 && (c.upgradeAdvice || c.timeTower || c.timeTowerWarning)) read(mc);
+        if (factory && ++ticks % 5 == 0 && (c.stats || c.upgradeAdvice || c.timeTower || c.timeTowerWarning)) read(mc);
         if (!factory && c.timeTowerWarning && Sky2MLocation.onSkyblock() && towerCharges >= 0 && towerCharges >= towerMax && towerMax > 0
             && now - lastTowerWarning > TOWER_WARNING_MS) {
             lastTowerWarning = now;
@@ -219,6 +250,7 @@ public final class ChocolateFactoryFeatures {
             if (current < 0 || cps <= 0 || multiplier <= 0) return;
             chocolate = current;
             perSecond = cps;
+            readStats(slots, current, cps, multiplier, info);
             double raw = cps / multiplier;
 
             List<Option> options = new ArrayList<>();
@@ -261,10 +293,89 @@ public final class ChocolateFactoryFeatures {
             }
             m = STATUS.matcher(line);
             if (m.find()) {
-                towerStatus = m.group(1).equals("ACTIVE") ? "Active " + m.group(2).trim() : "Inactive";
+                towerActive = m.group(1).equals("ACTIVE");
+                towerStatus = towerActive ? "Active " + m.group(2).trim() : "Inactive";
                 towerSeenAt = System.currentTimeMillis();
+                continue;
+            }
+            m = NEXT_CHARGE.matcher(line);
+            if (m.find()) towerNextChargeAt = System.currentTimeMillis() + durationMs(m.group(1));
+        }
+    }
+
+    /** SkyHanni's CFDataLoader: the prestige, barn and leaderboard items, and the all-time chocolate. */
+    private static void readStats(List<Slot> slots, double current, double cps, double multiplier, ItemStack info) {
+        long allTime = 0;
+        for (String line : lore(info)) {
+            Matcher m = ALL_TIME.matcher(line);
+            if (m.find()) allTime = (long) number(m.group(1));
+        }
+        int prestige = 1;
+        long thisPrestige = 0;
+        long forPrestige = -1;
+        ItemStack prestigeItem = slots.get(PRESTIGE_SLOT).getItem();
+        Matcher p = PRESTIGE.matcher(name(prestigeItem));
+        if (p.find()) prestige = roman(p.group(1));
+        for (String line : lore(prestigeItem)) {
+            Matcher m = THIS_PRESTIGE.matcher(line);
+            if (m.find()) thisPrestige = (long) number(m.group(1));
+            m = FOR_PRESTIGE.matcher(line);
+            if (m.find()) forPrestige = shortNumber(m.group(1));
+        }
+        int rabbits = -1;
+        int maxRabbits = -1;
+        for (String line : lore(slots.get(BARN_SLOT).getItem())) {
+            Matcher m = BARN.matcher(line);
+            if (m.find()) {
+                rabbits = Integer.parseInt(m.group(1));
+                maxRabbits = Integer.parseInt(m.group(2));
             }
         }
+        String position = null;
+        String percentile = null;
+        for (String line : lore(slots.get(LEADERBOARD_SLOT).getItem())) {
+            Matcher m = POSITION.matcher(line);
+            if (m.find()) position = m.group(1);
+            m = PERCENTILE.matcher(line);
+            if (m.find()) percentile = m.group(1);
+        }
+        stats = new Stats(current, cps, multiplier, allTime, prestige, thisPrestige, forPrestige, rabbits, maxRabbits, position, percentile);
+    }
+
+    private static final String[] ROMAN = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+
+    private static int roman(String text) {
+        for (int i = 1; i < ROMAN.length; i++) if (ROMAN[i].equals(text)) return i;
+        return 1;
+    }
+
+    /** "150M", "4B", "1.5k" as a number. */
+    private static long shortNumber(String text) {
+        char last = text.charAt(text.length() - 1);
+        double scale = switch (last) {
+            case 'k' -> 1e3;
+            case 'M' -> 1e6;
+            case 'B' -> 1e9;
+            case 'T' -> 1e12;
+            default -> 1;
+        };
+        return (long) (number(scale == 1 ? text : text.substring(0, text.length() - 1)) * scale);
+    }
+
+    /** "4h 32m 10s" (or "4h32m") in milliseconds. */
+    private static long durationMs(String text) {
+        long ms = 0;
+        Matcher m = DURATION_PART.matcher(text);
+        while (m.find()) {
+            long n = Long.parseLong(m.group(1));
+            ms += switch (m.group(2)) {
+                case "d" -> n * 86_400_000L;
+                case "h" -> n * 3_600_000L;
+                case "m" -> n * 60_000L;
+                default -> n * 1000L;
+            };
+        }
+        return ms;
     }
 
     // ------------------------------------------------------------------------------------------------ display
@@ -323,6 +434,74 @@ public final class ChocolateFactoryFeatures {
         if (c == null || !c.strayTimer || !strayArmed || !inFactory() || strayRemaining <= 0) return List.of();
         return List.of(Component.literal("Stray Timer").withStyle(ChatFormatting.YELLOW),
             Component.literal(String.format(Locale.US, "%.2fs", strayRemaining / 1000.0)).withStyle(ChatFormatting.AQUA));
+    }
+
+    /** The stats display: SkyHanni's CFStats numbers, laid out Sky2M's way (grey labels, white values, related stats on one line). */
+    private static List<Component> statsLines() {
+        EventsConfig.ChocolateFactory c = config();
+        Stats s = stats;
+        if (c == null || !c.stats || s == null || !inFactory()) return List.of();
+        String dot = " §8· ";
+        List<String> lines = new ArrayList<>();
+        lines.add("§6§lChocolate Factory" + (s.prestige() > 1 ? " §7(Prestige " + (s.prestige() < ROMAN.length ? ROMAN[s.prestige()] : String.valueOf(s.prestige())) + ")" : ""));
+        lines.add("§7Chocolate §f" + EventsFeatures.grouped((long) s.current()));
+        lines.add("§7All-time §f" + EventsFeatures.grouped(s.allTime())
+            + (s.prestige() != 1 ? dot + "§7this prestige §f" + EventsFeatures.grouped(s.thisPrestige()) : ""));
+        if (s.forPrestige() > 0) {
+            long left = s.forPrestige() - s.thisPrestige();
+            lines.add(left <= 0 ? "§7Prestige §aready now"
+                : "§7Prestige in " + untilGoal(s.thisPrestige(), s.forPrestige(), s.perSecond()) + " §8(" + EventsFeatures.grouped(left) + " to go)");
+        }
+        lines.add("§7Production §f" + separators(s.perSecond()) + "§7/s" + dot + "§f" + separators(s.perSecond() * 60) + "§7/m");
+        lines.add("  §f" + separators(s.perSecond() * 3600) + "§7/h" + dot + "§f" + separators(s.perSecond() * 86400) + "§7/day");
+        lines.add("§7Multiplier §f" + separators(s.multiplier()) + "x"
+            + (s.rabbits() >= 0 ? dot + "§7Barn " + (s.rabbits() >= s.maxRabbits() ? "§c" : "§f") + s.rabbits() + "/" + s.maxRabbits() : ""));
+        if (towerCharges >= 0) {
+            String tower = "§7Time Tower " + (towerActive ? "§d§lActive" : "§f" + towerCharges + "/" + towerMax);
+            if (towerMax > 0 && towerCharges >= towerMax) {
+                tower += dot + "§cfull now";
+            } else if (towerMax > 0 && towerNextChargeAt > 0) {
+                long fullAt = towerNextChargeAt + (towerMax - towerCharges - 1) * TOWER_CHARGE_MS;
+                tower += dot + "§7full in " + "§b" + longDuration(fullAt - System.currentTimeMillis())
+                    + " §8(" + new java.text.SimpleDateFormat("EEE h:mm a", Locale.US).format(new java.util.Date(fullAt)) + ")";
+            }
+            lines.add(tower);
+        }
+        if (s.position() != null) lines.add("§7Leaderboard §b#" + s.position() + (s.percentile() == null ? "" : " §8(top " + s.percentile() + "%)"));
+        Option bestOption = best;
+        if (bestOption != null) {
+            lines.add("§7Best upgrade " + ((long) s.current() >= bestOption.cost() ? "§aaffordable now"
+                : "in " + untilGoal((long) s.current(), bestOption.cost(), s.perSecond())));
+        }
+        List<Component> out = new ArrayList<>();
+        for (String line : lines) out.add(Component.literal(line));
+        return out;
+    }
+
+    /** SkyHanni's formattedTimeUntilGoal: "Now" when there is enough, otherwise how long production takes to get there. */
+    private static String untilGoal(long have, long goal, double perSecond) {
+        if (have >= goal) return "§aNow";
+        if (perSecond <= 0) return "§cNever";
+        return "§b" + longDuration((long) ((goal - have) / perSecond * 1000));
+    }
+
+    /** "1d 13h 59m 4s", like SkyHanni's Duration.format(). */
+    private static String longDuration(long millis) {
+        long seconds = Math.max(0, millis / 1000);
+        StringBuilder out = new StringBuilder();
+        long[] parts = {seconds / 86400, seconds % 86400 / 3600, seconds % 3600 / 60, seconds % 60};
+        String[] units = {"d", "h", "m", "s"};
+        for (int i = 0; i < parts.length; i++) {
+            if (parts[i] == 0 && !(i == 3 && out.isEmpty())) continue;
+            if (!out.isEmpty()) out.append(' ');
+            out.append(parts[i]).append(units[i]);
+        }
+        return out.toString();
+    }
+
+    /** SkyHanni's addSeparators() for decimals: "1,234.56". */
+    private static String separators(double value) {
+        return new java.text.DecimalFormat("#,##0.##", java.text.DecimalFormatSymbols.getInstance(Locale.US)).format(value);
     }
 
     private static List<Component> towerLines() {

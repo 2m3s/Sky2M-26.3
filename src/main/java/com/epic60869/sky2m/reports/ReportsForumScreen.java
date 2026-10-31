@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.reports;
 
-import com.epic60869.sky2m.Sky2MGlobalChat;
-import com.epic60869.sky2m.Sky2MLogin;
+import com.epic60869.sky2m.chat.Sky2MGlobalChat;
+import com.epic60869.sky2m.social.Sky2MLogin;
 import com.epic60869.sky2m.features.sbc.Flags;
 import com.epic60869.sky2m.features.sbc.Sbc;
 import com.epic60869.sky2m.features.sbc.SbcNet;

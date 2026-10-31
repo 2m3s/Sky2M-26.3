@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.social;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
@@ -16,7 +16,7 @@ public final class SocialConfig {
     public boolean partyShortcuts = false;
 
     @Expose
-    @ConfigOption(name = "Chat Waypoints", desc = "Coordinates in any chat message (x: 1, y: 2, z: 3, as sent by /sendcoords, Patcher or SkyHanni) get a clickable [Waypoint] button that makes a waypoint with the sender's name.")
+    @ConfigOption(name = "Chat Waypoints", desc = "Coordinates in any chat message (x: 1, y: 2, z: 3, as sent by /sendcoords or other mods) get a clickable [Waypoint] button that makes a waypoint with the sender's name.")
     @ConfigEditorBoolean
     public boolean chatWaypoints = false;
 
@@ -28,7 +28,7 @@ public final class SocialConfig {
     @Expose
     @ConfigOption(name = "Profile Icons In Chat", desc = "Show a player's profile icon (Ironman, Stranded or Bingo) next to their name in chat messages that don't already show it, when the tab list showed it for them.")
     @ConfigEditorBoolean
-    public boolean profileIcons = false;
+    public boolean profileIcons = true;
 
     public static SocialConfig current() {
         Sky2MConfig c = Sky2MConfig.current();

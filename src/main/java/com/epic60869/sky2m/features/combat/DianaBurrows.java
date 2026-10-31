@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
-import com.epic60869.sky2m.Sky2MConfig;
-import com.epic60869.sky2m.Sky2MKeyMappings;
+import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.input.Sky2MKeyMappings;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -512,6 +512,11 @@ public final class DianaBurrows {
     }
 
     private static Vec3 guessFromParticles() {
+        return guessFromPoints(lavaParticles);
+    }
+
+    /** Where a trail of particles ends up (also the Fishing Hotspot Radar's), or null with too few points. */
+    public static Vec3 guessFromPoints(List<Vec3> lavaParticles) {
         if (lavaParticles.size() < 4) return null;
         try {
             double[][] coefficients = new double[3][];

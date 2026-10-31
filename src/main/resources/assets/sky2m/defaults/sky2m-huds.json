@@ -521,12 +521,6 @@
     "scale": 1.0,
     "background": false
   },
-  "slayer_phase_timer": {
-    "x": 8,
-    "y": 240,
-    "scale": 1.0,
-    "background": false
-  },
   "voidgloom_lasers": {
     "x": 200,
     "y": 160,

@@ -12,7 +12,7 @@ public final class QolConfigs {
 
     public static final class StatusBars {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Show your health, mana, defense, XP and speed as bars on movable HUDs (after Skyblocker's and SkyHanni's status bars). Each bar is moved in /s2 gui.")
+        @ConfigOption(name = "Enabled", desc = "Show your health, mana, defense, XP and speed as bars on movable HUDs. Each bar is moved in /s2 gui.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -59,7 +59,7 @@ public final class QolConfigs {
 
     public static final class TabListExtras {
         @Expose
-        @ConfigOption(name = "Compact Tab List", desc = "Compact the tab list like SkyHanni: Hypixel's sections side by side without the blank filler lines, each column's title once, and the footer as an \"Other\" column.")
+        @ConfigOption(name = "Compact Tab List", desc = "Compact the tab list: Hypixel's sections side by side without the blank filler lines, each column's title once, and the footer as an \"Other\" column.")
         @ConfigEditorBoolean
         public boolean compact = false;
 
@@ -128,7 +128,7 @@ public final class QolConfigs {
 
     public static final class RadialMenu {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Hold the Radial Menu key (Options > Controls > Sky2M) to open a wheel of commands, move the mouse to a slice and release the key to run it (after Skyblocker's radial menus).")
+        @ConfigOption(name = "Enabled", desc = "Hold the Radial Menu key (Options > Controls > Sky2M) to open a wheel of commands, move the mouse to a slice and release the key to run it.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 

@@ -15,17 +15,17 @@ public final class DwarvenConfig {
 
     public static final class Solvers {
         @Expose
-        @ConfigOption(name = "Fetchur Solver", desc = "Replace Fetchur's riddle in chat with the item he wants. Based on Skyblocker's and SkyOcean's Fetchur helpers.")
+        @ConfigOption(name = "Fetchur Solver", desc = "Replace Fetchur's riddle in chat with the item he wants.")
         @ConfigEditorBoolean
         public boolean fetchur = false;
 
         @Expose
-        @ConfigOption(name = "Puzzler Solver", desc = "Mark the block you need to mine for the Puzzler's reward after he tells you the arrows. Based on Skyblocker's Puzzler solver.")
+        @ConfigOption(name = "Puzzler Solver", desc = "Mark the block you need to mine for the Puzzler's reward after he tells you the arrows.")
         @ConfigEditorBoolean
         public boolean puzzler = false;
 
         @Expose
-        @ConfigOption(name = "Metal Detector Solver", desc = "In the Mines of Divan, mark where the treasure chest is while you hold the Metal Detector. Stand still in a few different spots until only one place is left. Based on SkyHanni's Metal Detector Solver.")
+        @ConfigOption(name = "Metal Detector Solver", desc = "In the Mines of Divan, mark where the treasure chest is while you hold the Metal Detector. Stand still in a few different spots until only one place is left.")
         @ConfigEditorBoolean
         public boolean metalDetector = false;
 
@@ -47,7 +47,7 @@ public final class DwarvenConfig {
 
     public static final class Nucleus {
         @Expose
-        @ConfigOption(name = "Run Tracker", desc = "HUD with your Crystal Nucleus runs and the loot of each Loot Bundle (items and amounts, kept between sessions). Move it in /s2 gui. /s2 resetnucleus clears it. Based on SkyHanni's Crystal Nucleus Tracker.")
+        @ConfigOption(name = "Run Tracker", desc = "HUD with your Crystal Nucleus runs and the loot of each Loot Bundle (items and amounts, kept between sessions). Move it in /s2 gui. /s2 resetnucleus clears it.")
         @ConfigEditorBoolean
         public boolean tracker = false;
 
@@ -59,7 +59,7 @@ public final class DwarvenConfig {
 
     public static final class Glacite {
         @Expose
-        @ConfigOption(name = "Cold Overlay", desc = "Frost on the edges of your screen that gets stronger the colder you are in the Glacite Tunnels and Mineshafts. Based on SkyHanni's Cold Overlay.")
+        @ConfigOption(name = "Cold Overlay", desc = "Frost on the edges of your screen that gets stronger the colder you are in the Glacite Tunnels and Mineshafts.")
         @ConfigEditorBoolean
         public boolean coldOverlay = false;
 
@@ -91,12 +91,12 @@ public final class DwarvenConfig {
 
     public static final class Precision {
         @Expose
-        @ConfigOption(name = "Precision Mining Highlight", desc = "Highlight the Precision Mining spot on the block you are mining (green when you aim at it). Based on SkyHanni's Precision Mining highlighter.")
+        @ConfigOption(name = "Precision Mining Highlight", desc = "Highlight the Precision Mining spot on the block you are mining (green when you aim at it).")
         @ConfigEditorBoolean
         public boolean highlight = false;
 
         @Expose
-        @ConfigOption(name = "Flowstate HUD", desc = "While you mine with Flowstate, a HUD with your block streak, the speed it gives, the time left and your personal best. Move it in /s2 gui. Based on SkyHanni's Flowstate Helper.")
+        @ConfigOption(name = "Flowstate HUD", desc = "While you mine with Flowstate, a HUD with your block streak, the speed it gives, the time left and your personal best. Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean flowstate = false;
 
@@ -113,7 +113,7 @@ public final class DwarvenConfig {
         public boolean hotmLevel = false;
 
         @Expose
-        @ConfigOption(name = "HOTM Powder Cost Tooltip", desc = "In the Heart of the Mountain menu, add the powder cost of the next level and the total powder left to max the perk to the tooltip. Based on SkyHanni's Powder per Perk.")
+        @ConfigOption(name = "HOTM Powder Cost Tooltip", desc = "In the Heart of the Mountain menu, add the powder cost of the next level and the total powder left to max the perk to the tooltip.")
         @ConfigEditorBoolean
         public boolean hotmTooltip = false;
 
@@ -148,7 +148,7 @@ public final class DwarvenConfig {
 
     public static final class Events {
         @Expose
-        @ConfigOption(name = "Mining Events HUD", desc = "HUD with the mining events (2x Powder, Goblin Raid, Better Together, Gone with the Wind, Raffle, Mithril Gourmand) running on other servers and when they end, from the community Soopy API (it only reads, Sky2M sends nothing). Move it in /s2 gui. Based on SkyHanni's Mining Event Display.")
+        @ConfigOption(name = "Mining Events HUD", desc = "HUD with the mining events (2x Powder, Goblin Raid, Better Together, Gone with the Wind, Raffle, Mithril Gourmand) running on other servers and when they end, from a community API (it only reads, Sky2M sends nothing). Move it in /s2 gui.")
         @ConfigEditorBoolean
         public boolean hud = false;
 
@@ -190,7 +190,7 @@ public final class DwarvenConfig {
 
     public static final class Retexture {
         @Expose
-        @ConfigOption(name = "Red Dwarven Mines Carpets", desc = "Show the gray, light gray and light blue carpets of the Dwarven Mines as red carpets, which is easier on the eyes. Takes effect on chunks as they load: re-enter the Dwarven Mines or press F3+A. Based on SkyOcean's Red Carpets.")
+        @ConfigOption(name = "Red Dwarven Mines Carpets", desc = "Show the gray, light gray and light blue carpets of the Dwarven Mines as red carpets, which is easier on the eyes. Takes effect on chunks as they load: re-enter the Dwarven Mines or press F3+A.")
         @ConfigEditorBoolean
         public boolean redCarpets = false;
     }

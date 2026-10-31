@@ -1,10 +1,10 @@
 package com.epic60869.sky2m.features.itemlist;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.misc.storage.CustomGui;
-import com.epic60869.sky2m.mixin.Sky2MContainerScreenAccessor;
+import com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
@@ -232,9 +232,9 @@ public final class ItemList {
 
     /** What an item costs: its lowest BIN, else its bazaar buy price, else what an NPC pays; 0 when unknown. */
     private static double price(String id) {
-        Double p = com.epic60869.sky2m.Sky2MPriceTooltip.lowestBinPrice(id);
-        if (p == null || p <= 0) p = com.epic60869.sky2m.Sky2MPriceTooltip.bazaarBuyPrice(id);
-        if (p == null || p <= 0) p = com.epic60869.sky2m.Sky2MPriceTooltip.npcSellPrice(id);
+        Double p = com.epic60869.sky2m.price.Sky2MPriceTooltip.lowestBinPrice(id);
+        if (p == null || p <= 0) p = com.epic60869.sky2m.price.Sky2MPriceTooltip.bazaarBuyPrice(id);
+        if (p == null || p <= 0) p = com.epic60869.sky2m.price.Sky2MPriceTooltip.npcSellPrice(id);
         return p == null ? 0 : p;
     }
 
@@ -621,7 +621,7 @@ public final class ItemList {
         g.pose().popMatrix();
         if (over) {
             hoveredId = id;
-            List<Component> tip = new ArrayList<>(com.epic60869.sky2m.Sky2MPriceTooltip.itemListTooltip(stack));
+            List<Component> tip = new ArrayList<>(com.epic60869.sky2m.price.Sky2MPriceTooltip.itemListTooltip(stack));
             if (recipeTile) tip.add(Component.literal("[Ctrl + Click to pin this recipe]").withStyle(ChatFormatting.GRAY));
             g.setComponentTooltipForNextFrame(font, tip, mouseX, mouseY);
         }

@@ -38,7 +38,7 @@ import net.minecraft.world.item.equipment.trim.TrimMaterial;
 import net.minecraft.world.item.equipment.trim.TrimMaterials;
 import net.minecraft.world.item.equipment.trim.TrimPattern;
 
-import com.epic60869.sky2m.mixin.Sky2MEntityRenderDispatcherAccessor;
+import com.epic60869.sky2m.mixin.render.Sky2MEntityRenderDispatcherAccessor;
 import com.epic60869.sky2m.custom.util.GuiHelper;
 
 public abstract sealed class TrimElementButton extends AbstractButton permits TrimElementButton.Pattern, TrimElementButton.Material {

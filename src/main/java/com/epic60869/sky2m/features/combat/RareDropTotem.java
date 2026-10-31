@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.combat;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.RepoItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleTypes;
@@ -10,11 +10,14 @@ import net.minecraft.world.item.Items;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * RNG drop totem animation, ported from Skyblocker's RareDropSpecialEffects and SpecialEffects: when a big RNG drop
  * lands, the item pops up like a Totem of Undying, with particles and the challenge-complete sound. It plays for
- * Skyblocker's list of RNG drops, any PRAY TO RNGESUS or RNG METER drop, and dyes.
+ * Skyblocker's list of RNG drops, any PRAY TO RNGESUS or RNG METER drop, and dyes; with Garden Drops on, also for the
+ * special Garden drops (farming dyes and the Ray of Helios) in any Garden drop line.
  */
 public final class RareDropTotem {
     /** Skyblocker's list: the drop name in chat -> its item id. */
@@ -58,20 +61,78 @@ public final class RareDropTotem {
         return c != null && c.combat.rareDrops.totemAnimation;
     }
 
+    private static boolean gardenEnabled() {
+        Sky2MConfig c = Sky2MConfig.current();
+        return c != null && c.combat.rareDrops.totemAnimation && c.combat.rareDrops.totemGardenDrops;
+    }
+
     /** An RNG drop: one on Skyblocker's list (slayer, Diana and fishing RNG items), any PRAY TO RNGESUS or RNG METER drop, or any dye. */
     static boolean isRngDrop(String type, String item) {
         return RNG_DROPS.containsKey(item) || type.startsWith("PRAY TO RNGESUS") || type.startsWith("RNG METER") || item.endsWith(" Dye");
     }
 
+    /** A special Garden drop: a farming dye or a Ray of Helios. */
+    private static final Pattern GARDEN_SPECIAL = Pattern.compile("\\b(?<item>(?:[A-Z][\\w'-]* )+Dye|Ray of Helios)\\b");
+
+    /** Whether this item is a special Garden drop (a dye or a Ray of Helios). */
+    static boolean isGardenSpecial(String item) {
+        return item.endsWith(" Dye") || item.equals("Ray of Helios");
+    }
+
+    /**
+     * The special Garden drop in a drop line ("RARE DROP!", "RARE CROP!", "WOW! You found ...", "... found ..."), or
+     * null. Lines from players ("Guild > Name: ...", "Name: ...") are not drops.
+     */
+    static String gardenSpecialDrop(String line) {
+        boolean dropLine = line.contains("DROP!") || line.contains("CROP!") || line.trim().startsWith("WOW!") || line.contains(" found ");
+        if (!dropLine) return null;
+        Matcher m = GARDEN_SPECIAL.matcher(line);
+        if (!m.find() || line.substring(0, m.start()).contains(":")) return null;
+        return m.group("item").trim();
+    }
+
     /** A rare drop line ({@link CombatFeatures}): {@code type} is "RARE DROP!", "PRAY TO RNGESUS DROP!", .... */
     static void onDrop(String type, String item) {
         if (!enabled() || !isRngDrop(type, item)) return;
+        play(item, false);
+    }
+
+    /** A special Garden drop (dye or Ray of Helios) in the Garden: plays with Rare Drop Totem > Garden Drops on. */
+    static void onGardenDrop(String item) {
+        if (!gardenEnabled()) return;
+        play(item, true);
+    }
+
+    private static String lastItem;
+    private static long lastAt;
+
+    /** The item the totem animation last played for (for the game tests). */
+    public static String lastAnimated() {
+        return lastItem;
+    }
+
+    /**
+     * Pops the item up like a Totem of Undying. The same item twice within 3 seconds (one drop read from two chat
+     * lines, or by two triggers) plays once. With {@code fallback}, an item missing from the item repo pops up as a
+     * Nether Star instead of not playing.
+     */
+    private static void play(String item, boolean fallback) {
         String id = RNG_DROPS.get(item);
         if (id == null) id = RepoItems.idByName(item);
         if (id == null && item.endsWith(" Dye")) id = "DYE_" + item.substring(0, item.lastIndexOf(' ')).replace(' ', '_').toUpperCase(Locale.ROOT);
-        if (id == null) return;
-        ItemStack stack = RepoItems.itemStack(id);
-        if (stack.isEmpty() || stack.is(Items.BARRIER)) return;
+        if (id == null && fallback) id = item.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9 ]", "").trim().replace(' ', '_');
+        ItemStack found = id == null ? ItemStack.EMPTY : RepoItems.itemStack(id);
+        if (found.isEmpty() || found.is(Items.BARRIER)) {
+            if (!fallback) return;
+            found = new ItemStack(Items.NETHER_STAR);
+        }
+        ItemStack stack = found;
+        long now = System.currentTimeMillis();
+        synchronized (RareDropTotem.class) {
+            if (item.equals(lastItem) && now - lastAt < 3000) return;
+            lastItem = item;
+            lastAt = now;
+        }
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
             if (mc.player != null) mc.player.displayItemActivation(stack);

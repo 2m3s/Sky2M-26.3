@@ -1,7 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
-import com.epic60869.sky2m.ItemPriceResolver;
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.price.ItemPriceResolver;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -33,7 +33,7 @@ public final class CombatFeatures {
     private static final Pattern ARROW_RAN_OUT = Pattern.compile("QUIVER! You have run out of (?<type>.*)s!");
     /** Any name, apostrophes included ("Arachne's Keeper"), with or without "a"/"an"/"the" before it. */
     private static final Pattern COCOON = Pattern.compile("CAUGHT! You cocooned (?:an? |the )?(?<name>.+?)!");
-    private static final Pattern COCOON_BOSS = Pattern.compile("\\s*YOU COCOONED YOUR SLAYER BOSS");
+    private static final Pattern COCOON_BOSS = Pattern.compile("^\\s*YOU COCOONED YOUR SLAYER BOSS");
     /**
      * Every rare drop line: RARE / VERY RARE / CRAZY RARE / INSANE / PRAY TO RNGESUS / PET / RNG METER drops, the
      * Garden's RARE CROP lines, RARE REWARD and OUTSTANDING CATCH, with or without spaces before them.
@@ -178,17 +178,22 @@ public final class CombatFeatures {
             arrowAmount = 0;
         }
 
-        if (config.cocoonAlert.enabled) {
-            String mob = null;
-            if ((m = COCOON.matcher(text)).find()) mob = m.group("name").trim();
-            else if (COCOON_BOSS.matcher(text).matches()) mob = "Slayer Boss";
-            if (mob != null && (mob.equals("Slayer Boss") || important(mob))) {
+        String cocooned = null;
+        if ((m = COCOON.matcher(text)).find()) cocooned = m.group("name").trim();
+        else if (COCOON_BOSS.matcher(text).find()) cocooned = "Slayer Boss";
+        if (cocooned != null) {
+            // Every cocoon gets its label; the title is only for the mobs the alert is set to.
+            CocoonTracker.onCocoon(cocooned);
+            String mob = cocooned;
+            if (config.cocoonAlert.enabled && (!config.cocoonAlert.onlyImportant || mob.equals("Slayer Boss") || important(mob))) {
                 Sky2MAlerts.title(Component.literal("COCOONED!").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD),
                     Component.literal(mob).withStyle(ChatFormatting.WHITE));
             }
         }
 
+        boolean rareDropLine = false;
         if ((m = RARE_DROP.matcher(text)).find() && !someoneElsesDrop(text)) {
+            rareDropLine = true;
             String raw = m.group("wrapped") != null ? m.group("wrapped") : m.group("item");
             Matcher words = DROP_WORDS.matcher(raw.trim());
             String item = words.matches() ? words.group("item").trim() : raw.trim();
@@ -204,21 +209,22 @@ public final class CombatFeatures {
             boolean slayer = com.epic60869.sky2m.features.slayer.SlayerBossProfit.isSlayerDrop(item);
             // RARE CROP lines, and anything else that drops in the Garden (pest drops).
             boolean garden = type.contains("CROP") || Sky2MLocation.inGarden();
-            // A Chimera's animations wait for the Inquisitor Gamble's shot.
-            InquisitorGamble.checkLine(text.trim());
+            // Dyes and the Ray of Helios from the Garden show on the RNG HUD even when no price is found.
+            boolean gardenSpecial = garden && RareDropTotem.isGardenSpecial(item);
             String dropText = text.trim(), dropItem = item, dropType = m.group("type").trim();
             int dropAmount = amount;
-            InquisitorGamble.afterReveal(() -> {
+            {
                 // First and on its own, so a problem in the other drop features can't stop it reaching the RNG HUD.
                 try {
-                    com.epic60869.sky2m.FarmingRngTracker.get().onRareDrop(message.component(), dropItem, dropAmount,
-                        rng || dropType.startsWith("CRAZY RARE") || dropType.startsWith("INSANE") || dropType.startsWith("INCREDIBLY RARE"));
+                    com.epic60869.sky2m.tools.RngHud.get().onRareDrop(message.component(), dropItem, dropAmount,
+                        rng || gardenSpecial || dropType.startsWith("CRAZY RARE") || dropType.startsWith("INSANE") || dropType.startsWith("INCREDIBLY RARE"));
                 } catch (Exception e) {
                     System.err.println("[Sky2M] RNG HUD: " + e);
                 }
-                onRareDrop(config.rareDrops, dropText, dropItem, dropAmount, rng, slayer, garden);
+                onRareDrop(config.rareDrops, dropText, dropItem, dropAmount, rng, slayer, garden,
+                    com.epic60869.sky2m.features.misc.chat.PetDropRarity.label(message.component(), dropItem));
                 RareDropTotem.onDrop(dropType, dropItem);
-            });
+            }
         }
 
         if ((m = DYE_DROP.matcher(text)).find()) {
@@ -226,6 +232,22 @@ public final class CombatFeatures {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && ("You".equalsIgnoreCase(name) || name.equalsIgnoreCase(mc.player.getGameProfile().name()))) {
                 RareDropTotem.onDrop("RNG DYE DROP!", m.group("item"));
+            }
+        }
+
+        // Special Garden drops (farming dyes, Ray of Helios) in any Garden drop line, also ones the patterns above
+        // don't read: the totem animation (Rare Drop Totem > Garden Drops) and, if not counted above, the RNG HUD.
+        if (Sky2MLocation.inGarden()) {
+            String special = RareDropTotem.gardenSpecialDrop(text);
+            if (special != null && !someoneElsesDrop(text)) {
+                if (!rareDropLine) {
+                    try {
+                        com.epic60869.sky2m.tools.RngHud.get().onRareDrop(message.component(), special, 1, true);
+                    } catch (Exception e) {
+                        System.err.println("[Sky2M] RNG HUD: " + e);
+                    }
+                }
+                RareDropTotem.onGardenDrop(special);
             }
         }
     }
@@ -296,7 +318,7 @@ public final class CombatFeatures {
     }
 
     private static void onRareDrop(FeatureConfigs.RareDrops config, String text, String item, int amount,
-                                   boolean rng, boolean slayer, boolean garden) {
+                                   boolean rng, boolean slayer, boolean garden, Component petLabel) {
         Minecraft mc = Minecraft.getInstance();
         // Garden drops (rare crops, pest drops) only with Copy Garden Drops, so that toggle really turns them off;
         // Copy Rare Drops and Copy RNG Drops cover everything else.
@@ -304,33 +326,19 @@ public final class CombatFeatures {
         if (copy) {
             mc.execute(() -> {
                 mc.keyboardHandler.setClipboard(text);
-                com.epic60869.sky2m.features.misc.CopyChat.showPreview("Drop copied", text);
+                com.epic60869.sky2m.features.misc.chat.CopyChat.showPreview("Drop copied", text);
             });
         }
-        if (config.dropMessage || (config.rngTitle && rng)) {
+        if (config.dropMessage) {
             int count = Math.max(1, amount);
             ItemPriceResolver.valueByNameAsync(item).thenAccept(value -> {
                 boolean priced = value != null && value > 0;
                 String worth = priced ? formatCoins(value * count) : null;
-                if (config.dropMessage) {
-                    Sky2MAlerts.chat(Component.literal("+Drop: ").withStyle(ChatFormatting.GREEN)
-                        .append(Component.literal(item + (count > 1 ? " x" + count : "")).withStyle(ChatFormatting.AQUA))
-                        .append(priced ? Component.literal(" (" + worth + ")").withStyle(ChatFormatting.GOLD) : Component.empty()));
-                }
-                if (config.rngTitle && rng) {
-                    Sky2MAlerts.title(Component.literal(item + (count > 1 ? " x" + count : "")).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
-                        Component.literal("RNG DROP").withStyle(ChatFormatting.GOLD)
-                            .append(priced ? Component.literal("  " + worth + " coins").withStyle(ChatFormatting.YELLOW) : Component.empty()));
-                }
-            });
-        }
-        if (config.animation) {
-            int count = Math.max(1, amount);
-            ItemPriceResolver.valueByNameAsync(item).thenAccept(value -> {
-                if (value != null && value > 0 && value * count >= config.thresholdMillions * 1_000_000d) {
-                    Sky2MAlerts.dropAnimation(Component.literal(item + "!").withStyle(ChatFormatting.BOLD), 0xFFAA00);
-                    Sky2MAlerts.chat(Component.literal(item + " is worth " + formatCoins(value * count) + " coins!").withStyle(ChatFormatting.GOLD));
-                }
+                Sky2MAlerts.chat(Component.literal("+Drop: ").withStyle(ChatFormatting.GREEN)
+                    // A pet as "Epic Slug" in its rarity colour (Chat > Pet Rarity).
+                    .append(petLabel != null ? petLabel.copy().append(count > 1 ? " x" + count : "")
+                        : Component.literal(item + (count > 1 ? " x" + count : "")).withStyle(ChatFormatting.AQUA))
+                    .append(priced ? Component.literal(" (" + worth + ")").withStyle(ChatFormatting.GOLD) : Component.empty()));
             });
         }
     }

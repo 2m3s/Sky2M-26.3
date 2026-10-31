@@ -85,7 +85,7 @@ public final class HeldItemTransform {
         return Math.max(min, Math.min(max, value));
     }
 
-    record Snapshot(float x, float y, float z, float scale, float swingSpeed, SwingStyle swingStyle,
+    public record Snapshot(float x, float y, float z, float scale, float swingSpeed, SwingStyle swingStyle,
                     float rotationX, float rotationY, float rotationZ) {
         HeldItemTransform toTransform() {
             HeldItemTransform t = new HeldItemTransform();

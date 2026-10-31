@@ -1,6 +1,6 @@
 package com.epic60869.sky2m.features.dungeons.party;
 
-import com.epic60869.sky2m.Sky2MConfig;
+import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -25,8 +25,7 @@ import java.util.regex.Pattern;
 
 /**
  * Team Melody HUD, from Killer560's Mod (MIT, https://github.com/Killer560-OG/killer560s-mod, melody/): during F7/M7
- * P3, each teammate's Melody terminal progress, from their Sky2M (Party Dungeon Data), another mod's party socket (the
- * Cross-Mod Bridge) or the "Melody 2/4" lines Odin and NoammAddons users send in party chat. Your own progress is read
+ * P3, each teammate's Melody terminal progress, from their Sky2M (Party Dungeon Data) or the "Melody 2/4" lines Odin and NoammAddons users send in party chat. Your own progress is read
  * off your own open Melody terminal: which row's button is lit (green terracotta). That's only reading it; nothing
  * here ever clicks. Optionally your progress goes to party chat in the same "Melody 2/4 - 50%" form, like Odin.
  */
@@ -38,14 +37,6 @@ public final class TeamMelody {
 
     private static boolean inP3, open;
     private static int lastRow = -1, lastSentDone, target = -1, current = -1;
-
-    /** Your open Melody board as Odin numbers it: the lit row (1 to 4), the purple target and moving green columns (0 to 4). */
-    public record SelfMelody(int clayRow, int target, int current) {}
-
-    /** Your Melody board right now, or null when it isn't open (for the Cross-Mod Bridge's Odin socket). */
-    public static SelfMelody selfSnapshot() {
-        return open ? new SelfMelody(lastRow, target, current) : null;
-    }
 
     private TeamMelody() {}
 
