@@ -83,6 +83,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
+- Fix protected items (/s2 protect) being blocked in menus you put items into: the Wardrobe when Hypixel titles it "(1/2) Armor Sets", Kat's Pet Sitter, the Composter, the Fossil Excavator, the Gemstone Grinder, the Runic Pedestal, shard and attribute fusion, the Hunting Box, Personal Compactor and Deletor, island furnaces and brewing stands, and rod parts. NPC shops, the Bazaar, auction creation and player trades still block them.
 - Fix the Item Pickup Log showing armor you swap in the Wardrobe as +1 and -1 lines: worn armor is counted apart from your inventory, so swapping sets or putting armor on logs nothing.
 - Fix dungeon map player heads stacking on top of another teammate or not showing, in all three map styles: a teammate out of render distance could be given a nearby teammate's map marker. Nearby teammates now claim their own marker first.
 - Fix the Minimal dungeon map drawing player heads away from the room they're in (further off towards the map's edges).

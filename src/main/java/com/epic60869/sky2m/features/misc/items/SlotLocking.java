@@ -146,15 +146,22 @@ public final class SlotLocking {
 
     /**
      * Menus where moving a protected item is fine: storage, equipment and crafting menus, the Hex (it applies upgrades to
-     * the item), the Farming and Hunting Toolkits (swapping tools in and out) and the Abiphone.
+     * the item), the Farming and Hunting Toolkits (swapping tools in and out), the Abiphone and the other menus you put
+     * items into. A title matched as an NPC shop ({@link #isNpcShopScreen}) is checked first and stays blocked.
      */
     private static boolean isSafeMenu(AbstractContainerScreen<?> screen) {
         String title = net.minecraft.ChatFormatting.stripFormatting(screen.getTitle().getString());
         if (title == null) return false;
         title = title.toLowerCase(java.util.Locale.ROOT);
-        for (String safe : new String[] {"chest", "ender", "backpack", "bag", "storage", "sack", "wardrobe", "equipment",
+        // "armor sets": the Wardrobe's other title, "(1/2) Armor Sets" (same pattern as CustomWardrobe.TITLE).
+        for (String safe : new String[] {"chest", "ender", "backpack", "bag", "storage", "sack", "wardrobe", "armor sets", "equipment",
             "loadout", "pets", "anvil", "reforge", "forge", "craft", "enchant", "accessory", "quiver", "vault", "museum",
-            "salvage", "dye", "rune", "skin", "upgrade", "auction", "minion", "hopper", "hex", "toolkit", "abiphone"}) {
+            "salvage", "dye", "rune", "skin", "upgrade", "auction", "minion", "hopper", "hex", "toolkit", "abiphone",
+            // Menus you put your own items into: Kat, the Composter, the Fossil Excavator, the Gemstone Grinder, the
+            // Runic Pedestal, shard and attribute fusion, the Hunting Box, Personal Compactor / Deletor filters,
+            // island furnaces and brewing stands, and fishing rod parts.
+            "pet sitter", "composter", "fossil", "excavator", "gemstone", "runic", "fusion", "hunting box", "compactor",
+            "deletor", "furnace", "brewing", "rod part"}) {
             if (title.contains(safe)) return true;
         }
         return false;
