@@ -20,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -30,6 +31,8 @@ import java.util.regex.Pattern;
  * "Members:"; parties with your class get a red slot and a tooltip line. When someone joins your group ("Party Finder
  * > Name joined the dungeon group! (Mage Level 30)") you're warned if that class is already yours or a teammate's.
  * Your class comes from the setting, else the class you play in dungeons, pick in the Catacombs menus or join with.
+ * Teammates' classes (from those joins and the dungeon tab list) also answer !missing; anyone who leaves or is kicked
+ * is forgotten, so their class shows as missing.
  */
 public final class DupeClass {
     private static final Pattern MEMBER = Pattern.compile("^ ?(\\w{1,16}): (Healer|Mage|Berserk|Archer|Tank) \\(\\d+\\)$");
@@ -40,6 +43,9 @@ public final class DupeClass {
     private static String lastClass = "";
     /** Classes of the players who joined your group through the Party Finder, by lower-case name. */
     private static final Map<String, String> group = new LinkedHashMap<>();
+    /** Lower-case names that left or were kicked, so the dungeon tab list (which still lists them) doesn't add them back. */
+    private static final java.util.Set<String> gone = new java.util.HashSet<>();
+    private static final List<String> CLASSES = List.of("Healer", "Mage", "Berserk", "Archer", "Tank");
     private static int ticks;
 
     private DupeClass() {}
@@ -60,6 +66,7 @@ public final class DupeClass {
             if (Sky2MLocation.inDungeon()) {
                 DungeonClass self = SelfClass.get();
                 if (self != null && self != DungeonClass.UNKNOWN) lastClass = title(self.name());
+                learnTeammates(mc);
             }
             if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen && screen.getTitle().getString().contains("Catacombs")) readSelected(screen);
         });
@@ -99,9 +106,44 @@ public final class DupeClass {
         if (text.equals("You left the party.") || text.startsWith("The party was disbanded") || text.startsWith("You have been kicked from the party")
             || text.contains("has disbanded the party")) {
             group.clear();
+            gone.clear();
             return;
         }
-        if ((m = LEFT.matcher(text)).matches()) group.remove(m.group(1).toLowerCase(Locale.ROOT));
+        if ((m = LEFT.matcher(text)).matches()) {
+            String name = m.group(1).toLowerCase(Locale.ROOT);
+            group.remove(name);
+            gone.add(name);
+        } else if ((m = REJOINED.matcher(text)).matches()) gone.remove(m.group(1).toLowerCase(Locale.ROOT));
+    }
+
+    private static final Pattern REJOINED = Pattern.compile("^(?:\\[[^]]{1,7}] ?)?(\\w{1,16}) joined the party\\.$");
+
+    /** Teammates' classes from the dungeon tab list, for !missing in parties that didn't come from the Party Finder. */
+    private static void learnTeammates(Minecraft mc) {
+        var players = com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonPlayerManager.getPlayers();
+        String me = mc.player == null ? "" : mc.player.getGameProfile().name();
+        for (var p : players) {
+            if (p == null || p.dungeonClass() == DungeonClass.UNKNOWN || p.name().equalsIgnoreCase(me)) continue;
+            String name = p.name().toLowerCase(Locale.ROOT);
+            if (!gone.contains(name)) group.put(name, title(p.dungeonClass().name()));
+        }
+    }
+
+    /** The dungeon classes nobody in your party plays, in Hypixel's order. Players who left or were kicked don't count. */
+    public static List<String> missing() {
+        return missing(myClass(), group.values());
+    }
+
+    public static List<String> missing(String mine, java.util.Collection<String> teammates) {
+        List<String> out = new java.util.ArrayList<>(CLASSES);
+        out.remove(mine);
+        out.removeAll(teammates);
+        return out;
+    }
+
+    /** Whether Sky2M knows this teammate's class. */
+    public static boolean knowsClass(String name) {
+        return group.containsKey(name.toLowerCase(Locale.ROOT));
     }
 
     private static void onJoin(String name, String cls) {
@@ -111,6 +153,7 @@ public final class DupeClass {
             lastClass = cls;
             return;
         }
+        gone.remove(name.toLowerCase(Locale.ROOT));
         FeatureConfigs.DupeClass c = config();
         String clash = null;
         if (cls.equals(myClass())) clash = "you";

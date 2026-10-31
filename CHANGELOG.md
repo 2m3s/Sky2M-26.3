@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- !dt and !missing party commands (Misc > Party Commands, on by default): !dt stops Auto Requeue after this run, or cancels the requeue that's waiting, and says so in party chat. !missing says which dungeon classes nobody in the party plays, from Party Finder joins and the dungeon tab list; anyone who left or was kicked doesn't count, so kicking your Healer makes it say Healer.
 - Portfolio: set a row's quantity yourself with the Qty box instead of it being counted (leave it empty and Set qty to count again), and enter copies bought at different prices as "2x1.5m + 1x1.2m" in the buy box; profit uses their average.
 - Party Finder helper (Dungeons > Party Finder): groups you can't join get a dark red slot and groups missing your class a green one (both on by default), with optional red for paid carries, purple for non-PUGs and yellow when a member's class level is at or below a set level. Each group's tooltip lists the missing classes (yours in green) and shows member lines in colour, and the floor (F7, M5, E) is written on groups and on the Catacombs Gate and Select Floor menus. SkyHanni's Party Finder settings can be imported.
 - Accepted / Refused Glow (Garden > Visitors, on by default): a visitor glows green after you accept its offer and red after you refuse it, while it walks off.

@@ -18,7 +18,8 @@ import java.util.regex.Pattern;
  * Auto Requeue, like NoammAddons': when a dungeon run ends (Hypixel's "> EXTRA STATS <" line), /instancerequeue a few
  * seconds later, so the party goes straight into another run of the same floor. With Cancel If Someone Leaves, it
  * doesn't requeue when someone left, was kicked or disconnected at any point in that run (from "Starting in 1 second."),
- * not only during the delay. /s2 requeue cancel skips the next one. /instancerequeue only works for the leader.
+ * not only during the delay. /s2 requeue cancel and !dt in party chat skip the next one. /instancerequeue only works
+ * for the leader.
  */
 public final class AutoRequeue {
     private static final Pattern MEMBER_GONE = Pattern.compile("(?:has left the party|has been removed from the party|was removed from your party because they disconnected|has disconnected|has been kicked from the party|You left the party|The party was disbanded)");
@@ -91,6 +92,20 @@ public final class AutoRequeue {
                     }))));
             }
         });
+    }
+
+    /**
+     * !dt (downtime): cancels the requeue that's waiting, else skips the next one. Returns the party chat answer, or
+     * null when Auto Requeue is off.
+     */
+    public static String downtime(String asker) {
+        FeatureConfigs.AutoRequeue c = config();
+        if (c == null || !c.enabled) return null;
+        boolean waiting = requeueAt != 0;
+        requeueAt = 0;
+        if (!waiting) skipNext = true;
+        say((waiting ? "Requeue cancelled" : "The next run won't requeue") + " (!dt from " + asker + ").");
+        return waiting ? "Downtime: requeue cancelled." : "Downtime: won't requeue after this run.";
     }
 
     private static void say(String text) {

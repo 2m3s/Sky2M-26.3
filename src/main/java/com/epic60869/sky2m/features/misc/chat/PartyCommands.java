@@ -31,7 +31,8 @@ import com.epic60869.sky2m.features.misc.system.ServerInfo;
  * leader is guessed from party messages, which can be wrong). The answers to !fps, !ping and !tps work (Odin's ChatCommands, https://github.com/odtheking/Odin, BSD-3-Clause)
  * whoever is leader. Leadership is tracked from Hypixel's party messages. SBO's party commands
  * (https://github.com/SkyblockOverhaul/SBO, Apache-2.0) add !demote, !carrot, !time and the Diana ones (!chim, !since,
- * !profit, ...; see {@link com.epic60869.sky2m.features.combat.DianaPartyCommands}).
+ * !profit, ...; see {@link com.epic60869.sky2m.features.combat.DianaPartyCommands}). !dt stops Auto Requeue and
+ * !missing lists the dungeon classes nobody in the party plays.
  */
 public final class PartyCommands {
     // (?:[^\w\s\[]+ )? skips a Hypixel emblem (☘, ☣, ...) before a name: "Party > [MVP++] ☘ Name: !warp".
@@ -155,6 +156,8 @@ public final class PartyCommands {
             }
             case "carrot", "c" -> config.carrot ? CARROT.get(ThreadLocalRandom.current().nextInt(CARROT.size())) : null;
             case "time" -> config.time ? LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) : null;
+            case "dt", "downtime" -> config.downtime ? com.epic60869.sky2m.features.dungeons.AutoRequeue.downtime(sender) : null;
+            case "missing" -> config.missing ? missingClasses() : null;
             default -> null;
         };
         if (reply != null) {
@@ -282,6 +285,14 @@ public final class PartyCommands {
         long now = System.currentTimeMillis();
         lastCommand = now;
         Minecraft.getInstance().execute(() -> pending.add(new Pending(waiting.command(), now + REPLY_DELAY_MS)));
+    }
+
+    /** !missing: the classes nobody plays, with how many teammates' classes aren't known yet. */
+    private static String missingClasses() {
+        List<String> missing = com.epic60869.sky2m.features.dungeons.DupeClass.missing();
+        long unknown = members.stream().filter(n -> !com.epic60869.sky2m.features.dungeons.DupeClass.knowsClass(n)).count();
+        String answer = missing.isEmpty() ? "No missing classes!" : "Missing: " + String.join(", ", missing);
+        return unknown > 0 ? answer + " (" + unknown + " player" + (unknown == 1 ? "'s" : "s'") + " class unknown)" : answer;
     }
 
     /** !f1-!f7, !m1-!m7 and !t1-!t5: Hypixel's /joininstance for that floor or tier (Odin's queue commands). */

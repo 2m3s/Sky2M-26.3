@@ -4919,6 +4919,8 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "!tps", desc = "Says the server's TPS in party chat. Works whoever is leader.") @ConfigEditorBoolean public boolean tps = true;
         @Expose @ConfigOption(name = "!carrot", desc = "A magic 8-ball answer in party chat.") @ConfigEditorBoolean public boolean carrot = false;
         @Expose @ConfigOption(name = "!time", desc = "Says your time in party chat.") @ConfigEditorBoolean public boolean time = false;
+        @Expose @ConfigOption(name = "!dt", desc = "Downtime: stops Auto Requeue after this run (or the one waiting to happen) and says so in party chat. Anyone in the party can ask.") @ConfigEditorBoolean public boolean downtime = true;
+        @Expose @ConfigOption(name = "!missing", desc = "Says in party chat which dungeon classes nobody in the party plays. Players who left or were kicked don't count, so kicking your Healer makes !missing say Healer.") @ConfigEditorBoolean public boolean missing = true;
 
         @Expose
         @ConfigOption(name = "Diana Commands", desc = "Diana party commands, answered from this season's Diana trackers: !chim, !chimls, !inq, !king, !manti, !sphinx, !relic, !stick, !core, !wool, !food, !stinger, !feathers, !mobs, !burrows, !profit, !playtime, !mf, !stats <you>, !help and !since <chim|inq|relic|stick|king|manti|core|wool|food|...>.")
