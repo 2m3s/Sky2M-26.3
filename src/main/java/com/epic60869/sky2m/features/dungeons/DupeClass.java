@@ -57,6 +57,11 @@ public final class DupeClass {
 
     public static void init() {
         Sky2MChat.onChat(message -> onChat(message.text().trim()));
+        // Leaving the server is leaving its party as far as Sky2M can tell.
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            group.clear();
+            gone.clear();
+        });
         ItemTooltipCallback.EVENT.register((stack, context, flag, lines) -> {
             String dupe = partyDupe(stack);
             if (dupe != null) lines.add(1, Component.literal("Already has a " + dupe + "!").withStyle(ChatFormatting.RED));
@@ -97,26 +102,58 @@ public final class DupeClass {
         }
     }
 
-    private static void onChat(String text) {
+    /** A chat line without colours. Public for the game test. */
+    public static void onChat(String text) {
         Matcher m = JOINED.matcher(text);
         if (m.matches()) {
             onJoin(m.group(1), m.group(2));
             return;
         }
         if (text.equals("You left the party.") || text.startsWith("The party was disbanded") || text.startsWith("You have been kicked from the party")
-            || text.contains("has disbanded the party")) {
-            group.clear();
-            gone.clear();
+            || text.contains("has disbanded the party") || text.equals("You are not currently in a party.")) {
+            forgetParty();
             return;
         }
-        if ((m = LEFT.matcher(text)).matches()) {
+        if ((m = JOINED_OTHER.matcher(text)).matches()) {
+            // A new party: nobody from the old one counts, except whoever is in this one too.
+            forgetParty();
+            gone.remove(m.group(1).toLowerCase(Locale.ROOT));
+            return;
+        }
+        if ((m = PARTYING_WITH.matcher(text)).matches()) {
+            for (String part : m.group(1).split(",")) {
+                Matcher n = NAME.matcher(part.trim());
+                if (n.matches()) gone.remove(n.group(1).toLowerCase(Locale.ROOT));
+            }
+            return;
+        }
+        if ((m = LEFT.matcher(text)).matches() || (m = KICKED_OFFLINE.matcher(text)).matches() || (m = TRANSFERRED_LEFT.matcher(text)).matches()) {
             String name = m.group(1).toLowerCase(Locale.ROOT);
             group.remove(name);
             gone.add(name);
         } else if ((m = REJOINED.matcher(text)).matches()) gone.remove(m.group(1).toLowerCase(Locale.ROOT));
     }
 
+    /**
+     * You're no longer in that party: forget everyone's class. Everyone still in the dungeon tab list counts as gone,
+     * or the tab list would teach their classes again while you're still in the dungeon.
+     */
+    private static void forgetParty() {
+        group.clear();
+        gone.clear();
+        Minecraft mc = Minecraft.getInstance();
+        String me = mc.player == null ? "" : mc.player.getGameProfile().name();
+        for (var p : com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonPlayerManager.getPlayers()) {
+            if (p != null && !p.name().equalsIgnoreCase(me)) gone.add(p.name().toLowerCase(Locale.ROOT));
+        }
+    }
+
     private static final Pattern REJOINED = Pattern.compile("^(?:\\[[^]]{1,7}] ?)?(\\w{1,16}) joined the party\\.$");
+    private static final Pattern KICKED_OFFLINE = Pattern.compile("^Kicked (?:\\[[^]]+] )?(\\w{1,16}) because they were offline\\.?$");
+    private static final Pattern TRANSFERRED_LEFT = Pattern.compile("^The party was transferred to .+ because (?:\\[[^]]+] )?(\\w{1,16}) left\\.?$");
+    private static final Pattern JOINED_OTHER = Pattern.compile("^You have joined (?:\\[[^]]+] )?(\\w{1,16})'s? party!.*$");
+    private static final Pattern PARTYING_WITH = Pattern.compile("^You'll be partying with: (.+)$");
+    private static final Pattern NAME = Pattern.compile("^(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(\\w{1,16})$");
 
     /** Teammates' classes from the dungeon tab list, for !missing in parties that didn't come from the Party Finder. */
     private static void learnTeammates(Minecraft mc) {
