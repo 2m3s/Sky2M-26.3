@@ -56,13 +56,13 @@ public final class EnchantedBookLabels {
         return new Label(key, Math.max(1, enchants.getIntOr(key, 1)));
     }
 
-    /** "sharpness" -> "Sh", "first_strike" -> "FS"; Ultimate enchantments use the initials of the rest ("wise" -> "UW"). */
+    /** "sharpness" -> "Sh", "first_strike" -> "FS"; one-word Ultimate enchantments use their first four letters ("chimera" -> "Chim"). */
     static String label(String enchant, boolean ultimate) {
         String[] words = enchant.split("_");
         if (words.length >= 2) return (initial(words[0]) + initial(words[1])).toUpperCase(Locale.ROOT);
         String word = words[0];
         if (word.isEmpty()) return NONE.name();
-        if (ultimate) return "U" + Character.toUpperCase(word.charAt(0));
+        if (ultimate) return Character.toUpperCase(word.charAt(0)) + word.substring(1, Math.min(4, word.length()));
         return Character.toUpperCase(word.charAt(0)) + (word.length() > 1 ? word.substring(1, 2) : "");
     }
 

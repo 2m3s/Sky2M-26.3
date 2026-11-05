@@ -258,7 +258,7 @@ public final class Sky2MConfig extends Config {
         public ItemRarity itemRarity = new ItemRarity();
 
         @Expose
-        @ConfigOption(name = "Enchanted Book Labels", desc = "Two letters in the top right of enchanted books naming their enchantment (Sh for Sharpness, UW for Ultimate Wise, in pink for Ultimate enchantments), so you can tell them apart without hovering. Books with several enchantments aren't labelled.")
+        @ConfigOption(name = "Enchanted Book Labels", desc = "A short label in the top right of enchanted books naming their enchantment (Sh for Sharpness, Chim for Chimera, in pink for Ultimate enchantments), so you can tell them apart without hovering. Books with several enchantments aren't labelled.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2301)
         public boolean enchantedBookLabels = true;
