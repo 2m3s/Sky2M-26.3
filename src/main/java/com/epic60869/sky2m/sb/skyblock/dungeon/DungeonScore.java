@@ -63,6 +63,7 @@ public class DungeonScore {
 	private static final Pattern MIMIC_FLOORS_PATTERN = Pattern.compile("[FM][67]");
 	//Score messages sent in party chat
 	private static final String MIMIC_MESSAGE = "Mimic dead!";
+	private static final double MIMIC_REMOVED_RANGE = 20;
 	private static final String PRINCE_MESSAGE = "Prince dead!";
 	private static final String BAT_MESSAGE = "Bat dead!";
 
@@ -92,6 +93,7 @@ public class DungeonScore {
 		ClientPlayConnectionEvents.JOIN.register((_, _, _) -> reset());
 		DungeonEvents.DUNGEON_STARTED.register(DungeonScore::onDungeonStart);
 		DungeonEvents.DUNGEON_ENDED.register(DungeonScore::reset);
+		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents.ENTITY_UNLOAD.register(DungeonScore::handleEntityRemoved);
 		com.epic60869.sky2m.features.core.Sky2MChat.onGameMessage((message, overlay) -> {
 			if (overlay || !Utils.isInDungeons()) return;
 			String str = message.getString();
@@ -256,6 +258,17 @@ public class DungeonScore {
 		if (!isEntityMimic(entity)) return;
 		if (MIMIC_MESSAGE_CONFIG.get().sendMimicMessage) MessageScheduler.INSTANCE.sendMessageAfterCooldown("/pc " + MIMIC_MESSAGE, true);
 		mimicKilled = true;
+	}
+
+	/**
+	 * Sky2M: a Mimic killed the moment it spawns (a bow shot as the chest opens) can die before the client tracks it,
+	 * so no death event arrives and it's only removed. Nothing else removes a Mimic while you're this close to it.
+	 */
+	private static void handleEntityRemoved(Entity entity, net.minecraft.client.multiplayer.ClientLevel level) {
+		Minecraft client = Minecraft.getInstance();
+		if (!dungeonStarted || mimicKilled || !entity.isRemoved() || client.level != level || client.player == null) return;
+		if (client.player.distanceToSqr(entity) > MIMIC_REMOVED_RANGE * MIMIC_REMOVED_RANGE) return;
+		handleEntityDeath(entity);
 	}
 
 	public static void onMimicKill() {
