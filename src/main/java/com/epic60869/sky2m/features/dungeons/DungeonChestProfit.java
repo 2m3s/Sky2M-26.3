@@ -210,7 +210,24 @@ public final class DungeonChestProfit {
     static String lootId(ItemStack stack, String name) {
         if (name.startsWith("Wither Essence")) return "ESSENCE_WITHER";
         if (name.startsWith("Undead Essence")) return "ESSENCE_UNDEAD";
-        return Sky2MPriceTooltip.marketId(stack);
+        String id = Sky2MPriceTooltip.marketId(stack);
+        if (id.startsWith("ATTRIBUTE_SHARD") || id.startsWith("SHARD_") || (id.isEmpty() && isShard(name))) {
+            var shard = com.epic60869.sky2m.features.hunting.AttributeShards.of(stack);
+            if (shard == null) shard = com.epic60869.sky2m.features.hunting.AttributeShards.byName(shardName(name));
+            if (shard != null) return shard.bazaarName();
+            if (id.isEmpty()) return "SHARD_" + toId(shardName(name));
+        }
+        return id;
+    }
+
+    /** "Grove Shard", "Grove Shard x3", "3x Grove Shards". */
+    private static boolean isShard(String name) {
+        return shardName(name).length() < name.replaceAll(" x[0-9,]+$", "").replaceFirst("^[0-9,]+x ", "").length();
+    }
+
+    /** The shard's name without "Shard(s)" or an amount: "Grove" from "Grove Shard x3"; the name unchanged if it isn't one. */
+    private static String shardName(String name) {
+        return name.trim().replaceAll(" x[0-9,]+$", "").replaceFirst("^[0-9,]+x ", "").replaceAll(" Shards?$", "");
     }
 
     private static void renderChestValue(AbstractContainerScreen<?> screen, GuiGraphicsExtractor g) {
@@ -377,6 +394,10 @@ public final class DungeonChestProfit {
             return "ENCHANTMENT_" + enchantName + "_" + level;
         }
         if (name.endsWith(" Essence")) return "ESSENCE_" + toId(name.substring(0, name.lastIndexOf(' ')));
+        if (isShard(name)) {
+            var shard = com.epic60869.sky2m.features.hunting.AttributeShards.byName(shardName(name));
+            return shard != null ? shard.bazaarName() : "SHARD_" + toId(shardName(name));
+        }
         if (name.endsWith(" Dye")) return "DYE_" + toId(name.substring(0, name.lastIndexOf(' ')));
         if (name.startsWith("Master Skull - Tier ")) return toId(name.replace(" - ", " "));
         if (name.startsWith("[Lvl 1] ")) {
