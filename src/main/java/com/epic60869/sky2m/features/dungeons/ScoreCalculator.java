@@ -235,6 +235,31 @@ public final class ScoreCalculator {
         return total <= 0 ? 0 : (int) Math.ceil(total * REQUIRED_SECRETS.getOrDefault(floorKey(), 1.0));
     }
 
+    /**
+     * Secrets still enough for 300 score if the rest of the run is perfect, like Odin's neededSecretsAmount (BSD-3-Clause):
+     * bonus score covers some of the 40 points secrets are worth, and each death's skill point needs one more. 0 until the
+     * total is known.
+     */
+    public static int secretsForSPlus() {
+        int total = totalSecrets();
+        int penalty = Math.max(0, deathCount * 2 - 1);
+        return total <= 0 ? 0 : secretsForSPlus(total, REQUIRED_SECRETS.getOrDefault(floorKey(), 1.0), bonusScore(), penalty);
+    }
+
+    /** Public for the game test. */
+    public static int secretsForSPlus(int total, double required, int bonus, int deathPenalty) {
+        int points = Math.clamp(40 - bonus + deathPenalty, 0, 40);
+        return (int) Math.ceil(total * required * points / 40.0);
+    }
+
+    private static int bonusScore() {
+        int bonus = Math.min(cryptsCount, 5);
+        if (mimicKilled() && floorNumber() > 5) bonus += 2;
+        if (princeKilled()) bonus += 1;
+        if (isPaul()) bonus += 10;
+        return bonus;
+    }
+
     private static int totalRooms() {
         if (simActive() && simTotalRooms > 0) return simTotalRooms;
         return completedRooms > 0 && clearedPercentage > 0 ? (int) Math.floor(completedRooms / (clearedPercentage / 100.0) + 0.4) : 36;
@@ -255,10 +280,7 @@ public final class ScoreCalculator {
         String floor = floorKey();
         if (floor.isEmpty()) return;
 
-        int bonus = Math.min(cryptsCount, 5);
-        if (mimicKilled() && floorNumber() > 5) bonus += 2;
-        if (princeKilled()) bonus += 1;
-        if (isPaul()) bonus += 10;
+        int bonus = bonusScore();
 
         int limit = TIME_LIMIT.getOrDefault(floor, 100);
         int speed = secondsElapsed <= limit ? 100 : Math.max(0, (int) (100 - speedDeduction((secondsElapsed - limit) * 100f / limit)));

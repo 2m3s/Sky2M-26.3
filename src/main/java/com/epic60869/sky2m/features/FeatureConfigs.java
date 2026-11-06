@@ -3351,6 +3351,12 @@ public final class FeatureConfigs {
         public boolean detailed = false;
 
         @Expose
+        @ConfigOption(name = "Secrets For S+", desc = "Also show secrets found against how many are enough for 300 score if the rest of the run is perfect. It counts your bonus score and deaths, so it can be below the floor's full secret requirement. Shows once the first secret is found.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1801)
+        public boolean secretsForSPlus = true;
+
+        @Expose
         @ConfigOption(name = "Force Paul", desc = "Count Paul's +10 bonus score even when the EZPZ perk isn't detected.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1801)
