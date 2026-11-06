@@ -80,6 +80,14 @@ public final class Sky2MSim {
                     b -> com.epic60869.sky2m.sim.compat.McCompat.setScreen(client, new SimMenuScreen(screen)))
                 .bounds(6, 6, 80, 20)
                 .tooltip(Tooltip.create(Component.literal("Practise dungeon rooms and floors in your own world (Sky2M)")))
+                .build());
+            // /simparty join needs a world to type it in; this joins straight from the title screen.
+            Screens.getWidgets(screen).add(Button.builder(Component.literal("Join Sim Party"),
+                    b -> com.epic60869.sky2m.sim.compat.McCompat.setScreen(client,
+                            new com.epic60869.sky2m.sim.roomsim.SimJoinScreen(screen)))
+                .bounds(6, 30, 80, 20)
+                .tooltip(Tooltip.create(Component.literal("Join a friend's Dungeon Sim party with their party code")))
+                .build());
         });
     }
 
