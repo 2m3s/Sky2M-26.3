@@ -123,6 +123,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ### Changed
 
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
+- /s2 hour only counts your run time: the Between runs box and the time between runs are gone from the screen, the chat estimate and the boss collection time.
 - Dungeon Sim terminals work like Hypixel's: each P3 section deals its terminals from the six types with no repeats and at most one Melody, and a terminal keeps its type for the run. Several players can open the same terminal, each on their own board; the first to finish completes it and the others' menus close. Walking away closes a terminal, and pressing Melody's button at the wrong time freezes the pane for 2 seconds.
 - Dungeon Sim minibosses spawn in Hypixel's rooms and floors: King Midas in his room and the Shadow Assassin in his from Floor III, the Frozen Adventurer from Floor IV, and the Lost Adventurer and Angry Archaeologist on every floor. The Shadow Assassin waits invisible until you come near, the Frozen Adventurer shows its full name, and Fels in rooms start at Floor V.
 - Dungeon Sim hurt immunity like Hypixel's: one mob or attack can hit you at most once every half second, and overlapping boss hits landing at the same moment count once.
