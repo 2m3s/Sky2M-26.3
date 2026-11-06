@@ -171,6 +171,7 @@ public final class DungeonFeatures {
         LividTimer.init();
         BonzoTimer.init();
         TerracottaTimer.init();
+        SadanInterest.init();
         AutoRequeue.init();
         TeamSecrets.init();
         RoomClears.init();

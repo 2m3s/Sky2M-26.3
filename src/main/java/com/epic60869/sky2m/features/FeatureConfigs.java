@@ -711,6 +711,12 @@ public final class FeatureConfigs {
         public boolean terracottaTimer = true;
 
         @Expose
+        @ConfigOption(name = "Sadan Interest Timer (F6/M6)", desc = "In the Sadan fight, a HUD with the time left on his Interest Meter, two minutes less a second for each Terracotta killed, until the Giants wake. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1301)
+        public boolean sadanInterest = true;
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Blessing Display", desc = "The dungeon's blessings and their levels, from the tab list.")
         public BlessingDisplay blessings = new BlessingDisplay();

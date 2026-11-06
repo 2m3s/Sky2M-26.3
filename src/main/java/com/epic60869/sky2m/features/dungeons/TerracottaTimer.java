@@ -55,6 +55,7 @@ public final class TerracottaTimer {
         if (!(updated.getBlock() instanceof FlowerPotBlock) || !inBoss()) return;
         if (spawning.stream().anyMatch(t -> t.pos.equals(pos))) return;
         spawning.add(new Terracotta(pos.immutable(), 10f));
+        SadanInterest.onTerracottaDied();
     }
 
     private static void render(PrimitiveCollector collector) {

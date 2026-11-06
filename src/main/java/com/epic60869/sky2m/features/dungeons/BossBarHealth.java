@@ -24,6 +24,7 @@ public final class BossBarHealth {
 
     /** The name to draw for a boss bar (Sky2MBossBarMixin). */
     public static Component barName(Component name, float progress) {
+        if (Sky2MLocation.inDungeon()) SadanInterest.onBossBar(Sky2MLocation.strip(name.getString()), progress);
         Config c = config();
         if (c == null || !c.enabled || !Sky2MLocation.inDungeon()) return name;
         String plain = Sky2MLocation.strip(name.getString()).trim();
