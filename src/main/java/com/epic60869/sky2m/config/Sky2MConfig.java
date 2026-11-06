@@ -1782,6 +1782,11 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Highlight Event", desc = "In the Dwarven Mines, highlight the current mining event's targets: the goblins and golems of a Goblin Raid, and the Raffle Tickets on the ground during a Raffle.")
         @ConfigEditorBoolean
         public boolean highlightEvent = false;
+        @ConfigOption(name = "Commission Waypoints", desc = "In the Dwarven Mines, a beam and label on where each unfinished commission is done (Lava Springs, Royal Mines, Cliffside Veins, Rampart's Quarry, Upper Mines, Goblin Burrows, Glacite Walkers, Treasure Hoarders). Works without the HUD.")
+        public boolean waypoints = false;
+
+        @ConfigOption(name = "Emissary Waypoints", desc = "When a commission is DONE, a beam and label on the nearest Emissary to claim it at.")
+        public boolean emissaryWaypoints = false;
 
         @Expose
         @ConfigOption(name = "Goblin Raid Colour", desc = "Outline colour for Goblin Raid goblins and golems.")

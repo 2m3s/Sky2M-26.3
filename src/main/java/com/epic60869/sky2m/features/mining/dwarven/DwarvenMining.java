@@ -11,6 +11,7 @@ public final class DwarvenMining {
     public static void init(Path configDir) {
         DwarvenSolvers.init();
         MetalDetectorSolver.init();
+        CommissionWaypoints.init();
         NucleusTracker.init(configDir);
         GlaciteCold.init();
         PrecisionMining.init(configDir);

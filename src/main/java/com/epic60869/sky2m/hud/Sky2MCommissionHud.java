@@ -45,7 +45,7 @@ public final class Sky2MCommissionHud {
         // every 10 ticks instead of every frame; extract only draws the stored result.
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++tickCounter % 10 != 0) return;
-            if (!visible(mc)) return;
+            if (!visible(mc) && !com.epic60869.sky2m.features.mining.dwarven.CommissionWaypoints.wantsCommissions()) return;
             updateFromTab();
         });
     }
@@ -311,4 +311,11 @@ public final class Sky2MCommissionHud {
     }
 
     private record Commission(String name, String progress, float percent) {}
+
+    /** The commissions in the tab list right now: name -> whether it's DONE (for Commission Waypoints). */
+    public static java.util.Map<String, Boolean> current() {
+        java.util.Map<String, Boolean> out = new java.util.LinkedHashMap<>();
+        for (Commission c : commissions) out.put(c.name(), c.progress().equalsIgnoreCase("DONE"));
+        return out;
+    }
 }
