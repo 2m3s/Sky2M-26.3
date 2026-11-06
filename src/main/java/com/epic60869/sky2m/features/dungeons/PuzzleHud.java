@@ -326,7 +326,7 @@ public final class PuzzleHud {
         public boolean showEntered = true;
 
         @Expose
-        @ConfigOption(name = "Puzzle Bests", desc = "Keep your fastest time for each puzzle, from walking into its room to its green checkmark or a PUZZLE SOLVED! line naming you, and say so in chat when you beat one. /s2 puzzles lists them. A green checkmark only counts with no teammate's head in the room on the map.")
+        @ConfigOption(name = "Puzzle Bests", desc = "Keep your fastest time for each puzzle, from walking into its room to its green checkmark or a PUZZLE SOLVED! line naming you, and say the time in chat each time. /s2 puzzles lists them. A green checkmark only counts as a best with you in the room and no teammate's head in it on the map.")
         @ConfigEditorBoolean
         public boolean puzzleBests = true;
     }

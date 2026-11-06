@@ -28,8 +28,9 @@ import java.util.WeakHashMap;
 
 /**
  * Dungeons > Puzzle HUD > Puzzle Bests: your fastest time for each puzzle, from walking into its room to its green
- * checkmark or a "PUZZLE SOLVED!" line naming you. A green checkmark says nothing of who solved it, so it only counts while
- * you're alone in the room on the map. Saved in config/sky2m/puzzle-bests.json; /s2 puzzles lists them. Not in the Dungeon Sim.
+ * checkmark or a "PUZZLE SOLVED!" line naming you, said in chat each time. A green checkmark says nothing of who solved it, so
+ * it only counts as a best while you're in the room and alone in it on the map. Saved in config/sky2m/puzzle-bests.json;
+ * /s2 puzzles lists them. Not in the Dungeon Sim.
  */
 public final class PuzzleBests {
     /** The saved bests in ms, by puzzle. Public for the game test. */
@@ -119,28 +120,34 @@ public final class PuzzleBests {
         Room current = DungeonManager.getCurrentRoom();
         Room room = current != null && ENTERED.containsKey(current) ? current : lastEntered;
         if (room == null) return;
-        if (line.solved()) finish(room);
+        if (line.solved()) finish(room, System.currentTimeMillis(), true);
         else FINISHED.add(room);
     }
 
     /** The map shows {@code room} green after showing it unfinished. */
     static void onGreen(Room room, Room current) {
-        if (enabled() && room == current && room.getType() == Room.Type.PUZZLE && RoomBests.aloneInRoom()) finish(room);
+        if (!enabled() || room.getType() != Room.Type.PUZZLE) return;
+        if (room == current) {
+            finish(room, System.currentTimeMillis(), RoomBests.aloneInRoom());
+        } else {
+            // Solved and out before the map caught up. Teammates can't be checked for now, so it's a time but not a best.
+            Long left = RoomClears.leftRecently(room);
+            if (left != null) finish(room, left, false);
+        }
     }
 
-    private static void finish(Room room) {
+    /** Says the puzzle's time, ending at {@code end}; only {@code counts} can make it a best. */
+    private static void finish(Room room, long end, boolean counts) {
         Long entered = ENTERED.get(room);
         if (entered == null || room.getName() == null || !FINISHED.add(room)) return;
         String puzzle = puzzleName(room.getName());
-        long ms = System.currentTimeMillis() - entered;
+        long ms = Math.max(0, end - entered);
         Long previous = store.get(puzzle);
-        if (!store.record(puzzle, ms)) return;
-        SavedJson.save(file, store.toJson());
+        boolean newBest = counts && store.record(puzzle, ms);
+        if (newBest) SavedJson.save(file, store.toJson());
         Sky2MAlerts.chat(Component.literal(puzzle + ": ").withStyle(ChatFormatting.GOLD)
             .append(Component.literal(RoomClears.timeText(ms)).withStyle(ChatFormatting.GREEN))
-            .append(previous == null ? Component.literal(" (first best)").withStyle(ChatFormatting.GRAY)
-                : Component.literal(" New best!").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)
-                    .append(Component.literal(" (was " + RoomClears.timeText(previous) + ")").withStyle(style -> style.withColor(ChatFormatting.GRAY).withBold(false)))));
+            .append(RoomBests.suffix(new RoomBests.Outcome(ms, previous, counts, newBest, java.util.List.of()))));
     }
 
     /** The puzzle a room is, from its name in the room data; both Blaze rooms are one puzzle. Public for the game test. */
