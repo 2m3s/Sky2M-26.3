@@ -6455,6 +6455,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Count Across Runs", desc = "Also keep how many times each player has died in your runs, shown next to them in the HUD. /s2 deaths lists the most deaths.")
         @ConfigEditorBoolean
         public boolean lifetime = false;
+
+        @Expose
+        @ConfigOption(name = "Death Map", desc = "Keep how many times you've died in each room and each boss. /s2 deathmap lists the worst.")
+        @ConfigEditorBoolean
+        public boolean deathMap = true;
     }
 
     public static final class ClassCounters {
