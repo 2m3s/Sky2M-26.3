@@ -4,8 +4,12 @@
  */
 package com.epic60869.sky2m.sim.gui.profit;
 
+import com.epic60869.sky2m.gui.Sky2MGuiStyle;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+
+import net.minecraft.network.chat.Component;
 
 import java.util.Locale;
 
@@ -17,20 +21,46 @@ import java.util.Locale;
  * arrives as plain numbers and strings, and a mining or fishing tracker can draw the same screen by handing over
  * its own.
  *
- * <p>Colours are the mod's amber, not the blue and purple of the mockup these were drawn from.
+ * <p>Colours are Sky2M's settings look ({@link Sky2MGuiStyle}): purple headings and accents on MoulConfig's dark
+ * grey, so the Dungeon Sim's screens sit next to /s2 without looking like a different mod. They were the amber of
+ * the mod the sim came from.
  */
 public final class ProfitPanels {
 
-    public static final int ACCENT = 0xFFCC6600;
-    public static final int BORDER = 0xFF553311;
-    public static final int PANEL_BG = 0xFF0D0D0D;
-    public static final int INNER_BG = 0xFF080808;
-    public static final int DIM = 0xFF7A7A7A;
-    public static final int TEXT = 0xFFE8E8E8;
+    public static final int ACCENT = Sky2MGuiStyle.HEADING;
+    public static final int BORDER = Sky2MGuiStyle.LINE;
+    public static final int PANEL_BG = Sky2MGuiStyle.ROW;
+    public static final int INNER_BG = 0xFF101016;
+    public static final int DIM = 0xFF8C8C8C;
+    public static final int TEXT = Sky2MGuiStyle.TEXT;
     public static final int GOOD = 0xFF4ADE80;
     public static final int BAD = 0xFFEF4444;
 
     private ProfitPanels() {
+    }
+
+    /**
+     * A Dungeon Sim screen's frame in the settings look: the dimmed backdrop, a MoulConfig panel, and a title strip
+     * {@code bar} tall across its top with "Dungeon Sim" and the screen's name. Every sim screen drew its own copy of
+     * the old black-and-amber frame; this is the one place it lives now.
+     */
+    public static void frame(GuiGraphicsExtractor g, Font font, int screenW, int screenH, int x, int y, int w, int h,
+                             int bar, String title) {
+        Sky2MGuiStyle.backdrop(g, screenW, screenH);
+        Sky2MGuiStyle.panel(g, x, y, w, h, true);
+        Sky2MGuiStyle.panel(g, x + 4, y + 4, w - 8, bar - 6, false);
+        g.text(font, titleText(title), x + 10, y + (bar - 8) / 2, Sky2MGuiStyle.TITLE, false);
+    }
+
+    /** How wide {@link #frame}'s title is, for text that shares the strip with it. */
+    public static int titleWidth(Font font, String title) {
+        return font.width(titleText(title));
+    }
+
+    private static Component titleText(String title) {
+        return Component.literal("Dungeon Sim").withStyle(ChatFormatting.LIGHT_PURPLE)
+                .append(Component.literal(title == null || title.isEmpty() ? "" : "  " + title)
+                        .withStyle(ChatFormatting.GRAY));
     }
 
     /**

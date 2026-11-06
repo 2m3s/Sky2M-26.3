@@ -292,16 +292,10 @@ public class SimRoomFilterScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        // Design a Map's frame (SimMapEditorScreen.extractRenderState): shade, panel, border, black header bar with an
-        // amber rule under it, the title in capitals in the accent colour, and the room count right-aligned in the bar.
-        g.fill(0, 0, this.width, this.height, 0xCC000000);
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, ProfitPanels.PANEL_BG);
-        g.outline(panelX, panelY, panelW, panelH, ProfitPanels.BORDER);
-        g.fill(panelX, panelY, panelX + panelW, panelY + BAR, 0xFF000000);
-        g.fill(panelX, panelY + BAR - 1, panelX + panelW, panelY + BAR, ProfitPanels.ACCENT);
-        g.text(this.font, "FILTERS", panelX + 10, panelY + 11, ProfitPanels.ACCENT, false);
+        // The sim's shared frame (ProfitPanels.frame), and the room count right-aligned in its title strip.
+        ProfitPanels.frame(g, this.font, this.width, this.height, panelX, panelY, panelW, panelH, BAR, "Filters");
         String count = shown + " of " + total + " rooms" + (filter.isDefault() ? "" : " (filtered)");
-        int maxW = panelW - 20 - this.font.width("FILTERS") - 10;
+        int maxW = panelW - 20 - ProfitPanels.titleWidth(this.font, "Filters") - 10;
         String shownCount = this.font.width(count) <= maxW ? count : shown + "/" + total;
         g.text(this.font, shownCount, panelX + panelW - 10 - this.font.width(shownCount), panelY + 11,
                 filter.isDefault() ? ProfitPanels.DIM : ProfitPanels.ACCENT, false);

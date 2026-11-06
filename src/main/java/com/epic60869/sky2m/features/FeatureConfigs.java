@@ -6327,6 +6327,7 @@ public final class FeatureConfigs {
     /** Dungeon Sim (Killer560's): practise dungeon rooms and whole floors in a singleplayer world of your own. */
     public static final class DungeonSim {
         @Expose
+        @ConfigOption(name = "Enabled", desc = "Load the Dungeon Sim. Off: none of it loads (its rooms, commands, menus and everything that runs inside it), so it uses no memory or time. Takes effect after a game restart. The dungeon map, puzzle solvers and other dungeon features on Hypixel work either way.")
         @ConfigEditorBoolean
         @ConfigOption(name = "Open Dungeon Sim", desc = "Open the Dungeon Sim's menu: load any room or generate a whole floor (F1 to M7 sizes) in a singleplayer world, with secrets, puzzles, mobs, keys, the Mimic, a run timer and score. Also /s2 sim. It needs its own world, so leave the server first; from the title screen use the button below.")
         @ConfigEditorButton(buttonText = "OPEN")

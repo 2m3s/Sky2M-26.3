@@ -30,7 +30,61 @@ public final class Sky2MSim {
     private Sky2MSim() {
     }
 
+    /** Whether the Sim's own parts were registered at startup (see {@link #enabled}). */
+    private static boolean loaded;
+
     public static void init() {
+        loaded = enabled();
+        if (loaded) {
+            registerSimParts();
+        }
+
+        // What Sky2M's own dungeon features read on Hypixel too (the map styles are built from LiveMapFeature and the
+        // map scan), so these load whether or not the Sim is on.
+        com.epic60869.sky2m.sim.secrets.DungeonState.register();
+        com.epic60869.sky2m.sim.util.SkyblockGate.register();
+        com.epic60869.sky2m.sim.leapmenu.PartyTracker.register();
+        com.epic60869.sky2m.sim.witherdoors.WitherDoorsFeature.register();
+        com.epic60869.sky2m.sim.puzzlesolvers.BoulderSolverFeature.register();
+        com.epic60869.sky2m.sim.puzzlesolvers.QuizSolverFeature.register();
+        com.epic60869.sky2m.sim.puzzlesolvers.IceFillSolverFeature.register();
+        com.epic60869.sky2m.sim.puzzlesolvers.WeirdosSolverFeature.register();
+        com.epic60869.sky2m.sim.puzzlesolvers.WaterSolverFeature.register();
+        com.epic60869.sky2m.sim.puzzlesolvers.BeamsSolverFeature.register();
+        com.epic60869.sky2m.sim.puzzlesolvers.BlazeSolverFeature.register();
+        com.epic60869.sky2m.sim.puzzlesolvers.TicTacToeSolverFeature.register();
+        com.epic60869.sky2m.sim.puzzlesolvers.TeleportMazeSolverFeature.register();
+        com.epic60869.sky2m.sim.puzzlesolvers.IcePathSolverFeature.register();
+        LiveMapFeature.register();
+        com.epic60869.sky2m.sim.bossrecord.SimBossRecorder.register();
+
+        if (!loaded) {
+            // Off: none of the Sim's own parts load - no ticks, commands or screens, and the room library is never
+            // read. /s2 sim and the settings button say it is off instead.
+            registerOffCommand();
+            return;
+        }
+        // The Dungeon Sim draws the selected Dungeon Map style through DungeonMapStyles (hooked from sb.skyblock.dungeon.DungeonMap); no separate sim map.
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
+            for (String root : Compat.COMMAND_ROOTS) {
+                dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("sim").executes(c -> {
+                    openMenu();
+                    return 1;
+                })));
+            }
+        });
+
+        ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
+            if (!(screen instanceof TitleScreen) || !titleButtonEnabled()) return;
+            Screens.getWidgets(screen).add(Button.builder(Component.literal("Dungeon Sim"),
+                    b -> com.epic60869.sky2m.sim.compat.McCompat.setScreen(client, new SimMenuScreen(screen)))
+                .bounds(6, 6, 80, 20)
+                .tooltip(Tooltip.create(Component.literal("Practise dungeon rooms and floors in your own world (Sky2M)")))
+        });
+    }
+
+    /** The Sim's own parts: everything that only runs inside a Sim world, and its room library. */
+    private static void registerSimParts() {
         com.epic60869.sky2m.sim.roomsim.SimAbilities.register();
         com.epic60869.sky2m.sim.roomsim.SimActionBar.register();
         com.epic60869.sky2m.sim.roomsim.SimSpiritSceptre.register();
@@ -42,6 +96,10 @@ public final class Sky2MSim {
         com.epic60869.sky2m.sim.roomsim.SimItemLore.register();
         com.epic60869.sky2m.sim.roomsim.SimPauseEntry.register();
         com.epic60869.sky2m.sim.roomsim.SimSurvival.register();
+        com.epic60869.sky2m.sim.roomsim.SimVitals.register();
+        com.epic60869.sky2m.sim.roomsim.SimStats.register();
+        com.epic60869.sky2m.sim.roomsim.SimGear.register();
+        com.epic60869.sky2m.sim.roomsim.SimClassKit.register();
         com.epic60869.sky2m.sim.roomsim.FloorSizeLog.register();
         // The room library can be huge: read it ~20 s after launch (400 ticks) so it doesn't compete with start-up.
         // Anything that needs it sooner still loads it on demand (RoomLibrary.get/has/names).
@@ -62,7 +120,11 @@ public final class Sky2MSim {
         // Before SimMimic: it counts every chest click as a secret, and Fabric stops at the first non-PASS.
         com.epic60869.sky2m.sim.roomsim.puzzles.SimTeleportMazePuzzle.registerChestGuard();
         com.epic60869.sky2m.sim.roomsim.SimMimic.register();
+        com.epic60869.sky2m.sim.roomsim.SimBoss.register();
+        com.epic60869.sky2m.sim.roomsim.SimWatcher.register();
         com.epic60869.sky2m.sim.roomsim.SimScoreCommand.register();
+        com.epic60869.sky2m.sim.roomsim.SimScore.register();
+        com.epic60869.sky2m.sim.roomsim.SimDeath.register();
         com.epic60869.sky2m.sim.roomsim.SimRoomCycle.register();
         com.epic60869.sky2m.sim.roomsim.SimLoadout.register();
         com.epic60869.sky2m.sim.roomsim.SimSecrets.register();
@@ -79,25 +141,23 @@ public final class Sky2MSim {
         com.epic60869.sky2m.sim.roomsim.puzzles.SimIceFillPuzzle.register();
         com.epic60869.sky2m.sim.roomsim.puzzles.SimIcePathPuzzle.register();
         com.epic60869.sky2m.sim.roomsim.puzzles.SimPuzzles.register();
+        com.epic60869.sky2m.sim.roomsim.SimTerms.register();
+        // Sim parties: hosting, invites and the guest channel (/simparty).
+        com.epic60869.sky2m.sim.roomsim.SimParty.register();
+        // Last: who may use which sim command (party leader only, staff only). Wraps the commands registered above.
+        com.epic60869.sky2m.sim.roomsim.SimCommandGate.register();
 
-        // What the Sim's world reads its run from: the dungeon state, the map scan, the party and the helpers.
-        com.epic60869.sky2m.sim.secrets.DungeonState.register();
-        com.epic60869.sky2m.sim.util.SkyblockGate.register();
-        com.epic60869.sky2m.sim.leapmenu.PartyTracker.register();
-        com.epic60869.sky2m.sim.witherdoors.WitherDoorsFeature.register();
-        com.epic60869.sky2m.sim.puzzlesolvers.BoulderSolverFeature.register();
-        com.epic60869.sky2m.sim.puzzlesolvers.QuizSolverFeature.register();
-        com.epic60869.sky2m.sim.puzzlesolvers.IceFillSolverFeature.register();
-        com.epic60869.sky2m.sim.puzzlesolvers.WeirdosSolverFeature.register();
-        com.epic60869.sky2m.sim.puzzlesolvers.WaterSolverFeature.register();
-        com.epic60869.sky2m.sim.puzzlesolvers.BeamsSolverFeature.register();
-        com.epic60869.sky2m.sim.puzzlesolvers.BlazeSolverFeature.register();
-        com.epic60869.sky2m.sim.puzzlesolvers.TicTacToeSolverFeature.register();
-        com.epic60869.sky2m.sim.puzzlesolvers.TeleportMazeSolverFeature.register();
-        com.epic60869.sky2m.sim.puzzlesolvers.IcePathSolverFeature.register();
-        LiveMapFeature.register();
 
-        // The Dungeon Sim draws the selected Dungeon Map style through DungeonMapStyles (hooked from sb.skyblock.dungeon.DungeonMap); no separate sim map.
+    }
+
+    /** Dungeons > Dungeon Sim > Enabled, as it was when the game started (the Sim loads at startup or not at all). */
+    public static boolean enabled() {
+        Sky2MConfig c = Sky2MConfig.current();
+        return c == null || c.dungeons.dungeonSim.enabled;
+    }
+
+    /** /s2 sim while the Sim is off: says so rather than "Unknown command". */
+    private static void registerOffCommand() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("sim").executes(c -> {
@@ -105,15 +165,6 @@ public final class Sky2MSim {
                     return 1;
                 })));
             }
-        });
-
-        ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-            if (!(screen instanceof TitleScreen) || !titleButtonEnabled()) return;
-            Screens.getWidgets(screen).add(Button.builder(Component.literal("Dungeon Sim"),
-                    b -> com.epic60869.sky2m.sim.compat.McCompat.setScreen(client, new SimMenuScreen(screen)))
-                .bounds(6, 6, 80, 20)
-                .tooltip(Tooltip.create(Component.literal("Practise dungeon rooms and floors in your own world (Sky2M)")))
-                .build());
         });
     }
 
@@ -125,6 +176,11 @@ public final class Sky2MSim {
     /** Opens the Sim's menu. Picking a room there refuses (with a message) while you're on a server. */
     public static void openMenu() {
         Minecraft client = Minecraft.getInstance();
+        if (!loaded) {
+            com.epic60869.sky2m.sim.util.ModChat.send("Sim", com.epic60869.sky2m.sim.util.ModChat.text(
+                    "The Dungeon Sim is off. Turn on Dungeons > Dungeon Sim > Enabled and restart the game."));
+            return;
+        }
         Compat.queueOpenScreen(new SimMenuScreen(com.epic60869.sky2m.sim.compat.McCompat.screen(client)));
     }
 }

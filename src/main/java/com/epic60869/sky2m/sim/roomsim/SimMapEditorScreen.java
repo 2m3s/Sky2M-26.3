@@ -134,7 +134,7 @@ public class SimMapEditorScreen extends Screen {
     private MapCode.Decoded witherFor;
     private boolean[] witherDoors = new boolean[0];
 
-    private SimFloorGen.Floor floor = SimFloorGen.Floor.F7;
+    private SimFloorGen.Floor floor = SimFloorGen.Floor.M7;
     private int roomsToBlood = 5;
     private int puzzleCount = 3;
 
@@ -189,7 +189,7 @@ public class SimMapEditorScreen extends Screen {
         // (which draws from the list) and Generate - see SimRoomFilters.
         int active = SimRoomFilters.activeCount();
         int filtersW = this.font.width("Filters (99)") + 12;
-        search = new EditBox(this.font, listX, panelY + 44, Math.max(20, listW - filtersW - 4), 16,
+        search = new com.epic60869.sky2m.sim.gui.SimTextField(this.font, listX, panelY + 44, Math.max(20, listW - filtersW - 4), 16,
                 Component.literal("Search"));
         search.setHint(Component.literal("Search rooms..."));
         search.setValue(searchText);
@@ -206,7 +206,7 @@ public class SimMapEditorScreen extends Screen {
                 }).bounds(listX + listW - filtersW, panelY + 44, filtersW, 16).build());
 
         // The map's name, like the field in Ashfall's Dungeon Maker. Save uses it; Load fills it in.
-        nameBox = new EditBox(this.font, gridX, panelY + 44, cell * GRID, 16, Component.literal("Name"));
+        nameBox = new com.epic60869.sky2m.sim.gui.SimTextField(this.font, gridX, panelY + 44, cell * GRID, 16, Component.literal("Name"));
         nameBox.setHint(Component.literal("Map name..."));
         nameBox.setValue(mapName);
         nameBox.setResponder(v -> mapName = v);
@@ -574,6 +574,9 @@ public class SimMapEditorScreen extends Screen {
         // A generated plan wins over the drawing, because it carries rotations the drawing cannot.
         if (generated != null) {
             String code = generated.code();
+            // The floor it was generated as, for everything that differs per floor (mob health, the Watcher's
+            // blood mobs, the score's tables, the boss). Play never said, so every generated floor ran as F7.
+            SimState.setFloorLabel(floor.code);
             SimWorld.open(this.minecraft, code, c -> SimBuilder.build(c, code), "Generating " + floor.label);
             return;
         }
@@ -671,12 +674,7 @@ public class SimMapEditorScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        g.fill(0, 0, this.width, this.height, 0xCC000000);
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, ProfitPanels.PANEL_BG);
-        g.outline(panelX, panelY, panelW, panelH, ProfitPanels.BORDER);
-        g.fill(panelX, panelY, panelX + panelW, panelY + 30, 0xFF000000);
-        g.fill(panelX, panelY + 29, panelX + panelW, panelY + 30, ProfitPanels.ACCENT);
-        g.text(this.font, "DESIGN A MAP", panelX + 10, panelY + 11, ProfitPanels.ACCENT, false);
+        ProfitPanels.frame(g, this.font, this.width, this.height, panelX, panelY, panelW, panelH, 30, "Design a Map");
         // The type filters read the room database; a list built before it loaded is rebuilt the moment it does.
         if (!listedWithDatabase && panel == Panel.ROOMS && RoomDatabase.isReady()) {
             refilter();
@@ -685,7 +683,7 @@ public class SimMapEditorScreen extends Screen {
             // "N of M rooms" in the header bar, right-aligned: the only free space that never meets a control.
             String count = listed.size() + " of " + roomTotal + " rooms"
                     + (SimRoomFilters.isDefault() ? "" : " (filtered)");
-            int maxW = panelW - 20 - this.font.width("DESIGN A MAP") - 10;
+            int maxW = panelW - 20 - ProfitPanels.titleWidth(this.font, "Design a Map") - 10;
             String shownCount = this.font.width(count) <= maxW ? count : listed.size() + "/" + roomTotal;
             g.text(this.font, shownCount, panelX + panelW - 10 - this.font.width(shownCount), panelY + 11,
                     SimRoomFilters.isDefault() ? ProfitPanels.DIM : ProfitPanels.ACCENT, false);

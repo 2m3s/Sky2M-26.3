@@ -4,6 +4,7 @@
  */
 package com.epic60869.sky2m.sim.gui;
 
+import com.epic60869.sky2m.gui.Sky2MGuiStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -35,20 +36,10 @@ import net.minecraft.network.chat.Component;
  *  is untouched: {@code onClick(...)} below is still only ever invoked by vanilla's own left-button-only
  *  {@code mouseClicked}, so every existing call site with no {@code secondaryPress} keeps behaving
  *  exactly as before (right-click on it simply does nothing, same as pre-2026-09-27). Only call sites
- *  that opt in with {@code .secondaryPress(...)} - the enum-cycling buttons - respond to right-click. */
+ *  that opt in with {@code .secondaryPress(...)} - the enum-cycling buttons - respond to right-click.
+ *  <p>
 public final class SettingsButtonWidget extends AbstractWidget {
 
-    private static final int BORDER = 0xFF663D1A;
-    private static final int BORDER_HOVER = 0xFFCC6600;
-    private static final int BG = 0xFF1A1A1A;
-    private static final int BG_HOVER = 0xFF262626;
-    private static final int TEXT = 0xFFFFFFFF;
-    /** The {@link Builder#primary()} style: an amber-filled box with a full-amber border, for a screen's one main
-     *  action (the Auto Routes node editor's Go To) so it reads first among plain buttons. */
-    private static final int PRIMARY_BORDER = 0xFFCC6600;
-    private static final int PRIMARY_BORDER_HOVER = 0xFFFFA040;
-    private static final int PRIMARY_BG = 0xFF4A2A08;
-    private static final int PRIMARY_BG_HOVER = 0xFF63380B;
 
     public interface OnPress {
         void onPress(SettingsButtonWidget button);
@@ -100,7 +91,7 @@ public final class SettingsButtonWidget extends AbstractWidget {
             return this;
         }
 
-        /** Draws this as the screen's primary action (amber fill and border) instead of the plain dark box. */
+        /** Draws this as the screen's primary action (a purple frame) so it reads first among plain buttons. */
         public Builder primary() {
             this.primary = true;
             return this;
@@ -121,6 +112,8 @@ public final class SettingsButtonWidget extends AbstractWidget {
         graphics.outline(x0, y0, getWidth(), getHeight(), faded(border));
         graphics.centeredText(Minecraft.getInstance().font, getMessage(), x0 + getWidth() / 2,
                 y0 + (getHeight() - 8) / 2, faded(TEXT));
+        if (this.alpha < 1f) {
+            return;
             boolean selected) {
     }
 

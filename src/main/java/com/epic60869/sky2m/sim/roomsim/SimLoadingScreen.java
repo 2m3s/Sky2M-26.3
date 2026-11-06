@@ -64,6 +64,7 @@ public final class SimLoadingScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         g.fill(0, 0, this.width, this.height, 0xFF0B0B0B);
+        g.fill(0, 0, this.width, this.height, 0xFF101010);
 
         int panelW = Math.min(this.width - 40, 420);
         int panelH = 110;
@@ -72,7 +73,6 @@ public final class SimLoadingScreen extends Screen {
         g.fill(panelX, panelY, panelX + panelW, panelY + panelH, ProfitPanels.PANEL_BG);
         g.outline(panelX, panelY, panelW, panelH, ProfitPanels.BORDER);
 
-        g.centeredText(this.font, "DUNGEON SIM", panelX + panelW / 2, panelY + 16, ProfitPanels.ACCENT);
         if (!what.isEmpty()) {
             g.centeredText(this.font, what, panelX + panelW / 2, panelY + 38, ProfitPanels.TEXT);
         }

@@ -116,12 +116,7 @@ public final class SimItemsScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        g.fill(0, 0, this.width, this.height, 0xCC000000);
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, ProfitPanels.PANEL_BG);
-        g.outline(panelX, panelY, panelW, panelH, ProfitPanels.BORDER);
-        g.fill(panelX, panelY, panelX + panelW, panelY + 30, 0xFF000000);
-        g.fill(panelX, panelY + 29, panelX + panelW, panelY + 30, ProfitPanels.ACCENT);
-        g.text(this.font, "SIM ITEMS", panelX + 10, panelY + 11, ProfitPanels.ACCENT, false);
+        ProfitPanels.frame(g, this.font, this.width, this.height, panelX, panelY, panelW, panelH, 30, "Sim Items");
 
         hovered = cellAt(mouseX, mouseY);
         for (int i = 0; i < entries.size(); i++) {
