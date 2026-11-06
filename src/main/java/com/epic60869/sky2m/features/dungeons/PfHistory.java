@@ -217,7 +217,8 @@ public final class PfHistory {
             s = seen().get(name.toLowerCase(Locale.ROOT));
         }
         Together t = together(name);
-        if (s == null && t.runs() == 0) {
+        String averages = TeammateHistory.summary(name);
+        if (s == null && t.runs() == 0 && averages == null) {
             return Component.literal(always ? "You haven't played with " + name + " (or Run History is off)." : "").withStyle(ChatFormatting.GRAY);
         }
         MutableComponent out = Component.literal("Played with " + name + " before: ").withStyle(ChatFormatting.AQUA);
@@ -232,6 +233,7 @@ public final class PfHistory {
         } else {
             parts.add("no runs together in Run History");
         }
+        if (averages != null) parts.add(averages);
         if (s != null) {
             parts.add("joined your groups " + s.joins + "×");
             if (s.kicks > 0) parts.add("kicked " + s.kicks + "×");

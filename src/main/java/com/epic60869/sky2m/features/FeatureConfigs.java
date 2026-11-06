@@ -4524,6 +4524,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Rooms Done", desc = "Add roughly how many rooms each teammate cleared, like NoammAddons: whoever's on a room when the map shows its checkmark gets it, so \"3-5 rooms\" means 3 alone and 2 more with someone else in the room. Hover it for the rooms.")
         @ConfigEditorBoolean
         public boolean roomsDone = true;
+
+        @Expose
+        @ConfigOption(name = "Teammate History", desc = "Keep each player's average secrets, rooms and deaths across your runs, shown by Played Before and /s2 pfhistory <name>. Rooms is the same rough count as Rooms Done. Saved when Team Secrets has the run's numbers, so it needs Enabled on.")
+        @ConfigEditorBoolean
+        public boolean teammateHistory = true;
     }
 
     /** SkyHanni's Item Pickup Log. */

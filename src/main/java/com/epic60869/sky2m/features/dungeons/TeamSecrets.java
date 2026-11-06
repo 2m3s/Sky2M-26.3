@@ -42,6 +42,8 @@ public final class TeamSecrets {
     /** Goes up on every {@link #reset}, so a look that was still loading can tell the run has changed. */
     private static int runId;
     private static Map<String, Long> shown;
+    /** This run's numbers for Teammate History, held while a second look can still raise someone's secrets. */
+    private static TeammateHistory.Run historyRun;
 
     private TeamSecrets() {}
 
@@ -76,6 +78,8 @@ public final class TeamSecrets {
     }
 
     private static void reset() {
+        if (historyRun != null) TeammateHistory.record(historyRun);
+        historyRun = null;
         runId++;
         before.clear();
         classes.clear();
@@ -115,6 +119,7 @@ public final class TeamSecrets {
         int run = runId;
         FeatureConfigs.TeamSecrets c = config();
         Map<String, RoomClears.Counts> rooms = c != null && c.roomsDone ? RoomClears.snapshot() : null;
+        Map<String, Integer> deaths = DeathTracker.deathsThisRun();
         Map<String, CompletableFuture<Long>> loads = new LinkedHashMap<>();
         for (String name : start.keySet()) loads.put(name, secrets(name).exceptionally(t -> -1L));
         CompletableFuture.allOf(loads.values().toArray(CompletableFuture[]::new)).whenComplete((v, t) -> Minecraft.getInstance().execute(() -> {
@@ -125,14 +130,23 @@ public final class TeamSecrets {
             }
             // A new run started while loading: still say how the last one went, but leave the new run's state alone.
             if (run != runId) {
-                if (!retry) show(found, false, rooms);
+                if (!retry) {
+                    show(found, false, rooms);
+                    TeammateHistory.record(new TeammateHistory.Run(found, rooms, deaths));
+                }
                 return;
             }
             boolean someZero = found.values().stream().anyMatch(n -> n == 0);
             if (retry) {
+                // A second look that failed for someone keeps what the first look found.
+                if (historyRun != null) TeammateHistory.record(historyRun.withLaterSecrets(found));
+                historyRun = null;
                 if (shown != null && found.entrySet().stream().noneMatch(e -> e.getValue() > shown.getOrDefault(e.getKey(), -1L))) return;
             } else if (someZero) {
                 retryAt = System.currentTimeMillis() + SECOND_LOOK_MS;
+                historyRun = new TeammateHistory.Run(found, rooms, deaths);
+            } else {
+                TeammateHistory.record(new TeammateHistory.Run(found, rooms, deaths));
             }
             shown = found;
             show(found, retry, rooms);

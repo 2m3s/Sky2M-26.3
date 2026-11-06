@@ -12,6 +12,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Missed Secrets Nudge (Dungeons > Secrets and Routes > Room Clear Alert, off by default): a short line when you leave a room you got a secret in that still has some left, like `Left Raccoon with 2 secrets`.
 - Puzzle Bests (Dungeons > Puzzle HUD, on by default): your fastest time for each puzzle, from walking in to its green checkmark or your `PUZZLE SOLVED!` line. New bests are said in chat and `/s2 puzzles` lists them.
 - Death Map (Dungeons > Death Tracker, on by default): counts your own deaths per room and per boss. `/s2 deathmap` lists the worst.
+- Teammate History (Dungeons > Team Secrets, on by default, needs Team Secrets): each player's average secrets, rooms and deaths across your runs, shown by Played Before and `/s2 pfhistory <name>`.
 - Practice your slow rooms (`/s2 practice`): lists the rooms you lose the most time in, by your recent times against your best, or your slowest per secret until you have some. Click one to load it in the Dungeon Sim.
 - Reroll Protection (Dungeons > Chest Profit, 5M by default): stops you rerolling a reward chest worth at least that much. Hold Ctrl to reroll anyway, and 0 turns it off.
 - Worth A Key (Dungeons > Dungeon Extras > Croesus, on by default): after you've looked inside a run, Croesus marks it `KEY` if a Dungeon Chest Key would pay off, and Hide Claimed Runs keeps it showing.
