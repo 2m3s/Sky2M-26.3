@@ -448,7 +448,7 @@ public final class RoomPlacer {
      * <p>A bare id still works: entries captured before the palette held states parse straight to the default,
      * which is exactly what they meant.
      */
-    private static BlockState resolve(String paletteEntry) {
+    static BlockState resolve(String paletteEntry) {
         try {
             return net.minecraft.commands.arguments.blocks.BlockStateParser
                     .parseForBlock(BuiltInRegistries.BLOCK, paletteEntry, false)
