@@ -34,7 +34,7 @@ import java.util.WeakHashMap;
  * Dungeons > Secrets > Room Personal Bests: your fastest time for each room, and the time per secret.
  *
  * <p>The idea is SecretRoutes' personal bests (https://github.com/yourboykyle/SecretRoutes, GPL-3.0), but the clock is
- * {@link RoomClears}' one, first secret found in the room to the green checkmark, not SecretRoutes' room entry to the
+ * {@link RoomClears}' one, first secret found in the room to the last, not SecretRoutes' room entry to the
  * route's last secret. So a best works with or without a route, doesn't care which route you took, and running through on a blood
  * rush doesn't count. The walk to the first secret isn't in it. {@link RoomClears} says the time, and a new best goes on
  * that same line.
@@ -194,8 +194,19 @@ public final class RoomBests {
         attempt.stacked |= !aloneInRoom();
     }
 
-    /** {@code room} went green {@code ms} after its first secret. Returns null when bests are off. */
-    static Outcome onCleared(Room room, int secrets, long ms) {
+    /** When the last secret came up, in ms from the first, if all of {@code room}'s came up while you were in it, else null. */
+    static Long lastSecretAt(Room room, int secrets) {
+        Attempt attempt = ATTEMPTS.get(room);
+        return attempt == null ? null : lastSecretAt(attempt.foundBefore, attempt.splits, secrets);
+    }
+
+    /** The same from what was found before the clock started and the times since. Public for the game test. */
+    public static Long lastSecretAt(int foundBefore, List<Long> splits, int secrets) {
+        return splits.isEmpty() || foundBefore + splits.size() < secrets ? null : splits.getLast();
+    }
+
+    /** {@code room} went green {@code ms} after its first secret; {@code inRoom}: you're still in it. Returns null when bests are off. */
+    static Outcome onCleared(Room room, int secrets, long ms, boolean inRoom) {
         Attempt attempt = ATTEMPTS.remove(room);
         Sky2MConfig config = Sky2MConfig.current();
         if (config == null || !config.dungeons.secrets.roomBests || room.getName() == null) return null;
@@ -203,7 +214,7 @@ public final class RoomBests {
         Best best = store.get(key);
         Long previous = best == null ? null : best.ms();
         List<Long> splits = attempt == null ? List.of() : List.copyOf(attempt.splits);
-        boolean solo = !config.dungeons.secrets.roomBestsSoloOnly || (attempt != null && !attempt.stacked && aloneInRoom());
+        boolean solo = !config.dungeons.secrets.roomBestsSoloOnly || (attempt != null && !attempt.stacked && (!inRoom || aloneInRoom()));
         boolean counts = attempt != null && attempt.foundBefore == 0 && solo && !com.epic60869.sky2m.sim.roomsim.SimState.isActive();
         if (!counts) return new Outcome(ms, previous, false, false, splits);
         boolean newBest = store.record(key, ms, secrets, System.currentTimeMillis(), splits);

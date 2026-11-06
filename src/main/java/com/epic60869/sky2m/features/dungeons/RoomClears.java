@@ -122,22 +122,28 @@ public final class RoomClears {
     }
 
     /**
-     * {@code room} went green after the map had shown it unfinished: says how long it took, if you're in it, and {@link RoomBests}
-     * gets the same time, so one room is one line. With Room Secret Time off, the line only comes for a beaten best.
+     * {@code room} went green after the map had shown it unfinished: says how long it took, if you're in it or every secret
+     * came up while you were, and {@link RoomBests} gets the same time, so one room is one line. The time is up to the last
+     * secret, as the map takes a second or two to go green; if a secret was missed it's up to the green. With Room Secret Time
+     * off, the line only comes for a beaten best.
      */
     public static void onGreen(Room room, Room currentRoom) {
         Long firstSecret = FIRST_SECRET.remove(room);
         Sky2MConfig config = Sky2MConfig.current();
-        if (config == null || firstSecret == null || room != currentRoom) return;
+        if (config == null || firstSecret == null) return;
         if (room.getType() == Room.Type.FAIRY || room.getType() == Room.Type.ENTRANCE) return;
         int secrets = room.getMaxSecretCount();
         Minecraft mc = Minecraft.getInstance();
         if (secrets < MIN_SECRETS_TO_TIME || mc.player == null) return;
-        long ms = System.currentTimeMillis() - firstSecret;
-        RoomBests.Outcome best = RoomBests.onCleared(room, secrets, ms);
+        boolean inRoom = room == currentRoom;
+        Long lastSecret = RoomBests.lastSecretAt(room, secrets);
+        if (!inRoom && lastSecret == null) return;
+        long ms = lastSecret != null ? lastSecret : System.currentTimeMillis() - firstSecret;
+        RoomBests.Outcome best = RoomBests.onCleared(room, secrets, ms, inRoom);
         boolean showTime = config.dungeons.secrets.roomSecretTime;
         if (!showTime && (best == null || !best.newBest() || best.previous() == null)) return;
-        var line = Compat.PREFIX.get().append(Component.literal(displayName(room) + ": ").withStyle(ChatFormatting.GOLD));
+        String name = inRoom || room.getName() == null ? displayName(room) : room.getName();
+        var line = Compat.PREFIX.get().append(Component.literal(name + ": ").withStyle(ChatFormatting.GOLD));
         if (showTime) {
             line.append(Component.literal(secrets + "/" + secrets + " secrets").withStyle(ChatFormatting.AQUA))
                 .append(Component.literal(" in ").withStyle(ChatFormatting.GRAY));
