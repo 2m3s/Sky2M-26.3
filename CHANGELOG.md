@@ -10,6 +10,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Chest Luck (Dungeons > Chest Profit > Chest Value, on by default): under Dungeon Chest Value, what this chest is worth against your own average, like `+24% vs your M6 Bedrock average`. Needs 3 chests saved.
 - Next Catacombs level: `/s2 catacalc` shows the runs and time to your next level at your recent pace, and `/s2 catacalc next [floor]` says it in chat.
 - RNG Meter Cost Forecast (Slayers > Slayer RNG Meter, on by default): the HUD and `/s2 rngadvice` show the bosses, quest fee coins and time to your selected drop.
+- Slayer Times (`/s2 slayertimes`): a chart of your kill times this session for each boss and tier, with the count, average, best and spread.
 
 - Score Loss (Dungeons > Score > What's Stopping 300, on by default, needs Score Display): the score HUD says what's stopping 300, in score points, like `To 300: -6 secrets, -2 crypts, -1 death`.
 - Run Review (Dungeons > Timers > Run History, on by default, needs Run History): after a run, chat says which splits lost or gained time against your best finished run on that floor and which rooms were slower than your room best. Hover for the times.

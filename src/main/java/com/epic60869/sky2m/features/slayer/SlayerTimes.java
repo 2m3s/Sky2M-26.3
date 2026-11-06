@@ -98,6 +98,7 @@ public final class SlayerTimes {
         file = configDir.resolve("sky2m").resolve("slayer-personal-bests.json");
         lastBossFile = configDir.resolve("sky2m").resolve("slayer-last-boss.txt");
         load();
+        SlayerSessionTimes.init();
         Sky2MChat.onChat(message -> onChat(message.text().trim()));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> reset());
     }
@@ -245,6 +246,7 @@ public final class SlayerTimes {
         slayLineAt = 0;
         boss = null;
         killed = true;
+        if (!rejected(time, name, known)) SlayerSessionTimes.add(name, time, System.currentTimeMillis());
         Sky2MConfig.PersonalBest config = config();
         if (config == null) return;
         if (rejected(time, name, known)) {
