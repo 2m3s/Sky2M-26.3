@@ -7,26 +7,54 @@ import com.epic60869.sky2m.sb.events.DungeonEvents;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.Room;
 import com.epic60869.sky2m.sim.livemap.MapViewSource;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 
-/** How long the room you're in took to get all its secrets. */
+/**
+ * Two things read off the dungeon's rooms: roughly how many rooms each teammate cleared, for {@link TeamSecrets}, and how
+ * long the room you're in took to get all its secrets.
+ *
+ * <p>Rooms done works like NoammAddons' ClearInfoUpdater: when the map shows a checkmark on a room, whoever's head is in
+ * that room gets it, as solo if they're alone and stacked if not, so a player's count is the range "solo to solo+stacked".
+ * It's rough: the map doesn't say who did the work, only who was standing there.
+ */
 public final class RoomClears {
+    private static final int CHECK_EVERY_TICKS = 5;
+
+    /** The rooms a player got: alone, and with someone else in the room. */
+    public record Counts(List<String> solo, List<String> stacked) {
+        Counts() {
+            this(new ArrayList<>(), new ArrayList<>());
+        }
+    }
+
+    /** Tiles of rooms already handed out, as {col * 100 + row}. */
+    private static final Set<Integer> COUNTED = new HashSet<>();
+    private static final Map<String, Counts> BY_PLAYER = new HashMap<>();
     /** When the first secret was found in each room while you were in it, so running through on a blood rush doesn't count. */
     private static final Map<Room, Long> FIRST_SECRET = new WeakHashMap<>();
     /** One secret has no time between first and last. */
     private static final int MIN_SECRETS_TO_TIME = 2;
+    private static int ticks;
 
     private RoomClears() {}
 
     public static void init() {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> {
+            COUNTED.clear();
+            BY_PLAYER.clear();
             FIRST_SECRET.clear();
         });
         RoomBests.init();
@@ -35,6 +63,11 @@ public final class RoomClears {
         DungeonEvents.SECRET_COUNT_UPDATED.register((room, fromWS) -> {
             if (!fromWS && room.getFoundSecretCount() > 0) onSecret(room, -1);
         });
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            Sky2MConfig config = Sky2MConfig.current();
+            if (config == null) return;
+            if (config.dungeons.teamSecrets.roomsDone && ++ticks % CHECK_EVERY_TICKS == 0) countRooms(MapViewSource.current());
+        });
     }
 
     private static void onSecret(Room room, int secretIndex) {
@@ -42,6 +75,24 @@ public final class RoomClears {
         long now = System.currentTimeMillis();
         Long started = FIRST_SECRET.putIfAbsent(room, now);
         RoomBests.onSecret(room, started == null ? now : started, secretIndex);
+    }
+
+    private static void countRooms(MapView view) {
+        if (!view.valid() || view.inBoss()) return;
+        for (MapView.Room room : view.rooms()) {
+            if (room.state() != MapView.RoomState.CLEARED && room.state() != MapView.RoomState.GREEN) continue;
+            if (room.type() == MapView.RoomType.ENTRANCE || room.type() == MapView.RoomType.FAIRY) continue;
+            boolean counted = false;
+            for (int[] tile : room.tiles()) counted |= !COUNTED.add(tile[0] * 100 + tile[1]);
+            if (counted) continue;
+            List<String> players = new ArrayList<>();
+            for (MapView.Head head : view.heads()) if (inRoom(view, room, head.x(), head.y())) players.add(head.name());
+            String name = room.name() == null ? "Unknown room" : room.name();
+            for (String player : players) {
+                Counts counts = BY_PLAYER.computeIfAbsent(player.toLowerCase(Locale.ROOT), p -> new Counts());
+                (players.size() == 1 ? counts.solo() : counts.stacked()).add(name);
+            }
+        }
     }
 
     /** Whether a map position is in a room. A door between two slots counts as the slot before it. Public for the game test. */
@@ -56,6 +107,18 @@ public final class RoomClears {
     private static boolean roomAt(MapView.Room room, int col, int row) {
         for (int[] tile : room.tiles()) if (tile[0] == col && tile[1] == row) return true;
         return false;
+    }
+
+    /** A copy of each player's rooms so far (by lower-case name), kept by a look that outlives the run. */
+    public static Map<String, Counts> snapshot() {
+        Map<String, Counts> copy = new HashMap<>();
+        BY_PLAYER.forEach((name, counts) -> copy.put(name, new Counts(List.copyOf(counts.solo()), List.copyOf(counts.stacked()))));
+        return copy;
+    }
+
+    /** "3" when every room was solo, else "3-5": from the solo rooms to the solo and stacked rooms. Public for the game test. */
+    public static String rangeText(int solo, int stacked) {
+        return stacked == 0 ? String.valueOf(solo) : solo + "-" + (solo + stacked);
     }
 
     /**

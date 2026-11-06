@@ -4479,7 +4479,9 @@ public final class FeatureConfigs {
         public boolean enabled = true;
 
         @Expose
+        @ConfigOption(name = "Rooms Done", desc = "Add roughly how many rooms each teammate cleared, like NoammAddons: whoever's on a room when the map shows its checkmark gets it, so \"3-5 rooms\" means 3 alone and 2 more with someone else in the room. Hover it for the rooms.")
         @ConfigEditorBoolean
+        public boolean roomsDone = true;
     }
 
     /** SkyHanni's Item Pickup Log. */
