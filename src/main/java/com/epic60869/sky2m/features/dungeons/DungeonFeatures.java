@@ -169,6 +169,7 @@ public final class DungeonFeatures {
         SpiritBear.init();
         DungeonLividFinder.init();
         LividTimer.init();
+        BonzoTimer.init();
         TerracottaTimer.init();
         AutoRequeue.init();
         TeamSecrets.init();

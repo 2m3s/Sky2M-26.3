@@ -677,7 +677,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Catacombs Calculator", desc = "/s2 catacalc: how many runs until a Catacombs level.")
         public CataCalculator cataCalculator = new CataCalculator();
 
-        @ConfigOption(name = "Floors 4-6", desc = "Spirit Bear, Livid and Terracotta features.")
+        @ConfigOption(name = "Floors 1-6", desc = "Bonzo, Spirit Bear, Livid and Terracotta features.")
         @ConfigEditorAccordion(id = 1301)
         public boolean floors46Group = false;
         @Expose
@@ -699,8 +699,11 @@ public final class FeatureConfigs {
         public boolean lividTimer = true;
 
         @Expose
-        @ConfigOption(name = "Terracotta Timer (F6/M6)", desc = "In the Sadan fight, seconds until each terracotta respawns (15 on F6, 12 on M6), over its flower pot.")
+        @ConfigOption(name = "Bonzo Tick Timer (F1/M1)", desc = "A HUD with the server ticks until Bonzo can be damaged: from his opening line to his first phase, and from \"Oh I'm dead!\" to his second life. Move it in /s2 gui.")
         @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1301)
+        public boolean bonzoTimer = true;
+
         @Expose
         @ConfigOption(name = "Terracotta Timer (F6/M6)", desc = "In the Sadan fight, seconds until each terracotta respawns (10, as the wiki has it), over its flower pot.")
         @ConfigEditorBoolean
