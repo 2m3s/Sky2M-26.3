@@ -2,7 +2,11 @@ package com.epic60869.sky2m.features.dungeons;
 
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
+import com.epic60869.sky2m.features.core.Sky2MHuds;
+import com.epic60869.sky2m.features.core.Sky2MLocation;
+import com.epic60869.sky2m.features.core.Sky2MWorldRender;
 import com.epic60869.sky2m.features.dungeons.mapstyle.MapView;
+import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.Room;
 import com.epic60869.sky2m.sim.livemap.MapViewSource;
 import com.google.gson.GsonBuilder;
@@ -95,7 +99,8 @@ public final class RoomBests {
         /** Throws on a file that isn't JSON at all; one bad room is skipped so the rest still load. */
         public static Store fromJson(String json) {
             Store store = new Store();
-            JsonObject rooms = JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("rooms");
+            JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+            JsonObject rooms = root.getAsJsonObject("rooms");
             if (rooms == null) return store;
             for (var entry : rooms.entrySet()) {
                 try {
@@ -135,10 +140,47 @@ public final class RoomBests {
 
     private RoomBests() {}
 
+    private static boolean liveEnabled() {
+        Sky2MConfig config = Sky2MConfig.current();
+        return config != null && config.dungeons.secrets.roomLiveSplits;
+    }
+
+    /** How far behind (or, below 0, ahead of) the best this secret is, or null if there's nothing to compare it with. Public for the game test. */
+    public static Long splitDelta(List<Long> bestSplits, int index, long now) {
+        return index <= 0 || bestSplits == null || index >= bestSplits.size() ? null : now - bestSplits.get(index);
+    }
+
+    /** "§a-0.8s" ahead, "§c+1.2s" behind. Public for the game test. */
+    public static String deltaText(long ms) {
+        return (ms <= 0 ? "§a-" : "§c+") + String.format(java.util.Locale.ROOT, "%.1fs", Math.abs(ms) / 1000.0);
+    }
+
+    private static List<Component> liveLines(String name, int found, int total, Long delta, Long best) {
+        String count = "§6" + name + " §7" + found + (total > 0 ? "/" + total : "");
+        String time = best == null ? "§7No best yet" : "§7Best §f" + RoomClears.timeText(best);
+        return List.of(Component.literal(delta == null ? count : count + " " + deltaText(delta)), Component.literal(time));
+    }
+
     static void init() {
         file = FabricLoader.getInstance().getConfigDir().resolve("sky2m").resolve("room-bests.json");
         load();
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> ATTEMPTS.clear());
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> {
+            ATTEMPTS.clear();
+            liveRoom = null;
+        });
+        Sky2MHuds.setting("room_splits", RoomBests::liveEnabled);
+        Sky2MHuds.register("room_splits", "Live Room Splits",
+            () -> liveEnabled() && liveRoom != null && liveRoom == DungeonManager.getCurrentRoom(),
+            () -> liveLines(liveName, liveFound, liveTotal, liveDelta, liveBest),
+            liveLines("Raccoon", 2, 4, -800L, 6_500L),
+            20, 190);
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (++ticks % PATH_SAMPLE_TICKS != 0) return;
+            Room room = DungeonManager.getCurrentRoom();
+            Attempt attempt = room == null ? null : ATTEMPTS.get(room);
+            if (attempt != null && !attempt.pathDone) samplePath(room, attempt);
+        });
+        Sky2MWorldRender.register(RoomBests::renderGhost);
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root)
@@ -208,6 +250,7 @@ public final class RoomBests {
     /** {@code room} went green {@code ms} after its first secret; {@code inRoom}: you're still in it. Returns null when bests are off. */
     static Outcome onCleared(Room room, int secrets, long ms, boolean inRoom) {
         Attempt attempt = ATTEMPTS.remove(room);
+        if (liveRoom == room) liveRoom = null;
         Sky2MConfig config = Sky2MConfig.current();
         if (config == null || !config.dungeons.secrets.roomBests || room.getName() == null) return null;
         String key = DungeonRoutes.normalize(room.getName());

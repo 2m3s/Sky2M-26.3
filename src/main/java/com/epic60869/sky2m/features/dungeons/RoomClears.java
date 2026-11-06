@@ -155,7 +155,7 @@ public final class RoomClears {
     }
 
     /** The map's name for the room you're standing in ("Melon"), else the room data's ("melon-3"). */
-    private static String displayName(Room room) {
+    static String displayName(Room room) {
         MapView view = MapViewSource.current();
         for (MapView.Head head : view.heads()) {
             if (!head.self()) continue;

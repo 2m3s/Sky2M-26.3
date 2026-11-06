@@ -2999,6 +2999,13 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1506)
         public boolean roomBestsSoloOnly = true;
+
+        @Expose
+        @ConfigOption(name = "Live Room Splits", desc = "A HUD in the room you're clearing: secrets found, and how far ahead or behind your room best you are at each one. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1506)
+        public boolean roomLiveSplits = true;
+
     }
 
     public enum RoomClearMode {
