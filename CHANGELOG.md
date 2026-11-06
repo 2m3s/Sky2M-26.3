@@ -124,6 +124,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ### Changed
 
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
+- Item Protect's chat lines ("★ Protected ... from dropping.", "Removed drop protection from ...") show the item's name in its rarity colour, stars included, instead of white.
 - The Profile Viewer's Wardrobe (/pv) shows the Equipment Wardrobe too: each set's necklace, cloak, belt and gloves sit under its armour, nine sets a page.
 - /s2 hour only counts your run time: the Between runs box and the time between runs are gone from the screen, the chat estimate and the boss collection time.
 - Dungeon Sim terminals work like Hypixel's: each P3 section deals its terminals from the six types with no repeats and at most one Melody, and a terminal keeps its type for the run. Several players can open the same terminal, each on their own board; the first to finish completes it and the others' menus close. Walking away closes a terminal, and pressing Melody's button at the wrong time freezes the pane for 2 seconds.
