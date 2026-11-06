@@ -211,6 +211,9 @@ public final class BloodCamp {
         if (config == null || !inClear()) return;
         if (BLOOD_START.matcher(text).matches()) {
             startTime = tickTime;
+        } else if (startTime < 0 && !BLOOD_MOVE.matcher(text).matches() && text.startsWith("[BOSS] The Watcher: ")) {
+            // A greeting this list doesn't know (floors and Hypixel's lines vary): the Watcher's first line opens blood.
+            startTime = tickTime;
         } else if (BLOOD_MOVE.matcher(text).matches()) {
             firstSpawns = false;
             if (startTime < 0 || !config.movePrediction) return;
@@ -248,23 +251,27 @@ public final class BloodCamp {
         if (watcher != null && !watcher.isAlive()) watcher = null;
         if (watcher == null) {
             for (Entity entity : mc.level.entitiesForRendering()) {
-                if (entity instanceof Zombie zombie && BloodCampSkulls.WATCHER.contains(Compat.getHeadTexture(zombie.getItemBySlot(EquipmentSlot.HEAD)))) {
+                if (entity instanceof Zombie zombie && BloodCampSkulls.isWatcher(Compat.getHeadTexture(zombie.getItemBySlot(EquipmentSlot.HEAD)))) {
                     watcher = zombie;
                     break;
                 }
             }
-            if (watcher == null) return;
         }
+        // A Watcher whose skin isn't known (another floor's) still throws heads: once blood has opened, look around you.
+        AABB area;
+        if (watcher != null) area = watcher.getBoundingBox().inflate(20);
+        else if (startTime >= 0 && mc.player != null) area = mc.player.getBoundingBox().inflate(32);
+        else return;
         HEADS.keySet().removeIf(stand -> !stand.isAlive());
         RESTING.keySet().removeIf(stand -> !stand.isAlive());
-        for (ArmorStand stand : mc.level.getEntitiesOfClass(ArmorStand.class, watcher.getBoundingBox().inflate(20))) {
+        for (ArmorStand stand : mc.level.getEntitiesOfClass(ArmorStand.class, area)) {
             Vec3 pos = stand.position();
             Head head = HEADS.get(stand);
             if (head == null) {
                 Vec3 rest = RESTING.get(stand);
                 if (rest == null) {
                     ItemStack helmet = stand.getItemBySlot(EquipmentSlot.HEAD);
-                    if (!helmet.is(Items.PLAYER_HEAD) || !BloodCampSkulls.MOBS.contains(Compat.getHeadTexture(helmet))) continue;
+                    if (!helmet.is(Items.PLAYER_HEAD) || !BloodCampSkulls.isMob(Compat.getHeadTexture(helmet))) continue;
                     RESTING.put(stand, pos);
                     continue;
                 }
