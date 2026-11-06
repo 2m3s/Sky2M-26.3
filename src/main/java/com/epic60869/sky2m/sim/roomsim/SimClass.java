@@ -48,8 +48,10 @@ public final class SimClass {
      *  widens the target rather than widening the beam, which is what stops it being a box. */
     private static final double BEAM_RADIUS = 0.6;
 
-    /** Far above any sim mob's health, so nothing survives a hit it visibly took. */
+    /**
      * The beam's VANILLA damage, for anything without a health pool (a puzzle blaze). A pooled sim mob takes the
+     * Mage beam's Hypixel damage from the stats profile instead ({@link SimDamage#mageBeam}).
+     */
     private static final float BEAM_DAMAGE = 10_000f;
 
     /** Hypixel's 100 Attack Speed baseline, shared with every other sim weapon - killer560 asked that "all
@@ -86,6 +88,7 @@ public final class SimClass {
         // The Dungeon Orb's left click is the Ultimate, and the drop key casts it with anything in hand.
         if (SimClassKit.clientInput(client)) {
             return;
+        }
         if (!pressed || tickCounter - lastBeamTick < BEAM_COOLDOWN_TICKS) {
             return;
         }
@@ -110,6 +113,7 @@ public final class SimClass {
         // and fired the beam on every teleport.
         if (SimAbilities.usedAbilityRecently()) {
             return;
+        }
         // The beam is the Mage's: any other class's left click is a real swing with the held weapon.
         if (SimStats.profile().selected() != SimStats.DungeonClass.MAGE) {
             return;
@@ -173,22 +177,28 @@ public final class SimClass {
         }
     }
 
+    /**
      * Hypixel's own beam: a line of firework particles sent by the server, which is what the mod's Mage Beam feature
      * (and everyone else in the party) sees. Once per shot, from the integrated server; the client-side spark line
      * above stays as the sim's own picture.
+     */
     private static void sendBeamParticles(Minecraft client, Vec3 from, Vec3 to) {
         net.minecraft.client.server.IntegratedServer server = client.getSingleplayerServer();
         Vec3 delta = to.subtract(from);
         double length = delta.length();
         if (server == null || length < 0.01) {
             return;
+        }
         Vec3 dir = delta.scale(1.0 / length);
         server.execute(() -> {
             net.minecraft.server.level.ServerLevel level = server.overworld();
             for (double d = BEAM_PARTICLE_START; d < length; d += 0.5) {
                 Vec3 at = from.add(dir.scale(d));
                 level.sendParticles(net.minecraft.core.particles.ParticleTypes.FIREWORK, at.x, at.y, at.z, 1, 0, 0, 0, 0);
+            }
         });
+    }
+
     /** How far apart the beam's particles sit, and how far out the first one starts. */
     private static final double BEAM_PARTICLE_SPACING = 0.4;
     private static final double BEAM_PARTICLE_START = 1.0;
@@ -223,8 +233,13 @@ public final class SimClass {
         AABB search = new AABB(eye, stop).inflate(BEAM_RADIUS);
         Entity nearest = null;
         double nearestDist = Double.MAX_VALUE;
-        for (Entity e : client.level.getEntities(player, search,
-                e -> e instanceof LivingEntity && e.isAlive() && e != player)) {
+        // Mobs only. An armour stand - a mob's name tag just above its head, and every floating damage number
+        // (SimDamage.DamageTag) beside a mob that was just hit - is a marker with no hitbox to vanilla, but
+        // inflating its empty box gave it one here, so the beam stopped on the stand and the server hit a stand
+        // that cannot be hurt. Reported as "you have to be in melee range for it to do damage": a follow-up shot
+        // at range met the last shot's floating number first, while in reach the vanilla swing, which skips
+        // markers, did the damage. Teammates are not targets either.
+        for (Entity e : client.level.getEntities(player, search, SimClass::beamTarget)) {
             AABB box = e.getBoundingBox().inflate(BEAM_RADIUS * 0.5);
             var hit = box.clip(eye, stop);
             if (hit.isEmpty()) {
@@ -257,10 +272,22 @@ public final class SimClass {
             com.epic60869.sky2m.sim.roomsim.puzzles.SimCreeperPuzzle.shotAlong(client, eye, look, BEAM_RANGE);
             return;
         }
+        if (client.hitResult instanceof net.minecraft.world.phys.EntityHitResult swing
+                && swing.getEntity() == nearest) {
+            // In melee reach of the mob under the crosshair this same click was ALSO a vanilla swing at it, so the
+            // mob took two hits per click - a full melee hit and the beam. Mage Staff makes "all your melee weapon
+            // attacks" ranged, so the beam is the attack: the click is drained before vanilla reads it (this runs
+            // at the start of the tick, ahead of the key handling), and the arm still swings.
+            while (client.options.keyAttack.consumeClick()) {
+                // drained
+            }
+            player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, false);
+        }
         java.util.UUID id = nearest.getUUID();
         if (SimParty.sendAction("beam", id.toString())) {
             // A party guest: the host's server lands the hit, from his own stats (beamOnServer).
             return;
+        }
         var server = client.getSingleplayerServer();
         if (server == null) {
             return;
@@ -283,15 +310,37 @@ public final class SimClass {
                 beamHit(sp, level, living);
             }
         });
+    }
+
+    /** What the beam can stop on: a living mob, never an armour stand (name tags, damage numbers) or a player. */
+    private static boolean beamTarget(Entity e) {
+        return e instanceof LivingEntity && e.isAlive()
+                && !(e instanceof net.minecraft.world.entity.decoration.ArmorStand)
+                && !(e instanceof net.minecraft.world.entity.player.Player);
+    }
+
+    /**
+     * The hit itself: Hypixel's Mage Staff, a melee hit with the held weapon times 30% + 0.09% per Intelligence,
+     * crit and all ({@link SimDamage#mageBeam}). It used to be rolled as a magic ability, which left out
+     * Strength and the crit entirely.
+     */
     private static void beamHit(net.minecraft.server.level.ServerPlayer sp, ServerLevel level, LivingEntity living) {
+        SimDamage.mageBeam(() -> living.hurtServer(level, level.damageSources().playerAttack(sp), BEAM_DAMAGE));
+    }
+
+    /**
      * A sim party guest's Mage beam hit (SimParty's "beam" action), on the host's server thread. The guest's client
      * aimed it; this only checks it is a Mage, the target is alive and within the beam's reach, then hits it.
+     */
     static void beamOnServer(net.minecraft.server.level.ServerPlayer sp, java.util.UUID target) {
         if (SimParty.dungeonClass(sp) != SimStats.DungeonClass.MAGE || SimDeath.isGhost(sp)
                 || !(sp.level() instanceof ServerLevel level)) {
             return;
+        }
+        if (level.getEntity(target) instanceof LivingEntity living && beamTarget(living)
                 && living.distanceToSqr(sp.getEyePosition()) <= (BEAM_RANGE + 4) * (BEAM_RANGE + 4)) {
             beamHit(sp, level, living);
+        }
     }
 
     /** Where the beam would stop, for anything that wants to draw it. */
