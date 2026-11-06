@@ -4436,7 +4436,10 @@ public final class FeatureConfigs {
         public boolean leaveTitle = true;
 
         @Expose
+        @ConfigOption(name = "Leave Class In Chat", desc = "In a dungeon, add the class someone was playing to Hypixel's party leave, kick and disconnect lines, in the class colour: \"[VIP+] Name has left the party. (Tank)\". Works with Auto Requeue off.")
         @ConfigEditorBoolean
+        public boolean leaveClassInChat = true;
+
         @Expose
         @ConfigOption(name = "Announce", desc = "Say in chat (only you see it) that it's going to requeue.")
         @ConfigEditorBoolean

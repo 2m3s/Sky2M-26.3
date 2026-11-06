@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
  * doesn't requeue when someone left, was kicked or disconnected at any point in that run (from "Starting in 1 second."),
  * not only during the delay. /s2 requeue cancel and !dt in party chat skip the next one. /instancerequeue only works
  * for the leader. With Leave Title, a teammate leaving shows their name and class (in the class colour) as a title.
+ * Leave Class In Chat (its own switch, on by default) adds that class to Hypixel's leave line itself while in a dungeon.
  */
 public final class AutoRequeue {
     private static final Pattern MEMBER_GONE = Pattern.compile("(?:has left the party|has been removed from the party|was removed from your party because they disconnected|has disconnected|has been kicked from the party|You left the party|The party was disbanded)");
@@ -78,6 +79,15 @@ public final class AutoRequeue {
                     say("Not requeueing: someone left the party.");
                 }
             }
+        });
+        // Leave Class In Chat: its own switch, so it works with Auto Requeue off.
+        net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.MODIFY_GAME.register((message, overlay) -> {
+            FeatureConfigs.AutoRequeue c = config();
+            if (overlay || c == null || !c.leaveClassInChat || !Sky2MLocation.inDungeon()) return message;
+            String text = message.getString().trim();
+            if (!MEMBER_GONE.matcher(text).find() || text.contains(":")) return message;
+            String name = leftName(text);
+            return name == null ? message : withClass(message, classes.get(name));
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             rememberClasses();
@@ -133,25 +143,52 @@ public final class AutoRequeue {
             if (p.dungeonClass() != DungeonClass.UNKNOWN) classes.put(p.name(), p.dungeonClass());
             // Their rank colour, kept for after they've left the tab list.
             if (colours) PlayerNameColour.of(p.name());
+        }
+    }
+
     /** Who left, from a party leave, kick or disconnect line, or null ("You left the party", "The party was disbanded"). */
     public static String leftName(String text) {
         Matcher m = GONE_NAME.matcher(text);
         if (!m.find() || m.group("name").equals("You") || m.group("name").equals("The")) return null;
         return m.group("name");
+    }
+
     /** The title: "Name Tank", the class in its colour (no class if they weren't seen in a dungeon). */
     public static Component leaveTitleText(String name, DungeonClass dungeonClass) {
         return leaveTitleText(name, dungeonClass, null);
+    }
+
     /** The same with the name in its rank colour ({@link PlayerNameColour}), white when that isn't known. */
     public static Component leaveTitleText(String name, DungeonClass dungeonClass, Integer nameColour) {
         var title = nameColour == null ? Component.literal(name).withStyle(ChatFormatting.WHITE) : Component.literal(name).withColor(nameColour);
         if (dungeonClass != null && dungeonClass != DungeonClass.UNKNOWN) {
             title.append(Component.literal(" " + dungeonClass.displayName()).withColor(dungeonClass.color() & 0xFFFFFF));
+        }
         return title;
+    }
+
+    /**
+     * A leave line with the class they were playing after it, in the class colour: "[VIP+] Name has left the party. (Tank)".
+     * Unchanged when the class isn't known (they were never seen in the dungeon tab).
+     */
+    public static Component withClass(Component message, DungeonClass dungeonClass) {
+        if (dungeonClass == null || dungeonClass == DungeonClass.UNKNOWN) return message;
+        return message.copy().append(Component.literal(" (" + dungeonClass.displayName() + ")").withColor(dungeonClass.color() & 0xFFFFFF));
+    }
+
+    /** For the game test: what the dungeon tab last showed this teammate as. */
+    public static void rememberClassForTest(String name, DungeonClass dungeonClass) {
+        classes.put(name, dungeonClass);
+    }
+
     private static void leaveTitle(String text) {
+        String name = leftName(text);
         if (name == null) return;
         String lower = text.toLowerCase(java.util.Locale.ROOT);
         String what = lower.contains("disconnect") ? "disconnected" : lower.contains("kicked") || lower.contains("removed") ? "was removed" : "left the party";
         Sky2MAlerts.title(leaveTitleText(name, classes.get(name), PlayerNameColour.of(name)), Component.literal(what).withStyle(ChatFormatting.GRAY));
+    }
+
     private static void say(String text) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) mc.gui.hud.getChat().addClientSystemMessage(Compat.PREFIX.get().append(Component.literal(text).withStyle(ChatFormatting.YELLOW)));
