@@ -3018,6 +3018,11 @@ public final class FeatureConfigs {
         @ConfigAccordionId(id = 1506)
         public boolean roomGhost = true;
 
+        @Expose
+        @ConfigOption(name = "Missed Secrets Nudge", desc = "A short chat line when you leave a room you got a secret in that still has secrets left, like \"Left Raccoon with 2 secrets\". It can't tell when a teammate has taken the room over, so it's off by default.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1506)
+        public boolean missedSecretsNudge = false;
     }
 
     public enum RoomClearMode {

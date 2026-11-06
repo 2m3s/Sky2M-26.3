@@ -45,6 +45,8 @@ public final class RoomClears {
     private static final Map<String, Counts> BY_PLAYER = new HashMap<>();
     /** When the first secret was found in each room while you were in it, so running through on a blood rush doesn't count. */
     private static final Map<Room, Long> FIRST_SECRET = new WeakHashMap<>();
+    /** What the map called each of those rooms while you were in it, as it only says the room you're in now. */
+    private static final Map<Room, String> FIRST_SECRET_NAME = new WeakHashMap<>();
     /** One secret has no time between first and last. */
     private static final int MIN_SECRETS_TO_TIME = 2;
     private static int ticks;
@@ -56,6 +58,7 @@ public final class RoomClears {
             COUNTED.clear();
             BY_PLAYER.clear();
             FIRST_SECRET.clear();
+            FIRST_SECRET_NAME.clear();
         });
         RoomBests.init();
         DungeonEvents.SECRET_FOUND.register((room, secret) -> onSecret(room, secret.secretIndex));
@@ -74,7 +77,13 @@ public final class RoomClears {
         if (room != DungeonManager.getCurrentRoom()) return;
         long now = System.currentTimeMillis();
         Long started = FIRST_SECRET.putIfAbsent(room, now);
+        if (started == null) FIRST_SECRET_NAME.put(room, displayName(room));
         RoomBests.onSecret(room, started == null ? now : started, secretIndex);
+    }
+
+    /** The room's name if a secret was found while you were in it and it hasn't gone green since, else null. */
+    static String nameIfSecretFound(Room room) {
+        return FIRST_SECRET.containsKey(room) ? FIRST_SECRET_NAME.get(room) : null;
     }
 
     private static void countRooms(MapView view) {
