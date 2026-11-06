@@ -37,6 +37,7 @@ public final class AutoRequeue {
     private static final Pattern GONE_NAME = Pattern.compile("^(?:\\[[^\\]]+] )?(?<name>[A-Za-z0-9_]{1,16}) (?:has|was) ");
     /** The last class seen in the dungeon tab for each teammate, kept after they leave the tab list. */
     private static final Map<String, DungeonClass> classes = new HashMap<>();
+    private static int colourTicks;
 
     private AutoRequeue() {}
 
@@ -125,8 +126,13 @@ public final class AutoRequeue {
     private static void rememberClasses() {
         DungeonPlayerManager.DungeonPlayer[] players = DungeonPlayerManager.getPlayers();
         if (players == null) return;
+        boolean colours = ++colourTicks % 20 == 0;
         for (DungeonPlayerManager.DungeonPlayer p : players) {
+            if (p == null) continue;
             // A ghost reads as Unknown, so keep the class it had.
+            if (p.dungeonClass() != DungeonClass.UNKNOWN) classes.put(p.name(), p.dungeonClass());
+            // Their rank colour, kept for after they've left the tab list.
+            if (colours) PlayerNameColour.of(p.name());
     /** Who left, from a party leave, kick or disconnect line, or null ("You left the party", "The party was disbanded"). */
     public static String leftName(String text) {
         Matcher m = GONE_NAME.matcher(text);
@@ -134,6 +140,10 @@ public final class AutoRequeue {
         return m.group("name");
     /** The title: "Name Tank", the class in its colour (no class if they weren't seen in a dungeon). */
     public static Component leaveTitleText(String name, DungeonClass dungeonClass) {
+        return leaveTitleText(name, dungeonClass, null);
+    /** The same with the name in its rank colour ({@link PlayerNameColour}), white when that isn't known. */
+    public static Component leaveTitleText(String name, DungeonClass dungeonClass, Integer nameColour) {
+        var title = nameColour == null ? Component.literal(name).withStyle(ChatFormatting.WHITE) : Component.literal(name).withColor(nameColour);
         if (dungeonClass != null && dungeonClass != DungeonClass.UNKNOWN) {
             title.append(Component.literal(" " + dungeonClass.displayName()).withColor(dungeonClass.color() & 0xFFFFFF));
         return title;
@@ -141,6 +151,7 @@ public final class AutoRequeue {
         if (name == null) return;
         String lower = text.toLowerCase(java.util.Locale.ROOT);
         String what = lower.contains("disconnect") ? "disconnected" : lower.contains("kicked") || lower.contains("removed") ? "was removed" : "left the party";
+        Sky2MAlerts.title(leaveTitleText(name, classes.get(name), PlayerNameColour.of(name)), Component.literal(what).withStyle(ChatFormatting.GRAY));
     private static void say(String text) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) mc.gui.hud.getChat().addClientSystemMessage(Compat.PREFIX.get().append(Component.literal(text).withStyle(ChatFormatting.YELLOW)));
