@@ -760,7 +760,9 @@ public final class Sky2MConfig extends Config {
         @Category(name = "Vampire", desc = "Riftstalker Bloodfiend helpers.")
         public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.VampireSlayer vampire = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.VampireSlayer();
 
+        @Expose
         @ConfigOption(name = "Slayer Quest Warning", desc = "A title and a chat line when you hit slayer mobs in a slayer area (Zombies in the Graveyard, Endermen in the End...) with no slayer quest, or with a quest for a different slayer. At most every 30 seconds.")
+        @ConfigEditorBoolean
         public boolean questWarning = true;
 
         @ConfigOption(name = "Boss Fight", desc = "Boss phase HUD, boss and miniboss highlights, egg hits and the miniboss alert.")
@@ -812,6 +814,12 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "PB Leaderboard HUD", desc = "A HUD with the Sky2M kill time leaderboard for your slayer boss, and a live timer against your PB and the #1 time. Move it in /s2 gui.")
         @ConfigAccordionId(id = 502)
         public PbLeaderboardHud pbLeaderboardHud = new PbLeaderboardHud();
+
+        @Expose
+        @ConfigOption(name = "Slayer XP HUD", desc = "A HUD with this session's bosses per hour and Slayer XP per hour (breaks don't count), the XP to your next slayer level from Hypixel's own line, and about how many bosses and how long that is. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 502)
+        public boolean xpHud = true;
 
         @ConfigOption(name = "Loot & Profit", desc = "Boss profit, RNG meter value and kills since your last rare drop.")
         @ConfigEditorAccordion(id = 503)
@@ -1047,7 +1055,10 @@ public final class Sky2MConfig extends Config {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2304)
         public boolean recipeHudHideCompleted = false;
+
+        @Expose
         @ConfigOption(name = "Recipe HUD Click To Get From Sacks", desc = "With a menu open, click a missing ingredient in the Recipe HUD to take what you still need from your sacks (Hypixel's /gfs).")
+        @ConfigEditorBoolean
         @ConfigAccordionId(id = 2304)
         public boolean recipeHudGfs = true;
 
@@ -1785,10 +1796,15 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Highlight Event", desc = "In the Dwarven Mines, highlight the current mining event's targets: the goblins and golems of a Goblin Raid, and the Raffle Tickets on the ground during a Raffle.")
         @ConfigEditorBoolean
         public boolean highlightEvent = false;
+
+        @Expose
         @ConfigOption(name = "Commission Waypoints", desc = "In the Dwarven Mines, a beam and label on where each unfinished commission is done (Lava Springs, Royal Mines, Cliffside Veins, Rampart's Quarry, Upper Mines, Goblin Burrows, Glacite Walkers, Treasure Hoarders). Works without the HUD.")
+        @ConfigEditorBoolean
         public boolean waypoints = false;
 
+        @Expose
         @ConfigOption(name = "Emissary Waypoints", desc = "When a commission is DONE, a beam and label on the nearest Emissary to claim it at.")
+        @ConfigEditorBoolean
         public boolean emissaryWaypoints = false;
 
         @Expose

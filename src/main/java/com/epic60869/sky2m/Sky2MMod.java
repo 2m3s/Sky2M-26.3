@@ -132,6 +132,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.slayer.SlayerRngMeterDisplay.init(configDir); lap("SlayerRngMeterDisplay.init");
         com.epic60869.sky2m.features.slayer.SlayerTimes.init(configDir); lap("SlayerTimes.init");
         com.epic60869.sky2m.features.slayer.SlayerPbHud.init(); lap("SlayerPbHud.init");
+        com.epic60869.sky2m.features.slayer.SlayerXpHud.init(); lap("SlayerXpHud.init");
         com.epic60869.sky2m.features.slayer.SlayerMinibossAlert.init(); lap("SlayerMinibossAlert.init");
         com.epic60869.sky2m.features.slayer.SlayerBossSpawnAlert.init(); lap("SlayerBossSpawnAlert.init");
         com.epic60869.sky2m.features.slayer.SlayerBossProfit.init(configDir); lap("SlayerBossProfit.init");
