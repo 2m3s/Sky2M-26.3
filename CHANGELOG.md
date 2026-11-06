@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- `/s2 perf start [seconds]` (10 by default, `/s2 perf stop` ends it early): measures for that long, then says in chat which features cost the most, in ms per frame or tick, with your average FPS. Includes the tick features that have a safety guard; `/s2 perf` still opens the live table.
 - HUD Layouts Per Area (General, off by default): dungeons, the garden and the mining islands can each have their own HUD positions. `/s2 gui` edits the layout of the area you're in and says which one; a HUD you haven't moved there stays at its default position.
 - Smart command keys: start a line of a macro with a condition to send it only there, like `[dungeon] /gfs spirit_leap`, `[garden,hub] /warp x`, `[f7] ...` or `[tank] ...`. The key press skips lines that don't match. Hover Commands/Messages in `/s2 keys` for the words.
 - Reroll Advisor (Dungeons > Chest Profit > Chest Value, on by default): the Reroll Chest's tooltip compares this chest's profit with your own average for that floor and chest type, less a Kismet Feather. It's your average of the chests you opened, not real odds, and needs 5 chests saved.

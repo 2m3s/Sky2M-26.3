@@ -4,6 +4,7 @@
  */
 package com.epic60869.sky2m.sim.util;
 
+import com.epic60869.sky2m.features.core.Sky2MPerfSample;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import org.slf4j.Logger;
 
@@ -55,11 +56,13 @@ public final class FeatureGuard {
             if (anyDisabled && DISABLED.contains(name)) {
                 return;
             }
+            long started = Sky2MPerfSample.running ? System.nanoTime() : 0L; // /s2 perf start
             try {
                 handler.onStartTick(client);
             } catch (Throwable t) {
                 failed(name, t);
             }
+            if (started != 0L) Sky2MPerfSample.tick(name, started);
         };
     }
 
@@ -69,11 +72,13 @@ public final class FeatureGuard {
             if (anyDisabled && DISABLED.contains(name)) {
                 return;
             }
+            long started = Sky2MPerfSample.running ? System.nanoTime() : 0L; // /s2 perf start
             try {
                 handler.onEndTick(client);
             } catch (Throwable t) {
                 failed(name, t);
             }
+            if (started != 0L) Sky2MPerfSample.tick(name, started);
         };
     }
 

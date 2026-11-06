@@ -240,6 +240,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.misc.system.KeybindSheetScreen.register(); lap("KeybindSheetScreen.register");
         com.epic60869.sky2m.features.misc.social.ScreenshotGallery.register(); lap("ScreenshotGallery.register");
         com.epic60869.sky2m.features.core.Sky2MPerfScreen.register(); lap("Sky2MPerfScreen.register");
+        com.epic60869.sky2m.features.core.Sky2MPerfSample.register(); lap("Sky2MPerfSample.register");
         com.epic60869.sky2m.features.core.Sky2MPerfWarnings.register(); lap("Sky2MPerfWarnings.register");
         com.epic60869.sky2m.features.core.Sky2MErrors.register(); lap("Sky2MErrors.register");
         com.epic60869.sky2m.features.core.Sky2MHudOverviewScreen.register(); lap("Sky2MHudOverviewScreen.register");

@@ -48,6 +48,7 @@ public final class Sky2MPerf {
 
     public static void end(Kind kind, String name, long start) {
         long took = System.nanoTime() - start;
+        if (Sky2MPerfSample.running) Sky2MPerfSample.add(kind.name(), name, took);
         // Called for every HUD every frame and for every chat line: no key building, no lambda.
         Map<String, long[]> byName = BY_KIND[kind.ordinal()];
         long[] v = byName.get(name);
@@ -71,6 +72,7 @@ public final class Sky2MPerf {
     /** Once per frame (from the HUD pass): counts frames and closes the window every 5 seconds. */
     public static void frame() {
         frames++;
+        if (Sky2MPerfSample.running) Sky2MPerfSample.frame();
         long now = System.nanoTime();
         if (now - windowStart < WINDOW_NANOS) return;
         List<Stat> stats = new ArrayList<>();
