@@ -11,6 +11,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Next Catacombs level: `/s2 catacalc` shows the runs and time to your next level at your recent pace, and `/s2 catacalc next [floor]` says it in chat.
 - RNG Meter Cost Forecast (Slayers > Slayer RNG Meter, on by default): the HUD and `/s2 rngadvice` show the bosses, quest fee coins and time to your selected drop.
 - Slayer Times (`/s2 slayertimes`): a chart of your kill times this session for each boss and tier, with the count, average, best and spread.
+- Upgrade Advisor (`/s2 upgrades`): what your worn armour and held weapon are missing and what it costs: potato books, The Art of War and Peace, Recombobulator and stars. Upgrades with a known stat gain are ranked by coins per stat point, the rest by cost. Reforges, enchantments and gemstones aren't covered.
 
 - Score Loss (Dungeons > Score > What's Stopping 300, on by default, needs Score Display): the score HUD says what's stopping 300, in score points, like `To 300: -6 secrets, -2 crypts, -1 death`.
 - Run Review (Dungeons > Timers > Run History, on by default, needs Run History): after a run, chat says which splits lost or gained time against your best finished run on that floor and which rooms were slower than your room best. Hover for the times.
