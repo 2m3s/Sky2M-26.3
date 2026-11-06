@@ -126,6 +126,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ### Changed
 
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
+- Item List: clicking an item shows where to get it above its recipes: the Catacombs and Master Mode floors, slayer bosses, Kuudra, Diana and fishing it's an RNG drop from, who sells it, who drops it, and the collection or slayer level crafting it needs. An item with no recipe but a known source (like Necron's Handle) opens too.
 - Sky2M's screens have new dark buttons instead of the light grey ones: a box a shade above the panel that brightens with a purple border when hovered, light labels that keep their colours (Smart Disconnect's red Disconnect), purple for a chosen option and grey when disabled. Covers the Dungeon Sim, Smart Disconnect, /s2 hour, the leaderboard and the other Sky2M screens.
 - Item Protect's chat lines ("★ Protected ... from dropping.", "Removed drop protection from ...") show the item's name in its rarity colour, stars included, instead of white.
 - The Profile Viewer's Wardrobe (/pv) shows the Equipment Wardrobe too: each set's necklace, cloak, belt and gloves sit under its armour, nine sets a page.

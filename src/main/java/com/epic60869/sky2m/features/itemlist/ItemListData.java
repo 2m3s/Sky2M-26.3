@@ -162,7 +162,7 @@ public final class ItemListData {
     }
 
     private record Data(List<Entry> entries, Map<String, Entry> byId, Map<String, List<Recipe>> recipes,
-                        Map<String, List<Recipe>> usages) {}
+                        Map<String, List<Recipe>> usages, Map<String, String> craftText) {}
 
     private static volatile Data data;
     private static volatile boolean loading;
@@ -178,6 +178,12 @@ public final class ItemListData {
     /** What's happening while nothing is loaded yet ("Downloading items..."), or "". */
     public static String status() {
         return status;
+    }
+
+    /** What crafting {@code id} needs unlocked, as the repo writes it ("Requires Wheat VIII"), or null. */
+    public static String craftText(String id) {
+        Data d = data;
+        return d == null || id == null ? null : d.craftText().get(id);
     }
 
     public static List<Entry> entries() {
@@ -280,6 +286,7 @@ public final class ItemListData {
     private static Data parse() throws Exception {
         Map<String, Entry> byId = new LinkedHashMap<>();
         Map<String, List<Recipe>> recipes = new HashMap<>();
+        Map<String, String> craftText = new HashMap<>();
         Map<String, List<Recipe>> usages = new HashMap<>();
         JsonObject petNums = null;
         try (ZipInputStream zip = new ZipInputStream(Files.newInputStream(ZIP))) {
@@ -309,6 +316,9 @@ public final class ItemListData {
                 Entry entry = entry(item);
                 if (entry == null) continue;
                 byId.put(entry.id(), entry);
+                // "Requires Wheat VIII": the collection (or other) unlock the repo notes for crafting it.
+                String requires = str(item, "crafttext");
+                if (requires != null && !requires.isBlank()) craftText.put(entry.id(), requires.trim());
                 for (Recipe recipe : recipesOf(entry.id(), item)) {
                     for (Ingredient out : recipe.outputs()) add(recipes, out.id(), recipe);
                     for (Ingredient in : recipe.inputs()) add(usages, in.id(), recipe);
@@ -327,7 +337,7 @@ public final class ItemListData {
         });
         recipes.values().forEach(list -> deduplicate(list));
         usages.values().forEach(list -> deduplicate(list));
-        return new Data(Collections.unmodifiableList(entries), byId, recipes, usages);
+        return new Data(Collections.unmodifiableList(entries), byId, recipes, usages, craftText);
     }
 
     private static final Pattern PET_ID = Pattern.compile("(.+);(\\d)");
