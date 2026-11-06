@@ -27,6 +27,7 @@
     "player.Sky2MPlayerInfoMixin",
     "player.Sky2MPlayerInfoAccessor",
     "gui.Sky2MMultiLineEditBoxAccessor",
+    "gui.Sky2MGameNarratorAccessor",
     "gui.Sky2MContainerTooltipMixin",
     "chat.Sky2MChatComponentAccessor",
     "chat.Sky2MChatLineMixin",

@@ -96,6 +96,15 @@ public final class Sky2MConfig extends Config {
         @ConfigEditorBoolean
         public boolean hudLayoutsPerArea = false;
 
+        @Expose
+        @ConfigOption(name = "Voice Callouts", desc = "Speak Sky2M's on-screen title alerts aloud with your computer's text to speech. Uses the voice volume slider, not the game's Narrator setting, which stays as it is. Chat is never read out. At most one callout every 3 seconds; alerts in between stay silent.")
+        @ConfigEditorBoolean
+        public boolean voiceCallouts = false;
+
+        @Expose
+        @ConfigOption(name = "Voice Callout Words", desc = "Only speak title alerts containing one of these words, separated by commas, like: spawned, key, necron. Leave empty to speak every title alert.")
+        @ConfigEditorText
+        public String voiceCalloutWords = "";
 
         @ConfigOption(name = "Export Settings Code", desc = "Copy all your Sky2M settings to the clipboard as one code to share (/s2 config export). Versions and other personal values are left out.")
         @ConfigEditorButton(buttonText = "COPY")

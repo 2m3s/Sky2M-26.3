@@ -89,7 +89,7 @@ public final class ChatRules {
             if (!m.find()) continue;
             switch (rule.action()) {
                 case HIDE -> hide = true;
-                case NOTIFY -> Sky2MAlerts.title(Component.literal(expand(m, rule.text())), null);
+                case NOTIFY -> Sky2MAlerts.titleUnspoken(Component.literal(expand(m, rule.text())), null);
                 default -> {}
             }
         }

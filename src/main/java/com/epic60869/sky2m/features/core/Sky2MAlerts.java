@@ -18,12 +18,22 @@ public final class Sky2MAlerts {
 
     /** Shows a title and subtitle in the middle of the screen, with a ding or silently. */
     public static void title(Component title, Component subtitle, boolean ding) {
+        show(title, subtitle, ding, true);
+    }
+
+    /** {@link #title(Component, Component)} that Voice Callouts never speaks, for a title that can quote chat. */
+    public static void titleUnspoken(Component title, Component subtitle) {
+        show(title, subtitle, true, false);
+    }
+
+    private static void show(Component title, Component subtitle, boolean ding, boolean speak) {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
             mc.gui.hud.setTimes(5, 40, 10);
             mc.gui.hud.setTitle(title);
             mc.gui.hud.setSubtitle(subtitle == null ? Component.empty() : subtitle);
             if (ding) ding();
+            if (speak) Sky2MVoiceCallouts.onTitle(title, subtitle);
         });
     }
 
