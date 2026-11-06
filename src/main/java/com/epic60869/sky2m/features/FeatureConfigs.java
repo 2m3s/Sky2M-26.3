@@ -3272,6 +3272,12 @@ public final class FeatureConfigs {
         @ConfigAccordionId(id = 1701)
         public boolean splitEta = true;
 
+        @Expose
+        @ConfigOption(name = "Show Pace vs PB", desc = "Show how far ahead or behind your best run on this floor you are, under the split HUD. Uses your split bests until a run is finished.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1701)
+        public boolean splitPace = true;
+
         @ConfigOption(name = "Tick Timers", desc = "Tick timers, the Storm PY timer and the max debuff alert.")
         @ConfigEditorAccordion(id = 1702)
         public boolean tickTimersGroup = false;

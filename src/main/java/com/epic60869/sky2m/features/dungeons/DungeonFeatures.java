@@ -448,7 +448,46 @@ public final class DungeonFeatures {
             long eta = estimateTotal(rows);
             if (eta > 0) lines.add(Component.literal("§7ETA: §f" + formatTime(eta)));
         }
+        if (config.timers.splitPace) {
+            Long pace = paceAgainstBest(rows);
+            if (pace != null) lines.add(Component.literal("§7vs PB: " + paceText(pace)));
+        }
         return lines;
+    }
+
+    /** "§a-4.2s" ahead, "§c+4.2s" behind. Public for the game test. */
+    public static String paceText(long ms) {
+        return (ms <= 0 ? "§a-" : "§c+") + String.format(Locale.ROOT, "%.1fs", Math.abs(ms) / 1000.0);
+    }
+
+    /**
+     * How far behind (below 0, ahead of) your best finished run on this floor you are, over the splits done so far. A split
+     * that run doesn't have uses your best for it. The running split only counts once it's slower than that. Null if nothing
+     * is known.
+     */
+    private static Long paceAgainstBest(List<SplitRow> rows) {
+        if (splitFloor.isEmpty() || rows.size() < 2) return null;
+        RunHistory.Run bestRun = null;
+        for (RunHistory.Run run : RunHistory.runs()) {
+            if (!run.completed || !splitFloor.equals(run.floor) || run.totalMs <= 0) continue;
+            if (bestRun == null || run.totalMs < bestRun.totalMs) bestRun = run;
+        }
+        Map<String, Long> best = new HashMap<>();
+        if (bestRun != null) for (RunHistory.Split s : bestRun.splits) best.put(s.name(), s.ms());
+        Map<String, Float> pbs = personalBests.getOrDefault(splitFloor, Map.of());
+        long pace = 0;
+        boolean known = false;
+        for (SplitRow row : rows.subList(0, rows.size() - 1)) {
+            if (row.time() == 0) continue;
+            String name = ChatFormatting.stripFormatting(row.name());
+            Long expected = best.get(name);
+            if (expected == null && pbs.containsKey(name)) expected = (long) (pbs.get(name) * 1000f);
+            if (expected == null) continue;
+            if (row.current() && row.time() <= expected) continue;
+            pace += row.time() - expected;
+            known = true;
+        }
+        return known ? pace : null;
     }
 
     /**

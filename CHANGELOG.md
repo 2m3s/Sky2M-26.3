@@ -6,6 +6,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Added
 
+- Pace vs PB (Dungeons > Timers, on by default): the split HUD shows how far ahead or behind your best run on that floor you are, like `vs PB: -4.2s`.
 - Live Room Splits (Dungeons > Secrets, on by default): a HUD in the room you're clearing with secrets found and how far ahead or behind your room best you are at each one. Move it in /s2 gui.
 - Command keys top up a stack: a key set to `/gfs ender_pearl` with no amount only gets what a full stack is missing, and does nothing when it's full. `/gfs ender_pearl 16` and typing it in chat work as before.
 - Sadan Interest Timer (Dungeons > Floors 4-6, on by default): in the F6/M6 boss, a HUD with the time left on Sadan's Interest Meter, two minutes less a second for each Terracotta killed, until the Giants wake. Move it in /s2 gui.
