@@ -84,6 +84,7 @@ final class ProfilePages {
         cw = W - 12;
         ch = H - 24;
         g.text(f(), page.label, left + 8, top + 6, GOLD, true);
+        if (page == ProfileViewerScreen.Page.MINING || page == ProfileViewerScreen.Page.FARMING) weight(g, page, left, top, mx, my);
         switch (page) {
             case COLLECTIONS -> collections(g, mx, my);
             case MINING -> mining(g, mx, my);
@@ -96,6 +97,26 @@ final class ProfilePages {
             case FISHING -> fishing(g, mx, my);
             default -> misc(g, mx, my);
         }
+    }
+
+    /** Sky2M Mining or Farming Weight in the page's header, its breakdown on hover. */
+    private void weight(GuiGraphicsExtractor g, ProfileViewerScreen.Page page, int left, int top, int mx, int my) {
+        ProfileApi.Profile p = s.profile();
+        if (p == null || p.member() == null) return;
+        boolean mining = page == ProfileViewerScreen.Page.MINING;
+        Sky2MWeight.Result r = mining ? Sky2MWeight.mining(p.member()) : Sky2MWeight.farming(p.member());
+        String label = "Sky2M " + (mining ? "Mining" : "Farming") + " Weight: " + String.format(java.util.Locale.US, "%,.1f", r.total());
+        int x = left + W - 8 - f().width(label);
+        g.text(f(), label, x, top + 6, GOLD, true);
+        if (!in(mx, my, x, top + 4, f().width(label), 11)) return;
+        List<Component> t = new ArrayList<>();
+        t.add(line(label, ChatFormatting.GOLD));
+        for (Sky2MWeight.Part part : r.parts()) {
+            t.add(line(part.name() + ": " + String.format(java.util.Locale.US, "%,.1f", part.weight()) + "  (" + commas(part.amount()) + ")",
+                ChatFormatting.GRAY));
+        }
+        t.add(line("Sky2M's own weight: /s2 weight shows it in chat.", ChatFormatting.DARK_GRAY));
+        tip(t);
     }
 
     // ------------------------------------------------------------------------------------------------ helpers

@@ -415,6 +415,7 @@ public final class Sky2MMod implements ClientModInitializer {
             .then(ClientCommands.literal("notes").executes(context -> openNotes()))
             .then(ClientCommands.literal("search").executes(context -> openStorageSearch()))
             .then(Sky2MRecipeCommand.command())
+            .then(com.epic60869.sky2m.features.profileviewer.Sky2MWeightCommand.command())
             .then(ClientCommands.literal("calc")
                 .then(ClientCommands.argument("calculation", StringArgumentType.greedyString())
                     .executes(context -> calculate(StringArgumentType.getString(context, "calculation")))))
