@@ -6,9 +6,12 @@ import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
+import com.epic60869.sky2m.features.dungeons.mapstyle.MapView;
 import com.epic60869.sky2m.sb.skyblock.dungeon.DungeonMap;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonMapUtils;
+import com.epic60869.sky2m.sim.livemap.DungeonLayout;
+import com.epic60869.sky2m.sim.livemap.MapViewSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
@@ -44,6 +47,7 @@ public final class DoorHighlight {
     private static final Pattern BLOOD_KEY_PICKED_UP = Pattern.compile("^A Blood Key was picked up!$");
     private static final float[] LOCKED = {1f, 0.33f, 0.33f};
     private static final float[] OPENABLE = {0.33f, 1f, 0.33f};
+    private static final float[] FAIRY = {1f, 0.33f, 1f};
     private static final float[] WITHER_KEY = {0.1f, 0.1f, 0.1f};
     private static final float[] BLOOD_KEY = {1f, 0.2f, 0.2f};
 
@@ -51,6 +55,9 @@ public final class DoorHighlight {
     private record Door(BlockPos centre, boolean blood, boolean east) {}
 
     private static final List<Door> DOORS = new ArrayList<>();
+    /** The door into the Fairy room, when it isn't already a wither door in {@link #DOORS}. */
+    private static final List<BlockPos> FAIRY_DOORS = new ArrayList<>();
+    private static boolean fairyEntered;
     private static int witherKeys;
     private static boolean bloodKey;
     private static boolean bloodOpened;
@@ -98,6 +105,13 @@ public final class DoorHighlight {
                     collector.submitOutlinedBox(box, colour, 3f, true);
                 }
             }
+            if (config.fairyDoorHighlight) {
+                for (BlockPos c : FAIRY_DOORS) {
+                    AABB box = new AABB(c.getX() - 1, c.getY(), c.getZ() - 1, c.getX() + 2, c.getY() + 4, c.getZ() + 2);
+                    collector.submitFilledBox(box, FAIRY, 0.3f, true);
+                    collector.submitOutlinedBox(box, FAIRY, 3f, true);
+                }
+            }
             if (config.keyHighlight && keyEntity != null && keyEntity.isAlive()) {
                 AABB box = AABB.unitCubeFromLowerCorner(keyEntity.position().add(-0.5, 1, -0.5));
                 collector.submitOutlinedBox(box, keyIsBlood ? BLOOD_KEY : WITHER_KEY, 3f, true);
@@ -107,6 +121,8 @@ public final class DoorHighlight {
 
     private static void reset() {
         DOORS.clear();
+        FAIRY_DOORS.clear();
+        fairyEntered = false;
         witherKeys = 0;
         bloodKey = false;
         bloodOpened = false;
@@ -135,6 +151,9 @@ public final class DoorHighlight {
             }
         }
 
+        FAIRY_DOORS.clear();
+        if (config.fairyDoorHighlight) findFairyDoors();
+
         // Keys are armor stands named "Wither Key" / "Blood Key".
         if (keyEntity != null && !keyEntity.isAlive()) keyEntity = null;
         if (keyEntity == null) {
@@ -152,6 +171,36 @@ public final class DoorHighlight {
         }
     }
 
+
+    /** The door into the Fairy room, using only what the dungeon map shows, until anyone's head is in the room. */
+    private static void findFairyDoors() {
+        MapView view = MapViewSource.current();
+        if (!view.valid() || view.inBoss() || fairyEntered) return;
+        for (MapView.Room room : view.rooms()) {
+            if (room.type() != MapView.RoomType.FAIRY) continue;
+            for (MapView.Head head : view.heads()) {
+                if (RoomClears.inRoom(view, room, head.x(), head.y())) {
+                    fairyEntered = true;
+                    FAIRY_DOORS.clear();
+                    return;
+                }
+            }
+            for (MapView.Door door : view.doors()) {
+                if (!touchesRoom(door.gx(), door.gz(), room.tiles())) continue;
+                BlockPos pos = DungeonLayout.doorBlock(door.gz() * DungeonLayout.GRID + door.gx());
+                if (DOORS.stream().noneMatch(d -> d.centre().equals(pos))) FAIRY_DOORS.add(pos);
+            }
+        }
+    }
+
+    /** Whether a door on the 11x11 grid (one odd coordinate) opens onto one of a room's {col, row} slots. Public for the game test. */
+    public static boolean touchesRoom(int gx, int gz, List<int[]> tiles) {
+        for (int[] tile : tiles) {
+            int tileGx = tile[0] * 2, tileGz = tile[1] * 2;
+            if (Math.abs(gx - tileGx) + Math.abs(gz - tileGz) == 1) return true;
+        }
+        return false;
+    }
 
     private static void checkDoor(Minecraft mc, MapItemSavedData map, BlockPos pos, boolean east) {
         BlockState state = mc.level.getBlockState(pos);
