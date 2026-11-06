@@ -732,6 +732,11 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Boss Bar Health", desc = "The boss's health as a number on its boss bar.")
+        public com.epic60869.sky2m.features.dungeons.BossBarHealth.Config bossBarHealth = new com.epic60869.sky2m.features.dungeons.BossBarHealth.Config();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Party Finder Stats", desc = "Stats of players who join your dungeon group, with a kick button and optional auto kick.")
         public PartyFinderStats partyFinderStats = new PartyFinderStats();
 
