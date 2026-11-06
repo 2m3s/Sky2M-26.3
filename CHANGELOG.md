@@ -6,6 +6,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Added
 - Reroll Advisor (Dungeons > Chest Profit > Chest Value, on by default): the Reroll Chest's tooltip compares this chest's profit with your own average for that floor and chest type, less a Kismet Feather. It's your average of the chests you opened, not real odds, and needs 5 chests saved.
+- Best Floor (`/s2 bestfloor`): your chest profit per hour on each floor, best first, with how many runs each is based on.
 - Chest Luck (Dungeons > Chest Profit > Chest Value, on by default): under Dungeon Chest Value, what this chest is worth against your own average, like `+24% vs your M6 Bedrock average`. Needs 3 chests saved.
 
 - Score Loss (Dungeons > Score > What's Stopping 300, on by default, needs Score Display): the score HUD says what's stopping 300, in score points, like `To 300: -6 secrets, -2 crypts, -1 death`.
