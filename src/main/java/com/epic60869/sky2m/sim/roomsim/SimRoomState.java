@@ -47,6 +47,21 @@ public final class SimRoomState {
         STATES.clear();
     }
 
+    /** Host: every room the sim has an opinion on, with its {@link #stateFor} (green included), for party guests. */
+    public static Map<String, Integer> snapshot() {
+        Map<String, Integer> out = new java.util.TreeMap<>();
+        for (String room : STATES.keySet()) {
+            out.put(room, stateFor(room));
+        }
+        return out;
+    }
+
+    /** Party guest: the host's room states replace this client's (it has no rooms of its own to clear or fail). */
+    public static void replaceAll(Map<String, Integer> states) {
+        STATES.clear();
+        STATES.putAll(states);
+    }
+
     /** This room's puzzle was failed: paint it red. */
     public static void markFailed(String roomName) {
         // Ice Fill and Ice Path have no failed state on Hypixel - a slip regenerates or the fish just stops -
@@ -109,6 +124,17 @@ public final class SimRoomState {
      *         opinion and the map should decide for itself
      */
     public static int stateFor(String roomName) {
-        return roomName == null ? -1 : STATES.getOrDefault(roomName, -1);
+        int state = roomName == null ? -1 : STATES.getOrDefault(roomName, -1);
+        // A cleared room with every secret found is Hypixel's green checkmark.
+        if (state == STATE_CLEARED) {
+            com.epic60869.sky2m.sim.roomdatabase.RoomEntry entry = com.epic60869.sky2m.sim.roomdatabase.RoomDatabase.lookupByName(roomName);
+            if (entry != null && entry.secrets > 0 && SimScore.foundInRoom(roomName) >= entry.secrets) {
+                return STATE_GREEN;
+            }
+        }
+        return state;
     }
+
+    /** {@code DungeonMapScanner.STATE_GREEN} - the green checkmark. */
+    private static final int STATE_GREEN = 0;
 }

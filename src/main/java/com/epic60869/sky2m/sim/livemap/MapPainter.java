@@ -16,8 +16,9 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The one dungeon-map painter, shared by the {@link InteractiveMapScreen} and the
- * {@link LiveMapFeature.LiveMapHudElement} HUD.
+ * What the dungeon map has revealed (read by {@link MapViewSource}, which every Dungeon Map style draws from) and the
+ * room-label/door geometry the sim's map designer shares. The sim's own HUD map that used to draw through here was
+ * removed: the sim shows the mod's main Dungeon Map.
  * <p>
  * killer560, 2026-09-17 (screenshots {@code 14.17.05} = ours vs {@code 14.18.46} = the real held map): the HUD map
  * "does not look like the real dungeon map" - it drew every room the same grey on a uniform 8px grid with a 1px inset
@@ -83,19 +84,6 @@ public final class MapPainter {
         };
     }
 
-    /** Map units a run of {@code rooms} room slots covers: rooms of 16 with 4-unit gaps between them. */
-    private static int roomsToUnits(int rooms) {
-        return rooms * (ROOM_UNITS + GAP_UNITS) - GAP_UNITS;
-    }
-
-    /**
-     * The grid being drawn, in map units: {@code {unitsX, unitsZ}} - the size half of {@link #gridExtent}.
-     */
-    static int[] gridUnits(java.util.List<LiveMapFeature.RoomGroup> groups) {
-        int[] e = gridExtent(groups);
-        return new int[]{e[2], e[3]};
-    }
-
     /** Room slots {@code {across, down}} of the floor being played - {@link #floorRooms} of the current floor. */
     static int[] currentFloorRooms() {
         return floorRooms(com.epic60869.sky2m.sim.secrets.DungeonState.getFloor());
@@ -122,10 +110,7 @@ public final class MapPainter {
     /** p3sim.net has no dungeon map item at all, so the strict reveal-only rule above would leave the map
      *  permanently blank there. It is a practice site, not Hypixel, so the world scan still drives what
      *  {@link #cellRevealed}/{@link #visibleState} allow onto the Interactive Map and the pathfinders that
-     *  read through it - same carve-out {@code SkyblockGate.isP3Sim} already makes for the Skyblock gate.
-     *  Package-visible (not {@code private}) so {@link LiveMapFeature.LiveMapHudElement} can reuse this same
-     *  server-IP test for its own, separate p3sim rule (killer560: hide the Dungeon Map HUD on p3sim, same
-     *  as a boss room) instead of a second copy of the check. */
+     *  read through it - same carve-out {@code SkyblockGate.isP3Sim} already makes for the Skyblock gate. */
     /** The ServerData the cached answer was computed for; a different one recomputes. */
     private static net.minecraft.client.multiplayer.ServerData p3SimCachedFor;
     private static boolean p3SimCached;
@@ -232,22 +217,6 @@ public final class MapPainter {
         return g % 2 == 0 ? ROOM_UNITS : GAP_UNITS;
     }
 
-    /** Map-unit position of a world coordinate (tile centres land on tile centres). */
-    static double worldToUnits(double world) {
-        return (world - LiveMapFeature.START_X) * 0.625 + 8;
-    }
-
-    /** @return the grid index under a point given in map units, or -1. */
-    static int unitToGrid(double u) {
-        if (u < 0) {
-            return -1;
-        }
-        int k = (int) Math.floor(u / (ROOM_UNITS + GAP_UNITS));
-        double r = u - k * (double) (ROOM_UNITS + GAP_UNITS);
-        int g = r < ROOM_UNITS ? 2 * k : 2 * k + 1;
-        return g > 10 ? -1 : g;
-    }
-
     private static int px(float origin, double units, float ppu) {
         return Math.round(origin + (float) units * ppu);
     }
@@ -284,28 +253,6 @@ public final class MapPainter {
         };
     }
 
-    static int typeColor(String type, LiveMapConfig cfg) {
-        return switch (type) {
-            case "ENTRANCE" -> cfg.getColorEntrance();
-            case "PUZZLE" -> cfg.getColorPuzzle();
-            case "TRAP" -> cfg.getColorTrap();
-            case "CHAMPION", "MINIBOSS", "YELLOW" -> cfg.getColorMiniboss();
-            case "BLOOD" -> cfg.getColorBlood();
-            case "FAIRY" -> cfg.getColorFairy();
-            case "RARE" -> cfg.getColorRare();
-            case "UNKNOWN" -> cfg.getColorUnopened();
-            default -> cfg.getColorNormal();
-        };
-    }
-
-    static String typeName(String type) {
-        return switch (type) {
-            case "CHAMPION", "MINIBOSS", "YELLOW" -> "Miniboss";
-            case "UNKNOWN" -> "Unknown";
-            default -> type.charAt(0) + type.substring(1).toLowerCase(Locale.ROOT);
-        };
-    }
-
     /** Devonian {@code RoomTypes.prio} - which neighbour a plain door borrows its colour from. Fairy sits BELOW
      *  normal because NoammAddons' {@code DoorTile.getColor} explicitly prefers a non-fairy neighbour. */
     public static int typePriority(String type) {
@@ -322,93 +269,7 @@ public final class MapPainter {
         };
     }
 
-    /** Room fill before the current-room/hover tweaks. NoammAddons {@code RoomTile.getColor}: an unopened room is
-     *  grey whatever its real type is, because that is all the map itself knows about it. */
-    static int roomColor(LiveMapFeature.RoomGroup group, LiveMapConfig cfg) {
-        int state = visibleState(group);
-        if (state == DungeonMapScanner.STATE_UNOPENED) {
-            return cfg.getColorUnopened();
-        }
-        if (state == DungeonMapScanner.STATE_UNDISCOVERED) {
-            return multiply(cfg.getColorUnopened(), 1f - cfg.getDarkenUnopened());
-        }
-        int color = cfg.isColourByType() ? typeColor(roomType(group), cfg) : cfg.getColorNormal();
-        // A failed puzzle does NOT recolour its square. killer560, 2026-10-01: "no not the square the text
-        // should become red." The room keeps its own type colour and the NAME goes red, which it already does
-        // - every label's colour is stateColor(visibleState(group)), and STATE_FAILED's is 0xFFFF5555. So the
-        // only thing the sim had to add was a way to reach that state without a map item (SimRoomState).
-        return color;
-    }
-
-    /** Colour a plain corridor inherits from the rooms it joins. */
-    private static int connectorColor(int idx, LiveMapConfig cfg) {
-        int g = LiveMapFeature.GRID;
-        int gx = idx % g;
-        int gz = idx / g;
-        int best = Integer.MAX_VALUE;
-        int color = cfg.getColorNormal();
-        for (int side = 0; side < 2; side++) {
-            int nx = gx % 2 == 1 ? gx + (side == 0 ? -1 : 1) : gx;
-            int nz = gz % 2 == 1 ? gz + (side == 0 ? -1 : 1) : gz;
-            if (nx == gx && nz == gz) {
-                continue;
-            }
-            if (nx < 0 || nz < 0 || nx >= g || nz >= g) {
-                continue;
-            }
-            int gid = LiveMapFeature.groupIdAt(nx + nz * g);
-            if (gid < 0) {
-                continue;
-            }
-            LiveMapFeature.RoomGroup group = LiveMapFeature.groupsView().get(gid);
-            if (!isRevealed(group)) {
-                continue;
-            }
-            String type = roomType(group);
-            int prio = typePriority(type);
-            if (prio < best) {
-                best = prio;
-                color = roomColor(group, cfg);
-            }
-        }
-        return color;
-    }
-
     // ------------------------------------------------------------------------------------------- rooms
-
-    static void drawRoom(GuiGraphicsExtractor graphics, LiveMapFeature.RoomGroup group, int gid, int color,
-                         float ox, float oy, float ppu) {
-        com.epic60869.sky2m.sim.hud.GuiRects rects = com.epic60869.sky2m.sim.hud.GuiRects.begin(graphics);
-        drawRoom(rects, group, gid, color, ox, oy, ppu);
-        rects.submit();
-    }
-
-    /** {@link #drawRoom(GuiGraphicsExtractor, LiveMapFeature.RoomGroup, int, int, float, float, float)} into a batch,
-     *  so the HUD map can submit every room as one render-state element (rooms never overlap one another). */
-    static void drawRoom(com.epic60869.sky2m.sim.hud.GuiRects graphics, LiveMapFeature.RoomGroup group, int gid, int color,
-                         float ox, float oy, float ppu) {
-        int n = 0;
-        for (int c : group.cells) {
-            int gx = c % LiveMapFeature.GRID;
-            int gz = c / LiveMapFeature.GRID;
-            if (gx % 2 == 1 && gz % 2 == 1 && !centreOfSquare(gid, gx, gz)) {
-                continue; // an L-room's inner corner is not part of the room (QUOI lCorners)
-            }
-            if (!cellRevealed(c)) {
-                continue;
-            }
-            if (n * 4 + 4 > ROOM_RECTS.length) {
-                fillMerged(graphics, ROOM_RECTS, n, color);
-                n = 0;
-            }
-            ROOM_RECTS[n * 4] = px(ox, cellPos(gx), ppu);
-            ROOM_RECTS[n * 4 + 1] = px(oy, cellPos(gz), ppu);
-            ROOM_RECTS[n * 4 + 2] = px(ox, cellPos(gx) + cellSize(gx), ppu);
-            ROOM_RECTS[n * 4 + 3] = px(oy, cellPos(gz) + cellSize(gz), ppu);
-            n++;
-        }
-        fillMerged(graphics, ROOM_RECTS, n, color);
-    }
 
     /** Scratch for {@link #drawRoom}'s cell rectangles (render thread only): x0, y0, x1, y1 per cell. */
     private static final int[] ROOM_RECTS = new int[4 * 64];
@@ -477,25 +338,6 @@ public final class MapPainter {
         };
     }
 
-    /** @return the mark for a room state, or null when the room has none. */
-    private static String[] markSprite(int state) {
-        return switch (state) {
-            case DungeonMapScanner.STATE_CLEARED, DungeonMapScanner.STATE_GREEN -> CHECK;
-            case DungeonMapScanner.STATE_FAILED -> CROSS;
-            case DungeonMapScanner.STATE_UNOPENED -> QUESTION;
-            default -> null;
-        };
-    }
-
-    static String markGlyph(int state) {
-        return switch (state) {
-            case DungeonMapScanner.STATE_CLEARED, DungeonMapScanner.STATE_GREEN -> "✔";
-            case DungeonMapScanner.STATE_FAILED -> "✖";
-            case DungeonMapScanner.STATE_UNOPENED -> "?";
-            default -> null;
-        };
-    }
-
     private static void drawSprite(GuiGraphicsExtractor graphics, String[] rows, float cx, float cy, float size, int color) {
         int h = rows.length;
         int w = rows[0].length();
@@ -525,11 +367,6 @@ public final class MapPainter {
 
     // ------------------------------------------------------------------------------------------- labels
 
-    /** One room's text label, in map units so the same cache serves the HUD and the full-screen map. */
-    private record Label(String[] lines, int maxWidth, int color, float boxW, float boxH, float cx, float cy,
-                         int fill) {
-    }
-
     /**
      * Whether text in {@code text} would be hard to read on a room filled with {@code fill}.
      *
@@ -550,47 +387,6 @@ public final class MapPainter {
         return (0.299 * ((argb >> 16) & 0xFF) + 0.587 * ((argb >> 8) & 0xFF) + 0.114 * (argb & 0xFF)) / 255.0;
     }
 
-    private static final List<Label> LABEL_CACHE = new ArrayList<>();
-    private static int labelTick = Integer.MIN_VALUE;
-    private static int labelGeneration = Integer.MIN_VALUE;
-    private static int labelStyle = -1;
-
-    /** Rebuilt at most once a tick (fps report 2026-09-20: the map rebuilt every room's line list, and measured every
-     *  line, on every single frame). Nothing a label depends on - map state, found secrets, room identity - can
-     *  change more often than a tick. */
-    private static List<Label> labels(int style, Font font) {
-        int tick = LiveMapFeature.tickCount();
-        int generation = LiveMapFeature.resetGeneration();
-        if (tick == labelTick && generation == labelGeneration && style == labelStyle) {
-            return LABEL_CACHE;
-        }
-        labelTick = tick;
-        labelGeneration = generation;
-        labelStyle = style;
-        LABEL_CACHE.clear();
-        for (LiveMapFeature.RoomGroup group : LiveMapFeature.groupsView()) {
-            RoomEntry entry = group.entry;
-            if (entry == null || !identityRevealed(group)) {
-                continue; // unidentified (or, on the legit map, still-unopened) rooms only get a checkmark
-            }
-            String type = roomType(group);
-            List<String> lines = labelLines(style, type, group.nameLines, entry.secrets, secretsText(group), true);
-            if (lines.isEmpty()) {
-                continue;
-            }
-            int maxWidth = 0;
-            for (String s : lines) {
-                maxWidth = Math.max(maxWidth, font.width(s));
-            }
-            float boxW = group.lShape ? 36 : cellPos(group.maxGX) + ROOM_UNITS - cellPos(group.minGX);
-            float boxH = group.lShape ? ROOM_UNITS : cellPos(group.maxGZ) + ROOM_UNITS - cellPos(group.minGZ);
-            LABEL_CACHE.add(new Label(lines.toArray(new String[0]), maxWidth,
-                    stateColor(visibleState(group)), boxW, boxH,
-                    group.labelGX * 10 + 8, group.labelGZ * 10 + 8,
-                    roomColor(group, LiveMapConfig.getInstance())));
-        }
-        return LABEL_CACHE;
-    }
 
     /**
      * The text lines the live map writes on a room for a Room Labels style (2 secrets, 3 name, 4 name + secrets);
@@ -659,38 +455,6 @@ public final class MapPainter {
         return (found < 0 ? 0 : found) + "/" + entry.secrets;
     }
 
-    /** Checkmarks / secrets / room names over the rooms. Style is
-     *  {@code LiveMapConfig.ROOM_LABEL_NAMES}: 0 Off, 1 Checkmarks, 2 Secrets, 3 Room Name, 4 Name + Secrets. */
-    static void drawLabels(GuiGraphicsExtractor graphics, Font font, int style, LiveMapConfig cfg,
-                           float ox, float oy, float ppu) {
-        if (style == 0) {
-            return;
-        }
-        // Rooms with no database entry can only ever show a mark, whatever the style is.
-        for (LiveMapFeature.RoomGroup group : LiveMapFeature.groupsView()) {
-            if (style != 1 && identityRevealed(group) && group.entry != null) {
-                continue;
-            }
-            if (!isRevealed(group)) {
-                continue;
-            }
-            drawMark(graphics, font, visibleState(group), cfg,
-                    ox + (group.labelGX * 10 + 8) * ppu, oy + (group.labelGZ * 10 + 8) * ppu, ppu);
-        }
-        if (style == 1) {
-            return;
-        }
-        for (Label label : labels(style, font)) {
-            float want = 0.4f * cfg.getFontScale() * ppu;
-            // A shadow whenever the name would otherwise blend into the room it is written on, whatever
-            // his Text Shadow setting says. The setting is about how he likes the map to look; this is
-            // about the name being readable at all, and it only overrides when it has to.
-            boolean shadow = cfg.isTextShadow() || lowContrast(label.color, label.fill);
-            drawFittedLines(graphics, font, label.lines, ox + label.cx * ppu, oy + label.cy * ppu,
-                    label.boxW * ppu, label.boxH * ppu, want, label.color, shadow);
-        }
-    }
-
     /**
      * Room-name text, one word per line, scaled down until it fits a box and centred on it - the live map's
      * own fitting rule, shared so the sim's map designer writes names exactly the way this map does.
@@ -721,29 +485,6 @@ public final class MapPainter {
         graphics.pose().popMatrix();
     }
 
-    static void drawMark(GuiGraphicsExtractor graphics, Font font, int state, LiveMapConfig cfg,
-                         float cx, float cy, float ppu) {
-        int color = stateColor(state);
-        if (cfg.isCheckmarkSprites()) {
-            String[] sprite = markSprite(state);
-            if (sprite != null) {
-                drawSprite(graphics, sprite, cx, cy, Math.max(6f, 10f * ppu),
-                        state == DungeonMapScanner.STATE_UNOPENED ? 0xFF1A1A1A : color);
-            }
-            return;
-        }
-        String glyph = markGlyph(state);
-        if (glyph == null) {
-            return;
-        }
-        float scale = Math.max(0.3f, 0.75f * cfg.getFontScale() * ppu);
-        graphics.pose().pushMatrix();
-        graphics.pose().translate(cx, cy);
-        graphics.pose().scale(scale, scale);
-        graphics.text(font, glyph, -font.width(glyph) / 2, -font.lineHeight / 2, color, cfg.isTextShadow());
-        graphics.pose().popMatrix();
-    }
-
     // ------------------------------------------------------------------------------------------- players
 
     /** His own marker's fill. Unchanged green; what keeps it off a green room is the contrast outline below. */
@@ -752,80 +493,6 @@ public final class MapPainter {
     private static final float MARKER_OUTLINE = 1f;
     /** Sub-rows per unit a triangle is filled at, so a one-unit outline stays one unit at any rotation. */
     private static final int TRI_RES = 2;
-
-    /** One player marker. {@code markerScale} is a straight multiplier on the icon size so the full-screen map can
-     *  keep its fixed 8px icons while the HUD scales them with the map.
-     *  <p>
-     *  killer560, 2026-10-07: "make an option to have people's symbols be by player head for the default ones. It
-     *  should work on your own head as well. Also don't make the green blend in so well with green room for the
-     *  arrow pointer." With Player Heads on, a player whose skin is known ({@link MapHeads}) is drawn as their face
-     *  turned so the TOP of the head points where they face (killer560, same day: "it shouldn't have that arrow for
-     *  where they face, it should just rotate their head ... with the top of their head being their facing
-     *  direction"; until then it was upright with a heading tick orbiting it); anyone else keeps the arrow.
-     *  (The skin-head option removed on 2026-09-20, "i do not want it showing the white heads for mobs", drew mobs
-     *  because the marker list took every Player entity; {@link InteractiveMapFeature#players} only takes vouched
-     *  teammates since, so no mob can get a head.) Every arrow and tick has a solid outline in the colour that
-     *  contrasts with its own fill ({@link #outlineFor}), which is what keeps the green arrow off a green room.
-     *  @return whether {@code (mouseX, mouseY)} is over this marker. */
-    static boolean drawMarker(GuiGraphicsExtractor graphics, Font font, InteractiveMapFeature.MapPlayer mp,
-                              LiveMapConfig cfg, float ox, float oy, float ppu, float markerScale,
-                              boolean classColours, boolean showName, double mouseX, double mouseY) {
-        float x = ox + (float) worldToUnits(mp.worldX()) * ppu;
-        float y = oy + (float) worldToUnits(mp.worldZ()) * ppu;
-        int size = Math.max(5, Math.round(8 * cfg.getIconScale() * markerScale));
-        DungeonClass cls = mp.dungeonClass();
-        int fillColor = mp.self() ? SELF_MARKER_COLOR : (classColours && cls != null ? cls.color() : 0xFFFFFFFF);
-
-        net.minecraft.world.entity.player.PlayerSkin skin = cfg.isPlayerHeads() ? MapHeads.skinFor(mp) : null;
-        if (skin != null) {
-            drawHead(graphics, skin, x, y, size, mp.yaw());
-        } else {
-            graphics.pose().pushMatrix();
-            graphics.pose().translate(x, y);
-            graphics.pose().rotate((float) Math.toRadians(headRotationDegrees(mp.yaw())));
-            drawArrow(graphics, Math.round(size * 0.9f), fillColor);
-            graphics.pose().popMatrix();
-        }
-
-        if (showName) {
-            float nameScale = 0.6f * cfg.getIconScale();
-            graphics.pose().pushMatrix();
-            graphics.pose().translate(x, y + size / 2f + 2);
-            graphics.pose().scale(nameScale, nameScale);
-            int nameColor = classColours && cls != null ? cls.color() : 0xFFFFFFFF;
-            graphics.text(font, mp.name(), -font.width(mp.name()) / 2, 0, nameColor, true);
-            graphics.pose().popMatrix();
-        }
-        return Math.abs(mouseX - x) <= size / 2f + 1 && Math.abs(mouseY - y) <= size / 2f + 1;
-    }
-
-    /** A {@code size}-unit face (skin face + hat layer) centred on {@code (x, y)}, framed by a one-unit black edge,
-     *  turned by exactly the arrow's rotation ({@link #headRotationDegrees}), so the top of the head is where the arrow
-     *  would point: facing north (yaw 180) the head is upright on the north-up map. No arrow or tick is drawn. */
-    private static void drawHead(GuiGraphicsExtractor graphics, net.minecraft.world.entity.player.PlayerSkin skin,
-                                 float x, float y, int size, float yaw) {
-        float half = size / 2f;
-        graphics.pose().pushMatrix();
-        try {
-            graphics.pose().translate(x, y);
-            graphics.pose().rotate((float) Math.toRadians(headRotationDegrees(yaw)));
-            graphics.pose().translate(-half, -half);
-            graphics.fill(-1, -1, size + 1, size + 1, 0xFF000000);
-            net.minecraft.resources.Identifier texture = skin.body().texturePath();
-            float scale = size / 8.0f;
-            graphics.pose().scale(scale, scale);
-            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, texture, 0, 0, 8f, 8f, 8, 8, 64, 64);
-            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, texture, 0, 0, 40f, 8f, 8, 8, 64, 64);
-        } finally {
-            graphics.pose().popMatrix();
-        }
-    }
-
-    /** The turn, in degrees clockwise on screen, that points a marker's local -y (the arrow's tip, the head's top)
-     *  where a player with this Minecraft yaw faces on the north-up map: yaw 180 (north) is 0, yaw 270 (east) 90. */
-    static float headRotationDegrees(float yaw) {
-        return 180f + yaw;
-    }
 
     /** Map marker pointing towards local -y (rotated to the player's heading by the caller).
      *  <p>
@@ -891,63 +558,4 @@ public final class MapPainter {
 
     // ------------------------------------------------------------------------------------------- etherwarp path
 
-    /** killer560, 2026-09-27: "if i click on a room to etherwarp to it ... it shows a small circle at each
-     *  etherwarp spot that it is going to take to get to the next room, and a line from one spot to another.
-     *  Make it a toggleable section." A small circle at each queued hop
-     *  ({@link com.epic60869.sky2m.sim.livemap.autoclear.ClearExecutor#plannedHopPositions()}), in order, with a line
-     *  joining consecutive hops - same orange {@link com.epic60869.sky2m.sim.livemap.autoclear.ClearNode#toEther}
-     *  already colours the in-world hop markers, just drawn flat on the map instead. Gated on
-     *  {@link LiveMapConfig#isShowEtherwarpPath()}, so it costs nothing when the section is off. */
-    static void drawEtherwarpPath(GuiGraphicsExtractor graphics, LiveMapConfig cfg, float ox, float oy, float ppu) {
-        if (!cfg.isShowEtherwarpPath()) {
-            return;
-        }
-        List<Vec3> hops = List.of(); // no auto-clear in Sky2M
-        if (hops.isEmpty()) {
-            return;
-        }
-        final int lineColor = 0xB4FFA500;
-        final int dotColor = 0xFFFFA500;
-        final int dotOutline = 0xFF000000;
-        float prevX = 0f;
-        float prevY = 0f;
-        boolean hasPrev = false;
-        for (Vec3 hop : hops) {
-            float x = ox + (float) worldToUnits(hop.x) * ppu;
-            float y = oy + (float) worldToUnits(hop.z) * ppu;
-            if (hasPrev) {
-                drawLineSegment(graphics, prevX, prevY, x, y, lineColor);
-            }
-            fillCircle(graphics, Math.round(x), Math.round(y), 3, dotColor, dotOutline);
-            prevX = x;
-            prevY = y;
-            hasPrev = true;
-        }
-    }
-
-    /** A small filled circle (scanline fill via {@code fill()} rects - {@code GuiGraphicsExtractor} has no
-     *  round-shape primitive) with a 1px darker ring so it reads against any room colour underneath it. */
-    private static void fillCircle(GuiGraphicsExtractor graphics, int cx, int cy, int radius, int argb, int outlineArgb) {
-        for (int dy = -radius - 1; dy <= radius + 1; dy++) {
-            int outerDx = (int) Math.round(Math.sqrt(Math.max(0, (radius + 1) * (radius + 1) - dy * dy)));
-            graphics.fill(cx - outerDx, cy + dy, cx + outerDx + 1, cy + dy + 1, outlineArgb);
-        }
-        for (int dy = -radius; dy <= radius; dy++) {
-            int dx = (int) Math.round(Math.sqrt(Math.max(0, radius * radius - dy * dy)));
-            graphics.fill(cx - dx, cy + dy, cx + dx + 1, cy + dy + 1, argb);
-        }
-    }
-
-    /** A 1px line between two arbitrary screen points, stepped in ~2px dabs (no arbitrary-angle line primitive
-     *  on {@code GuiGraphicsExtractor} either - {@code horizontalLine}/{@code verticalLine} are axis-only). */
-    private static void drawLineSegment(GuiGraphicsExtractor graphics, float x1, float y1, float x2, float y2, int argb) {
-        double dist = Math.hypot(x2 - x1, y2 - y1);
-        int steps = Math.max(1, (int) Math.ceil(dist / 2.0));
-        for (int i = 0; i <= steps; i++) {
-            float t = i / (float) steps;
-            int px = Math.round(x1 + (x2 - x1) * t);
-            int py = Math.round(y1 + (y2 - y1) * t);
-            graphics.fill(px, py, px + 1, py + 1, argb);
-        }
-    }
 }

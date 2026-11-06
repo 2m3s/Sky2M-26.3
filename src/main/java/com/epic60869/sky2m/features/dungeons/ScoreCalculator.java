@@ -288,6 +288,8 @@ public final class ScoreCalculator {
     }
 
     private static boolean isPaul() {
+        // The sim has no mayor: /simscore paul decides, the same switch the sim's own score reads.
+        if (simActive()) return com.epic60869.sky2m.sim.roomsim.SimScore.isPaulEzpz();
         FeatureConfigs.Score config = config();
         if (config != null && config.forcePaul) return true;
         try {
@@ -307,8 +309,7 @@ public final class ScoreCalculator {
         int limit = TIME_LIMIT.getOrDefault(floor, 100);
         int speed = secondsElapsed <= limit ? 100 : Math.max(0, (int) (100 - speedDeduction((secondsElapsed - limit) * 100f / limit)));
 
-        boolean inBoss = DungeonManager.isInBoss();
-        int effectiveRooms = completedRooms + (bloodDone ? 0 : 1) + (inBoss ? 0 : 1);
+        // Dungeon Sim: its own boss flag, and its death penalty (a Spirit pet's first death is -1, any other -2).
         double required = REQUIRED_SECRETS.getOrDefault(floor, 1.0);
         int secretsScore = (int) Math.max(0, Math.min(40, Math.floor(secretPercentage / required / 100.0 * 40.0)));
         double roomRatio = effectiveRooms / (double) totalRooms();

@@ -93,6 +93,12 @@ public final class SimRoomIndex {
         ROOMS.add(new Placed(room.name, clay[0], clay[1], dbRotation, cellArray, gridX, gridZ, rotation));
     }
 
+    /** Party guest: the host's placed rooms (the guest builds nothing itself, but its waypoints and routes read these). */
+    public static void replaceAll(List<Placed> rooms) {
+        ROOMS.clear();
+        ROOMS.addAll(rooms);
+    }
+
     /** Every placed room on the floor, in paste order. Read by {@link SimRoomPuzzles} to arm the puzzles. */
     public static List<Placed> placed() {
         return List.copyOf(ROOMS);

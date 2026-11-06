@@ -556,6 +556,27 @@ public class Room implements Tickable, Renderable {
 	}
 
 	/**
+	 * The sim names puzzle rooms as the game shows them ("Water Board"), the room data by their internal names
+	 * ("water-puzzle"). Only the sim's side is mapped: the data's "ice-path" is Ice Fill, the sim's "Ice Path" is the
+	 * silverfish room ("ice-silverfish-room").
+	 */
+	private static String simPuzzleKey(String key) {
+		return switch (key) {
+			case "waterboard" -> "waterpuzzle";
+			case "boulder" -> "boxesroom";
+			case "creeperbeams" -> "creeperroom";
+			case "teleportmaze" -> "teleportpadroom";
+			case "threeweirdos" -> "threechests";
+			case "quiz" -> "triviaroom";
+			case "higherblaze" -> "blazeroomhigh";
+			case "lowerblaze" -> "blazeroomlow";
+			case "icefill" -> "icepath";
+			case "icepath" -> "icesilverfishroom";
+			default -> key;
+		};
+	}
+
+	/**
 	 * Sky2M: matches this room by name for the Dungeon Sim, which knows what room it placed. Instead of narrowing the room
 	 * down by the blocks around the player, the sim's name picks the room data and the direction is the one whose blocks
 	 * agree most with the world. Waypoints load exactly as for a normal match.
@@ -574,7 +595,7 @@ public class Room implements Tickable, Renderable {
 		long now = System.currentTimeMillis();
 		if (now < simForceRetryAt) return false;
 		simForceRetryAt = now + 2000;
-		String wanted = simKey(simName);
+		String wanted = simPuzzleKey(simKey(simName));
 		String roomName = null;
 		for (String candidate : data.keySet()) {
 			if (simKey(candidate).equals(wanted)) {

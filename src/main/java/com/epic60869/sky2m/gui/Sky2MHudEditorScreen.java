@@ -140,7 +140,7 @@ public final class Sky2MHudEditorScreen extends Screen {
                 (x, y) -> { config.misc.pets.display.x = Math.max(0, x); config.misc.pets.display.y = Math.max(0, y); },
                 Sky2MNopoFeatures::petHudWidth, Sky2MNopoFeatures::petHudHeight, Sky2MNopoFeatures::renderPetHudPreview, "pet"));
         }
-        if (config != null && (config.dungeons.map.enabled || com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.inSim())) {
+        if (config != null && config.dungeons.map.enabled) {
             var map = config.dungeons.map;
             elements.add(new EditableHud("Dungeon Map", () -> map.x, () -> map.y,
                 (x, y) -> { map.x = Math.max(0, x); map.y = Math.max(0, y); },

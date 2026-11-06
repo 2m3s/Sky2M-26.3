@@ -42,7 +42,9 @@ public final class AutoRequeue {
             String text = message.text().trim();
             if (text.equals("Starting in 1 second.")) {
                 memberLeft = false;
-            } else if (text.equals("> EXTRA STATS <") && Sky2MLocation.inDungeon()) {
+            } else if (text.equals("> EXTRA STATS <") && Sky2MLocation.inDungeon()
+                    // The Dungeon Sim has no /instancerequeue; it rebuilds floors from its own menu.
+                    && !com.epic60869.sky2m.sim.roomsim.SimState.isActive()) {
                 if (skipNext) {
                     skipNext = false;
                     say("Skipped this requeue.");

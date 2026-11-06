@@ -60,7 +60,11 @@ public final class DungeonMapStyles {
         return map != null && map.predictRooms;
     }
 
-    /** The Dungeon Sim always draws the map; a run draws it when Dungeons > Dungeon Map is on. */
+    /**
+     * Whether this is the Dungeon Sim, which has no map item: every style, Skyblocker's too, then draws from the sim's
+     * published floor ({@link MapView}). Whether the map shows at all is the same rule as a run (Dungeons > Dungeon Map
+     * on, run started, not in the boss room), see {@code DungeonMap}.
+     */
     public static boolean inSim() {
         return SimState.isActive();
     }

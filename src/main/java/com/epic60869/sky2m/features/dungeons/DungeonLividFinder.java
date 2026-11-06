@@ -150,7 +150,9 @@ public final class DungeonLividFinder {
     }
 
     private static void onBlockChange(BlockPos pos, BlockState old, BlockState updated) {
-        if (!inLividBossRoom() || !pos.equals(BLOCK_LOCATION)) return;
+        // The Dungeon Sim pastes Livid's arena far from Hypixel's coordinates, so its wool cue sits elsewhere.
+        if (!inLividBossRoom() || !(pos.equals(BLOCK_LOCATION) || (com.epic60869.sky2m.sim.roomsim.SimState.isActive()
+                && pos.equals(com.epic60869.sky2m.sim.roomsim.SimLivid.woolCue())))) return;
         ChatFormatting newColor = woolColor(updated.getBlock());
         if (newColor == null) return;
         color = newColor;

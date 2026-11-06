@@ -415,7 +415,22 @@ public final class SimWaterPuzzle {
             Minecraft client = Minecraft.getInstance();
             // level.isClientSide(): this event also fires server-side; without the check a real click would be
             // evaluated twice, same double-fire guard SimDoors uses for its own UseBlockCallback registration.
-            if (!level.isClientSide() || !SimState.canAct(client) || player != client.player || !isArmed()) {
+            if (!level.isClientSide()) {
+                // A party guest's click reaches only the host's server: the same lever, answered there.
+                if (isArmed() && com.epic60869.sky2m.sim.roomsim.SimParty.guestOnServer(player)
+                        && player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                    LeverBlock guestLever = BLOCK_INDEX.get(hitResult.getBlockPos());
+                    if (guestLever != null) {
+                        com.epic60869.sky2m.sim.roomsim.SimParty.forGuest(sp, () -> {
+                            if (isArmed()) {
+                                onLeverClicked(client, guestLever);
+                            }
+                        });
+                    }
+                }
+                return InteractionResult.PASS;
+            }
+            if (!SimState.canAct(client) || player != client.player || !isArmed()) {
                 return InteractionResult.PASS;
             }
             LeverBlock lever = BLOCK_INDEX.get(hitResult.getBlockPos());

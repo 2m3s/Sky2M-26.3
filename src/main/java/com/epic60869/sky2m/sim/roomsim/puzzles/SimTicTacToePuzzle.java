@@ -104,7 +104,25 @@ public final class SimTicTacToePuzzle {
             Minecraft client = Minecraft.getInstance();
             // level.isClientSide(): this event also fires server-side; without this check a real click would
             // try to play twice - the same double-fire guard SimDoors uses for its own UseBlockCallback.
-            if (!level.isClientSide() || !SimState.canAct(client) || player != client.player) {
+            if (!level.isClientSide()) {
+                // A party guest's click reaches only the host's server: played there, on the host's board.
+                if (com.epic60869.sky2m.sim.roomsim.SimParty.guestOnServer(player)
+                        && player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                    Integer guestIndex = CELL_INDEX.get(hitResult.getBlockPos());
+                    if (guestIndex != null && built && !complete && board[guestIndex] == EMPTY) {
+                        com.epic60869.sky2m.sim.roomsim.SimParty.forGuest(sp, () -> {
+                            if (built && !complete && board[guestIndex] == EMPTY) {
+                                onPlayerClick(client, guestIndex);
+                            }
+                        });
+                        return level.getBlockState(hitResult.getBlockPos())
+                                .getBlock() instanceof net.minecraft.world.level.block.ButtonBlock
+                                ? InteractionResult.PASS : InteractionResult.SUCCESS;
+                    }
+                }
+                return InteractionResult.PASS;
+            }
+            if (!SimState.canAct(client) || player != client.player) {
                 return InteractionResult.PASS;
             }
             Integer index = CELL_INDEX.get(hitResult.getBlockPos());

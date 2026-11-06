@@ -672,6 +672,15 @@ public class DungeonManager {
 		boolean inDungeon = Utils.isInDungeons();
 		// Load the room data on the way in (Dungeon Hub) or, at the latest, in the dungeon itself.
 		if (!loadStarted && (inDungeon || com.epic60869.sky2m.features.core.Sky2MLocation.areaIs("Dungeon Hub"))) ensureRoomsLoading();
+		// Sky2M: a new Dungeon Sim floor is a new run in the same world, with no rejoin to reset the last one: without
+		// this the previous floor's boss (or its finished run) kept every room feature off for the rest of the session.
+		if (com.epic60869.sky2m.sim.roomsim.SimState.isActive()) {
+			int generation = com.epic60869.sky2m.sim.livemap.LiveMapFeature.resetGeneration();
+			if (generation != simFloorGeneration) {
+				simFloorGeneration = generation;
+				reset();
+			}
+		}
 		if (!inDungeon || isInBoss() || runEnded) {
 			return;
 		}
@@ -749,6 +758,8 @@ public class DungeonManager {
 	}
 
 	private static int simGeneration = -1;
+	/** The sim floor the boss/run-ended state belongs to; unlike {@link #simGeneration}, {@link #reset()} keeps it. */
+	private static int simFloorGeneration = Integer.MIN_VALUE;
 	private static boolean simLoaded;
 	private static String simDebugKey = "";
 
@@ -809,6 +820,50 @@ public class DungeonManager {
 		}
 		currentRoom.tick(CLIENT);
 		simDebug(placed.name(), room);
+		if (++simCheckmarkTicks >= 10) {
+			simCheckmarkTicks = 0;
+			updateSimCheckmarks();
+		}
+	}
+
+	private static int simCheckmarkTicks;
+
+	/**
+	 * Sky2M: {@link #updateAllRoomCheckmarks()} for the Dungeon Sim. Hypixel's checkmarks are read off the map item; the
+	 * sim says itself which rooms are cleared, all secrets found (green) or failed ({@code SimRoomState}), so every
+	 * known room gets the same clear state, secret marking and Room Clear Alert it gets on Hypixel.
+	 */
+	private static void updateSimCheckmarks() {
+		for (com.epic60869.sky2m.sim.roomsim.SimRoomIndex.Placed placed : com.epic60869.sky2m.sim.roomsim.SimRoomIndex.placed()) {
+			if (placed.cells().length == 0) continue;
+			int c = placed.cells()[0];
+			Room room = rooms.get(DungeonMapUtils.getPhysicalRoomPos(com.epic60869.sky2m.sim.livemap.LiveMapFeature.START_X + c % 11 * 16, com.epic60869.sky2m.sim.livemap.LiveMapFeature.START_Z + c / 11 * 16));
+			if (room == null || !room.isMatched() || room.clearState == Room.ClearState.GREEN_CHECKED) continue;
+			int state = com.epic60869.sky2m.sim.roomsim.SimRoomState.stateFor(placed.name());
+			switch (state) {
+				case 0 -> { // the green checkmark, DungeonMapScanner.STATE_GREEN
+					com.epic60869.sky2m.features.dungeons.RoomClearAlert.onCheckmark(room, currentRoom, room.clearState, true);
+					room.clearState = Room.ClearState.GREEN_CHECKED;
+					room.secretCountOutdated = false;
+					room.secretsFound = room.getMaxSecretCount();
+					room.markAllSecrets(true);
+					DungeonEvents.SECRET_COUNT_UPDATED.invoker().onSecretCountUpdate(room, true);
+				}
+				case 1 -> { // the white checkmark, STATE_CLEARED
+					if (room.clearState == Room.ClearState.WHITE_CHECKED) continue;
+					com.epic60869.sky2m.features.dungeons.RoomClearAlert.onCheckmark(room, currentRoom, room.clearState, false);
+					room.clearState = Room.ClearState.WHITE_CHECKED;
+					room.secretCountOutdated = true;
+				}
+				case 3 -> room.clearState = Room.ClearState.FAILED; // STATE_FAILED
+				default -> {
+					if (room.clearState != Room.ClearState.UNCLEARED) {
+						room.clearState = Room.ClearState.UNCLEARED;
+						com.epic60869.sky2m.features.dungeons.RoomClearAlert.onUncleared(room);
+					}
+				}
+			}
+		}
 	}
 
 	/** Entrance, blood and fairy come from the room database when it is loaded; puzzle, trap and miniboss from which shape of room data holds the name. */

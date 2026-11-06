@@ -59,9 +59,10 @@ public class DungeonMap {
 
 	private static void extract(GuiGraphicsExtractor graphics) {
 		DungeonsConfig.DungeonMap dungeonMap = SkyblockerConfigManager.get().dungeons.dungeonMap;
-		// Sky2M: Dungeons > Dungeon Map > Map Style picks the look (Skyblocker, Stella, Devonian); the Dungeon Sim always draws it.
-		if (com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.inSim() || (shouldProcess() && dungeonMap.enableMap)) {
+		// Sky2M: Dungeons > Dungeon Map > Map Style picks the look (Skyblocker, Stella, Devonian). The Dungeon Sim follows the
+		// same rules as a run: shown only while Dungeon Map is on, from the start of the run, and hidden in the boss room.
 		if (replaced.getAsBoolean()) return;
+		if (shouldProcess() && dungeonMap.enableMap) {
 			com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.render(graphics, dungeonMap.mapX, dungeonMap.mapY, dungeonMap.mapScaling);
 		}
 	}

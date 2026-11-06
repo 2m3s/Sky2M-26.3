@@ -6,9 +6,6 @@ package com.epic60869.sky2m.sim.livemap;
 
 import com.epic60869.sky2m.sim.util.FeatureGuard;
 import com.epic60869.sky2m.sim.util.SimChunks;
-import com.epic60869.sky2m.sim.hud.HudSeen;
-import com.epic60869.sky2m.sim.hud.HudVisibility;
-import com.epic60869.sky2m.sim.hud.HudElement;
 import com.epic60869.sky2m.sim.puzzlesolvers.BeamsSolverConfig;
 import com.epic60869.sky2m.sim.puzzlesolvers.BlazeSolverConfig;
 import com.epic60869.sky2m.sim.puzzlesolvers.BoulderSolverConfig;
@@ -22,7 +19,6 @@ import com.epic60869.sky2m.sim.secrets.DungeonState;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -205,6 +201,22 @@ public final class LiveMapFeature {
         });
     }
 
+    /** The arguments of the last {@link #publishSimFloor}, which a sim party host sends to its guests. */
+    public record PublishedFloor(int[] roomCells, int[] doorCells, String[] names, int[][] clay, boolean fitToRooms) {
+    }
+
+    private static volatile PublishedFloor publishedFloor;
+
+    /** The last floor published on this client, or null. Any thread (the sim party reads it on the server thread). */
+    public static PublishedFloor publishedFloor() {
+        return publishedFloor;
+    }
+
+    /** Whether a sim floor is on the grid now (a world change or new dungeon clears it). */
+    public static boolean hasSimFloor() {
+        return simRoomExtent != null;
+    }
+
     /** A published sim floor's room-slot bounding box {@code {minCol, minRow, maxCol, maxRow}}, or null. */
     private static int[] simRoomExtent;
 
@@ -237,7 +249,7 @@ public final class LiveMapFeature {
      *  draws when Live Map itself is enabled. */
     private static String scanConsumers() {
         StringBuilder sb = new StringBuilder();
-        if (LiveMapConfig.getInstance().isEnabled()) sb.append("LiveMap,");
+        if (LiveMapConfig.getInstance().isEnabled()) sb.append("DungeonMap,");
         if (com.epic60869.sky2m.sim.witherdoors.WitherDoorsConfig.getInstance().isEnabled()
                 && com.epic60869.sky2m.sim.witherdoors.WitherDoorsConfig.getInstance().isFairyDoor()) sb.append("FairyDoor,");
         if (BoulderSolverConfig.getInstance().isEnabled()) sb.append("Boulder,");
@@ -250,10 +262,6 @@ public final class LiveMapFeature {
         if (WaterSolverConfig.getInstance().isEnabled()) sb.append("Water,");
         if (BeamsSolverConfig.getInstance().isEnabled()) sb.append("Beams,");
         if (BlazeSolverConfig.getInstance().isEnabled()) sb.append("Blaze,");
-        // Teleport Pathing folded into Interactive Map itself (killer560: "the entire portion of interactive
-        // map is the teleport pathing") - no separate flag left to report here.
-        if (LiveMapConfig.getInstance().isInteractiveMapEnabled()) sb.append("InteractiveMap,");
-        if (LiveMapConfig.getInstance().isBloodRushEnabled()) sb.append("BloodRush,");
         // The insta-clear recorder reads room states off the dungeon map, which is only sampled while scanning.
         return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
     }
@@ -333,6 +341,8 @@ public final class LiveMapFeature {
     public static void publishSimFloor(int[] roomCells, int[] doorCells, String[] names, int[][] clay,
                                        boolean fitToRooms) {
         resetGrid("Sim floor built");
+        publishedFloor = new PublishedFloor(roomCells.clone(), doorCells.clone(), names.clone(),
+                clay == null ? new int[0][] : clay.clone(), fitToRooms);
         for (int idx = 0; idx < GRID * GRID; idx++) {
             int room = idx < roomCells.length ? roomCells[idx] : -1;
             if (room >= 0 && room < names.length) {
@@ -1043,243 +1053,5 @@ public final class LiveMapFeature {
     static int[] clayAndRotation(RoomGroup group) {
         int r = rotationSourceIdx(group);
         return group.entry == null || r < 0 ? null : new int[]{clayXGrid[r], clayZGrid[r], rotationGrid[r]};
-    }
-
-    public static final class LiveMapHudElement implements HudElement {
-        @Override
-        public String id() {
-            return "live_map";
-        }
-
-        @Override
-        public String displayName() {
-            return "Dungeon Map";
-        }
-
-        @Override
-        public int defaultX() {
-            return 10;
-        }
-
-        @Override
-        public int defaultY() {
-            return 500;
-        }
-
-        /**
-         * The map's outline: a fixed square, plus a 2px margin each side.
-         *
-         * <p>It is NOT an 11x11 grid of equal cells - rooms are 16 units and gaps 4, exactly like the real
-         * dungeon map. Since 2026-10-04 it is also the SAME size for the whole run and on every floor:
-         * killer560, "It should always have the same outline ... It shouldn't do this weird fill in and shrink
-         * in real dungeons." It is {@link MapPainter#MAP_UNITS} (F7's full 6x6) at the Room Size setting, so
-         * Room Size and the HUD editor's scale set the outline, and the floor only sets how big the grid is
-         * drawn inside it ({@link MapPainter#floorFit}). Before this it was cut to the rooms revealed so far,
-         * which is why the box changed shape as the floor was discovered.
-         *
-         * <p>Both {@link #width()}/{@link #height()} and the background {@link #renderMap} fills go through
-         * here, which is the rule that matters: {@code HudElementRegistry} defines the element's on-screen size
-         * as {@code width() * scale}, and a panel measured one way and drawn another is the bug that made the
-         * Storage Overlay unclampable (see docs/LESSONS.md).
-         */
-        private static int mapPx() {
-            return Math.round(MapPainter.MAP_UNITS * LiveMapConfig.getInstance().getRoomPx() / 16f) + 4;
-        }
-
-        @Override
-        public int width() {
-            return mapPx();
-        }
-
-        @Override
-        public int height() {
-            // killer560, 2026-09-20: "remove room name below map" - the HUD is exactly the map, plus the Extra Info
-            // section under it when that is on (2026-10-07), measured from the same lines it draws.
-            return mapPx() + extraInfoHeight(extraInfoLines());
-        }
-
-        /** Gap between the map and the Extra Info section, the room at its sides, and its text's size against the map. */
-        private static final int EXTRA_GAP = 2;
-        private static final int EXTRA_SIDE = 2;
-        /**
-         * Extra Info's text is drawn at {@code mapPx() / EXTRA_TEXT_MAP} of the font's size, at most 1. At the default
-         * Room Size the map is 120 units, so the text is HALF the font's size: exactly one screen pixel per font pixel
-         * at GUI scale 2 (two at GUI 4), so it stays sharp. It grows and shrinks with Room Size and the HUD scale like
-         * the map itself. History: full size until 2026-10-07 ("Crypts 0/5  Deaths 0" filled the map's whole width),
-         * then 0.75 in four rows ("The text under the map should also be smaller and fit better"), then half size in two
-         * rows the same evening ("Try to make it smaller and only take up 2 rows").
-         */
-        private static final float EXTRA_TEXT_MAP = 240f;
-
-        /** The Extra Info text size, in map units per font unit. */
-        static float extraTextScale() {
-            return Math.min(1f, mapPx() / EXTRA_TEXT_MAP);
-        }
-
-        /** One Extra Info row: a text line at {@link #extraTextScale()} and one unit between rows, rounded up. */
-        static int extraRow() {
-            return (int) Math.ceil(9 * extraTextScale()) + 1;
-        }
-
-        /**
-         * The scale every Extra Info row is drawn at: {@link #extraTextScale()}, or smaller when the widest row would
-         * not fit the map's width - one scale for all the rows, so the two rows always read as one block of text.
-         */
-        private static float extraDrawScale(List<String> lines) {
-            net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
-            float s = extraTextScale();
-            int room = mapPx() - 2 * EXTRA_SIDE;
-            for (String line : lines) {
-                int tw = font.width(line);
-                if (tw * s > room) {
-                    s = room / (float) tw;
-                }
-            }
-            return s;
-        }
-
-        /** Extra Info's lines, or none when the Map Extras toggle is off. One list for the drawing and the box. */
-        private static List<String> extraInfoLines() {
-            return List.of();
-        }
-
-        private static int extraInfoHeight(List<String> lines) {
-            return lines.isEmpty() ? 0 : EXTRA_GAP + lines.size() * extraRow() + 1;
-        }
-
-        /**
-         * Extra Info under the map (killer560, 2026-10-07: "I have the extra info overlay on for the map but the
-         * info isn't coming up below the map" - the Map Extras toggle was a saved placeholder that drew nothing).
-         * Score, secrets for S+, crypts, deaths and the bonus kills, from the Score Calculator's live tracking, which
-         * runs for this toggle whether or not Score Calculator itself is on. On the map's own background, as wide as
-         * the map; a line too long for a small Room Size is scaled down to fit rather than spilling past the box.
-         */
-        private static void renderExtraInfo(GuiGraphicsExtractor graphics, int x, int y, LiveMapConfig cfg,
-                                            List<String> lines) {
-            if (lines.isEmpty()) {
-                return;
-            }
-            int w = mapPx();
-            int h = extraInfoHeight(lines);
-            graphics.fill(x, y, x + w, y + h, cfg.getMapBackground());
-            net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
-            float s = extraDrawScale(lines);
-            int row = extraRow();
-            int lineY = y + EXTRA_GAP + 1;
-            for (String line : lines) {
-                // Each row is its own band, row units tall: a line's text never reaches the next one's.
-                graphics.pose().pushMatrix();
-                graphics.pose().translate(x + EXTRA_SIDE, lineY);
-                graphics.pose().scale(s, s);
-                graphics.text(font, line, 0, 0, 0xFFFFFFFF, cfg.isTextShadow());
-                graphics.pose().popMatrix();
-                lineY += row;
-            }
-        }
-
-        @Override
-        public boolean isEnabledInSettings() {
-            // Setting only - in a dungeon, out of the boss and off p3sim are all gates render() applies, and
-            // the draw stamp there is what tells the HUD editor whether the map was actually up.
-            return LiveMapConfig.getInstance().isEnabled();
-        }
-
-        @Override
-        public void render(GuiGraphicsExtractor graphics, int x, int y) {
-            LiveMapConfig cfg = LiveMapConfig.getInstance();
-            // Chat never hides the map any more (killer560: "dont make it hide the gui if i open chat") - it used to
-            // stay only for the interactive map's "Open From HUD Click"; that click path still works the same.
-            // killer560: "if you detect I am on the p3sim then make it hide the dungeon map just like it does in
-            // boss rooms of dungeons" - isInBoss() is the one boss flag this whole package already gates room
-            // matching/solvers on; p3sim now shares that same gate (via MapPainter.onP3Sim(), not a second IP
-            // check) instead of a parallel hide rule. Interactive Map / teleport pathing / Auto Blood Rush are
-            // untouched - those still work on p3sim off the world scan, same as before this change.
-            if (!cfg.isEnabled() || HudVisibility.hidesHud() || !DungeonState.isInDungeon() || isInBoss()
-                    || MapPainter.onP3Sim()) {
-                return;
-            }
-            Minecraft client = Minecraft.getInstance();
-            ensureGroups();
-
-            // HUD peek: while the peek key is held, draw enlarged, shifted so it stays on screen.
-            float peek = InteractiveMapFeature.isPeeking() ? cfg.getPeekScale() : 1f;
-            boolean peeking = peek > 1f;
-            if (peeking) {
-                int[] pos = com.epic60869.sky2m.sim.hud.HudElementRegistry.resolvePosition(this);
-                float hudScale = com.epic60869.sky2m.sim.hud.HudElementRegistry.resolveScale(this);
-                float drawnW = width() * hudScale * peek;
-                float drawnH = height() * hudScale * peek;
-                float shiftX = Math.min(0, graphics.guiWidth() - (pos[0] + drawnW)) - Math.min(0, pos[0]);
-                float shiftY = Math.min(0, graphics.guiHeight() - (pos[1] + drawnH)) - Math.min(0, pos[1]);
-                graphics.pose().pushMatrix();
-                graphics.pose().translate(shiftX / hudScale, shiftY / hudScale);
-                graphics.pose().scale(peek, peek);
-            }
-            try {
-                HudSeen.markDrawn(id());
-                renderMap(graphics, x, y, cfg, client);
-                renderExtraInfo(graphics, x, y + mapPx(), cfg, extraInfoLines());
-            } finally {
-                if (peeking) {
-                    graphics.pose().popMatrix();
-                }
-            }
-        }
-
-        /** killer560, 2026-09-17: "the live map hud does not look like the real dungeon map". It used to paint all
-         *  121 cells as same-size grey squares with a 1px inset on every side, so rooms, corridors and gaps were
-         *  indistinguishable and nothing ever touched. It now shares the interactive map's painter
-         *  ({@link MapPainter}): 16-unit rooms, flush 4-unit connectors, real per-type colours and sprite
-         *  checkmarks - the same geometry and palette as the held map itself. */
-        private void renderMap(GuiGraphicsExtractor graphics, int x, int y, LiveMapConfig cfg, Minecraft client) {
-            float ppu = cfg.getRoomPx() / 16f;
-            int sizeW = mapPx();
-            int sizeH = mapPx();
-            graphics.fill(x, y, x + sizeW, y + sizeH, cfg.getMapBackground());
-            int border = cfg.getMapBorderColor();
-            if ((border >>> 24) != 0) {
-                graphics.outline(x, y, sizeW, sizeH, border);
-            }
-            // The floor's whole grid, scaled to fill the fixed outline and centred in it - chosen from the
-            // floor being played, never from what has been revealed, so nothing moves or shrinks during a run.
-            // Applied by moving the origin and multiplying the pixels-per-unit, so every drawing call below is
-            // untouched: doors, rooms, labels, teammates and the player arrow all scale together through ppu.
-            DungeonLayout fitLayout = DungeonLayout.current();
-            float[] fit = MapPainter.floorFit(groups);
-            ppu *= fit[0];
-            float ox = x + 2 + fit[1] * ppu;
-            float oy = y + 2 + fit[2] * ppu;
-
-            // Per-tick snapshot, never per frame: capture() walks all 121 cells and block-checks every wither/blood
-            // door (fps report 2026-09-20).
-            DungeonLayout layout = fitLayout;
-            MapPainter.drawDoors(graphics, layout, cfg, ox, oy, ppu, -1);
-
-            // killer560, 2026-09-20: "remove the current-room colour changer" - every revealed room just draws its
-            // real colour now, current room or not.
-            // All rooms as ONE render-state element (hud/GuiRects): rooms never overlap one another, and each separate
-            // fill was placement-tested against everything already on the HUD (95-fps-bench JFR, 2026-10-07).
-            com.epic60869.sky2m.sim.hud.GuiRects roomRects = com.epic60869.sky2m.sim.hud.GuiRects.begin(graphics);
-            for (int gid = 0; gid < groups.size(); gid++) {
-                RoomGroup group = groups.get(gid);
-                if (!MapPainter.isRevealed(group)) {
-                    continue; // legit build: the map item has not shown this room yet
-                }
-                MapPainter.drawRoom(roomRects, group, gid, MapPainter.roomColor(group, cfg), ox, oy, ppu);
-            }
-            roomRects.submit();
-
-            MapPainter.drawLabels(graphics, client.font, cfg.getRoomLabels(), cfg, ox, oy, ppu);
-
-            // Real arrow/head markers at the exact world position instead of a whole cell filled yellow. The list is
-            // cached per tick - it used to run a fresh level.players() party scan every frame.
-            for (InteractiveMapFeature.MapPlayer mp : InteractiveMapFeature.playersCached(client)) {
-                if (!mp.self() && !cfg.isShowTeammates()) {
-                    continue;
-                }
-                MapPainter.drawMarker(graphics, client.font, mp, cfg, ox, oy, ppu, ppu,
-                        cfg.isClassRecolorTeammates(), false, -1, -1);
-            }
-        }
     }
 }

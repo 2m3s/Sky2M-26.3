@@ -65,7 +65,9 @@ public final class TeleportMazeSolverConfig {
     }
 
     public boolean isEnabled() {
-        return com.epic60869.sky2m.sim.roomsim.SimState.isActive(); // Sky2M: only inside the Dungeon Sim
+        // Sky2M: only inside the Dungeon Sim, and only while Dungeons > Puzzle Solvers' own solver for this puzzle is
+        // off - with it on, the mod's solver (which now runs in the sim too) draws it and this one would draw it twice.
+        return com.epic60869.sky2m.sim.roomsim.SimState.isActive() && !com.epic60869.sky2m.sim.puzzlesolvers.PuzzleCoords.modSolverOn(p -> p.teleportMaze);
     }
 
     public void setEnabled(boolean enabled) {

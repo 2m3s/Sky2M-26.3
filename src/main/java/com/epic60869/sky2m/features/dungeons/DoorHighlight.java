@@ -142,11 +142,13 @@ public final class DoorHighlight {
             DOORS.clear();
             MapItemSavedData map = mc.player == null ? null
                 : MapItem.getSavedData(DungeonMap.getMapIdComponent(mc.player.getInventory().getNonEquipmentItems().get(8)), mc.level);
+            // The Dungeon Sim may build its floor higher or lower than Hypixel's (0 on Hypixel).
+            int y = 69 + DungeonMapUtils.yShift();
             for (int i = 0; i < 6; i++) {
                 for (int j = 0; j < 6; j++) {
                     int roomX = -185 + 32 * i, roomZ = -185 + 32 * j;
-                    checkDoor(mc, map, new BlockPos(roomX + 16, 69, roomZ), true);
-                    checkDoor(mc, map, new BlockPos(roomX, 69, roomZ + 16), false);
+                    checkDoor(mc, map, new BlockPos(roomX + 16, y, roomZ), true);
+                    checkDoor(mc, map, new BlockPos(roomX, y, roomZ + 16), false);
                 }
             }
         }
@@ -212,6 +214,8 @@ public final class DoorHighlight {
 
     /** Whether Hypixel's dungeon map draws the door, which it does once a room next to it has been opened. */
     private static boolean onMap(MapItemSavedData map, Door door) {
+        // The Dungeon Sim has no map item and shows its whole floor on the map: every door it built is on it.
+        if (com.epic60869.sky2m.sim.roomsim.SimState.isActive()) return true;
         Vector2ic mapEntrance = DungeonManager.getMapEntrancePos();
         Vector2ic physicalEntrance = DungeonManager.getPhysicalEntrancePos();
         int size = DungeonManager.getMapRoomSize();

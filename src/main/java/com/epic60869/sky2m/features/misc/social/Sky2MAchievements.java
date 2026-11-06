@@ -193,7 +193,8 @@ public final class Sky2MAchievements {
 
     private static void onChat(String text) {
         if (text.equals("SLAYER QUEST COMPLETE!")) add(Stat.SLAYER_BOSSES, 1);
-        if (!runCounted && Sky2MLocation.inDungeon() && text.startsWith("Team Score:")) {
+        // Dungeon Sim runs are practice and don't count as SkyBlock runs.
+        if (!runCounted && Sky2MLocation.inDungeon() && !com.epic60869.sky2m.sim.roomsim.SimState.isActive() && text.startsWith("Team Score:")) {
             runCounted = true;
             add(Stat.DUNGEON_RUNS, 1);
             if (text.contains("(S+)")) add(Stat.S_PLUS_RUNS, 1);
