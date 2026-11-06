@@ -119,6 +119,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ### Changed
 
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
+- Dungeon Sim hurt immunity like Hypixel's: one mob or attack can hit you at most once every half second, and overlapping boss hits landing at the same moment count once.
 - /s2 catacalc opens a Catacombs Calculator screen (also Dungeons > Catacombs Calculator > Open): pick a floor, and your target level, XP per run (from your last run of it) and run time (from Run History) fill in for you to change. It shows your level, the XP and runs to the target and how long they take, and the runs to each level on the way. After Runs: type how many runs of the floor and it says the Catacombs level you'll be, the XP they give and how long they take. /s2 catacalc 50 m7 still answers in chat.
 - Chroma enchants now flow as one smooth, softer rainbow across the whole tooltip instead of a full rainbow squeezed into each enchant name.
 - /boss in the Dungeon Sim switches the floor to the boss's (keeping Master Mode), so /boss storm on an F1 map shows F7 on the scoreboard.
@@ -211,6 +212,11 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Fix Key & Door Alerts missing keys and doors from players with an emblem before their name, like "🐟 2m3s opened a WITHER door!".
 - Fix the Mimic not being detected when it's killed very fast with a Terminator: its "Mimic 0❤" nametag now counts, for the Mimic Message, score and Kill Titles.
 - Fix the Mimic not being detected when it dies the moment it spawns, such as a bow shot as the chest opens: the Mimic Message, score and Kill Titles now count it.
+- Fix the Dungeon Sim not putting your wardrobe armour on when a session or floor starts, so your gear counted for nothing and low floors hit far too hard.
+- Fix the Dungeon Sim giving no armour or pet to players who had used it before (an older stats file), so they played with no gear.
+- Fix single rooms and map codes in the Dungeon Sim using the previous map's floor for mob damage (often F7's); a map with no floor picked plays as F7.
+- Fix Wither armour not reducing damage from Maxor, Storm, Goldor and Necron in the Dungeon Sim.
+- Fix unknown hits in the Dungeon Sim (explosions and the like) hitting for many times a mob's damage: they're capped at three mob hits.
 - Fix the Croesus "Chests: n/60" overlay not matching "Unclaimed chests" in the tab list: chests opened at the end of a run or with a Dungeon Chest Key only reached it once you opened Croesus, so it could still count a run you'd opened. It now shows Hypixel's own count from the tab whenever it's there (plus any runs finished since), and its own list only until then.
 - Fix Profile Icons In Chat never showing: an ironman (♲), Bingo or Stranded player's icon from the tab list wasn't added to their chat messages, because SkyBlock's tab rows were read by their placeholder names instead of the player's. Chat lines with emblems and extra tags before the name ("[318] ✭ [✌] [MVP++] Name") now get the icon too.
 - Fix slayer kill times not reaching the /s2 leaderboard: a boss first seen as it died could save an impossible time (a 0.03s Sven) as your PB, and no real kill could ever beat it to be sent. Kills are now timed from Hypixel's "Slay the boss!" sidebar line, impossibly fast times aren't saved, and the impossible PBs you already have are removed so your real times are sent again.
