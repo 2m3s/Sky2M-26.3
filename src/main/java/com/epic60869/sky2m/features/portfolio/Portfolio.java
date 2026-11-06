@@ -579,6 +579,23 @@ public final class Portfolio {
         return true;
     }
 
+    /**
+     * Sets the buy price from separate purchases (the item page's lines): one purchase is a plain buy price, several are
+     * kept as lots and averaged; none clears it.
+     */
+    public static void setLots(Entry entry, List<Lot> lots) {
+        int amount = 0;
+        double cost = 0;
+        for (Lot lot : lots) {
+            amount += lot.amount;
+            cost += lot.amount * lot.price;
+        }
+        entry.lots = lots.size() > 1 ? new ArrayList<>(lots) : null;
+        entry.buyPrice = amount == 0 ? 0 : cost / amount;
+        entry.buyPricePending = false;
+        save();
+    }
+
     /** The buy price as you'd type it back in: "2x1.5M + 1x1.2M", or the single price. */
     public static String buyPriceText(Entry entry) {
         if (entry.lots == null || entry.lots.isEmpty()) return entry.buyPrice > 0 ? coins(entry.buyPrice) : "";
