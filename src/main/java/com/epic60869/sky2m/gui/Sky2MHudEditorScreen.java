@@ -156,9 +156,18 @@ public final class Sky2MHudEditorScreen extends Screen {
             // Only HUDs whose feature is turned on; turn one on in /s2 to place it.
             if (!com.epic60869.sky2m.features.core.Sky2MHuds.turnedOn(hud)) continue;
             if (!showAll && !com.epic60869.sky2m.features.core.Sky2MHuds.drawnRecently(hud.id(), openedAt)) continue;
-            var placement = com.epic60869.sky2m.features.core.Sky2MHuds.placement(hud.id());
-            elements.add(new EditableHud(hud.name(), () -> placement.x, () -> placement.y,
-                (x, y) -> { placement.x = Math.max(0, x); placement.y = Math.max(0, y); },
+            // Looked up each time: with HUD Layouts Per Area on, it's the layout of the area you're in, and a HUD only gets
+            // its own place in that layout once it really moves.
+            elements.add(new EditableHud(hud.name(), () -> com.epic60869.sky2m.features.core.Sky2MHuds.placement(hud.id()).x,
+                () -> com.epic60869.sky2m.features.core.Sky2MHuds.placement(hud.id()).y,
+                (x, y) -> {
+                    int nx = Math.max(0, x), ny = Math.max(0, y);
+                    var current = com.epic60869.sky2m.features.core.Sky2MHuds.placement(hud.id());
+                    if (current.x == nx && current.y == ny) return;
+                    var edit = com.epic60869.sky2m.features.core.Sky2MHuds.editPlacement(hud.id());
+                    edit.x = nx;
+                    edit.y = ny;
+                },
                 () -> com.epic60869.sky2m.features.core.Sky2MHuds.editorWidth(hud),
                 () -> com.epic60869.sky2m.features.core.Sky2MHuds.editorHeight(hud),
                 (g, x, y) -> {
@@ -169,8 +178,16 @@ public final class Sky2MHudEditorScreen extends Screen {
                         } catch (Exception ex) {
                             com.epic60869.sky2m.features.core.Sky2MErrors.caught(hud.name(), ex);
                         }
-                    } else com.epic60869.sky2m.features.core.Sky2MHuds.render(g, com.epic60869.sky2m.features.core.Sky2MHuds.editorLines(hud), x, y, placement.scale, placement.background);
+                    } else {
+                        var placement = com.epic60869.sky2m.features.core.Sky2MHuds.placement(hud.id());
+                        com.epic60869.sky2m.features.core.Sky2MHuds.render(g, com.epic60869.sky2m.features.core.Sky2MHuds.editorLines(hud), x, y, placement.scale, placement.background);
+                    }
                 }, "hud:" + hud.id()));
+        }
+        // In an area's layout the screen-size change is applied to every layout first, so the loop below only pulls
+        // off-screen HUDs back in and doesn't give every HUD a position of its own in this layout.
+        if (!com.epic60869.sky2m.features.core.Sky2MHuds.layoutGroup().equals(com.epic60869.sky2m.features.core.Sky2MHuds.LAYOUT_DEFAULT)) {
+            com.epic60869.sky2m.features.core.Sky2MHuds.setReferenceToScreen();
         }
         // Move every HUD to where it is drawn on this screen (GUI scale / window size may have changed since it
         // was placed), pulling anything off screen back into view so it can be grabbed.
@@ -187,6 +204,15 @@ public final class Sky2MHudEditorScreen extends Screen {
         int textY = buttonsBottom + 6;
         g.centeredText(font, Component.literal("Sky2M Position Editor"), width / 2, textY, 0xFFFFFFFF);
         textY += 12;
+        Sky2MConfig layoutConfig = Sky2MConfig.current();
+        if (layoutConfig != null && layoutConfig.general.hudLayoutsPerArea) {
+            String layoutLine = "Editing the " + com.epic60869.sky2m.features.core.Sky2MHuds.layoutGroup() + " layout. Dungeon Map, RNG, Commissions and Pet Display are shared by all layouts.";
+            for (String line : wrap(layoutLine, Math.max(40, width - 16))) {
+                g.centeredText(font, Component.literal(line), width / 2, textY, 0xFF55FFFF);
+                textY += 10;
+            }
+            textY += 2;
+        }
         for (String line : wrap(HELP, Math.max(40, width - 16))) {
             g.centeredText(font, Component.literal(line), width / 2, textY, 0xFFB8BEC9);
             textY += 10;

@@ -91,6 +91,12 @@ public final class Sky2MConfig extends Config {
         @Expose
         public boolean overlapNoticeShown = false;
 
+        @Expose
+        @ConfigOption(name = "HUD Layouts Per Area", desc = "Give dungeons, the garden and the mining islands their own HUD positions. /s2 gui edits the layout of the area you're in and says which one; everywhere else is the default layout. A HUD you haven't moved in an area stays where the default layout has it. Off, your default positions are used everywhere and the area layouts are kept for later.")
+        @ConfigEditorBoolean
+        public boolean hudLayoutsPerArea = false;
+
+
         @ConfigOption(name = "Export Settings Code", desc = "Copy all your Sky2M settings to the clipboard as one code to share (/s2 config export). Versions and other personal values are left out.")
         @ConfigEditorButton(buttonText = "COPY")
         public Runnable exportSettingsCode = () -> Sky2MConfigCode.exportToClipboard();

@@ -38,6 +38,16 @@ public final class Sky2MHuds {
     private static final Map<String, Placement> PLACEMENTS = new LinkedHashMap<>();
     private static Path file;
     private static final String BACKGROUNDS_OFF = "#backgroundsOff";
+    public static final String LAYOUT_DEFAULT = "Default";
+    public static final String LAYOUT_DUNGEONS = "Dungeons";
+    public static final String LAYOUT_GARDEN = "Garden";
+    public static final String LAYOUT_MINING = "Mining";
+    /** Saved under this key in the file; PLACEMENTS is the default layout, as it always was. */
+    private static final String LAYOUTS_KEY = "#layouts";
+    /** HUD Layouts Per Area: layout -> HUD id -> placement, holding only what was moved in that layout. */
+    private static final Map<String, Map<String, Placement>> LAYOUTS = new LinkedHashMap<>();
+    private static String activeLayout = LAYOUT_DEFAULT;
+    private static long layoutTick = -1;
     /**
      * The GUI-scaled screen size the positions were placed on. When the window or GUI scale changes, every HUD
      * keeps its place relative to the screen instead of piling up against an edge.
@@ -160,8 +170,58 @@ public final class Sky2MHuds {
         }
     }
 
+    /** The placement in use where you are: this area's layout when it has one for this HUD, else the default layout's. */
     public static Placement placement(String id) {
-        return PLACEMENTS.computeIfAbsent(id, k -> new Placement());
+        Placement base = PLACEMENTS.computeIfAbsent(id, k -> new Placement());
+        String group = layoutGroup();
+        return group.equals(LAYOUT_DEFAULT) ? base : resolveLayout(LAYOUTS.get(group), id, base);
+    }
+
+    /**
+     * The placement to change: only {@link #placement} is read every frame, so an area's layout only ever holds what was
+     * really moved there. The first change in an area copies the HUD's default placement, and leaves the default alone.
+     */
+    public static Placement editPlacement(String id) {
+        String group = layoutGroup();
+        if (group.equals(LAYOUT_DEFAULT)) return placement(id);
+        Placement from = placement(id);
+        return LAYOUTS.computeIfAbsent(group, k -> new LinkedHashMap<>()).computeIfAbsent(id, k -> copy(from));
+    }
+
+    private static Placement copy(Placement from) {
+        Placement p = new Placement();
+        p.x = from.x;
+        p.y = from.y;
+        p.scale = from.scale;
+        p.background = from.background;
+        return p;
+    }
+
+    /** A HUD's placement in a layout, or the default one when that layout has none for it (or there's no layout). Public for the game test. */
+    public static <T> T resolveLayout(Map<String, T> layout, String id, T fallback) {
+        T saved = layout == null ? null : layout.get(id);
+        return saved != null ? saved : fallback;
+    }
+
+    /** Which layout an area uses. Public for the game test. */
+    public static String layoutGroup(String area, boolean inDungeon) {
+        if (inDungeon) return LAYOUT_DUNGEONS;
+        return switch (area == null ? "" : area) {
+            case "Garden" -> LAYOUT_GARDEN;
+            case "Dwarven Mines", "Crystal Hollows", "Mineshaft" -> LAYOUT_MINING;
+            default -> LAYOUT_DEFAULT;
+        };
+    }
+
+    /** The layout in use now: always the default one while HUD Layouts Per Area is off. Worked out once per client tick. */
+    public static String layoutGroup() {
+        if (layoutTick != clientTicks) {
+            layoutTick = clientTicks;
+            com.epic60869.sky2m.config.Sky2MConfig config = com.epic60869.sky2m.config.Sky2MConfig.current();
+            activeLayout = config != null && config.general.hudLayoutsPerArea
+                ? layoutGroup(Sky2MLocation.area(), Sky2MLocation.inDungeon()) : LAYOUT_DEFAULT;
+        }
+        return activeLayout;
     }
 
     private static void renderAll(GuiGraphicsExtractor graphics) {
@@ -281,11 +341,27 @@ public final class Sky2MHuds {
         return clampY(Math.round((y + h / 2f) * screen / refHeight - h / 2f), h);
     }
 
-    /** Called by /s2 gui once every position has been converted to the current screen. */
+    /**
+     * Called by /s2 gui once every position has been converted to the current screen. The saved area layouts share the one
+     * reference size, so they (and, while an area's layout is being edited, the default one) keep their place here.
+     */
     public static void setReferenceToScreen() {
-        refWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-        refHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+        int screenW = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        int screenH = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+        if (refWidth > 0 && refHeight > 0 && (refWidth != screenW || refHeight != screenH)) {
+            for (Map<String, Placement> layout : LAYOUTS.values()) rescale(layout, screenW, screenH);
+            if (!layoutGroup().equals(LAYOUT_DEFAULT)) rescale(PLACEMENTS, screenW, screenH);
+        }
+        refWidth = screenW;
+        refHeight = screenH;
         save();
+    }
+
+    private static void rescale(Map<String, Placement> layout, int screenW, int screenH) {
+        for (Placement p : layout.values()) {
+            p.x = Math.round(p.x * (float) screenW / refWidth);
+            p.y = Math.round(p.y * (float) screenH / refHeight);
+        }
     }
 
     /** Keeps a HUD on screen even if its saved position is past the edge (e.g. after a window or GUI scale change). */
@@ -409,36 +485,43 @@ public final class Sky2MHuds {
     }
 
     public static void toggleBackground(String id) {
-        Placement p = placement(id);
+        Placement p = editPlacement(id);
         p.background = !p.background;
     }
 
     public static void changeScale(String id, float delta) {
-        Placement p = placement(id);
+        Placement p = editPlacement(id);
         p.scale = Math.max(0.5f, Math.min(3f, Math.round((p.scale + delta) * 10f) / 10f));
     }
 
-    /** Puts a registered HUD back at its registered x/y and scale 1 (the background choice is kept), and saves. */
+    /**
+     * Puts a registered HUD back at its registered x/y and scale 1 (the background choice is kept), and saves. In an area's
+     * layout it drops that layout's position instead, so the HUD goes back to following the default layout.
+     */
     public static boolean resetPlacement(String id) {
         Element element = ELEMENTS.get(id);
         if (element == null) return false;
-        Placement p = placement(id);
-        p.x = element.defaultX();
-        p.y = element.defaultY();
-        p.scale = 1f;
+        resetOne(element);
         save();
         return true;
     }
 
     /** {@link #resetPlacement} for every registered HUD, saved once. */
     public static void resetAllPlacements() {
-        for (Element element : ELEMENTS.values()) {
-            Placement p = placement(element.id());
-            p.x = element.defaultX();
-            p.y = element.defaultY();
-            p.scale = 1f;
-        }
+        for (Element element : ELEMENTS.values()) resetOne(element);
         save();
+    }
+
+    private static void resetOne(Element element) {
+        Map<String, Placement> layout = LAYOUTS.get(layoutGroup());
+        if (!layoutGroup().equals(LAYOUT_DEFAULT)) {
+            if (layout != null) layout.remove(element.id());
+            return;
+        }
+        Placement p = placement(element.id());
+        p.x = element.defaultX();
+        p.y = element.defaultY();
+        p.scale = 1f;
     }
 
     /**
@@ -471,6 +554,15 @@ public final class Sky2MHuds {
                 if (entry.getKey().startsWith("#")) continue;
                 PLACEMENTS.put(entry.getKey(), GSON.fromJson(entry.getValue(), Placement.class));
             }
+            if (root.has(LAYOUTS_KEY)) {
+                for (var layout : root.getAsJsonObject(LAYOUTS_KEY).entrySet()) {
+                    Map<String, Placement> saved = new LinkedHashMap<>();
+                    for (var entry : layout.getValue().getAsJsonObject().entrySet()) {
+                        saved.put(entry.getKey(), GSON.fromJson(entry.getValue(), Placement.class));
+                    }
+                    LAYOUTS.put(layout.getKey(), saved);
+                }
+            }
             // Backgrounds became opt-in; turn off the ones saved before that, once.
             if (!root.has(BACKGROUNDS_OFF)) {
                 for (Placement p : PLACEMENTS.values()) p.background = false;
@@ -495,6 +587,7 @@ public final class Sky2MHuds {
             root.addProperty(BACKGROUNDS_OFF, true);
             if (refWidth > 0) root.addProperty("#refWidth", refWidth);
             if (refHeight > 0) root.addProperty("#refHeight", refHeight);
+            if (!LAYOUTS.isEmpty()) root.add(LAYOUTS_KEY, GSON.toJsonTree(LAYOUTS));
             Files.writeString(file, GSON.toJson(root), StandardCharsets.UTF_8);
         } catch (Exception e) {
             System.err.println("[Sky2M] Failed to save HUD positions: " + e.getMessage());
