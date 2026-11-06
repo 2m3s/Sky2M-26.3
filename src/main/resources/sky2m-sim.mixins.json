@@ -5,6 +5,7 @@
   "client": [
     "SimFovMixin",
     "SimGameModeInvoker",
+    "SimHypixelPacketMixin",
     "SimPlayerInfoPacketAccessor"
   ],
   "injectors": {
