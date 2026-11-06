@@ -255,6 +255,16 @@ public final class DungeonExtras {
         @ConfigOption(name = "Kismet Feather Count", desc = "How many Kismet Feathers you carry on the Reroll Chest in a reward chest, as its stack size. Sacks are not counted.")
         @ConfigEditorBoolean
         public boolean kismetCount = true;
+
+        @Expose
+        @ConfigOption(name = "Hide Claimed Runs", desc = "Hide runs you've already opened a chest of in Croesus's list, so only the unclaimed ones are left. Their slots look empty and can't be clicked.")
+        @ConfigEditorBoolean
+        public boolean hideClaimed = true;
+
+        @Expose
+        @ConfigOption(name = "Keep Runs With A Key Left", desc = "With Hide Claimed Runs on, keep showing opened runs you could still use a Dungeon Chest Key on.")
+        @ConfigEditorBoolean
+        public boolean keepKeyRuns = false;
     }
 
     public static final class Clutter {

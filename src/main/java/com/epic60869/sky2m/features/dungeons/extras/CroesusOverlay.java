@@ -57,7 +57,7 @@ public final class CroesusOverlay {
     private static final long MAX_AGE_MS = 3L * 24 * 60 * 60 * 1000;
 
     /** 0 unopened, 1 opened, 2 a key was used (nothing left to open). */
-    private static final int UNOPENED = 0, OPENED = 1, KEY_USED = 2;
+    public static final int UNOPENED = 0, OPENED = 1, KEY_USED = 2;
 
     private static final class Run {
         String floor;
@@ -272,6 +272,58 @@ public final class CroesusOverlay {
             if (text.equals("No chests opened yet!")) return UNOPENED;
         }
         return -1;
+    }
+
+    // ------------------------------------------------------------------------------------------------ Hide Claimed Runs
+
+    /** The screen the answers below are for, whether it's Croesus's list, and each run's answer (lore is only read once). */
+    private static java.lang.ref.WeakReference<Object> hideScreen = new java.lang.ref.WeakReference<>(null);
+    private static boolean hideScreenIsCroesus;
+    private static final Map<ItemStack, Boolean> HIDE_ANSWERS = new java.util.IdentityHashMap<>();
+
+    /**
+     * Whether this slot holds a claimed run to hide (Sky2MCroesusSlotMixin, asked for every slot many times a frame on any
+     * menu, so the setting and the screen are checked first). Like Odin's Croesus Hide Claimed (BSD-3-Clause).
+     */
+    public static boolean hideSlot(Slot slot) {
+        DungeonExtras.Croesus c = config();
+        if (c == null || !c.hideClaimed) return false;
+        Minecraft mc = Minecraft.getInstance();
+        if (!mc.isSameThread() || !(mc.gui.screen() instanceof AbstractContainerScreen<?> screen)) return false;
+        if (hideScreen.get() != screen) {
+            hideScreen = new java.lang.ref.WeakReference<>(screen);
+            hideScreenIsCroesus = CROESUS.matcher(ChatFormatting.stripFormatting(screen.getTitle().getString()).trim()).matches();
+            HIDE_ANSWERS.clear();
+        }
+        if (!hideScreenIsCroesus || slot.container instanceof Inventory || runIndex(slot.index, 0) < 0) return false;
+        ItemStack stack = slot.getItem();
+        if (stack.isEmpty()) return false;
+        Boolean answer = HIDE_ANSWERS.get(stack);
+        if (answer == null) {
+            if (HIDE_ANSWERS.size() > 256) HIDE_ANSWERS.clear();
+            answer = ChatFormatting.stripFormatting(stack.getHoverName().getString()).endsWith("The Catacombs")
+                && hideRun(state(stack), c.keepKeyRuns, keyStruckThrough(stack));
+            HIDE_ANSWERS.put(stack, answer);
+        }
+        return answer;
+    }
+
+    /** Whether a run in this state is hidden: {@link #OPENED} unless a key could still be used on it, and {@link #KEY_USED}. Public for the game test. */
+    public static boolean hideRun(int state, boolean keepKeyRuns, boolean keyStruckThrough) {
+        if (state == KEY_USED) return true;
+        return state == OPENED && (!keepKeyRuns || keyStruckThrough);
+    }
+
+    /** Hypixel strikes "Dungeon Chest Key" through in a run's lore once one has been used on it (as Odin reads it). */
+    private static boolean keyStruckThrough(ItemStack stack) {
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore == null) return false;
+        for (Component line : lore.lines()) {
+            for (Component part : line.getSiblings()) {
+                if (part.getStyle().isStrikethrough() && part.getString().equals("Dungeon Chest Key")) return true;
+            }
+        }
+        return false;
     }
 
     private static int floorNumber(ItemStack stack) {
