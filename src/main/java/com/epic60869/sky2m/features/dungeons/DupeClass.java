@@ -146,6 +146,26 @@ public final class DupeClass {
         return group.containsKey(name.toLowerCase(Locale.ROOT));
     }
 
+    /** The class Sky2M last saw this teammate join or play with, as "Archer", or null. */
+    public static String classOf(String name) {
+        return group.get(name.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * A player's selected dungeon class from their selected SkyBlock profile ("selected_dungeon_class"), as "Archer",
+     * or null when it isn't set. The API can be a minute or so behind a class just picked.
+     */
+    public static java.util.concurrent.CompletableFuture<String> selectedClass(String name) {
+        return com.epic60869.sky2m.features.profileviewer.ProfileApi.playerFast(name).thenApply(player -> {
+            if (player.profiles().isEmpty()) return null;
+            com.google.gson.JsonObject member = player.profiles().getFirst().member();
+            if (member == null || !(member.get("dungeons") instanceof com.google.gson.JsonObject dungeons)
+                || !(dungeons.get("selected_dungeon_class") instanceof com.google.gson.JsonPrimitive cls)) return null;
+            String found = title(cls.getAsString().toUpperCase(Locale.ROOT));
+            return CLASSES.contains(found) ? found : null;
+        });
+    }
+
     private static void onJoin(String name, String cls) {
         Minecraft mc = Minecraft.getInstance();
         boolean self = mc.player != null && name.equalsIgnoreCase(mc.player.getGameProfile().name());

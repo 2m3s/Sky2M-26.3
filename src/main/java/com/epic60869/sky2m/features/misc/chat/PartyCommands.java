@@ -83,6 +83,16 @@ public final class PartyCommands {
     private static final List<Consumer<String>> joinListeners = new CopyOnWriteArrayList<>();
     private static final List<Consumer<String>> kickListeners = new CopyOnWriteArrayList<>();
 
+    /** !missing: the names /p list has shown so far (you too), or null when nobody asked. */
+    private static Set<String> listed;
+    private static long missingAsked;
+    private static long lastListLine;
+    /** How long /p list gets to answer, and how long after its last line the list counts as complete. */
+    private static final long LIST_WAIT_MS = 800L;
+    private static final long LIST_SETTLE_MS = 150L;
+    /** How long the API gets for the classes Sky2M doesn't know; anyone slower counts as unknown. */
+    private static final long LOOKUP_MS = 1_200L;
+
     private PartyCommands() {}
 
     public static void init() {
@@ -93,8 +103,9 @@ public final class PartyCommands {
             noteKick(command);
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            Pending next = pending.peek();
             long now = System.currentTimeMillis();
+            if (listed != null && (lastListLine > 0 ? now - lastListLine >= LIST_SETTLE_MS : now - missingAsked >= LIST_WAIT_MS)) finishMissing();
+            Pending next = pending.peek();
             if (next == null || now < next.at() || now < lastSent + SEND_GAP_MS) return;
             pending.poll();
             if (mc.getConnection() != null) mc.getConnection().sendCommand(next.command());
@@ -157,7 +168,10 @@ public final class PartyCommands {
             case "carrot", "c" -> config.carrot ? CARROT.get(ThreadLocalRandom.current().nextInt(CARROT.size())) : null;
             case "time" -> config.time ? LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) : null;
             case "dt", "downtime" -> config.downtime ? com.epic60869.sky2m.features.dungeons.AutoRequeue.downtime(sender) : null;
-            case "missing" -> config.missing ? missingClasses() : null;
+            case "missing" -> {
+                if (config.missing) askMissing();
+                yield null;
+            }
             default -> null;
         };
         if (reply != null) {
@@ -212,8 +226,11 @@ public final class PartyCommands {
             // "[MVP+] Nix ● [VIP] Steve ●" or "You'll be partying with: [MVP+] Nix, Steve"
             for (String part : m.group("names").split("●|, ")) {
                 Matcher n = LIST_NAME.matcher(part.trim());
-                if (n.find()) addMember(n.group("name"));
+                if (!n.find()) continue;
+                addMember(n.group("name"));
+                if (listed != null) listed.add(n.group("name"));
             }
+            if (listed != null) lastListLine = System.currentTimeMillis();
         }
     }
 
@@ -287,10 +304,64 @@ public final class PartyCommands {
         Minecraft.getInstance().execute(() -> pending.add(new Pending(waiting.command(), now + REPLY_DELAY_MS)));
     }
 
-    /** !missing: the classes nobody plays, with how many teammates' classes aren't known yet. */
+    /**
+     * !missing: sends /p list, so the answer goes by who's in the party now (a kicked player isn't listed, so their
+     * class counts as missing). The list is read by {@link #trackMembers} and answered from {@link #finishMissing}.
+     */
+    private static void askMissing() {
+        if (listed != null) return;
+        listed = new LinkedHashSet<>();
+        missingAsked = System.currentTimeMillis();
+        lastListLine = 0;
+        Minecraft.getInstance().execute(() -> {
+            var connection = Minecraft.getInstance().getConnection();
+            if (connection == null) {
+                listed = null;
+                return;
+            }
+            // A command, not chat: the answer needn't wait Hypixel's chat gap because of it.
+            long before = lastSent;
+            connection.sendCommand("party list");
+            lastSent = before;
+        });
+    }
+
+    /**
+     * Once /p list has answered: each member's class from their Party Finder join or the dungeon tab list (more up to
+     * date), else their selected class from the API, looked up together. Without a list, what Sky2M already knows.
+     */
+    private static void finishMissing() {
+        Set<String> names = listed;
+        listed = null;
+        if (names.isEmpty()) {
+            run("pc " + missingClasses());
+            return;
+        }
+        String mine = com.epic60869.sky2m.features.dungeons.DupeClass.myClass();
+        List<java.util.concurrent.CompletableFuture<String>> classes = new java.util.ArrayList<>();
+        for (String name : names) {
+            boolean self = name.equalsIgnoreCase(me());
+            String known = self ? (mine.isEmpty() ? null : mine) : com.epic60869.sky2m.features.dungeons.DupeClass.classOf(name);
+            classes.add(known != null ? java.util.concurrent.CompletableFuture.completedFuture(known)
+                : com.epic60869.sky2m.features.dungeons.DupeClass.selectedClass(name).exceptionally(e -> null)
+                    .completeOnTimeout(null, LOOKUP_MS, java.util.concurrent.TimeUnit.MILLISECONDS));
+        }
+        java.util.concurrent.CompletableFuture.allOf(classes.toArray(java.util.concurrent.CompletableFuture[]::new)).thenRun(() -> {
+            List<String> found = classes.stream().map(java.util.concurrent.CompletableFuture::join).toList();
+            long unknown = found.stream().filter(java.util.Objects::isNull).count();
+            List<String> missing = com.epic60869.sky2m.features.dungeons.DupeClass.missing("", found.stream().filter(java.util.Objects::nonNull).toList());
+            Minecraft.getInstance().execute(() -> run("pc " + answer(missing, unknown)));
+        });
+    }
+
+    /** !missing without /p list: the classes nobody plays, with how many teammates' classes aren't known yet. */
     private static String missingClasses() {
         List<String> missing = com.epic60869.sky2m.features.dungeons.DupeClass.missing();
         long unknown = members.stream().filter(n -> !com.epic60869.sky2m.features.dungeons.DupeClass.knowsClass(n)).count();
+        return answer(missing, unknown);
+    }
+
+    private static String answer(List<String> missing, long unknown) {
         String answer = missing.isEmpty() ? "No missing classes!" : "Missing: " + String.join(", ", missing);
         return unknown > 0 ? answer + " (" + unknown + " player" + (unknown == 1 ? "'s" : "s'") + " class unknown)" : answer;
     }
