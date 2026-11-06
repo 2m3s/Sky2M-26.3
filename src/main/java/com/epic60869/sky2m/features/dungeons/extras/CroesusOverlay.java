@@ -69,6 +69,11 @@ public final class CroesusOverlay {
     private static List<Run> runs;
     private static String loadedProfile;
     private static int ticks;
+    /** "Unclaimed chests: 24" in the tab list's Info widget: Hypixel's own count. */
+    private static final Pattern TAB_UNCLAIMED = Pattern.compile("^Unclaimed chests: (\\d+)$");
+    /** Hypixel's count from the tab, -1 until seen (on this profile), plus the runs finished since it was read. */
+    private static int tabCount = -1;
+    private static String tabProfile = "";
 
     private CroesusOverlay() {}
 
@@ -101,6 +106,7 @@ public final class CroesusOverlay {
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 5 != 0) return;
+            if (ticks % 40 == 0 && config() != null && Compat.isOnSkyblock()) readTab(mc);
             DungeonExtras.Croesus c = config();
             if (c == null || !Compat.isOnSkyblock() || !(mc.gui.screen() instanceof AbstractContainerScreen<?> screen)) {
                 DungeonChestProfit.setExtras(Map.of(), Set.of());
@@ -166,6 +172,8 @@ public final class CroesusOverlay {
         while (list.size() > MAX_RUNS) list.removeLast();
         removeOld();
         save();
+        // A finished run is one more unclaimed chest than the tab last said, until the tab shows it.
+        if (tabCount >= 0) tabCount = Math.min(MAX_RUNS, tabCount + 1);
         DungeonExtras.Croesus c = config();
         if (c != null && c.limitWarning && lastActive() >= 55) {
             Sky2MAlerts.chat(Component.literal("You are close to the Croesus limit. Please open your chests!").withStyle(ChatFormatting.RED));
@@ -373,19 +381,42 @@ public final class CroesusOverlay {
     }
 
     /**
+     * Reads Hypixel's "Unclaimed chests: n" from the tab list when it's there. It's right even when the runs list isn't:
+     * chests opened at the end of a run, or with a Dungeon Chest Key, only reach that list when Croesus's menu is opened,
+     * so the overlay could still count a run Hypixel had already marked opened.
      */
+    private static void readTab(Minecraft mc) {
+        var connection = mc.getConnection();
+        if (connection == null) return;
+        for (var info : connection.getListedOnlinePlayers()) {
+            Component display = info.getTabListDisplayName();
+            if (display == null) continue;
+            int n = unclaimedFromTab(ChatFormatting.stripFormatting(display.getString()));
+            if (n < 0) continue;
+            String profile = Sky2MStorageSearch.currentProfile();
+            tabCount = n;
+            tabProfile = profile == null ? "" : profile;
+            return;
         }
     }
 
+    /** The count in a tab line like "Unclaimed chests: 24", or -1. */
+    public static int unclaimedFromTab(String line) {
+        Matcher m = TAB_UNCLAIMED.matcher(line == null ? "" : line.trim());
+        return m.matches() ? Integer.parseInt(m.group(1)) : -1;
     }
 
+    /** What the overlay shows: Hypixel's count from the tab (on this profile) when it's been seen, else the tracked runs. */
+    public static int shownCount(int tracked, int fromTab, boolean sameProfile) {
+        return fromTab >= 0 && sameProfile ? fromTab : tracked;
     }
 
     private static List<Component> lines() {
         int n;
         synchronized (CroesusOverlay.class) {
             removeOld();
-            n = unopened();
+            String profile = Sky2MStorageSearch.currentProfile();
+            n = shownCount(unopened(), tabCount, tabProfile.equals(profile == null ? "" : profile));
         }
         ChatFormatting colour = n >= 45 ? ChatFormatting.DARK_RED : n >= 30 ? ChatFormatting.RED : n >= 15 ? ChatFormatting.YELLOW : ChatFormatting.GOLD;
         return List.of(Component.literal("Chests: ").withStyle(ChatFormatting.GRAY)
