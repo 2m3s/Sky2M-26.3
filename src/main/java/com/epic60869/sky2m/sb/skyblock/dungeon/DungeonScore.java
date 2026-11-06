@@ -64,6 +64,7 @@ public class DungeonScore {
 	//Score messages sent in party chat
 	private static final String MIMIC_MESSAGE = "Mimic dead!";
 	private static final double MIMIC_REMOVED_RANGE = 20;
+	private static final Pattern DEAD_MIMIC_TAG = Pattern.compile("\\bMimic\\b.*(?<![\\d,.])0(?:/\\S+)?❤");
 	private static final String PRINCE_MESSAGE = "Prince dead!";
 	private static final String BAT_MESSAGE = "Bat dead!";
 
@@ -94,6 +95,7 @@ public class DungeonScore {
 		DungeonEvents.DUNGEON_STARTED.register(DungeonScore::onDungeonStart);
 		DungeonEvents.DUNGEON_ENDED.register(DungeonScore::reset);
 		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents.ENTITY_UNLOAD.register(DungeonScore::handleEntityRemoved);
+		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(DungeonScore::checkMimicNametag);
 		com.epic60869.sky2m.features.core.Sky2MChat.onGameMessage((message, overlay) -> {
 			if (overlay || !Utils.isInDungeons()) return;
 			String str = message.getString();
@@ -256,8 +258,31 @@ public class DungeonScore {
 	public static void handleEntityDeath(Entity entity) {
 		if (mimicKilled) return;
 		if (!isEntityMimic(entity)) return;
+		announceMimic();
+	}
+
+	private static void announceMimic() {
 		if (MIMIC_MESSAGE_CONFIG.get().sendMimicMessage) MessageScheduler.INSTANCE.sendMessageAfterCooldown("/pc " + MIMIC_MESSAGE, true);
 		mimicKilled = true;
+	}
+
+	/**
+	 * Sky2M: a Terminator can kill the Mimic so fast the zombie is never seen dying (clip of 2026-11-06), but its nametag
+	 * still shows "Mimic 0❤" for a moment, so look for that every tick while the Mimic is alive.
+	 */
+	private static void checkMimicNametag(Minecraft client) {
+		if (!dungeonStarted || !floorHasMimics || mimicKilled || client.player == null || client.level == null) return;
+		for (net.minecraft.world.entity.decoration.ArmorStand stand : client.level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, client.player.getBoundingBox().inflate(MIMIC_REMOVED_RANGE))) {
+			if (stand.hasCustomName() && isDeadMimicTag(stand.getCustomName().getString())) {
+				announceMimic();
+				return;
+			}
+		}
+	}
+
+	/** Whether a nametag is a Mimic on no health, such as "[Lv547] Mimic 0❤". Public for the game test. */
+	public static boolean isDeadMimicTag(String name) {
+		return DEAD_MIMIC_TAG.matcher(com.epic60869.sky2m.features.core.Sky2MLocation.strip(name)).find();
 	}
 
 	/**
