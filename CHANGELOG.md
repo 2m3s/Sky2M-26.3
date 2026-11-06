@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Puzzle HUD (Dungeons > Puzzle HUD, on by default), like Odin's: each puzzle in the run, remaining, done or failed, who solved or failed it, and who has gone into it, so a skipped puzzle shows who, until the boss. Move it in /s2 gui.
 - Room Personal Bests (Dungeons > Secrets and Routes > Room Clear Alert, on by default): your fastest time for each room on the Room Secret Time clock, shown on the same chat line ("New best! (was 45.1s)"), with the time per secret when you hover the time. `/s2 route best`, `/s2 route bests` and `/s2 route best reset`. Personal Bests Solo Only (on by default) leaves out times with a teammate in the room. Saved in `config/sky2m/room-bests.json`.
 - Room Secret Time (Dungeons > Secrets > Room Clear Alert, on by default): when the room you're in goes green, chat says how long it took to get all its secrets, from the first secret found while you're in the room, like "Melon: 7/7 secrets in 42.3s". Running through on a blood rush doesn't count, and rooms with one secret aren't timed.
 - Route Packs (`/s2 route pack`): share routes as a text through the clipboard. `/s2 route pack export` copies all your routes, `export room` copies this room's, and `/s2 route pack import <name>` adds what's on your clipboard as a new pack in the route folder without replacing anything. `list`, `on <name>` and `off <name>` manage them. Also in the Route Editor menu.

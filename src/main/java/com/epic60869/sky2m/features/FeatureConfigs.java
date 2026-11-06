@@ -717,6 +717,11 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Puzzle HUD", desc = "The run's puzzles, remaining, done or failed, and who did each.")
+        public com.epic60869.sky2m.features.dungeons.PuzzleHud.Config puzzleHud = new com.epic60869.sky2m.features.dungeons.PuzzleHud.Config();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Party Finder Stats", desc = "Stats of players who join your dungeon group, with a kick button and optional auto kick.")
         public PartyFinderStats partyFinderStats = new PartyFinderStats();
 
