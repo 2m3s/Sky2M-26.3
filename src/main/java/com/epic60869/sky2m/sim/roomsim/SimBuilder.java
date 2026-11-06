@@ -983,7 +983,7 @@ public final class SimBuilder {
         // One read of the field: the build callbacks that land here run on the server thread, and the render thread
         // nulls client.player when the world goes away - a check and a second read could see two different values.
         var player = client.player;
-        snapPlayerTo(player == null ? null : player.getUUID(), level, gridX, gridZ, room);
+        snapPlayerTo(player == null ? null : player.getUUID(), level, gridX, gridZ, room, true);
     }
 
     /**
@@ -993,6 +993,10 @@ public final class SimBuilder {
      */
     static void snapPlayerTo(java.util.UUID uuid, ServerLevel level, int gridX, int gridZ,
                              RoomLibrary.Room room) {
+        snapPlayerTo(uuid, level, gridX, gridZ, room, false);
+    /** {@code party}: a build's landing, which brings every player out of the holding area, not only this one. */
+    private static void snapPlayerTo(java.util.UUID uuid, ServerLevel level, int gridX, int gridZ,
+                                     RoomLibrary.Room room, boolean party) {
         var origin = DungeonLayout.cellCenter(gridZ * DungeonLayout.GRID + gridX);
         Spawn spawn = spawnFor(room, gridX, gridZ);
         int x = origin.getX() + (spawn == null ? 0 : spawn.dx());
@@ -1105,6 +1109,7 @@ public final class SimBuilder {
         level.getServer().execute(() -> {
             ServerPlayer sp = level.getServer().getPlayerList().getPlayer(uuid);
             if (sp != null) {
+            for (ServerPlayer sp : moving) {
                 // A room that names a facing (the trap rooms and Teleport Maze face in from their doorway) is
                 // turned by the shortest way from where he was looking - the yaw stays a running value rather
                 // than being reset into 0..360. Every other room keeps his own yaw.
@@ -1296,14 +1301,12 @@ public final class SimBuilder {
             return;
         }
         level.getServer().execute(() -> {
-            ServerPlayer sp = level.getServer().getPlayerList().getPlayer(uuid);
-            if (sp == null) {
-                return;
-            }
             level.setBlockAndUpdate(HOLDING_AREA.below(),
                     net.minecraft.world.level.block.Blocks.BARRIER.defaultBlockState());
-            sp.teleportTo(level, HOLDING_AREA.getX() + 0.5, HOLDING_AREA.getY(), HOLDING_AREA.getZ() + 0.5,
-                    java.util.Set.of(), sp.getYRot(), sp.getXRot(), false);
+            // Party guests too: one left standing in the old map keeps its chunks, and the build writes them
+            // without telling his client, so he was left in ghost blocks he could neither see nor walk on.
+                sp.teleportTo(level, HOLDING_AREA.getX() + 0.5, HOLDING_AREA.getY(), HOLDING_AREA.getZ() + 0.5,
+                        java.util.Set.of(), sp.getYRot(), sp.getXRot(), false);
         });
     }
 
