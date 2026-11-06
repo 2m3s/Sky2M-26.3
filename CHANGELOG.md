@@ -61,6 +61,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Changed
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
+- Livid Finder points to the real Livid straight away: it's picked the moment the wool changes or she spawns (it used to check once a second), and shown while you're blind too.
 - Inventory HUD: Rarity Background (on by default) puts each SkyBlock item on its rarity colour, in the shape and opacity set under Item Rarity, even with Item Rarity off.
 - Profile viewer Overflow Levels now covers pets: a maxed pet keeps levelling past 100 (or 200), each level taking the XP of its last one, shown in purple on the Pets page and the main page's active pet, with progress to the next level in the tooltip.
 - Custom Wardrobe: a Toggle button under the Wardrobe (below Close and Favourites in the custom one, below the chest in the regular one; green when the custom wardrobe is on, red when off) switches the custom wardrobe on ("Toggle Custom Wardrobe" in the regular Wardrobe) or off ("Toggle Off Custom Wardrobe" in the custom one).

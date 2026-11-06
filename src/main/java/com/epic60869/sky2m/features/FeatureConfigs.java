@@ -689,7 +689,7 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Livid Finder (F5/M5)", desc = "Once the wool above the arena shows which Livid is real, boxes and labels her, with a line from your crosshair (not while you're blind), and can hide the fake ones.")
+        @ConfigOption(name = "Livid Finder (F5/M5)", desc = "Once the wool above the arena shows which Livid is real, boxes and labels her, with a line from your crosshair (straight away, even while you're blind), and can hide the fake ones.")
         @ConfigAccordionId(id = 1301)
         public LividFinder lividFinder = new LividFinder();
 

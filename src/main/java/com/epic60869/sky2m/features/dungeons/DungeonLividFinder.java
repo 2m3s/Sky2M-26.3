@@ -18,8 +18,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.Level;
@@ -43,7 +41,8 @@ import java.util.regex.Pattern;
  * SkyHanni's Livid Finder (https://github.com/hannibal002/SkyHanni, LGPL-2.1: features/dungeon/DungeonLividFinder.kt).
  * In the F5/M5 boss, the wool block above the arena turns the real Livid's colour. The Livids are told apart by their
  * skin (SkyHanni's repo dungeons/LividSolver.json) or their nametag colour; the real one gets a box, a "Livid" label and
- * a line from your crosshair, and the fake ones (and their nametags) can be hidden. Not while you're blind.
+ * a line from your crosshair, and the fake ones (and their nametags) can be hidden. The real one is picked the moment
+ * the wool changes or it spawns, and shown while you're blind too.
  */
 public final class DungeonLividFinder {
     private static final BlockPos BLOCK_LOCATION = new BlockPos(6, 109, 43);
@@ -121,25 +120,33 @@ public final class DungeonLividFinder {
         // Entering the boss room: the wool starts red (Hockey).
         if (inBoss && !wasInBoss) color = ChatFormatting.RED;
         wasInBoss = inBoss;
-        if (++ticks % 20 != 0 || !enabled() || !inBoss || color == null) return;
+        // Every tick until the real Livid is found (so it shows the moment it spawns), then once a second for fakes.
+        if (!enabled() || !inBoss || color == null || (livid != null && ++ticks % 20 != 0)) return;
+        sort(mc);
+    }
 
+    /** Splits the Livids into the real one (the wool's colour) and the fakes. */
+    private static void sort(Minecraft mc) {
         for (RemotePlayer entity : lividEntities(mc)) {
-            ChatFormatting lividColor = colorOf(entity);
-            if (lividColor == null) {
-                Matcher m = LIVID_NAME.matcher(entity.getName().getString());
-                String texture = skinTexture(entity);
-                if (m.matches() && texture != null) {
-                    ChatFormatting nameColor = nameToColor.get(m.group("name"));
-                    if (nameColor != null) {
-                        TEXTURE_TO_COLOR.put(texture, nameColor);
-                        lividColor = nameColor;
-                    }
-                }
-            }
+            ChatFormatting lividColor = lividColor(entity);
             if (lividColor == null) continue;
-            if (lividColor == color) livid = entity;
-            else FAKE_LIVIDS.add(entity);
+            if (lividColor == color) {
+                livid = entity;
+                FAKE_LIVIDS.remove(entity);
+            } else FAKE_LIVIDS.add(entity);
         }
+    }
+
+    /** A Livid's colour from its skin, else its name ("Hockey Livid" is red), which also teaches Sky2M its skin. */
+    private static ChatFormatting lividColor(RemotePlayer entity) {
+        ChatFormatting lividColor = colorOf(entity);
+        if (lividColor != null) return lividColor;
+        Matcher m = LIVID_NAME.matcher(entity.getName().getString());
+        if (!m.matches()) return null;
+        ChatFormatting nameColor = nameToColor.get(m.group("name"));
+        String texture = skinTexture(entity);
+        if (nameColor != null && texture != null) TEXTURE_TO_COLOR.put(texture, nameColor);
+        return nameColor;
     }
 
     private static void onBlockChange(BlockPos pos, BlockState old, BlockState updated) {
@@ -149,18 +156,8 @@ public final class DungeonLividFinder {
         color = newColor;
         livid = null;
         FAKE_LIVIDS.clear();
-
-        Minecraft mc = Minecraft.getInstance();
-        for (RemotePlayer mob : lividEntities(mc)) {
-            if (isLividColor(mob, ChatFormatting.RED) && newColor != ChatFormatting.RED) {
-                FAKE_LIVIDS.add(mob);
-                continue;
-            }
-            if (isLividColor(mob, newColor)) {
-                livid = mob;
-                FAKE_LIVIDS.remove(mob);
-            }
-        }
+        // Right away, by skin or name, rather than at the next scan.
+        if (enabled()) sort(Minecraft.getInstance());
     }
 
     /** NPC players (not real ones) named "X Livid" or wearing a known Livid skin. Only searched in the F5/M5 boss. */
@@ -193,11 +190,6 @@ public final class DungeonLividFinder {
         return com.epic60869.sky2m.features.sbc.SbcItems.legacy(component).replace("§r", "");
     }
 
-    private static boolean isLividColor(RemotePlayer player, ChatFormatting color) {
-        String code = color.toString();
-        return formatted(player.getName()).startsWith(code + "﴾ " + code + "§lLivid");
-    }
-
     /** SkyHanni's ColoredBlockCompat wool colours. */
     private static ChatFormatting woolColor(Block block) {
         if (block == Blocks.WOOL.white()) return ChatFormatting.WHITE;
@@ -216,11 +208,6 @@ public final class DungeonLividFinder {
         return null;
     }
 
-    private static boolean isBlind(Minecraft mc) {
-        MobEffectInstance blindness = mc.player == null ? null : mc.player.getEffect(MobEffects.BLINDNESS);
-        return blindness != null && blindness.getDuration() > 10;
-    }
-
     /** Hide Wrong Livids: the fake Livids and their nametags aren't drawn (only once the real one is known). */
     public static boolean hide(Entity entity) {
         FeatureConfigs.LividFinder config = config();
@@ -235,7 +222,8 @@ public final class DungeonLividFinder {
 
     private static void render(PrimitiveCollector collector) {
         Minecraft mc = Minecraft.getInstance();
-        if (!enabled() || !inLividBossRoom() || isBlind(mc) || livid == null || mc.player == null) return;
+        // Shown while you're blind too: the wool already says which Livid is real when the blindness starts.
+        if (!enabled() || !inLividBossRoom() || livid == null || mc.player == null) return;
         FeatureConfigs.LividFinder config = config();
         ChatFormatting shown = config.colorOverride.color != null ? config.colorOverride.color : color;
         if (shown == null || net.minecraft.network.chat.TextColor.fromLegacyFormat(shown) == null || !livid.isAlive() || !mc.player.hasLineOfSight(livid)) return;
