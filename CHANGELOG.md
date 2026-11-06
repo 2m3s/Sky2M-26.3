@@ -6,7 +6,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Added
 
-- Fairy Door Highlight (Dungeons > Secrets and Routes > Doors & Keys, on by default): the door into the Fairy room is highlighted in pink through walls until anyone goes in, once your dungeon map has revealed the room.
+- Command keys top up a stack: a key set to `/gfs ender_pearl` with no amount only gets what a full stack is missing, and does nothing when it's full. `/gfs ender_pearl 16` and typing it in chat work as before.
 - Sadan Interest Timer (Dungeons > Floors 4-6, on by default): in the F6/M6 boss, a HUD with the time left on Sadan's Interest Meter, two minutes less a second for each Terracotta killed, until the Giants wake. Move it in /s2 gui.
 - Fairy Door Highlight (Dungeons > Secrets and Routes > Doors & Keys, on by default): the door into the Fairy room is highlighted in pink, and stays highlighted once it's open, once your dungeon map has revealed the room. Walls hide the highlight.
 - Route Packs (`/s2 route pack`): share routes as a text through the clipboard. `/s2 route pack export` copies all your routes, `export room` copies this room's, and `/s2 route pack import <name>` adds what's on your clipboard as a new pack in the route folder without replacing anything. `list`, `on <name>` and `off <name>` manage them. Also in the Route Editor menu.
