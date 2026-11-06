@@ -187,21 +187,43 @@ public final class RoomBests {
         }
     }
 
-    /** One go at a room, from the first secret. */
-    private static final class Attempt {
+    /** One go at a room, from the first secret. Public for the game test. */
+    public static final class Attempt {
         final long startedAt;
         /** Secrets the room already had when the clock started: above 0, the time isn't for the whole room. */
         final int foundBefore;
         final List<Long> splits = new ArrayList<>();
         final Set<Integer> seen = new HashSet<>();
+        /** Secrets the action bar counted that the waypoints haven't seen yet: when they do, it's the same secret. */
+        private int countOnly;
         final List<Vec3> path = new ArrayList<>();
         /** Every secret is in: the time has stopped, so the path should too. */
         boolean pathDone;
         boolean stacked;
 
-        Attempt(long startedAt, int foundBefore) {
+        public Attempt(long startedAt, int foundBefore) {
             this.startedAt = startedAt;
             this.foundBefore = foundBefore;
+        }
+
+        /** The waypoints saw this secret. The two can come in either order: a bat's death often comes after the action bar has it. */
+        public void sawSecret(int index, long now, int max) {
+            if (!seen.add(index)) return;
+            if (countOnly > 0) countOnly--;
+            else if (max <= 0 || foundBefore + splits.size() < max) splits.add(now);
+        }
+
+        /** The action bar says the room has this many found. */
+        public void countSays(int found, long now, int max) {
+            int target = (max > 0 ? Math.min(found, max) : found) - foundBefore;
+            while (splits.size() < target) {
+                splits.add(now);
+                countOnly++;
+            }
+        }
+
+        public int secretsFound() {
+            return foundBefore + splits.size();
         }
     }
 
@@ -392,21 +414,21 @@ public final class RoomBests {
             ATTEMPTS.put(room, attempt);
         }
         long now = Math.max(0, System.currentTimeMillis() - startedAt);
-        if (secretIndex >= 0) {
-            if (attempt.seen.add(secretIndex)) attempt.splits.add(now);
-        } else {
-            while (attempt.splits.size() < found - attempt.foundBefore) attempt.splits.add(now);
-        }
+        int before = attempt.splits.size();
+        int max = room.getMaxSecretCount();
+        if (secretIndex >= 0) attempt.sawSecret(secretIndex, now, max);
+        else attempt.countSays(found, now, max);
+        // The action bar comes about once a second: only a new secret should move anything on.
+        if (attempt.splits.size() == before) return;
         attempt.stacked |= !aloneInRoom();
         samplePath(room, attempt);
-        int max = room.getMaxSecretCount();
-        if (max > 0 && attempt.foundBefore + attempt.splits.size() >= max) attempt.pathDone = true;
+        if (max > 0 && attempt.secretsFound() >= max) attempt.pathDone = true;
         if (room.getName() == null) return;
         Best best = store.get(DungeonRoutes.normalize(room.getName()));
         liveRoom = room;
         liveName = RoomClears.displayName(room);
-        liveFound = attempt.foundBefore + attempt.splits.size();
-        liveTotal = room.getMaxSecretCount();
+        liveFound = attempt.secretsFound();
+        liveTotal = max;
         liveDelta = best == null ? null : splitDelta(best.splits(), attempt.splits.size() - 1, now);
         liveBest = best == null ? null : best.ms();
     }
