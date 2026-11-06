@@ -14,11 +14,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 
@@ -56,7 +59,40 @@ public final class RoomBests {
 
     /** The saved bests, by {@link DungeonRoutes#normalize room name}. Public for the game test. */
     public static final class Store {
+        private static final int RECENT_KEPT = 5;
         private final Map<String, Best> rooms = new LinkedHashMap<>();
+        /** The last few counted times per room, so {@link #practiceOrder} can see where you usually lose time. */
+        private final Map<String, List<Long>> recent = new LinkedHashMap<>();
+
+        public void addRecent(String room, long ms) {
+            List<Long> times = recent.computeIfAbsent(room, r -> new ArrayList<>());
+            times.add(ms);
+            while (times.size() > RECENT_KEPT) times.removeFirst();
+        }
+
+        /** The average of the room's recent times, or -1 without any. */
+        public long recentAverage(String room) {
+            List<Long> times = recent.get(room);
+            if (times == null || times.isEmpty()) return -1;
+            long total = 0;
+            for (long time : times) total += time;
+            return total / times.size();
+        }
+
+        /** How far the room's recent times are above its best, or 0 without any. */
+        private long gap(String room) {
+            long average = recentAverage(room);
+            return average < 0 ? 0 : Math.max(0, average - rooms.get(room).ms());
+        }
+
+        /** Rooms to practise first: the biggest gap between recent times and the best, then the slowest per secret. */
+        public List<String> practiceOrder() {
+            return rooms.keySet().stream().sorted(Comparator.comparingLong((String room) -> gap(room)).reversed()
+                .thenComparing(Comparator.comparingDouble((String room) -> {
+                    Best best = rooms.get(room);
+                    return (double) best.ms() / Math.max(1, best.secrets());
+                }).reversed())).toList();
+        }
 
         public Best get(String room) {
             return rooms.get(room);
@@ -93,6 +129,13 @@ public final class RoomBests {
                 list.add(name, room);
             });
             root.add("rooms", list);
+            JsonObject times = new JsonObject();
+            recent.forEach((name, values) -> {
+                JsonArray array = new JsonArray();
+                values.forEach(array::add);
+                times.add(name, array);
+            });
+            root.add("recent", times);
             return new GsonBuilder().setPrettyPrinting().create().toJson(root);
         }
 
@@ -102,6 +145,15 @@ public final class RoomBests {
             JsonObject root = JsonParser.parseString(json).getAsJsonObject();
             JsonObject rooms = root.getAsJsonObject("rooms");
             if (rooms == null) return store;
+            if (root.has("recent")) {
+                for (var entry : root.getAsJsonObject("recent").entrySet()) {
+                    try {
+                        for (JsonElement time : entry.getValue().getAsJsonArray()) store.addRecent(entry.getKey(), time.getAsLong());
+                    } catch (RuntimeException ignored) {
+                        // Only this room's recent times are lost.
+                    }
+                }
+            }
             for (var entry : rooms.entrySet()) {
                 try {
                     JsonObject room = entry.getValue().getAsJsonObject();
@@ -188,7 +240,11 @@ public final class RoomBests {
                         .then(ClientCommands.literal("best")
                             .executes(c -> showRoom())
                             .then(ClientCommands.literal("reset").executes(c -> resetRoom())))
-                        .then(ClientCommands.literal("bests").executes(c -> showAll()))));
+                        .then(ClientCommands.literal("bests").executes(c -> showAll())))
+                    .then(ClientCommands.literal("practice")
+                        .executes(c -> showPractice())
+                        .then(ClientCommands.argument("room", StringArgumentType.greedyString())
+                            .executes(c -> practise(StringArgumentType.getString(c, "room"))))));
             }
         });
     }
@@ -260,8 +316,10 @@ public final class RoomBests {
         boolean solo = !config.dungeons.secrets.roomBestsSoloOnly || (attempt != null && !attempt.stacked && (!inRoom || aloneInRoom()));
         boolean counts = attempt != null && attempt.foundBefore == 0 && solo && !com.epic60869.sky2m.sim.roomsim.SimState.isActive();
         if (!counts) return new Outcome(ms, previous, false, false, splits);
-        boolean newBest = store.record(key, ms, secrets, System.currentTimeMillis(), splits);
-        if (newBest) save();
+        boolean newBest = store.record(key, ms, secrets, System.currentTimeMillis(), splits, attempt.path);
+        store.addRecent(key, ms);
+        RUN_ROOMS.add(new RunRoom(inRoom ? RoomClears.displayName(room) : room.getName(), ms, previous));
+        save();
         return new Outcome(ms, previous, true, newBest, splits);
     }
 
@@ -325,6 +383,46 @@ public final class RoomBests {
         if (!store.remove(DungeonRoutes.normalize(room.getName()))) return DungeonRoutes.say("No best for " + room.getName() + " yet.", ChatFormatting.RED);
         save();
         return DungeonRoutes.say("Reset your best for " + room.getName() + ".", ChatFormatting.YELLOW);
+    }
+
+    /** The Dungeon Sim's room for a saved best, or null if the sim doesn't have it. */
+    private static String simRoom(String key) {
+        for (String name : com.epic60869.sky2m.sim.roomsim.RoomLibrary.names()) {
+            if (DungeonRoutes.normalize(name).equals(key)) return name;
+        }
+        return null;
+    }
+
+    /** /s2 practice: the rooms worth practising, each with a link to load it in the Dungeon Sim. */
+    private static int showPractice() {
+        if (store.all().isEmpty()) return DungeonRoutes.say("No room bests yet: clear a room with 2 or more secrets on your own first.", ChatFormatting.YELLOW);
+        var chat = Minecraft.getInstance().gui.hud.getChat();
+        chat.addClientSystemMessage(Compat.PREFIX.get().append(Component.literal("Rooms to practise:").withStyle(ChatFormatting.GOLD)));
+        store.practiceOrder().stream().limit(PRACTICE_LISTED).forEach(key -> {
+            Best best = store.get(key);
+            long average = store.recentAverage(key);
+            var line = Component.literal(" " + key + ": ").withStyle(ChatFormatting.YELLOW)
+                .append(Component.literal("best " + RoomClears.timeText(best.ms())).withStyle(ChatFormatting.GREEN));
+            if (average > best.ms()) line.append(Component.literal(", recently " + RoomClears.timeText(average)).withStyle(ChatFormatting.RED));
+            if (simRoom(key) != null) {
+                line.append(Component.literal(" [Practice]").withStyle(style -> style.withColor(ChatFormatting.AQUA).withBold(true)
+                    .withClickEvent(new ClickEvent.RunCommand("/s2 practice " + key))
+                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("Load this room in the Dungeon Sim")))));
+            }
+            chat.addClientSystemMessage(line);
+        });
+        return 1;
+    }
+
+    /** /s2 practice <room>: loads it in the Dungeon Sim. That can't happen while on a server, as the sim is its own world. */
+    private static int practise(String typed) {
+        String room = simRoom(DungeonRoutes.normalize(typed));
+        if (room == null) return DungeonRoutes.say("The Dungeon Sim has no room called " + typed + ".", ChatFormatting.RED);
+        Minecraft mc = Minecraft.getInstance();
+        if (!mc.hasSingleplayerServer()) return DungeonRoutes.say("The Dungeon Sim is its own world: open it from the title screen, then run /s2 practice " + typed + " there.", ChatFormatting.YELLOW);
+        if (!com.epic60869.sky2m.sim.Sky2MSim.enabled()) return DungeonRoutes.say("Turn on Dungeons > Dungeon Sim first.", ChatFormatting.YELLOW);
+        mc.execute(() -> com.epic60869.sky2m.sim.roomsim.SimBuilder.buildSingleRoom(mc, room));
+        return 1;
     }
 
     private static int showAll() {

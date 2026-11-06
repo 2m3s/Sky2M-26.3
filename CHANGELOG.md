@@ -6,6 +6,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Added
 
+- Practice your slow rooms (`/s2 practice`): lists the rooms you lose the most time in, by your recent times against your best, or your slowest per secret until you have some. Click one to load it in the Dungeon Sim.
 - Reroll Protection (Dungeons > Chest Profit, 5M by default): stops you rerolling a reward chest worth at least that much. Hold Ctrl to reroll anyway, and 0 turns it off.
 - Worth A Key (Dungeons > Dungeon Extras > Croesus, on by default): after you've looked inside a run, Croesus marks it `KEY` if a Dungeon Chest Key would pay off, and Hide Claimed Runs keeps it showing.
 - Pace vs PB (Dungeons > Timers, on by default): the split HUD shows how far ahead or behind your best run on that floor you are, like `vs PB: -4.2s`.
