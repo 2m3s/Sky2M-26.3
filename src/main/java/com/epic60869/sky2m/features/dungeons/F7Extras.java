@@ -103,6 +103,8 @@ public final class F7Extras {
     private static boolean maxorDeadTitle, goldorDeadTitle, necronDeadTitle;
     /** Inactive terminal stands by entity id, with the section they're in. */
     private static final Map<Integer, Integer> inactiveTerminals = new HashMap<>();
+    /** Each matched terminal stand's spot (its block), what the box and the waypoint are drawn on. */
+    private static final Map<Integer, BlockPos> terminalSpots = new HashMap<>();
     private static final Map<Integer, Long> terminalFlash = new HashMap<>();
 
     private F7Extras() {}
@@ -153,6 +155,7 @@ public final class F7Extras {
         necronStart = necronDeathHeard = coreOpened = false;
         maxorDeadTitle = goldorDeadTitle = necronDeadTitle = false;
         inactiveTerminals.clear();
+        terminalSpots.clear();
         terminalFlash.clear();
         for (LeapSpot spot : LeapSpot.values()) spot.reset();
     }
@@ -391,7 +394,7 @@ public final class F7Extras {
         }
         if (c.witherTitles) checkBossBars(mc);
         int phase = phase();
-        if (c.terminalBoxes && phase == 3) scanTerminals(mc);
+        if ((c.terminalBoxes || c.terminalWaypoints) && phase == 3) scanTerminals(mc);
         if (c.leapCounter) countLeaps(mc, c);
     }
 
@@ -420,9 +423,15 @@ public final class F7Extras {
             if ("Terminal Active".equals(name)) {
                 inactiveTerminals.remove(stand.getId());
             } else if ("Inactive Terminal".equals(name) && !inactiveTerminals.containsKey(stand.getId())) {
+                // By the column, not the 3D distance to the spot's corner: the old <= 1.5 squared distance to (x, y, z)
+                // missed a stand centred in its block (x + 0.5) that floats a little above it, so nothing matched.
                 for (int s = 0; s < TERMINALS.length; s++) {
                     for (Vec3 pos : TERMINALS[s]) {
-                        if (stand.distanceToSqr(pos) <= 1.5) inactiveTerminals.put(stand.getId(), s + 1);
+                        double dx = stand.getX() - (pos.x + 0.5), dz = stand.getZ() - (pos.z + 0.5);
+                        if (dx * dx + dz * dz <= 2.25 && Math.abs(stand.getY() - pos.y) <= 3) {
+                            inactiveTerminals.put(stand.getId(), s + 1);
+                            terminalSpots.put(stand.getId(), BlockPos.containing(pos));
+                        }
                     }
                 }
             }
@@ -530,7 +539,7 @@ public final class F7Extras {
                 collector.submitOutlinedBox(GATE_BOXES[section - 1], rgb(argb), alpha(argb), 2.5f, c.throughWalls);
             }
         }
-        if (c.terminalBoxes && section > 0) {
+        if ((c.terminalBoxes || c.terminalWaypoints) && section > 0) {
             int argb = argb(c.terminalColour, 0xFF55FFFF);
             long now = System.currentTimeMillis();
             for (Map.Entry<Integer, Integer> e : inactiveTerminals.entrySet()) {
@@ -540,7 +549,17 @@ public final class F7Extras {
                 Long flashed = terminalFlash.get(e.getKey());
                 boolean flash = c.terminalFlash && flashed != null && now - flashed < 250;
                 float[] colour = flash ? new float[]{1f, 0f, 0f} : rgb(argb);
-                collector.submitOutlinedBox(stand.getBoundingBox(), colour, alpha(argb), 2.5f, c.throughWalls);
+                // The terminal's spot, two blocks tall: Hypixel's name stands are markers, whose hitbox is empty, so
+                // boxing the stand itself drew nothing (why Terminal Boxes never showed).
+                BlockPos spot = terminalSpots.getOrDefault(e.getKey(), stand.blockPosition());
+                AABB box = stand.getBoundingBox().getSize() > 0.1 ? stand.getBoundingBox()
+                    : new AABB(spot.getX(), spot.getY(), spot.getZ(), spot.getX() + 1, spot.getY() + 2, spot.getZ() + 1);
+                if (c.terminalBoxes) collector.submitOutlinedBox(box, colour, alpha(argb), 2.5f, c.throughWalls);
+                if (c.terminalWaypoints) {
+                    collector.submitFilledBoxWithBeaconBeam(spot, colour, 0.25f, true);
+                    collector.submitText(Component.literal("Inactive Terminal").withStyle(ChatFormatting.RED),
+                        new Vec3(spot.getX() + 0.5, spot.getY() + 2.5, spot.getZ() + 0.5), true);
+                }
             }
         }
     }

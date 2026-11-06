@@ -702,6 +702,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Terracotta Timer (F6/M6)", desc = "In the Sadan fight, seconds until each terracotta respawns (15 on F6, 12 on M6), over its flower pot.")
         @ConfigEditorBoolean
         @Expose
+        @ConfigOption(name = "Terracotta Timer (F6/M6)", desc = "In the Sadan fight, seconds until each terracotta respawns (10, as the wiki has it), over its flower pot.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1301)
         public boolean terracottaTimer = true;
@@ -1029,12 +1030,16 @@ public final class FeatureConfigs {
         public String gateColour = "0:255:255:85:255";
 
         @Expose
-        @ConfigOption(name = "Terminal Boxes", desc = "Box the hitbox of each inactive terminal in your P3 section, using the terminal's real hitbox.")
+        @ConfigOption(name = "Terminal Boxes", desc = "Box each inactive terminal in your P3 section.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 3012)
-        public boolean terminalBoxes = false;
+        public boolean terminalBoxes = true;
+
         @Expose
+        @ConfigOption(name = "Terminal Waypoints", desc = "A beacon beam and an \"Inactive Terminal\" label on each inactive terminal in your P3 section, through walls.")
         @ConfigEditorBoolean
+        @ConfigAccordionId(id = 3012)
+        public boolean terminalWaypoints = true;
 
         @Expose
         @ConfigOption(name = "Terminal Box Colour", desc = "")
