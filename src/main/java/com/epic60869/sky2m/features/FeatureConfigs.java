@@ -4438,13 +4438,29 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Announce", desc = "Say in chat (only you see it) that it's going to requeue.")
         @ConfigEditorBoolean
         public boolean announce = true;
+    }
+
+    /** /s2 tracker, /s2 hour and /s2 rnglist (from the Sky2M Personal add-on). */
+    public static final class Trackers {
         @Expose
+        @ConfigOption(name = "Drop Tracker", desc = "/s2 tracker: tabs for Dungeons (the loot of every dungeon chest you open from when this is on, with what the chests cost and your profit), Slayer, Fishing, Diana, Mining, Farming and Foraging (from Sky2M's trackers). Most expensive first, RNG drops only or everything, with a search bar. /s2 tracker reset clears the Dungeons tab (asks in chat). Dungeons needs Chest History on.")
         @ConfigEditorBoolean
+        public boolean dropTracker = true;
+
         @Expose
+        @ConfigOption(name = "Dungeon Profit per Hour", desc = "/s2 hour: your dungeon profit per hour on a floor at your run speed, from Chest History and Run History, with and without the RNG meter, and how long a boss collection target takes. /s2 hour 1:20 m1 says it in chat.")
         @ConfigEditorBoolean
+        public boolean profitHour = true;
+
         @Expose
+        @ConfigOption(name = "RNG Drop List", desc = "/s2 rnglist: every RNG drop (slayer, Catacombs, Master Mode and more), crossed off by itself when you get one, or ticked by hand. /s2 rnglist test checks it against every drop message.")
         @ConfigEditorBoolean
+        public boolean rngList = true;
+
+        /** /s2 hour's screen: the floor (index) and boxes when it closed, -1 = empty. Not shown in the settings. */
         @Expose
+    }
+
     /** Odin's and NoammAddons' secrets per teammate at the end of a run. */
     public static final class TeamSecrets {
         @Expose
@@ -4705,6 +4721,9 @@ public final class FeatureConfigs {
     public static final class ProfitTrackers {
         @Expose
         @Accordion
+        @ConfigOption(name = "Drop Tracker, Profit per Hour & RNG List", desc = "/s2 tracker: your RNG drops by category, most expensive first. /s2 hour: your dungeon profit per hour. /s2 rnglist: every RNG drop, crossed off as you get it.")
+        public Trackers trackers = new Trackers();
+
         @Expose
         @Accordion
         @ConfigOption(name = "Session Tracker", desc = "/s2 session: your Diana, Mining and Farming this game session, with a Total of all three, until you restart the game.")

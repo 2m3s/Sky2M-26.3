@@ -228,6 +228,8 @@ public final class Sky2MMod implements ClientModInitializer {
         Sky2MPlayerNotes.init(); lap("Sky2MPlayerNotes.init");
         Sky2MAliases.init(); lap("Sky2MAliases.init");
         com.epic60869.sky2m.features.combat.RngCommand.init(); lap("RngCommand.init");
+        // /s2 hour, /s2 tracker and /s2 rnglist, moved here from the Sky2M Personal add-on.
+        com.epic60869.sky2m.features.tracker.DungeonProfitHour.init(); lap("DungeonProfitHour.init");
         com.epic60869.sky2m.features.misc.system.KeybindSheetScreen.register(); lap("KeybindSheetScreen.register");
         com.epic60869.sky2m.features.misc.social.ScreenshotGallery.register(); lap("ScreenshotGallery.register");
         com.epic60869.sky2m.features.core.Sky2MPerfScreen.register(); lap("Sky2MPerfScreen.register");
