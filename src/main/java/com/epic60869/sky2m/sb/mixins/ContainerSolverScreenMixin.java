@@ -43,6 +43,12 @@ public abstract class ContainerSolverScreenMixin {
 			ci.cancel();
 			return;
 		}
+		// Sky2M: Croesus's Worth A Key notes which run is being opened; Reroll Protection stops rerolling a valuable chest.
+		com.epic60869.sky2m.features.dungeons.extras.CroesusOverlay.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot);
+		if (com.epic60869.sky2m.features.dungeons.DungeonChestProfit.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot)) {
+			ci.cancel();
+			return;
+		}
 		// Sky2M: Auction Price Guard stops listing far too cheap or buying far too dear until you click again.
 		if (com.epic60869.sky2m.features.misc.items.AuctionGuard.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot)) {
 			ci.cancel();

@@ -200,6 +200,51 @@ public final class CroesusOverlay {
 
     // ------------------------------------------------------------------------------------------------ reading Croesus
 
+    /** The run last clicked in Croesus's list, whose chests the menu now open shows, and the runs known to be worth a key. */
+    private static int lastClickedRun = -1;
+    private static final Map<Integer, Boolean> KEY_WORTH = new HashMap<>();
+    private static net.minecraft.world.level.Level keyLevel;
+
+    /** Whether a key on a chest with this profit pays off. Public for the game test. */
+    public static boolean worthKey(double chestValue, double keyPrice) {
+        return keyPrice > 0 && chestValue - keyPrice > 0;
+    }
+
+    /** What's known is only good until you change world: new runs move the list along. */
+    private static Map<Integer, Boolean> keyWorth() {
+        var level = Minecraft.getInstance().level;
+        if (level != keyLevel) {
+            keyLevel = level;
+            KEY_WORTH.clear();
+            lastClickedRun = -1;
+        }
+        return KEY_WORTH;
+    }
+
+    private static int page(String title) {
+        Matcher croesus = CROESUS.matcher(title);
+        return !croesus.matches() || croesus.group(1) == null ? 0 : Integer.parseInt(croesus.group(1)) - 1;
+    }
+
+    /** From the container click mixin: remembers which run is being opened. */
+    public static void onSlotClicked(AbstractContainerScreen<?> screen, Slot slot) {
+        if (slot == null || slot.container instanceof Inventory || !slot.hasItem()) return;
+        String title = ChatFormatting.stripFormatting(screen.getTitle().getString()).trim();
+        if (!CROESUS.matcher(title).matches()) return;
+        keyWorth();
+        lastClickedRun = runIndex(slot.index, page(title));
+    }
+
+    /** A run's chest menu is open: what its second best chest would make with a key ({@link DungeonChestProfit}). */
+    public static void noteKeyValue(double secondChestValue, double keyPrice) {
+        Map<Integer, Boolean> worth = keyWorth();
+        if (lastClickedRun >= 0) worth.put(lastClickedRun, worthKey(secondChestValue, keyPrice));
+    }
+
+    private static boolean markedForKey(int run, DungeonExtras.Croesus config) {
+        return config.worthKey && run >= 0 && Boolean.TRUE.equals(keyWorth().get(run));
+    }
+
     private static int runIndex(int slot, int page) {
         int index;
         if (slot >= 10 && slot <= 16) index = slot - 10;
@@ -215,6 +260,7 @@ public final class CroesusOverlay {
         if (slots.size() <= FRONT_ARROW_SLOT) return;
         Map<Integer, String> noLabels = Map.of();
         Set<Integer> checks = new HashSet<>();
+        Set<Integer> keyMarks = new HashSet<>();
         boolean empty = ChatFormatting.stripFormatting(slots.get(EMPTY_SLOT).getItem().getHoverName().getString()).equals("No treasures!");
         if (empty) {
             synchronized (CroesusOverlay.class) {
@@ -256,6 +302,7 @@ public final class CroesusOverlay {
                     changed = true;
                 }
                 if (kismet && config.kismetCheck) checks.add(slot.index);
+                if (state != KEY_USED && markedForKey(index, config)) keyMarks.add(slot.index);
             }
             boolean lastPage = !slots.get(FRONT_ARROW_SLOT).getItem().is(Items.ARROW);
             if (lastPage) {
@@ -268,6 +315,7 @@ public final class CroesusOverlay {
             if (changed) save();
         }
         DungeonChestProfit.setExtras(noLabels, checks);
+        DungeonChestProfit.setKeyMarks(keyMarks);
     }
 
     private static int state(ItemStack stack) {
@@ -287,6 +335,7 @@ public final class CroesusOverlay {
     /** The screen the answers below are for, whether it's Croesus's list, and each run's answer (lore is only read once). */
     private static java.lang.ref.WeakReference<Object> hideScreen = new java.lang.ref.WeakReference<>(null);
     private static boolean hideScreenIsCroesus;
+    private static int hidePage;
     private static final Map<ItemStack, Boolean> HIDE_ANSWERS = new java.util.IdentityHashMap<>();
 
     /**
@@ -300,12 +349,14 @@ public final class CroesusOverlay {
         if (!mc.isSameThread() || !(mc.gui.screen() instanceof AbstractContainerScreen<?> screen)) return false;
         if (hideScreen.get() != screen) {
             hideScreen = new java.lang.ref.WeakReference<>(screen);
-            hideScreenIsCroesus = CROESUS.matcher(ChatFormatting.stripFormatting(screen.getTitle().getString()).trim()).matches();
+            String title = ChatFormatting.stripFormatting(screen.getTitle().getString()).trim();
+            hideScreenIsCroesus = CROESUS.matcher(title).matches();
+            hidePage = page(title);
             HIDE_ANSWERS.clear();
         }
         if (!hideScreenIsCroesus || slot.container instanceof Inventory || runIndex(slot.index, 0) < 0) return false;
         ItemStack stack = slot.getItem();
-        if (stack.isEmpty()) return false;
+        if (stack.isEmpty() || markedForKey(runIndex(slot.index, hidePage), c)) return false;
         Boolean answer = HIDE_ANSWERS.get(stack);
         if (answer == null) {
             if (HIDE_ANSWERS.size() > 256) HIDE_ANSWERS.clear();

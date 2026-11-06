@@ -67,8 +67,34 @@ public final class DungeonChestProfit {
     /** Labels at a slot's bottom right and green checks at its top left from Dungeons > Dungeon Extras (Croesus Overlay). */
     private static Map<Integer, String> extraLabels = Map.of();
     private static java.util.Set<Integer> extraChecks = java.util.Set.of();
+    /** Croesus runs a Dungeon Chest Key would pay off on (Worth A Key). */
+    private static java.util.Set<Integer> keyMarks = java.util.Set.of();
 
     private DungeonChestProfit() {}
+
+    public static void setKeyMarks(java.util.Set<Integer> marks) {
+        keyMarks = marks;
+    }
+
+    /** Reroll Protection, from the container click mixin: true stops the click. */
+    public static boolean onSlotClicked(AbstractContainerScreen<?> screen, Slot slot) {
+        FeatureConfigs.ChestProfit config = config();
+        if (config == null || config.rerollProtection <= 0 || slot == null || !slot.hasItem() || !isInLootArea()) return false;
+        if (!isChest(title(screen))) return false;
+        ItemStack stack = slot.getItem();
+        if (!"Reroll Chest".equals(ChatFormatting.stripFormatting(stack.getHoverName().getString()))) return false;
+        if (!lore(stack).contains("Click to reroll this chest!")) return false;
+        double value = rewardChestValue(screen);
+        if (!blockReroll(value, config.rerollProtection, Minecraft.getInstance().hasControlDown())) return false;
+        com.epic60869.sky2m.features.core.Sky2MAlerts.title(Component.literal("Reroll blocked").withStyle(ChatFormatting.RED),
+            Component.literal("This chest is worth " + separator(value) + ". Hold Ctrl to reroll.").withStyle(ChatFormatting.GRAY));
+        return true;
+    }
+
+    /** Whether to stop a reroll of a chest with this profit. Public for the game test. */
+    public static boolean blockReroll(double value, double threshold, boolean ctrl) {
+        return threshold > 0 && value >= threshold && !ctrl;
+    }
 
     /** Croesus Overlay: Kismet Feather counts on the Reroll Chest and checks on runs a Kismet Feather was used on. */
     public static void setExtras(Map<Integer, String> labels, java.util.Set<Integer> checks) {
@@ -126,6 +152,7 @@ public final class DungeonChestProfit {
         if (!backgrounds.isEmpty()) backgrounds = Map.of();
         if (!labels.isEmpty()) labels = Map.of();
         if (!chestValues.isEmpty()) chestValues = Map.of();
+        if (!keyMarks.isEmpty()) keyMarks = java.util.Set.of();
     }
 
     private static boolean isInLootArea() {
@@ -347,6 +374,7 @@ public final class DungeonChestProfit {
         if (chests.size() >= 2) {
             Map.Entry<Integer, Double> second = chests.get(1);
             double keyPrice = Sky2MPriceTooltip.price("DUNGEON_CHEST_KEY", FeatureConfigs.ProfitPriceSource.SELL_ORDER);
+            com.epic60869.sky2m.features.dungeons.extras.CroesusOverlay.noteKeyValue(second.getValue(), keyPrice);
             if (keyPrice > 0 && second.getValue() - keyPrice > 0) colours.put(second.getKey(), colour(config.profitKeyColor, 0x8055FFFF));
             else if (second.getValue() > 0) colours.put(second.getKey(), colour(config.profitSecondaryColor, 0x80FFFF55));
         }
@@ -364,8 +392,9 @@ public final class DungeonChestProfit {
 
     /** Over the slot's item, like a stack count (Sky2MSlotBackgroundMixin). */
     public static void renderSlotLabel(GuiGraphicsExtractor graphics, Slot slot) {
-        if ((labels.isEmpty() && extraLabels.isEmpty() && extraChecks.isEmpty()) || slot.container instanceof Inventory) return;
+        if ((labels.isEmpty() && extraLabels.isEmpty() && extraChecks.isEmpty() && keyMarks.isEmpty()) || slot.container instanceof Inventory) return;
         var font = Minecraft.getInstance().font;
+        if (keyMarks.contains(slot.index)) graphics.text(font, "KEY", slot.x + 17 - font.width("KEY"), slot.y - 1, 0xFF55FF55, true);
         String label = labels.get(slot.index);
         if (label == null) label = extraLabels.get(slot.index);
         if (label != null) graphics.text(font, label, slot.x + 17 - font.width(label), slot.y + 9, 0xFFFFFFFF, true);

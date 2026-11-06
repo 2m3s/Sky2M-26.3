@@ -265,6 +265,11 @@ public final class DungeonExtras {
         @ConfigOption(name = "Keep Runs With A Key Left", desc = "With Hide Claimed Runs on, keep showing opened runs you could still use a Dungeon Chest Key on.")
         @ConfigEditorBoolean
         public boolean keepKeyRuns = false;
+
+        @Expose
+        @ConfigOption(name = "Worth A Key", desc = "After you've looked inside a run, mark it KEY if a Dungeon Chest Key on its second best chest would pay off. Hide Claimed Runs keeps a marked run showing. Forgotten when you change world.")
+        @ConfigEditorBoolean
+        public boolean worthKey = true;
     }
 
     public static final class Clutter {
