@@ -64,6 +64,9 @@ public final class ScoreCalculator {
     private static boolean mimicKilled;
     private static boolean princeKilled;
     private static int deathCount;
+    /** Who died first this run, and whether they have a Legendary Spirit pet (null while that isn't known yet). */
+    private static String firstDeath;
+    private static volatile Boolean firstDeathSpirit;
     private static int foundSecrets;
     private static int cryptsCount;
     private static double secretPercentage;
@@ -91,6 +94,13 @@ public final class ScoreCalculator {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 5 != 0 || !Sky2MLocation.inDungeon()) return;
             update();
+            if (ticks % 100 == 0 && !simActive()) {
+                // Teammates' Spirit pets looked up ahead of time, so a first death is scored at once (SpiritPetCheck).
+                var players = com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonPlayerManager.getPlayers();
+                if (players != null) {
+                    List<String> names = new ArrayList<>();
+                    for (var p : players) if (p != null) names.add(p.name());
+                    SpiritPetCheck.prefetch(names);
                 }
             }
         });
@@ -105,6 +115,8 @@ public final class ScoreCalculator {
         mimicKilled = false;
         princeKilled = false;
         deathCount = 0;
+        firstDeath = null;
+        firstDeathSpirit = null;
         foundSecrets = 0;
         cryptsCount = 0;
         secretPercentage = 0;
@@ -157,20 +169,46 @@ public final class ScoreCalculator {
     }
 
     /**
+     * A death line. The first one of the run decides the Spirit pet rule: it costs 1 skill point instead of 2 when that
+     * player has a Legendary Spirit pet in their pets menu (the wiki's Dungeon Score page; {@link SpiritPetCheck}).
+     * {@code who} is null for "You were ...".
      */
+    private static void onDeath(String who) {
+        deathCount++;
+        if (deathCount != 1) return;
+        String name = who != null ? who : Minecraft.getInstance().getUser().getName();
+        firstDeath = name;
+        firstDeathSpirit = SpiritPetCheck.known(name);
+        if (firstDeathSpirit == null) {
+            SpiritPetCheck.lookup(name).thenAccept(has -> {
+                if (name.equals(firstDeath)) {
+                    firstDeathSpirit = has;
+                    Minecraft.getInstance().execute(ScoreCalculator::recalculate);
                 }
+            });
         }
     }
 
     /**
+     * Skill points the deaths cost: 2 each, 1 for the first when its player has a Legendary Spirit pet. Until that's
+     * known ({@code firstSpirit} null) the first counts 2, so the score never reads higher than it is. Public for the
+     * game test.
      */
+    public static int deathPenalty(int deaths, Boolean firstSpirit) {
+        return Math.max(0, deaths * 2 - (deaths > 0 && Boolean.TRUE.equals(firstSpirit) ? 1 : 0));
     }
 
+    /** The run's first death and whether the Spirit pet rule applies to it, for the score HUD and the game test. */
+    public static String firstDeath() { return firstDeath; }
+    public static Boolean firstDeathSpirit() { return firstDeathSpirit; }
     private static void onChat(String text) {
         if (!Sky2MLocation.inDungeon()) return;
         if (text.equals("[NPC] Mort: Here, I found this map when I first entered the dungeon.")) started = true;
         else if (text.equals("[BOSS] The Watcher: You have proven yourself. You may pass.")) watcherCleared = true;
         else if (text.startsWith(" ☠ ") && !text.contains("reconnected") && DEATH.matcher(text).matches()) deathCount++;
+        else if (text.startsWith(" ☠ ") && !text.contains("reconnected")) {
+            Matcher death = DEATH.matcher(text);
+            if (death.matches()) onDeath(death.group(1));
         }
 
         String lower = text.toLowerCase(Locale.ROOT);
@@ -316,7 +354,7 @@ public final class ScoreCalculator {
         int roomScore = (int) Math.max(0, Math.min(60, roomRatio * 60.0));
         int skillRooms = (int) Math.max(0, Math.min(80, Math.floor(roomRatio * 80)));
         int puzzlePenalty = Math.max(0, maxPuzzles - puzzlesDone) * 10;
-        int deathPenalty = Math.max(0, deathCount * 2 - 1);
+        int deathPenalty = simActive() ? com.epic60869.sky2m.sim.roomsim.SimScore.deathPenalty() : deathPenalty(deathCount, firstDeathSpirit);
 
         score = secretsScore + roomScore + Math.max(20, Math.min(100, 20 + skillRooms - puzzlePenalty - deathPenalty)) + bonus + speed;
 

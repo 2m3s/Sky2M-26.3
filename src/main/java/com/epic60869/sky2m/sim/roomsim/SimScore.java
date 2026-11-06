@@ -54,6 +54,7 @@ public final class SimScore {
     private static int roomsCleared;
     private static int roomsTotal;
     private static int deaths;
+    /** The first death of the run was by a player with a Legendary Spirit pet: it costs one point instead of two. */
     private static boolean spiritDeath;
     private static boolean princeKilled;
     private static int puzzleFails;
@@ -177,6 +178,8 @@ public final class SimScore {
     }
 
     /**
+     * A death of the run. {@code spirit}: it was the first death, by a player with a Legendary Spirit pet, so it costs one skill
+     * point instead of two (Hypixel's rule; {@code SimClassKit.hasSpiritForScore}).
      */
     public static synchronized void died(boolean spirit) {
         if (spirit && deaths == 0) {

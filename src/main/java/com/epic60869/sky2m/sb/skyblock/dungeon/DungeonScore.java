@@ -455,7 +455,9 @@ public class DungeonScore {
 			if (s.equals("You")) return Minecraft.getInstance().getUser().getName(); //This will be wrong if the dead player is called 'You' but that's unlikely
 			else return s;
 		});
-		ProfileUtils.fetchProfileMember(whoDied).thenAccept(player -> firstDeathHasSpiritPet = hasSpiritPet(player, whoDied));
+		// Sky2M's own profile lookup (Skyblocker's ProfileUtils is a stub here that always failed, so the first death
+		// always cost 2 even with a Legendary Spirit pet).
+		com.epic60869.sky2m.features.dungeons.SpiritPetCheck.lookup(whoDied).thenAccept(has -> firstDeathHasSpiritPet = has);
 	}
 
 	private static void checkMessageForWatcher(String message) {
