@@ -246,6 +246,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Fix Door Highlight showing the wrong colour when a player with an emblem before their name picks up a key or opens a door.
 - Fix Key & Door Alerts missing keys and doors from players with an emblem before their name, like "🐟 2m3s opened a WITHER door!".
 - Fix the Mimic not being detected when it's killed very fast with a Terminator: its "Mimic 0❤" nametag now counts, for the Mimic Message, score and Kill Titles.
+- Fix the Bat Message spamming "Bat dead!" and adding to the score when many bats vanish near you at once, such as at the start of a run: more than 3 going within a second no longer count as your kills.
 - Fix the Bat Message and score missing bats killed with a Hyperion or other Wither blade: a bat dying near you just after you use the blade now says "Bat dead!" and counts +1, for each bat, unless Hypixel or a teammate already announced it.
 - Fix Team Secrets losing the run's message and logging an error when you requeued or changed world while it was loading everyone's secrets.
 - Fix the Mimic not being detected when it dies the moment it spawns, such as a bow shot as the chest opens: the Mimic Message, score and Kill Titles now count it.
