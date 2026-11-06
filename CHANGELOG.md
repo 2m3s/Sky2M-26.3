@@ -86,6 +86,8 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
+- Fix Door Highlight showing the wrong colour when a player with an emblem before their name picks up a key or opens a door.
+- Fix Key & Door Alerts missing keys and doors from players with an emblem before their name, like "🐟 2m3s opened a WITHER door!".
 - Fix the Mimic not being detected when it's killed very fast with a Terminator: its "Mimic 0❤" nametag now counts, for the Mimic Message, score and Kill Titles.
 - Fix the Mimic not being detected when it dies the moment it spawns, such as a bow shot as the chest opens: the Mimic Message, score and Kill Titles now count it.
 - Fix protected items (/s2 protect) being blocked in menus you put items into: the Wardrobe when Hypixel titles it "(1/2) Armor Sets", Kat's Pet Sitter, the Composter, the Fossil Excavator, the Gemstone Grinder, the Runic Pedestal, shard and attribute fusion, the Hunting Box, Personal Compactor and Deletor, island furnaces and brewing stands, and rod parts. NPC shops, the Bazaar, auction creation and player trades still block them.

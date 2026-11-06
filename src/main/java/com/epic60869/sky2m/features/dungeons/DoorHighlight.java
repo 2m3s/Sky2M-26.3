@@ -35,10 +35,12 @@ import java.util.regex.Pattern;
  * Hypixel's dungeon map draws them (when a room next to them is opened), like Odin's map scan. Drawn through walls.
  */
 public final class DoorHighlight {
-    private static final Pattern WITHER_KEY_OBTAINED = Pattern.compile("^(\\[[^]]*?])? ?(\\w{1,16}) has obtained Wither Key!?$");
+    /** A rank and an emblem can come before the name: "[MVP++] 🐟 2m3s has obtained Wither Key!". */
+    private static final String WHO = "^(?:\\[[^]]*?] ?)?(?:[^\\w\\s\\[]+ )?(\\w{1,16})";
+    private static final Pattern WITHER_KEY_OBTAINED = Pattern.compile(WHO + " has obtained Wither Key!?$");
     private static final Pattern WITHER_KEY_PICKED_UP = Pattern.compile("^A Wither Key was picked up!$");
-    private static final Pattern WITHER_DOOR_OPENED = Pattern.compile("^(\\[[^]]*?])? ?(\\w{1,16}) opened a WITHER door!$");
-    private static final Pattern BLOOD_KEY_OBTAINED = Pattern.compile("^(\\[[^]]*?])? ?(\\w{1,16}) has obtained Blood Key!$");
+    private static final Pattern WITHER_DOOR_OPENED = Pattern.compile(WHO + " opened a WITHER door!$");
+    private static final Pattern BLOOD_KEY_OBTAINED = Pattern.compile(WHO + " has obtained Blood Key!$");
     private static final Pattern BLOOD_KEY_PICKED_UP = Pattern.compile("^A Blood Key was picked up!$");
     private static final float[] LOCKED = {1f, 0.33f, 0.33f};
     private static final float[] OPENABLE = {0.33f, 1f, 0.33f};
