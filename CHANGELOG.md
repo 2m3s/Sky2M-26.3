@@ -214,6 +214,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Fix slayer kill times not reaching the /s2 leaderboard: a boss first seen as it died could save an impossible time (a 0.03s Sven) as your PB, and no real kill could ever beat it to be sent. Kills are now timed from Hypixel's "Slay the boss!" sidebar line, impossibly fast times aren't saved, and the impossible PBs you already have are removed so your real times are sent again.
 - Fix Dungeon Sim party guests being left in invisible ghost blocks when the host generates a new map: everyone now waits in the holding area and lands in the new map together.
 - Fix starting the Dungeon Sim below full health: you join, and go through the gate at the start of a run, at full health and mana in your gear.
+- Fix Mort being pulled around by fishing rods in the Dungeon Sim.
 - Fix Storm staying at 1 HP and the fight never moving on to Goldor when his killing crush landed after he'd already been beaten down.
 - Fix /boss softlocking on Floors 1-5 in the Dungeon Sim: you started behind the closed boss door; you now start just past it.
 - Fix Dungeon Sim ghosts damaging bosses and mobs with arrows and abilities.
