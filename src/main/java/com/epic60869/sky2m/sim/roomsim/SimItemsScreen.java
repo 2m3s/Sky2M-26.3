@@ -122,7 +122,7 @@ public final class SimItemsScreen extends Screen {
         for (int i = 0; i < entries.size(); i++) {
             int cx = gridX + (i % COLUMNS) * (CELL + PAD);
             int cy = gridY + (i / COLUMNS) * (CELL + PAD);
-            g.fill(cx, cy, cx + CELL, cy + CELL, i == hovered ? 0xFF3A2A12 : 0xFF141414);
+            g.fill(cx, cy, cx + CELL, cy + CELL, i == hovered ? com.epic60869.sky2m.gui.Sky2MGuiStyle.ROW_HOVER : 0xFF141414);
             if (i == hovered) {
                 g.outline(cx, cy, CELL, CELL, ProfitPanels.ACCENT);
             }
@@ -132,7 +132,7 @@ public final class SimItemsScreen extends Screen {
 
         int allY = panelY + panelH - 28;
         boolean overAll = isOverGiveAll(mouseX, mouseY);
-        g.fill(panelX + 10, allY, panelX + panelW - 10, allY + 18, overAll ? 0xFF3A2A12 : 0xFF141414);
+        g.fill(panelX + 10, allY, panelX + panelW - 10, allY + 18, overAll ? com.epic60869.sky2m.gui.Sky2MGuiStyle.ROW_HOVER : 0xFF141414);
         g.outline(panelX + 10, allY, panelW - 20, 18, overAll ? ProfitPanels.ACCENT : ProfitPanels.BORDER);
         g.centeredText(this.font, "Give me everything", panelX + panelW / 2, allY + 5,
                 overAll ? ProfitPanels.ACCENT : ProfitPanels.TEXT);

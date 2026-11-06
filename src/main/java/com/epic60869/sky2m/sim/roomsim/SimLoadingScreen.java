@@ -63,21 +63,23 @@ public final class SimLoadingScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        g.fill(0, 0, this.width, this.height, 0xFF0B0B0B);
+        // Opaque under the frame's dimmed backdrop: the world behind is the one being built.
         g.fill(0, 0, this.width, this.height, 0xFF101010);
 
         int panelW = Math.min(this.width - 40, 420);
         int panelH = 110;
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, ProfitPanels.PANEL_BG);
-        g.outline(panelX, panelY, panelW, panelH, ProfitPanels.BORDER);
+        // The sim's shared frame (ProfitPanels.frame), like its other screens.
+        ProfitPanels.frame(g, this.font, this.width, this.height, panelX, panelY, panelW, panelH, 26, "Loading");
 
         if (!what.isEmpty()) {
-            g.centeredText(this.font, what, panelX + panelW / 2, panelY + 38, ProfitPanels.TEXT);
+            g.centeredText(this.font, this.font.plainSubstrByWidth(what, panelW - 20), panelX + panelW / 2,
+                    panelY + 36, ProfitPanels.TEXT);
         }
         if (!detail.isEmpty()) {
-            g.centeredText(this.font, detail, panelX + panelW / 2, panelY + 52, ProfitPanels.DIM);
+            g.centeredText(this.font, this.font.plainSubstrByWidth(detail, panelW - 20), panelX + panelW / 2,
+                    panelY + 50, ProfitPanels.DIM);
         }
 
         // A real bar. killer560 (2026-09-28): "instead of the moving bar at the bottom [...] make an acttual
@@ -89,7 +91,7 @@ public final class SimLoadingScreen extends Screen {
         int barX = panelX + 20;
         int barW = panelW - 40;
         int barY = panelY + panelH - 30;
-        g.fill(barX, barY, barX + barW, barY + 6, 0xFF1A1A1A);
+        g.fill(barX, barY, barX + barW, barY + 6, ProfitPanels.INNER_BG);
         float progress = SimBuildQueue.progress();
         int filled = Math.max(0, Math.min(barW, Math.round(barW * progress)));
         if (filled > 0) {

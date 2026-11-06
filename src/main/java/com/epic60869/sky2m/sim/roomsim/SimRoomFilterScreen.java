@@ -34,7 +34,7 @@ import java.util.Map;
  * <p>Drawn in the mod's own style, not the mockup's (killer560, 2026-10-07: "make sure that the filter section for
  * creating the map is in our mods style and not a direct copy"): the panel, header bar, title and "N of M rooms" are
  * Design a Map's ({@link SimMapEditorScreen}), with {@link ProfitPanels}' colours; a chip is a
- * {@link SettingsButtonWidget} box, and a chosen one has the amber border and a §6 label, the way the mod marks the
+ * {@link SettingsButtonWidget} box, and a chosen one has the purple border and a purple label, the way the mod marks the
  * chosen value everywhere else; Clear all and Done are plain {@link SettingsButtonWidget}s.
  *
  * <p>The chips flow: they wrap onto as many lines as the width needs, and on a narrow window the labels go on a line
@@ -335,8 +335,8 @@ public class SimRoomFilterScreen extends Screen {
 
     /**
      * One chip: a toggle in a row, drawn as a {@link SettingsButtonWidget} box. Its message is the bare label, so a
-     * test can find it by name; {@link #row()} says which row it is in. The colour is added only when drawing: §6 when
-     * chosen, §8 when the row is switched off, as the mod's tabs colour a chosen or disabled value.
+     * test can find it by name; {@link #row()} says which row it is in. The colour is added only when drawing: dark
+     * purple when chosen, grey when the row is switched off (the button is light, so its labels are dark).
      */
     public static final class Chip extends AbstractWidget {
         private final String label;
@@ -370,6 +370,8 @@ public class SimRoomFilterScreen extends Screen {
             String code = !active ? "§8" : selected ? "§6" : "";
             g.centeredText(font, Component.literal(code + shown), getX() + getWidth() / 2,
                     getY() + (getHeight() - 8) / 2, 0xFFFFFFFF);
+            g.text(font, shown, getX() + (getWidth() - font.width(shown)) / 2, getY() + (getHeight() - 8) / 2,
+                    colour, false);
         }
 
         @Override

@@ -107,6 +107,10 @@ public final class Sky2MGuiStyle {
         g.text(font, fit, x + (w - font.width(fit)) / 2, y + (h - 8) / 2, BUTTON_TEXT, false);
     }
 
+    /** {@link #button}'s box without a label, for a widget that draws its own (coloured or disabled) text on it. */
+    public static void buttonFrame(GuiGraphicsExtractor g, int x, int y, int w, int h, boolean hover) {
+    /**
+     */
     /** The width a {@link #button} needs for {@code text}. */
     public static int buttonWidth(Font font, String text) {
         return Math.max(48, font.width(text) + 12);

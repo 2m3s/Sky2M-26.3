@@ -945,7 +945,7 @@ public class SimMapEditorScreen extends Screen {
             boolean isSelected = panel == Panel.ROOMS && name.equals(selected);
             boolean hover = mouseX >= listX && mouseX < listX + listW && mouseY >= y && mouseY < y + ROW_H;
             if (isSelected || hover) {
-                g.fill(listX, y, listX + listW, y + ROW_H, isSelected ? 0xFF241A0E : 0xFF141414);
+                g.fill(listX, y, listX + listW, y + ROW_H, isSelected ? 0xFF2C2440 : com.epic60869.sky2m.gui.Sky2MGuiStyle.ROW_HOVER);
             }
             if (panel == Panel.MAPS) {
                 Map<Integer, String> saved = SimMapPresets.get(name);

@@ -106,12 +106,11 @@ public final class SettingsButtonWidget extends AbstractWidget {
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         int x0 = getX();
         int y0 = getY();
-        int bg = primary ? (isHovered ? PRIMARY_BG_HOVER : PRIMARY_BG) : (isHovered ? BG_HOVER : BG);
-        int border = primary ? (isHovered ? PRIMARY_BORDER_HOVER : PRIMARY_BORDER) : (isHovered ? BORDER_HOVER : BORDER);
-        graphics.fill(x0, y0, x0 + getWidth(), y0 + getHeight(), faded(bg));
-        graphics.outline(x0, y0, getWidth(), getHeight(), faded(border));
-        graphics.centeredText(Minecraft.getInstance().font, getMessage(), x0 + getWidth() / 2,
-                y0 + (getHeight() - 8) / 2, faded(TEXT));
+        var font = Minecraft.getInstance().font;
+        if (!active) {
+            text = net.minecraft.ChatFormatting.stripFormatting(text);
+        int labelX = x0 + (getWidth() - font.width(text)) / 2;
+        int labelY = y0 + (getHeight() - 8) / 2;
         if (this.alpha < 1f) {
             return;
             boolean selected) {

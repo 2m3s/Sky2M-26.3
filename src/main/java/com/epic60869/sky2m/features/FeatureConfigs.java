@@ -6373,7 +6373,7 @@ public final class FeatureConfigs {
         public Runnable open = com.epic60869.sky2m.sim.Sky2MSim::openMenu;
 
         @Expose
-        @ConfigOption(name = "Title Screen Button", desc = "A \"Dungeon Sim\" button on the title screen, in the top left, that opens the Sim's menu.")
+        @ConfigOption(name = "Title Screen Button", desc = "A \"Dungeon Sim\" button on the title screen, in the top left, that opens the Sim's menu. Hidden while the Dungeon Sim is off (Enabled above).")
         @ConfigEditorBoolean
         public boolean titleButton = false;
 
