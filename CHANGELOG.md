@@ -121,6 +121,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
 - Chroma enchants now flow as one smooth, softer rainbow across the whole tooltip instead of a full rainbow squeezed into each enchant name.
 - /boss in the Dungeon Sim switches the floor to the boss's (keeping Master Mode), so /boss storm on an F1 map shows F7 on the scoreboard.
+- Dungeon Sim items no longer lose durability (fishing rods, weapons and armour).
 - The Dungeon Sim's F7/M7 boss room is now Stradivarius Violin's M7 Practice Map (MIT License): it has the real west side of P3 section 3 (its terminals and the Arrow Align wall) instead of a rebuilt approximation.
 - Water and lava no longer flow in the Dungeon Sim, so breaking a block beside them does not pour them into the room.
 - Dungeon Sim class presets come with a stack of arrows.
