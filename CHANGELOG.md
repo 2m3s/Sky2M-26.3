@@ -248,6 +248,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Fixed
 
+- Fix `/s2 hour`, `/s2 hour collec` and the Run Time box in `/s2 catacalc` averaging your oldest 20 runs of a floor instead of your newest 20, for run time and score.
 - Fix Room Secret Time and Room Personal Bests skipping a room when you got all its secrets and left before it went green. The time now stops at your last secret, not when the map shows green, so it no longer includes the map's delay.
 - Fix Team Secrets showing 0 rooms for everyone, and Fairy Door Highlight not showing, while Dungeon Map is off.
 - Fix Door Highlight showing the wrong colour when a player with an emblem before their name picks up a key or opens a door.

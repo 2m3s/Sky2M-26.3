@@ -286,18 +286,25 @@ public final class DungeonProfitHour {
         return null;
     }
 
-    /** Your average time for a completed run on the floor (last 20, from Run History) in seconds, or -1. */
+    /** Your average time for a completed run on the floor (newest 20, from Run History) in seconds, or -1. */
     public static double averageRunSeconds(String floor, JsonArray runs) {
-        double total = 0;
-        int n = 0;
+        return recentRunSeconds(floor, runs, 20);
+    }
+
+    /** Your average time over your newest {@code count} completed runs on the floor, in seconds, or -1. */
+    public static double recentRunSeconds(String floor, JsonArray runs, int count) {
         List<JsonObject> done = new ArrayList<>();
         for (JsonElement e : runs) {
             JsonObject run = e.getAsJsonObject();
             if (floor.equalsIgnoreCase(string(run, "floor")) && run.has("completed") && run.get("completed").getAsBoolean()) done.add(run);
         }
-        for (int i = done.size() - 1; i >= 0 && n < 20; i--) {
-            double ms = number(done.get(i), "totalMs");
-            if (ms <= 0) ms = number(done.get(i), "endedAt") - number(done.get(i), "startedAt");
+        done.sort((a, b) -> Long.compare((long) number(b, "endedAt"), (long) number(a, "endedAt")));
+        double total = 0;
+        int n = 0;
+        for (JsonObject run : done) {
+            if (n >= count) break;
+            double ms = number(run, "totalMs");
+            if (ms <= 0) ms = number(run, "endedAt") - number(run, "startedAt");
             if (ms > 0) {
                 total += ms;
                 n++;
@@ -407,7 +414,7 @@ public final class DungeonProfitHour {
         return history(floor, read(chestFile()), runHistory());
     }
 
-    /** Sky2M's Run History (config/sky2m/run-history.json), oldest first. */
+    /** Sky2M's Run History (config/sky2m/run-history.json), newest first. */
     public static JsonArray runHistory() {
         return read(DIR.resolve("sky2m").resolve("run-history.json"));
     }
@@ -439,9 +446,11 @@ public final class DungeonProfitHour {
 
         double score = 0;
         int scored = 0;
-        for (int i = done.size() - 1; i >= 0 && scored < 20; i--) {
-            double s = number(done.get(i), "hypixelScore");
-            if (s <= 0) s = number(done.get(i), "score");
+        done.sort((a, b) -> Long.compare((long) number(b, "endedAt"), (long) number(a, "endedAt")));
+        for (JsonObject run : done) {
+            if (scored >= 20) break;
+            double s = number(run, "hypixelScore");
+            if (s <= 0) s = number(run, "score");
             if (s > 0) {
                 score += s;
                 scored++;
