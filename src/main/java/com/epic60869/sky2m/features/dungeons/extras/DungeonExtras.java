@@ -257,7 +257,7 @@ public final class DungeonExtras {
         public boolean kismetCount = true;
 
         @Expose
-        @ConfigOption(name = "Hide Claimed Runs", desc = "Hide runs you've already opened a chest of in Croesus's list, so only the unclaimed ones are left. Their slots look empty and can't be clicked.")
+        @ConfigOption(name = "Hide Claimed Runs", desc = "Hide runs you've already opened a chest of in Croesus's list, so only the unclaimed ones are left. Their slots look empty, but you can still hover and click them to use a Dungeon Chest Key.")
         @ConfigEditorBoolean
         public boolean hideClaimed = true;
 
