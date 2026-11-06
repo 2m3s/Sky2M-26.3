@@ -26,24 +26,51 @@ import java.util.concurrent.ConcurrentHashMap;
  * Team Secrets, like Odin's Secrets Counter and NoammAddons': each teammate's total secrets (live, from
  * {@link ProfileApi#secrets}, not the profile's dungeons.secrets, which only updates once Hypixel saves the profile) is
  * loaded when they show up in the dungeon tab, and again a few seconds after the run ends ("> EXTRA STATS <"); the
- * difference is what they found this run, shown in chat with their class in its colour. Hypixel's API can lag behind,
- * so anyone still on 0 is looked up once more a bit later.
+ * difference is what they found this run, shown in chat with their class in its colour. Hypixel's API can lag behind and
+ * the proxy can refuse lookups, so anyone still on 0 or unknown is looked up again a few times over the next few minutes,
+ * even if you've left the dungeon by then, and a total that comes late is taken out of the next run's count.
  */
 public final class TeamSecrets {
     private static final long FIRST_LOOK_MS = 4000;
-    private static final long SECOND_LOOK_MS = 30000;
+    /** After the first look, for anyone still on 0 or unknown. Spaced out, as the proxy only allows about 10 lookups a minute. */
+    private static final long[] LATER_LOOKS_MS = {20_000, 45_000, 90_000, 150_000, 240_000};
+    /** A starting total that failed to load isn't tried again for this long. */
+    private static final long START_RETRY_MS = 15_000;
+
+    /** A finished run still being looked up: its own copy of everything, as the next run clears the rest. */
+    private static final class Finished {
+        final Map<String, Long> start;
+        final Map<String, DungeonClass> classes;
+        final Map<String, RoomClears.Counts> rooms;
+        final Map<String, Integer> deaths;
+        final Map<String, Long> found = new LinkedHashMap<>();
+        final int run;
+        int laterLooks;
+        long nextAt;
+        boolean loading;
+
+        Finished(Map<String, Long> start, Map<String, DungeonClass> classes, Map<String, RoomClears.Counts> rooms, Map<String, Integer> deaths, int run) {
+            this.start = start;
+            this.classes = classes;
+            this.rooms = rooms;
+            this.deaths = deaths;
+            this.run = run;
+        }
+    }
 
     /** Total secrets per teammate when the run started (-1 while loading or if it failed). */
     private static final Map<String, Long> before = new ConcurrentHashMap<>();
+    /** When a starting total that failed can be tried again. */
+    private static final Map<String, Long> startRetryAt = new ConcurrentHashMap<>();
     /** Each teammate's class, kept after they leave the tab or turn into a ghost. */
     private static final Map<String, DungeonClass> classes = new LinkedHashMap<>();
-    private static long showAt, retryAt;
+    private static long showAt;
     private static int colourTicks;
-    /** Goes up on every {@link #reset}, so a look that was still loading can tell the run has changed. */
+    /** Goes up on every {@link #reset}, so a late look can tell the run has changed. */
     private static int runId;
-    private static Map<String, Long> shown;
-    /** This run's numbers for Teammate History, held while a second look can still raise someone's secrets. */
-    private static TeammateHistory.Run historyRun;
+    /** This run has ended, so its starting totals are done with. */
+    private static boolean ended;
+    private static Finished finished;
 
     private TeamSecrets() {}
 
@@ -57,34 +84,30 @@ public final class TeamSecrets {
         Sky2MChat.onChat(message -> {
             FeatureConfigs.TeamSecrets c = config();
             if (c == null || !c.enabled || !Sky2MLocation.inDungeon()) return;
-            if (message.text().trim().equals("> EXTRA STATS <") && !com.epic60869.sky2m.sim.roomsim.SimState.isActive() && !before.isEmpty()) {
+            if (message.text().trim().equals("> EXTRA STATS <") && !com.epic60869.sky2m.sim.roomsim.SimState.isActive() && !(before.isEmpty() && classes.isEmpty())) {
                 showAt = System.currentTimeMillis() + FIRST_LOOK_MS;
             }
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             FeatureConfigs.TeamSecrets c = config();
             if (c == null || !c.enabled) return;
-            if (Sky2MLocation.inDungeon() && showAt == 0 && shown == null) watchPlayers();
+            if (Sky2MLocation.inDungeon() && showAt == 0 && !ended) watchPlayers();
             long now = System.currentTimeMillis();
             if (showAt != 0 && now >= showAt) {
                 showAt = 0;
-                look(false);
+                runEnded();
             }
-            if (retryAt != 0 && now >= retryAt) {
-                retryAt = 0;
-                look(true);
-            }
+            if (finished != null && !finished.loading && finished.nextAt != 0 && now >= finished.nextAt) look(finished);
         });
     }
 
     private static void reset() {
-        if (historyRun != null) TeammateHistory.record(historyRun);
-        historyRun = null;
         runId++;
         before.clear();
+        startRetryAt.clear();
         classes.clear();
-        showAt = retryAt = 0;
-        shown = null;
+        showAt = 0;
+        ended = false;
     }
 
     /** Loads the starting total of anyone new in the tab and remembers their class. */
@@ -96,11 +119,17 @@ public final class TeamSecrets {
             if (p.dungeonClass() != DungeonClass.UNKNOWN) classes.put(p.name(), p.dungeonClass());
             // Their rank colour, kept for the end of the run even if they've left the tab list.
             if (++colourTicks % 20 == 0) PlayerNameColour.of(p.name());
-            if (before.putIfAbsent(p.name(), -1L) == null) {
-                String name = p.name();
+            String name = p.name();
+            Long retryAt = startRetryAt.get(name);
+            if (retryAt != null && System.currentTimeMillis() < retryAt) continue;
+            if (before.putIfAbsent(name, -1L) == null) {
                 secrets(name).whenComplete((total, error) -> {
-                    if (error == null && total != null && total >= 0) before.replace(name, -1L, total);
-                    else before.remove(name, -1L);
+                    if (error == null && total != null && total >= 0) {
+                        before.replace(name, -1L, total);
+                    } else {
+                        startRetryAt.put(name, System.currentTimeMillis() + START_RETRY_MS);
+                        before.remove(name, -1L);
+                    }
                 });
             }
         }
@@ -110,57 +139,71 @@ public final class TeamSecrets {
         return ProfileApi.secrets(name);
     }
 
-    /** Loads everyone's totals now and prints this run's secrets; on the retry, only if someone's count went up. */
-    private static void look(boolean retry) {
-        // Kept here: requeueing or changing world while these load clears before (and starts the next run's state).
+    /** The run is over: takes a copy of it and has the first look. */
+    private static void runEnded() {
         Map<String, Long> start = new LinkedHashMap<>();
         for (Map.Entry<String, Long> e : before.entrySet()) if (e.getValue() >= 0) start.put(e.getKey(), e.getValue());
-        if (start.isEmpty()) return;
-        int run = runId;
         FeatureConfigs.TeamSecrets c = config();
-        Map<String, RoomClears.Counts> rooms = c != null && c.roomsDone ? RoomClears.snapshot() : null;
-        Map<String, Integer> deaths = DeathTracker.deathsThisRun();
+        Finished run = new Finished(start, new LinkedHashMap<>(classes), c != null && c.roomsDone ? RoomClears.snapshot() : null, DeathTracker.deathsThisRun(), runId);
+        // Anyone whose starting total never loaded still gets a line, with "?".
+        for (String name : before.keySet()) run.found.put(name, -1L);
+        for (String name : classes.keySet()) run.found.put(name, -1L);
+        if (run.found.isEmpty()) return;
+        ended = true;
+        if (finished != null) recordHistory(finished);
+        finished = run;
+        look(run);
+    }
+
+    /** Loads the totals of everyone who still needs it, and says so if that changed anything. */
+    private static void look(Finished run) {
+        boolean first = run.laterLooks == 0 && run.nextAt == 0;
+        run.loading = true;
         Map<String, CompletableFuture<Long>> loads = new LinkedHashMap<>();
-        for (String name : start.keySet()) loads.put(name, secrets(name).exceptionally(t -> -1L));
+        for (String name : stillToLook(run.found)) {
+            if (run.start.containsKey(name)) loads.put(name, secrets(name).exceptionally(t -> -1L));
+        }
         CompletableFuture.allOf(loads.values().toArray(CompletableFuture[]::new)).whenComplete((v, t) -> Minecraft.getInstance().execute(() -> {
-            Map<String, Long> found = new LinkedHashMap<>();
+            run.loading = false;
+            boolean raised = false;
             for (Map.Entry<String, CompletableFuture<Long>> e : loads.entrySet()) {
-                long now = e.getValue().getNow(-1L);
-                found.put(e.getKey(), now < 0 ? -1 : Math.max(0, now - start.get(e.getKey())));
+                long total = e.getValue().getNow(-1L);
+                if (total < 0) continue;
+                long count = Math.max(0, total - run.start.get(e.getKey()));
+                raised |= count > run.found.get(e.getKey());
+                run.found.put(e.getKey(), count);
+                // The next run started from a total that was behind: this much of it is this run's, not that one's.
+                if (run.run != runId) before.computeIfPresent(e.getKey(), (name, from) -> from >= 0 && from < total ? total : from);
             }
-            // A new run started while loading: still say how the last one went, but leave the new run's state alone.
-            if (run != runId) {
-                if (!retry) {
-                    show(found, false, rooms);
-                    TeammateHistory.record(new TeammateHistory.Run(found, rooms, deaths));
-                }
-                return;
+            if (first) show(run, "Team secrets this run:");
+            else if (raised) show(run, run.run == runId ? "Team secrets (updated):" : "Team secrets last run (updated):");
+            boolean more = run.laterLooks < LATER_LOOKS_MS.length && stillToLook(run.found).stream().anyMatch(run.start::containsKey);
+            if (more) {
+                run.nextAt = System.currentTimeMillis() + LATER_LOOKS_MS[run.laterLooks] - (run.laterLooks == 0 ? 0 : LATER_LOOKS_MS[run.laterLooks - 1]);
+                run.laterLooks++;
+            } else if (finished == run) {
+                recordHistory(run);
+                finished = null;
             }
-            boolean someZero = found.values().stream().anyMatch(n -> n == 0);
-            if (retry) {
-                // A second look that failed for someone keeps what the first look found.
-                if (historyRun != null) TeammateHistory.record(historyRun.withLaterSecrets(found));
-                historyRun = null;
-                if (shown != null && found.entrySet().stream().noneMatch(e -> e.getValue() > shown.getOrDefault(e.getKey(), -1L))) return;
-            } else if (someZero) {
-                retryAt = System.currentTimeMillis() + SECOND_LOOK_MS;
-                historyRun = new TeammateHistory.Run(found, rooms, deaths);
-            } else {
-                TeammateHistory.record(new TeammateHistory.Run(found, rooms, deaths));
-            }
-            shown = found;
-            show(found, retry, rooms);
         }));
     }
 
-    private static void show(Map<String, Long> found, boolean updated, Map<String, RoomClears.Counts> rooms) {
+    private static void recordHistory(Finished run) {
+        TeammateHistory.record(new TeammateHistory.Run(run.found, run.rooms, run.deaths));
+    }
+
+    /** Who's worth another look: on 0, which is often Hypixel's API behind, or unknown. Public for the game test. */
+    public static List<String> stillToLook(Map<String, Long> found) {
+        return found.entrySet().stream().filter(e -> e.getValue() <= 0).map(Map.Entry::getKey).toList();
+    }
+
+    private static void show(Finished run, String title) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        mc.gui.hud.getChat().addClientSystemMessage(Compat.PREFIX.get().append(
-            Component.literal(updated ? "Team secrets (updated):" : "Team secrets this run:").withStyle(ChatFormatting.GOLD)));
-        for (Map.Entry<String, Long> e : found.entrySet()) {
-            MutableComponent line = line(e.getKey(), classes.get(e.getKey()), e.getValue(), PlayerNameColour.of(e.getKey()));
-            if (rooms != null) line.append(roomsPart(rooms.getOrDefault(e.getKey().toLowerCase(java.util.Locale.ROOT), new RoomClears.Counts(List.of(), List.of()))));
+        mc.gui.hud.getChat().addClientSystemMessage(Compat.PREFIX.get().append(Component.literal(title).withStyle(ChatFormatting.GOLD)));
+        for (Map.Entry<String, Long> e : run.found.entrySet()) {
+            MutableComponent line = line(e.getKey(), run.classes.get(e.getKey()), e.getValue(), PlayerNameColour.of(e.getKey()));
+            if (run.rooms != null) line.append(roomsPart(run.rooms.getOrDefault(e.getKey().toLowerCase(java.util.Locale.ROOT), new RoomClears.Counts(List.of(), List.of()))));
             mc.gui.hud.getChat().addClientSystemMessage(line);
         }
     }

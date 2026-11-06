@@ -20,16 +20,7 @@ import java.util.Map;
  */
 public final class TeammateHistory {
     /** One run's numbers: secrets by name (below 0 when their total couldn't be loaded), and rooms and deaths by lower-case name. */
-    public record Run(Map<String, Long> secrets, Map<String, RoomClears.Counts> rooms, Map<String, Integer> deaths) {
-        /** With secrets from a later look; someone it couldn't load keeps what they had. */
-        Run withLaterSecrets(Map<String, Long> later) {
-            Map<String, Long> merged = new LinkedHashMap<>(secrets);
-            later.forEach((name, found) -> {
-                if (found >= 0) merged.put(name, found);
-            });
-            return new Run(merged, rooms, deaths);
-        }
-    }
+    public record Run(Map<String, Long> secrets, Map<String, RoomClears.Counts> rooms, Map<String, Integer> deaths) {}
 
     /** One player's totals. {@code secretRuns} and {@code roomRuns} are the runs those were known for. */
     public static final class Totals {

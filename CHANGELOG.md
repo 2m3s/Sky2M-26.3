@@ -273,6 +273,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Big Drop Animation (the rainbow item name for drops worth over 5M) and its "is worth X coins!" chat line.
 
 ### Fixed
+- Fix Team Secrets showing 0 or ? for everyone, or nothing at all: it now keeps looking for up to 4 minutes after the run, even once you've left the dungeon, and says the updated numbers. A total that arrives late no longer adds to the next run's count.
 - Fix Live Room Splits showing more secrets than a room has (like 7/6), and the room time stopping a secret early, when one secret was counted twice, most often a bat.
 - Fix Room Secret Time and Room Personal Bests missing rooms: more secret items are recognised (such as Health Potion and Revive Stone), a secret found while a room is still being recognised counts, a room that fails to be recognised is retried after 0.5s instead of 2.5s, and a room a teammate had cleared of mobs now gets a time.
 - Fix room times starting late and saving impossible bests like 0.0s when a secret wasn't seen: the action bar's count is now always read, and the last room's count is ignored as you walk in.
