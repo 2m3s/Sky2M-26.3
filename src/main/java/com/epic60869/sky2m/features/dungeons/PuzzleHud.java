@@ -324,5 +324,10 @@ public final class PuzzleHud {
         @ConfigOption(name = "Show Who Entered", desc = "Also show who went into each puzzle room first, so a puzzle someone walked into and skipped shows who. From the heads on the dungeon map.")
         @ConfigEditorBoolean
         public boolean showEntered = true;
+
+        @Expose
+        @ConfigOption(name = "Puzzle Bests", desc = "Keep your fastest time for each puzzle, from walking into its room to its green checkmark or a PUZZLE SOLVED! line naming you, and say so in chat when you beat one. /s2 puzzles lists them. A green checkmark only counts with no teammate's head in the room on the map.")
+        @ConfigEditorBoolean
+        public boolean puzzleBests = true;
     }
 }

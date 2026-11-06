@@ -180,6 +180,10 @@ public final class DungeonFeatures {
         PfRequirements.init();
         BlessingDisplay.init();
         PuzzleHud.init();
+        PuzzleBests.init();
+        DeathMap.init();
+        MissedSecrets.init();
+        TeammateHistory.init();
         ArchitectDraftAlert.init();
         BreakerHud.init();
         // A reconnect keeps the run's splits: leaving the dungeon or the next run's start clears them.
