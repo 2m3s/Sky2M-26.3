@@ -262,6 +262,12 @@ public final class LiveMapFeature {
         if (WaterSolverConfig.getInstance().isEnabled()) sb.append("Water,");
         if (BeamsSolverConfig.getInstance().isEnabled()) sb.append("Beams,");
         if (BlazeSolverConfig.getInstance().isEnabled()) sb.append("Blaze,");
+        // These read rooms off the map too, and must work with the Dungeon Map itself off.
+        com.epic60869.sky2m.config.Sky2MConfig config = com.epic60869.sky2m.config.Sky2MConfig.current();
+        if (config != null) {
+            if (config.dungeons.teamSecrets.enabled && config.dungeons.teamSecrets.roomsDone) sb.append("RoomsDone,");
+            if (config.dungeons.secrets.fairyDoorHighlight) sb.append("FairyDoorHighlight,");
+        }
         // The insta-clear recorder reads room states off the dungeon map, which is only sampled while scanning.
         return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
     }

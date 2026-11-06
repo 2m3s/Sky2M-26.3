@@ -246,6 +246,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Fixed
 
+- Fix Team Secrets showing 0 rooms for everyone, and Fairy Door Highlight not showing, while Dungeon Map is off.
 - Fix Door Highlight showing the wrong colour when a player with an emblem before their name picks up a key or opens a door.
 - Fix Key & Door Alerts missing keys and doors from players with an emblem before their name, like "🐟 2m3s opened a WITHER door!".
 - Fix the Mimic not being detected when it's killed very fast with a Terminator: its "Mimic 0❤" nametag now counts, for the Mimic Message, score and Kill Titles.
