@@ -62,7 +62,8 @@ public final class CataCalculator {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("catacalc")
-                    .executes(c -> run(50, ""))
+                    // Alone: the calculator screen. With a level (and floor or XP): the answer in chat, as before.
+                    .executes(c -> Compat.queueOpenScreen(new CataCalcScreen(null)))
                     .then(ClientCommands.argument("level", IntegerArgumentType.integer(1, 100))
                         .executes(c -> run(IntegerArgumentType.getInteger(c, "level"), ""))
                         .then(ClientCommands.argument("floor", StringArgumentType.word())
@@ -74,6 +75,35 @@ public final class CataCalculator {
     private static int run(int level, String arg) {
         Minecraft.getInstance().execute(() -> calculate(level, arg));
         return 1;
+    }
+
+    /** XP per run on a floor and where it comes from. */
+    public record PerRun(double xp, String source) {}
+
+    /** What one run of {@code floor} gives: your last run of it, else its base S+ XP with the XP Bonus setting. */
+    public static PerRun perRun(String floor) {
+        Double last = saved.lastXp.get(floor);
+        if (last != null && last > 0) return new PerRun(last, "your last " + floor + " run");
+        Sky2MConfig c = Sky2MConfig.current();
+        int bonus = c == null ? 0 : c.dungeons.cataCalculator.bonusPercent;
+        return new PerRun(BASE_XP.getOrDefault(floor, 0.0) * (1 + bonus / 100.0), floor + " base S+ XP" + (bonus > 0 ? " +" + bonus + "%" : ""));
+    }
+
+    /** The floor the screen starts on: the dungeon you're in, else your last run's, else M7. */
+    public static String startFloor() {
+        return !currentFloor().isEmpty() ? currentFloor() : !saved.lastFloor.isEmpty() ? saved.lastFloor : "M7";
+    }
+
+    /** Your Catacombs XP from your profile (ProfileApi's 5-minute cache). */
+    public static java.util.concurrent.CompletableFuture<Double> yourXp() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return java.util.concurrent.CompletableFuture.failedFuture(new IllegalStateException("not in a world"));
+        return ProfileApi.player(mc.player.getGameProfile().name()).thenApply(player -> cataXp(player.profiles().getFirst().member()));
+    }
+
+    /** A Catacombs level with decimals from its XP. */
+    public static double level(double xp) {
+        return PartyFinderStats.level(xp);
     }
 
     /** "E", "F1".."F7" or "M1".."M7" for the dungeon you're in, or "" outside one. */
@@ -162,13 +192,13 @@ public final class CataCalculator {
     }
 
     /** Total Catacombs XP to reach {@code level}. */
-    private static double xpFor(int level) {
+    public static double xpFor(int level) {
         double total = 0;
         for (int i = 0; i < level; i++) total += i < PartyFinderStats.CATA_XP.length ? PartyFinderStats.CATA_XP[i] : 200_000_000L;
         return total;
     }
 
-    private static double cataXp(JsonObject member) {
+    public static double cataXp(JsonObject member) {
         JsonElement e = member;
         for (String key : new String[]{"dungeons", "dungeon_types", "catacombs", "experience"}) {
             if (e == null || !e.isJsonObject()) return 0;

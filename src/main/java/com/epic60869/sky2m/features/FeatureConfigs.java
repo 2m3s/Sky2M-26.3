@@ -6503,9 +6503,10 @@ public final class FeatureConfigs {
     }
 
     public static final class CataCalculator {
-        @ConfigOption(name = "How To Use", desc = "/s2 catacalc [level] [floor or XP per run]: how many runs of that floor to reach the level (50 and your last floor by default). It reads your Catacombs XP from your profile, and uses the XP your last run of that floor gave you (from the run summary), else the floor's base XP with the bonus below. /s2 catacalc 50 m7, /s2 catacalc 45 f7, /s2 catacalc 50 350000.")
-        @ConfigEditorButton(buttonText = "50")
-        public Runnable run = () -> com.epic60869.sky2m.features.dungeons.CataCalculator.calculate(50, "");
+        @ConfigOption(name = "How To Use", desc = "/s2 catacalc opens the calculator: pick a floor and type a target level, XP per run and run time to see the runs and time to it, and to each level on the way. It reads your Catacombs XP from your profile, and uses the XP your last run of that floor gave you (from the run summary), else the floor's base XP with the bonus below. /s2 catacalc [level] [floor or XP per run] still answers in chat: /s2 catacalc 50 m7, /s2 catacalc 50 350000.")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable run = () -> com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(
+            new com.epic60869.sky2m.features.dungeons.CataCalcScreen(net.minecraft.client.Minecraft.getInstance().gui.screen()));
 
         @Expose
         @ConfigOption(name = "XP Bonus", desc = "Your Catacombs XP bonus in percent (Catacombs Expert Ring, Hecatomb, mayors...), used when a floor's XP isn't known from your own runs yet.")
