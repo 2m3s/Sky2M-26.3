@@ -86,6 +86,14 @@ public final class ScoreCalculator {
     private static int ticks;
     private static int simTotalRooms;
     private static int simTotalSecrets;
+    /** Where the points to 300 went at the last calculation; null until there's been one. */
+    private static ScoreLoss loss;
+
+    /**
+     * What's between the score and 300, in score points. The first five are points lost, and those minus the bonus score
+     * are exactly {@code total}, which is {@code 300 - score}. {@code crypts} and {@code mimic} are bonus points still to get.
+     */
+    public record ScoreLoss(int secrets, int rooms, int puzzles, int deaths, int speed, int crypts, int mimic, int total) {}
 
     private ScoreCalculator() {}
 
@@ -137,6 +145,7 @@ public final class ScoreCalculator {
         score = 0;
         simTotalRooms = 0;
         simTotalSecrets = 0;
+        loss = null;
     }
 
     public static boolean started() { return started; }
@@ -387,6 +396,7 @@ public final class ScoreCalculator {
         int deathPenalty = simActive() ? com.epic60869.sky2m.sim.roomsim.SimScore.deathPenalty() : deathPenalty(deathCount, firstDeathSpirit);
 
         score = secretsScore + roomScore + Math.max(20, Math.min(100, 20 + skillRooms - puzzlePenalty - deathPenalty)) + bonus + speed;
+        loss = scoreLoss(secretsScore, roomScore, skillRooms, puzzlePenalty, deathPenalty, speed, bonus, cryptsCount, floorNumber() > 5 && !mimicKilled());
 
         // Like NoammAddons, each milestone the score passes gets its own message (both when it jumps straight past 300).
         if (score >= 270 && !had270) {
@@ -397,6 +407,44 @@ public final class ScoreCalculator {
             had300 = true;
             milestone(300);
         }
+    }
+
+    /** The Score Display's "what's stopping 300" line; null before the first calculation. */
+    public static ScoreLoss scoreLoss() {
+        return loss;
+    }
+
+    /**
+     * Splits the parts of the score in {@link #recalculate} into what each one costs. Skill can't go below 20, so while few
+     * rooms are done its loss is smaller than rooms, puzzles and deaths together: deaths and puzzles are counted first, as
+     * those stay, and rooms get the rest. Public for the game test.
+     */
+    public static ScoreLoss scoreLoss(int secretsScore, int roomScore, int skillRooms, int puzzlePenalty, int deathPenalty, int speed, int bonus, int crypts, boolean mimicMissing) {
+        int skillLoss = 100 - Math.max(20, Math.min(100, 20 + skillRooms - puzzlePenalty - deathPenalty));
+        int deaths = Math.min(deathPenalty, skillLoss);
+        int puzzles = Math.min(puzzlePenalty, skillLoss - deaths);
+        int rooms = 60 - roomScore + skillLoss - deaths - puzzles;
+        int secrets = 40 - secretsScore;
+        int slow = 100 - speed;
+        return new ScoreLoss(secrets, rooms, puzzles, deaths, slow, 5 - Math.min(crypts, 5), mimicMissing ? 2 : 0, secrets + rooms + puzzles + deaths + slow - bonus);
+    }
+
+    /** "-6 secrets, -2 crypts, -1 death", empty at 300 or over. Public for the game test. */
+    public static String lossText(ScoreLoss loss) {
+        if (loss == null || loss.total() <= 0) return "";
+        List<String> parts = new ArrayList<>();
+        lossPart(parts, loss.secrets(), "secret");
+        lossPart(parts, loss.crypts(), "crypt");
+        lossPart(parts, loss.rooms(), "room");
+        lossPart(parts, loss.puzzles(), "puzzle");
+        lossPart(parts, loss.deaths(), "death");
+        if (loss.speed() > 0) parts.add("-" + loss.speed() + " time");
+        if (loss.mimic() > 0) parts.add("-" + loss.mimic() + " mimic");
+        return String.join(", ", parts);
+    }
+
+    private static void lossPart(List<String> parts, int points, String word) {
+        if (points > 0) parts.add("-" + points + " " + word + (points == 1 ? "" : "s"));
     }
 
     private static float speedDeduction(float percentage) {

@@ -240,7 +240,7 @@ public final class DungeonFeatures {
         Sky2MHuds.register("dungeon_score", "Dungeon Score",
             () -> config() != null && config().score.display && Sky2MLocation.inDungeon() && ScoreCalculator.started(),
             DungeonFeatures::scoreLines,
-            List.of(Component.literal("§eScore: §a300"), secretsForSPlusLine(18, 25)),
+            List.of(Component.literal("§eScore: §a300"), secretsForSPlusLine(18, 25), scoreLossLine("-6 secrets, -2 crypts, -1 death")),
             200, 820);
     }
 
@@ -684,6 +684,10 @@ public final class DungeonFeatures {
         if (config != null && config.score.secretsForSPlus && ScoreCalculator.totalSecrets() > 0) {
             lines.add(secretsForSPlusLine(ScoreCalculator.foundSecrets(), ScoreCalculator.secretsForSPlus()));
         }
+        if (config != null && config.score.lossExplainer) {
+            String loss = ScoreCalculator.lossText(ScoreCalculator.scoreLoss());
+            if (!loss.isEmpty()) lines.add(scoreLossLine(loss));
+        }
         if (config != null && config.score.detailed) {
             int crypts = ScoreCalculator.crypts();
             int deaths = ScoreCalculator.deaths();
@@ -697,6 +701,10 @@ public final class DungeonFeatures {
                 : prince));
         }
         return lines;
+    }
+
+    private static Component scoreLossLine(String loss) {
+        return Component.literal("§7To 300: §c" + loss);
     }
 
     private static Component secretsForSPlusLine(int found, int needed) {

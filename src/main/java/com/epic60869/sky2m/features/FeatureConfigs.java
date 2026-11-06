@@ -3415,6 +3415,12 @@ public final class FeatureConfigs {
         public boolean secretsForSPlus = true;
 
         @Expose
+        @ConfigOption(name = "What's Stopping 300", desc = "Also show what the score is short of 300 by, in score points, like \"To 300: -6 secrets, -2 crypts, -1 death\". Rooms and puzzles still to do count, so it starts long and shrinks. Crypts and mimic are bonus points still to get. Needs Score Display on.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1801)
+        public boolean lossExplainer = true;
+
+        @Expose
         @ConfigOption(name = "Force Paul", desc = "Count Paul's +10 bonus score even when the EZPZ perk isn't detected.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1801)
