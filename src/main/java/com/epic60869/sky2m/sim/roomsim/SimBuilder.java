@@ -517,6 +517,8 @@ public final class SimBuilder {
                     snapPlayerTo(client, level, firstCell % DungeonLayout.GRID,
                             firstCell / DungeonLayout.GRID);
                 }
+                // A new sim starts with an empty inventory, not the last run's items.
+                SimClassKit.resetInventories(level);
                 // Mort, beside the entrance gate: his menu is the party's ready-up (SimMort).
                 SimMort.place(level, entranceDoorPos,
                         entranceCell[0] >= 0 ? DungeonLayout.cellCenter(entranceCell[0]) : null);
