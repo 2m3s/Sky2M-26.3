@@ -247,6 +247,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Fix the Mimic not being detected when it's killed very fast with a Terminator: its "Mimic 0❤" nametag now counts, for the Mimic Message, score and Kill Titles.
 - Fix the Mimic not being detected when it dies the moment it spawns, such as a bow shot as the chest opens: the Mimic Message, score and Kill Titles now count it.
 - Fix the dungeon score reading 2-3 too low: every Bat killed now counts +1 (from Hypixel's message or a teammate's party line), and the Score Display shows Bats and Paul +10.
+- Fix the dungeon score reading about 7 too high when a room was skipped.
 - Fix Paul's +10 never being added to the dungeon map's score and its 270/300 messages, and retry the election data after 30 seconds, not 10 minutes, if it fails to load.
 - Fix dropped pets in the profit trackers (like a Hound from Sven) showing as "LVL 1 EPIC HOUND" with no icon: they show the pet's head and "[Lvl 1] Hound" in the pet's rarity colour.
 - Fix real slayer kills under a second (a one-shot Tier IV Sven) being thrown away as "too fast to be real": a short time is only ignored now when the boss was never seen alive and the sidebar didn't show when it spawned, and a saved sub-second PB is no longer deleted at startup.

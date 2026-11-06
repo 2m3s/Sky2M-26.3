@@ -373,6 +373,7 @@ public class DungeonScore {
 	//This is needed for calculating the score before going in the boss room & completing the blood room, so we have the result sooner
 	//It might cause score to fluctuate when completing the blood room or entering the boss room as there's a slight delay between the room being completed (boolean set to true) and the scoreboard updating
 	private static int getExtraCompletedRooms() {
+		if (DungeonManager.isInBoss()) return 0;
 		if (!bloodRoomCompleted) return isCurrentFloorEntrance ? 1 : 2;
 		if (!DungeonManager.isInBoss() && !isCurrentFloorEntrance) return 1;
 		return 0;

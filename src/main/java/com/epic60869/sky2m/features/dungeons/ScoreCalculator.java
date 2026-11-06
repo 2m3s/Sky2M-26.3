@@ -68,6 +68,8 @@ public final class ScoreCalculator {
     private static boolean mimicKilled;
     private static boolean princeKilled;
     private static int batsKilled;
+    /** Sticky: once at the boss, Blood and the boss room are no longer rooms still to come. */
+    private static boolean reachedBoss;
     private static int deathCount;
     /** Who died first this run, and whether they have a Legendary Spirit pet (null while that isn't known yet). */
     private static String firstDeath;
@@ -120,6 +122,7 @@ public final class ScoreCalculator {
         mimicKilled = false;
         princeKilled = false;
         batsKilled = 0;
+        reachedBoss = false;
         deathCount = 0;
         firstDeath = null;
         firstDeathSpirit = null;
@@ -162,7 +165,11 @@ public final class ScoreCalculator {
     }
 
     /**
+     * Rooms to score: the completed ones, plus Blood and the boss room while they're still to come. From the boss on
+     * neither is added, so a skipped room costs what it costs on Hypixel. Public for the game test.
      */
+    public static int effectiveRooms(int completed, boolean bloodDone, boolean inBoss) {
+        return completed + (bloodDone || inBoss ? 0 : 1) + (inBoss ? 0 : 1);
     }
 
     /** A teammate's Sky2M (or another mod's party socket) said this happened (Party Dungeon Data). */
@@ -220,7 +227,7 @@ public final class ScoreCalculator {
         if (!Sky2MLocation.inDungeon()) return;
         if (text.equals("[NPC] Mort: Here, I found this map when I first entered the dungeon.")) started = true;
         else if (text.equals("[BOSS] The Watcher: You have proven yourself. You may pass.")) watcherCleared = true;
-        else if (text.startsWith(" ☠ ") && !text.contains("reconnected") && DEATH.matcher(text).matches()) deathCount++;
+        else if (text.startsWith("[BOSS] ") && !text.startsWith("[BOSS] The Watcher:")) reachedBoss = true;
         else if (isBatKill(text, Minecraft.getInstance().getUser().getName())) batsKilled++;
         else if (text.startsWith(" ☠ ") && !text.contains("reconnected")) {
             Matcher death = DEATH.matcher(text);
@@ -365,6 +372,9 @@ public final class ScoreCalculator {
         int speed = secondsElapsed <= limit ? 100 : Math.max(0, (int) (100 - speedDeduction((secondsElapsed - limit) * 100f / limit)));
 
         // Dungeon Sim: its own boss flag, and its death penalty (a Spirit pet's first death is -1, any other -2).
+        if (!simActive() && DungeonManager.isInBoss()) reachedBoss = true;
+        boolean inBoss = simActive() ? com.epic60869.sky2m.sim.roomsim.SimBoss.isActive() : reachedBoss;
+        int effectiveRooms = effectiveRooms(completedRooms, bloodDone, inBoss);
         double required = REQUIRED_SECRETS.getOrDefault(floor, 1.0);
         int secretsScore = (int) Math.max(0, Math.min(40, Math.floor(secretPercentage / required / 100.0 * 40.0)));
         double roomRatio = effectiveRooms / (double) totalRooms();
