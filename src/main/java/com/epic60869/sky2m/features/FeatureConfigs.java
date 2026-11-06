@@ -722,6 +722,11 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Architect's Draft Alert", desc = "When a puzzle fails, tell you and optionally the party to get an Architect's First Draft.")
+        public com.epic60869.sky2m.features.dungeons.ArchitectDraftAlert.Config architectDraft = new com.epic60869.sky2m.features.dungeons.ArchitectDraftAlert.Config();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Party Finder Stats", desc = "Stats of players who join your dungeon group, with a kick button and optional auto kick.")
         public PartyFinderStats partyFinderStats = new PartyFinderStats();
 
