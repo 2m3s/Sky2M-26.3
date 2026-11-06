@@ -24,7 +24,8 @@ import java.util.WeakHashMap;
 
 /**
  * Two things read off the dungeon's rooms: roughly how many rooms each teammate cleared, for {@link TeamSecrets}, and how
- * long the room you're in took to get all its secrets.
+ * long the room you're in took to get all its secrets. A room with one secret has no first and last, so its time is from
+ * walking in to that secret.
  *
  * <p>Rooms done works like NoammAddons' ClearInfoUpdater: when the map shows a checkmark on a room, whoever's head is in
  * that room gets it, as solo if they're alone and stacked if not, so a player's count is the range "solo to solo+stacked".
@@ -47,8 +48,18 @@ public final class RoomClears {
     private static final Map<Room, Long> FIRST_SECRET = new WeakHashMap<>();
     /** What the map called each of those rooms while you were in it, as it only says the room you're in now. */
     private static final Map<Room, String> FIRST_SECRET_NAME = new WeakHashMap<>();
-    /** One secret has no time between first and last. */
-    private static final int MIN_SECRETS_TO_TIME = 2;
+    /** The latest time you walked into each room, and walked out of it. */
+    private static final Map<Room, Long> ENTERED = new WeakHashMap<>();
+    private static final Map<Room, Long> LEFT = new WeakHashMap<>();
+    /** How long after walking in the first secret came, for a room with one secret. */
+    private static final Map<Room, Long> FIRST_SECRET_AFTER_ENTRY = new WeakHashMap<>();
+    /** The action bar can show the last room's count this long after you walk in, so it can't start the clock. */
+    private static final long STALE_COUNT_MS = 1_500;
+    /** A secret the game reports just after you warped out is still that room's. */
+    private static final long LATE_SECRET_MS = 1_000;
+    /** The map goes green a second or two after the last secret: leave this soon before green and the time ends when you left. */
+    private static final long LEFT_BEFORE_GREEN_MS = 5_000;
+    private static Room lastRoom;
     private static int ticks;
 
     private RoomClears() {}
@@ -59,6 +70,10 @@ public final class RoomClears {
             BY_PLAYER.clear();
             FIRST_SECRET.clear();
             FIRST_SECRET_NAME.clear();
+            ENTERED.clear();
+            LEFT.clear();
+            FIRST_SECRET_AFTER_ENTRY.clear();
+            lastRoom = null;
         });
         RoomBests.init();
         DungeonEvents.SECRET_FOUND.register((room, secret) -> onSecret(room, secret.secretIndex));
@@ -67,17 +82,44 @@ public final class RoomClears {
             if (!fromWS && room.getFoundSecretCount() > 0) onSecret(room, -1);
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            watchCurrentRoom();
             Sky2MConfig config = Sky2MConfig.current();
             if (config == null) return;
             if (config.dungeons.teamSecrets.roomsDone && ++ticks % CHECK_EVERY_TICKS == 0) countRooms(MapViewSource.current());
         });
     }
 
-    private static void onSecret(Room room, int secretIndex) {
-        if (room != DungeonManager.getCurrentRoom()) return;
+    private static void watchCurrentRoom() {
+        Room room = DungeonManager.getCurrentRoom();
+        if (room == lastRoom) return;
         long now = System.currentTimeMillis();
+        if (lastRoom != null) LEFT.put(lastRoom, now);
+        if (room != null) {
+            ENTERED.put(room, now);
+            LEFT.remove(room);
+        }
+        lastRoom = room;
+    }
+
+    /** When you left {@code room}, if that was recent enough that its green checkmark could be from you, else null. */
+    static Long leftRecently(Room room) {
+        Long left = LEFT.get(room);
+        return left != null && System.currentTimeMillis() - left <= LEFT_BEFORE_GREEN_MS ? left : null;
+    }
+
+    private static void onSecret(Room room, int secretIndex) {
+        long now = System.currentTimeMillis();
+        if (room != DungeonManager.getCurrentRoom()) {
+            Long left = LEFT.get(room);
+            if (left == null || now - left > LATE_SECRET_MS) return;
+        }
+        Long entered = ENTERED.get(room);
+        if (secretIndex < 0 && !FIRST_SECRET.containsKey(room) && (entered == null || now - entered < STALE_COUNT_MS)) return;
         Long started = FIRST_SECRET.putIfAbsent(room, now);
-        if (started == null) FIRST_SECRET_NAME.put(room, displayName(room));
+        if (started == null) {
+            FIRST_SECRET_NAME.put(room, displayName(room));
+            if (entered != null) FIRST_SECRET_AFTER_ENTRY.put(room, now - entered);
+        }
         RoomBests.onSecret(room, started == null ? now : started, secretIndex);
     }
 
@@ -131,23 +173,25 @@ public final class RoomClears {
     }
 
     /**
-     * {@code room} went green after the map had shown it unfinished: says how long it took, if you're in it or every secret
-     * came up while you were, and {@link RoomBests} gets the same time, so one room is one line. The time is up to the last
-     * secret, as the map takes a second or two to go green; if a secret was missed it's up to the green. With Room Secret Time
-     * off, the line only comes for a beaten best.
+     * {@code room} went green after the map had shown it unfinished: says how long it took, if you're in it, every secret
+     * came up while you were, or you only just left, and {@link RoomBests} gets the same time, so one room is one line. See
+     * {@link #timedMs}. With Room Secret Time off, the line only comes for a beaten best. Puzzles have {@link PuzzleBests}.
      */
     public static void onGreen(Room room, Room currentRoom) {
         Long firstSecret = FIRST_SECRET.remove(room);
+        Long afterEntry = FIRST_SECRET_AFTER_ENTRY.remove(room);
         Sky2MConfig config = Sky2MConfig.current();
         if (config == null || firstSecret == null) return;
-        if (room.getType() == Room.Type.FAIRY || room.getType() == Room.Type.ENTRANCE) return;
+        if (room.getType() == Room.Type.FAIRY || room.getType() == Room.Type.ENTRANCE || room.getType() == Room.Type.PUZZLE) return;
         int secrets = room.getMaxSecretCount();
         Minecraft mc = Minecraft.getInstance();
-        if (secrets < MIN_SECRETS_TO_TIME || mc.player == null) return;
+        if (secrets < 1 || mc.player == null) return;
         boolean inRoom = room == currentRoom;
-        Long lastSecret = RoomBests.lastSecretAt(room, secrets);
-        if (!inRoom && lastSecret == null) return;
-        long ms = lastSecret != null ? lastSecret : System.currentTimeMillis() - firstSecret;
+        Long left = leftRecently(room);
+        Long timed = timedMs(secrets, afterEntry, RoomBests.lastSecretAt(room, secrets), inRoom,
+            System.currentTimeMillis() - firstSecret, left == null ? null : Math.max(0, left - firstSecret));
+        if (timed == null) return;
+        long ms = timed;
         RoomBests.Outcome best = RoomBests.onCleared(room, secrets, ms, inRoom);
         boolean showTime = config.dungeons.secrets.roomSecretTime;
         if (!showTime && (best == null || !best.newBest() || best.previous() == null)) return;
@@ -161,6 +205,17 @@ public final class RoomClears {
         line.append(Component.literal(timeText(ms)).withStyle(style -> style.withColor(ChatFormatting.GREEN).withHoverEvent(hover)))
             .append(RoomBests.suffix(best));
         mc.gui.hud.getChat().addClientSystemMessage(line);
+    }
+
+    /**
+     * A green room's time, or null if there's none to give. One secret: from walking in to it. Otherwise up to the last
+     * secret, as the map takes a second or two to go green; if one was missed, up to the green when you're still there or
+     * to when you left if you only just did. All from the first secret. Public for the game test.
+     */
+    public static Long timedMs(int secrets, Long firstSecretAfterEntry, Long lastSecret, boolean inRoom, long sinceFirstSecret, Long leftAfterFirstSecret) {
+        if (secrets == 1) return firstSecretAfterEntry;
+        if (lastSecret != null) return lastSecret;
+        return inRoom ? Long.valueOf(sinceFirstSecret) : leftAfterFirstSecret;
     }
 
     /** The map's name for the room you're standing in ("Melon"), else the room data's ("melon-3"). */

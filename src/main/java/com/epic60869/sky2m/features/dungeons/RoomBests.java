@@ -46,8 +46,8 @@ import java.util.WeakHashMap;
  * <p>The idea is SecretRoutes' personal bests (https://github.com/yourboykyle/SecretRoutes, GPL-3.0), but the clock is
  * {@link RoomClears}' one, first secret found in the room to the last, not SecretRoutes' room entry to the
  * route's last secret. So a best works with or without a route, doesn't care which route you took, and running through on a blood
- * rush doesn't count. The walk to the first secret isn't in it. {@link RoomClears} says the time, and a new best goes on
- * that same line.
+ * rush doesn't count. The walk to the first secret isn't in it, except in a room with one secret, which is timed from walking
+ * in. {@link RoomClears} says the time, and a new best goes on that same line.
  *
  * <p>A time only counts when you were there for all of the room: nobody had got one of its secrets before the clock started
  * and (unless Solo Only is off) no teammate's head was in the room on the map when a secret came up or it went green.
@@ -536,7 +536,7 @@ public final class RoomBests {
 
     /** /s2 practice: the rooms worth practising, each with a link to load it in the Dungeon Sim. */
     private static int showPractice() {
-        if (store.all().isEmpty()) return DungeonRoutes.say("No room bests yet: clear a room with 2 or more secrets on your own first.", ChatFormatting.YELLOW);
+        if (store.all().isEmpty()) return DungeonRoutes.say("No room bests yet: clear a room on your own first.", ChatFormatting.YELLOW);
         var chat = Minecraft.getInstance().gui.hud.getChat();
         chat.addClientSystemMessage(Compat.PREFIX.get().append(Component.literal("Rooms to practise:").withStyle(ChatFormatting.GOLD)));
         store.practiceOrder().stream().limit(PRACTICE_LISTED).forEach(key -> {

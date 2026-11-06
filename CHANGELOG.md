@@ -154,6 +154,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- Time rooms with one secret, from walking in to that secret, in Room Secret Time and Room Personal Bests.
 
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
 - /r on its own now takes you out of Sky2M chat (/s2c), like switching channel with /chat, so you're in Hypixel's private conversation it opens. /r with a message still just replies.
@@ -274,6 +275,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Fix Live Room Splits showing more secrets than a room has (like 7/6), and the room time stopping a secret early, when one secret was counted twice, most often a bat.
 - Fix Room Secret Time and Room Personal Bests missing rooms: more secret items are recognised (such as Health Potion and Revive Stone), a secret found while a room is still being recognised counts, a room that fails to be recognised is retried after 0.5s instead of 2.5s, and a room a teammate had cleared of mobs now gets a time.
 - Fix room times starting late and saving impossible bests like 0.0s when a secret wasn't seen: the action bar's count is now always read, and the last room's count is ignored as you walk in.
+- Fix no room time when you warp out right after the last secret: the time ends when you left, if the room goes green within 5 seconds.
 
 - Fix `/s2 hour`, `/s2 hour collec` and the Run Time box in `/s2 catacalc` averaging your oldest 20 runs of a floor instead of your newest 20, for run time and score.
 - Fix Room Secret Time and Room Personal Bests skipping a room when you got all its secrets and left before it went green. The time now stops at your last secret, not when the map shows green, so it no longer includes the map's delay.

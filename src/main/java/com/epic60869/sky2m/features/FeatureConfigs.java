@@ -3001,13 +3001,13 @@ public final class FeatureConfigs {
         public RoomClearMode roomClearMode = RoomClearMode.BOTH;
 
         @Expose
-        @ConfigOption(name = "Room Secret Time", desc = "When the room you're in gets its green checkmark, say in chat (only you see it) how long it took to get all its secrets, from the first secret found while you're in the room, so running through on a blood rush doesn't count. Not for rooms with one secret.")
+        @ConfigOption(name = "Room Secret Time", desc = "When the room you're in gets its green checkmark, say in chat (only you see it) how long it took to get all its secrets, from the first secret found while you're in the room, so running through on a blood rush doesn't count. A room with one secret is timed from walking in to that secret.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1506)
         public boolean roomSecretTime = true;
 
         @Expose
-        @ConfigOption(name = "Room Personal Bests", desc = "Keep your fastest time for each room, on the same clock as Room Secret Time: first secret to green checkmark, so running through on a blood rush doesn't count and the walk to the first secret isn't in it. A beaten best says so on the room's chat line, and hovering the time shows the time per secret. /s2 route best, /s2 route bests, /s2 route best reset. Not for rooms with one secret, rooms someone had started before you, or the Dungeon Sim.")
+        @ConfigOption(name = "Room Personal Bests", desc = "Keep your fastest time for each room, on the same clock as Room Secret Time: first secret to green checkmark, so running through on a blood rush doesn't count and the walk to the first secret isn't in it. A room with one secret is timed from walking in. A beaten best says so on the room's chat line, and hovering the time shows the time per secret. /s2 route best, /s2 route bests, /s2 route best reset. Not for rooms someone had started before you, or the Dungeon Sim.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1506)
         public boolean roomBests = true;
