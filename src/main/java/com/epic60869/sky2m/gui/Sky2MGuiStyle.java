@@ -39,7 +39,7 @@ public final class Sky2MGuiStyle {
     public static final int ROW = 0xFF202026;
     public static final int ROW_HOVER = 0xFF303036;
     /** MoulConfig's button texture is light, so its label is dark. */
-    public static final int BUTTON_TEXT = 0xFF303030;
+    public static final int BUTTON_TEXT = 0xFFE0E0E0;
 
     public static MoulConfigRenderContext context(GuiGraphicsExtractor g) {
         return new MoulConfigRenderContext(g);
@@ -93,24 +93,47 @@ public final class Sky2MGuiStyle {
     }
 
     /**
-     * MoulConfig's button (its own texture), lightened a little while hovered. The texture is a 48x16 button, so a wider
-     * one keeps its rounded ends and stretches only the middle.
+     * Sky2M's button (2026-11-04, replacing MoulConfig's light texture, which looked out of place on the dark panels): a
+     * box a shade above the panel with a soft border, a faint highlight along the top and a shadow along the bottom.
+     * Hovered, it brightens and its border turns the headings' purple. Labels are light and keep their own colour codes.
      */
     public static void button(GuiGraphicsExtractor g, Font font, String text, int x, int y, int w, int h, boolean hover) {
-        MoulConfigRenderContext ctx = context(g);
-        float cap = 4, capU = cap / 48f;
-        ctx.drawComplexTexture(GuiTextures.BUTTON, x, y, cap, h, b -> b.uv(0, 0, capU, 1));
-        ctx.drawComplexTexture(GuiTextures.BUTTON, x + cap, y, w - 2 * cap, h, b -> b.uv(capU, 0, 1 - capU, 1));
-        ctx.drawComplexTexture(GuiTextures.BUTTON, x + w - cap, y, cap, h, b -> b.uv(1 - capU, 0, 1, 1));
-        if (hover) g.fill(x + 1, y + 1, x + w - 1, y + h - 1, 0x30FFFFFF);
-        String fit = font.plainSubstrByWidth(text, w - 4);
-        g.text(font, fit, x + (w - font.width(fit)) / 2, y + (h - 8) / 2, BUTTON_TEXT, false);
+        button(g, font, text, x, y, w, h, hover, false, true);
+    }
+
+    /** {@link #button}, marked as the chosen option or the screen's main action ({@code chosen}), or greyed out. */
+    public static void button(GuiGraphicsExtractor g, Font font, String text, int x, int y, int w, int h, boolean hover,
+                              boolean chosen, boolean enabled) {
+        buttonBox(g, x, y, w, h, hover && enabled, chosen, enabled);
+        String fit = font.plainSubstrByWidth(enabled ? text : ChatFormatting.stripFormatting(text), w - 6);
+        int colour = !enabled ? BUTTON_TEXT_DISABLED : chosen ? BUTTON_TEXT_CHOSEN : hover ? BUTTON_TEXT_HOVER : BUTTON_TEXT;
+        g.text(font, Component.literal(fit), x + (w - font.width(fit)) / 2, y + (h - 8) / 2, colour, false);
     }
 
     /** {@link #button}'s box without a label, for a widget that draws its own (coloured or disabled) text on it. */
     public static void buttonFrame(GuiGraphicsExtractor g, int x, int y, int w, int h, boolean hover) {
+        buttonBox(g, x, y, w, h, hover, false, true);
+    }
+
     /**
+     * The button's box: purple-tinted with a purple border and a purple bar down the left when {@code chosen}, dimmer
+     * with a quiet border when not {@code enabled}.
      */
+    public static void buttonBox(GuiGraphicsExtractor g, int x, int y, int w, int h, boolean hover, boolean chosen,
+                                 boolean enabled) {
+        int fill = !enabled ? BUTTON_FILL_OFF : chosen ? BUTTON_FILL_CHOSEN : hover ? BUTTON_FILL_HOVER : BUTTON_FILL;
+        int edge = !enabled ? BUTTON_EDGE_OFF : chosen || hover ? HEADING : BUTTON_EDGE;
+        g.fill(x, y, x + w, y + h, fill);
+        g.fill(x + 1, y + 1, x + w - 1, y + 2, 0x1CFFFFFF);
+        g.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, 0x50000000);
+        g.outline(x, y, w, h, edge);
+        if (chosen && enabled) g.fill(x + 1, y + 1, x + 3, y + h - 1, HEADING);
+    }
+
+    public static final int BUTTON_FILL = 0xFF2A2A33, BUTTON_FILL_HOVER = 0xFF35353F, BUTTON_FILL_CHOSEN = 0xFF30273F,
+        BUTTON_FILL_OFF = 0xFF222228, BUTTON_EDGE = 0xFF44444F, BUTTON_EDGE_OFF = 0xFF303036;
+    /** A button's label while hovered, when chosen, and when it can't be pressed. */
+    public static final int BUTTON_TEXT_HOVER = 0xFFFFFFFF, BUTTON_TEXT_CHOSEN = 0xFFD0A8FF, BUTTON_TEXT_DISABLED = 0xFF6E6E76;
     /** The width a {@link #button} needs for {@code text}. */
     public static int buttonWidth(Font font, String text) {
         return Math.max(48, font.width(text) + 12);

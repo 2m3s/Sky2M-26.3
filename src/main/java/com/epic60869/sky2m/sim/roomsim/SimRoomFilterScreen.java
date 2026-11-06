@@ -364,12 +364,12 @@ public class SimRoomFilterScreen extends Screen {
 
         @Override
         protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-            SettingsButtonWidget.drawBox(g, getX(), getY(), getWidth(), getHeight(), isHovered && active, selected);
+            SettingsButtonWidget.drawBox(g, getX(), getY(), getWidth(), getHeight(), isHovered && active, selected, active);
             var font = Minecraft.getInstance().font;
             String shown = font.width(label) <= getWidth() - 8 ? label : font.plainSubstrByWidth(label, getWidth() - 8);
-            String code = !active ? "§8" : selected ? "§6" : "";
-            g.centeredText(font, Component.literal(code + shown), getX() + getWidth() / 2,
-                    getY() + (getHeight() - 8) / 2, 0xFFFFFFFF);
+            // Light text on the dark button: purple when chosen, grey when the row is switched off.
+            int colour = !active ? SettingsButtonWidget.LABEL_OFF
+                    : selected ? SettingsButtonWidget.LABEL_CHOSEN : isHovered ? SettingsButtonWidget.LABEL_HOVER : SettingsButtonWidget.LABEL;
             g.text(font, shown, getX() + (getWidth() - font.width(shown)) / 2, getY() + (getHeight() - 8) / 2,
                     colour, false);
         }

@@ -38,6 +38,9 @@ import net.minecraft.network.chat.Component;
  *  exactly as before (right-click on it simply does nothing, same as pre-2026-09-27). Only call sites
  *  that opt in with {@code .secondaryPress(...)} - the enum-cycling buttons - respond to right-click.
  *  <p>
+ *  Restyled (2026-11-01) from the amber box to the /s2 settings' colours, briefly (2026-11-04) to MoulConfig's light
+ *  button, and the same day to its own dark themed box ({@link #drawBox}): the light texture looked out of place on the
+ *  dark sim panels. Labels are light again and keep their own colour codes. */
 public final class SettingsButtonWidget extends AbstractWidget {
 
 
@@ -102,30 +105,49 @@ public final class SettingsButtonWidget extends AbstractWidget {
         }
     }
 
+    // The Sky2M button (Sky2MGuiStyle#buttonBox), the same one every Sky2M screen's buttons now use.
+    static final int FILL = Sky2MGuiStyle.BUTTON_FILL, EDGE = Sky2MGuiStyle.BUTTON_EDGE;
+    /** Label colours: light text, purple for a chosen option, grey while disabled. */
+    public static final int LABEL = Sky2MGuiStyle.BUTTON_TEXT, LABEL_HOVER = Sky2MGuiStyle.BUTTON_TEXT_HOVER,
+            LABEL_CHOSEN = Sky2MGuiStyle.BUTTON_TEXT_CHOSEN, LABEL_OFF = Sky2MGuiStyle.BUTTON_TEXT_DISABLED;
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         int x0 = getX();
         int y0 = getY();
         var font = Minecraft.getInstance().font;
+        // Dark button, light labels: the labels' own colour codes (chosen, set, go) read as they are.
+        String text = font.plainSubstrByWidth(getMessage().getString(), getWidth() - 6);
         if (!active) {
             text = net.minecraft.ChatFormatting.stripFormatting(text);
+        }
         int labelX = x0 + (getWidth() - font.width(text)) / 2;
         int labelY = y0 + (getHeight() - 8) / 2;
+        boolean hover = isHovered && active;
         if (this.alpha < 1f) {
+            // Fading in (the title screen's button): the same box at the widget's opacity.
+            graphics.fill(x0, y0, x0 + getWidth(), y0 + getHeight(), faded(FILL));
+            graphics.outline(x0, y0, getWidth(), getHeight(), faded(EDGE));
+            graphics.text(font, net.minecraft.ChatFormatting.stripFormatting(text), labelX, labelY, faded(LABEL), false);
             return;
+        }
+        drawBox(graphics, x0, y0, getWidth(), getHeight(), hover, primary, active);
+        graphics.text(font, Component.literal(text), labelX, labelY, !active ? LABEL_OFF : hover ? LABEL_HOVER : LABEL, false);
+    }
+
+    /** {@link #drawBox(GuiGraphicsExtractor, int, int, int, int, boolean, boolean, boolean)} for an enabled box. */
+    public static void drawBox(GuiGraphicsExtractor graphics, int x, int y, int w, int h, boolean hovered,
             boolean selected) {
+        drawBox(graphics, x, y, w, h, hovered, selected, true);
     }
 
     /**
-     * Draws a box in this button's style, for a widget that has to be its own class but must look like one of these
-     * (the sim's filter chips, which carry a row and a selected state). {@code selected} is the mod's "this one is
-     * chosen" look: the full-amber border this button shows on hover, kept on, with the label in §6 by the caller.
+     * A box in this button's style, also for widgets that have to be their own class but must look like one of these
+     * (the sim's filter chips, which carry a row and a selected state): {@link Sky2MGuiStyle#buttonBox}. Labels on it
+     * are light ({@link #LABEL}, {@link #LABEL_CHOSEN} when chosen).
      */
     public static void drawBox(GuiGraphicsExtractor graphics, int x, int y, int w, int h, boolean hovered,
-            boolean selected) {
-        int border = selected ? (hovered ? PRIMARY_BORDER_HOVER : BORDER_HOVER) : (hovered ? BORDER_HOVER : BORDER);
-        graphics.fill(x, y, x + w, y + h, hovered ? BG_HOVER : BG);
-        graphics.outline(x, y, w, h, border);
+            boolean selected, boolean enabled) {
+        Sky2MGuiStyle.buttonBox(graphics, x, y, w, h, hovered, selected, enabled);
     }
     /**
      * This colour at the widget's current opacity.

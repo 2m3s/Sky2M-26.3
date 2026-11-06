@@ -124,6 +124,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ### Changed
 
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
+- Sky2M's screens have new dark buttons instead of the light grey ones: a box a shade above the panel that brightens with a purple border when hovered, light labels that keep their colours (Smart Disconnect's red Disconnect), purple for a chosen option and grey when disabled. Covers the Dungeon Sim, Smart Disconnect, /s2 hour, the leaderboard and the other Sky2M screens.
 - Item Protect's chat lines ("★ Protected ... from dropping.", "Removed drop protection from ...") show the item's name in its rarity colour, stars included, instead of white.
 - The Profile Viewer's Wardrobe (/pv) shows the Equipment Wardrobe too: each set's necklace, cloak, belt and gloves sit under its armour, nine sets a page.
 - /s2 hour only counts your run time: the Between runs box and the time between runs are gone from the screen, the chat estimate and the boss collection time.
@@ -141,6 +142,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Dungeon Sim M7 damage from Hypixel runs: Maxor's Frenzy, Storm's Static Field, Withermancer skulls and Goldor's Frenzy; F7 is scaled down from them.
 - Dungeon Sim F7/M7 lines match M7 runs: Maxor's stun lines in order, Necron's "Let's make some space!" into the Wither King, and Goldor's "YOUR END IS NEAR!!".
 - Dungeon Sim Goldor slows down for a moment when hit in the terminal sections, and Maxor's first wave of adds is the big one.
+- Dungeon Sim screens use Sky2M's dark buttons, with purple marking the chosen option, and the loading screen uses the same frame as the other sim screens.
 - /s2 catacalc opens a Catacombs Calculator screen (also Dungeons > Catacombs Calculator > Open): pick a floor, and your target level, XP per run (from your last run of it) and run time (from Run History) fill in for you to change. It shows your level, the XP and runs to the target and how long they take, and the runs to each level on the way. After Runs: type how many runs of the floor and it says the Catacombs level you'll be, the XP they give and how long they take. /s2 catacalc 50 m7 still answers in chat.
 - Chroma enchants now flow as one smooth, softer rainbow across the whole tooltip instead of a full rainbow squeezed into each enchant name.
 - /boss in the Dungeon Sim switches the floor to the boss's (keeping Master Mode), so /boss storm on an F1 map shows F7 on the scoreboard.
