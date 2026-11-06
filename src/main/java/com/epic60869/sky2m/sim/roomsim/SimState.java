@@ -43,6 +43,11 @@ public final class SimState {
         // also want getCurrentServer() == null, but on 26.2 another mod can give the singleplayer connection server data,
         // and then every sim command gated on this (/simitem, /map, /item...) said "Unknown command" inside the sim.
         boolean local = client.getSingleplayerServer() != null && client.isLocalServer();
+        // A party guest (SimParty): connected to a friend's sim world that sent the sim hello on THIS connection.
+        // Never true on Hypixel or any other server - nothing there sends the hello, and the connection it came on
+        // is checked, so a flag left over from a sim party cannot carry into the next server.
+        if (!local && isGuest(client)) {
+            return true;
         if (!local && !loggedRefusal) {
             loggedRefusal = true;
             org.slf4j.LoggerFactory.getLogger("sky2m-sim").warn("Sim: active but not acting - singleplayerServer={}, localServer={}, currentServer={}",
@@ -52,6 +57,31 @@ public final class SimState {
     }
 
     private static boolean loggedRefusal;
+
+    /** The connection a friend's sim world sent the sim hello on, or null when not a party guest. */
+    private static volatile Object guestConnection;
+
+     * Whether this client is a guest in a friend's sim world: no integrated server of its own, and the connection
+     * it is on now is the one the host's sim hello arrived on.
+    public static boolean isGuest(Minecraft client) {
+        Object connection = guestConnection;
+        return active && connection != null && client != null && client.getSingleplayerServer() == null
+                && client.getConnection() == connection;
+    /** Whether {@code connection} is the one a sim party's hello arrived on. Any thread. */
+    public static boolean isGuestConnection(Object connection) {
+        return connection != null && connection == guestConnection;
+    /** Guest side: the host's sim hello (or a later state update) arrived on {@code connection}. Client thread. */
+    public static void enterAsGuest(Object connection, String code, String floor, boolean generated) {
+        if (connection == null) {
+            return;
+        boolean fresh = guestConnection != connection || !active;
+        guestConnection = connection;
+        if (fresh) {
+            enter(code);
+        } else {
+            replaceMapCode(code);
+        setFloorLabel(floor);
+        setGeneratedFloor(generated);
 
     /**
      * May a sim world be opened right now?
@@ -86,6 +116,7 @@ public final class SimState {
     }
 
     public static void leave() {
+        guestConnection = null;
         generatedFloor = false;
         SimWitherDoors.clear();
         active = false;

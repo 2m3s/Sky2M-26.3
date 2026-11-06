@@ -91,7 +91,18 @@ public final class SimRoomLevers {
             Minecraft client = Minecraft.getInstance();
             // level.isClientSide(): this event fires on both sides in singleplayer, and without the check a
             // single click would be handled twice - the same guard SimDoors uses.
-            if (!level.isClientSide() || !SimState.canAct(client) || player != client.player) {
+            if (!level.isClientSide()) {
+                // A party guest's click reaches only the host's server: the same lever, answered there.
+                if (SimParty.guestOnServer(player) && player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                    List<BlockPos> guestBlocks = ARMED.remove(hit.getBlockPos());
+                    if (guestBlocks != null) {
+                        String guestRoom = ROOM_OF.remove(hit.getBlockPos());
+                        SimParty.forGuest(sp, () -> open(client, guestBlocks, guestRoom));
+                    }
+                }
+                return InteractionResult.PASS;
+            }
+            if (!SimState.canAct(client) || player != client.player) {
                 return InteractionResult.PASS;
             }
             List<BlockPos> blocks = ARMED.remove(hit.getBlockPos());

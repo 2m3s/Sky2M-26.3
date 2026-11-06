@@ -6,59 +6,77 @@ package com.epic60869.sky2m.sim.roomsim;
 
 import com.epic60869.sky2m.sim.util.FeatureGuard;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundResetScorePacket;
+import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket;
+import net.minecraft.network.protocol.game.ClientboundSetScorePacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.WeakHashMap;
 
 /**
- * The Catacombs sidebar, inside the sim.
+ * The Catacombs sidebar, inside the sim, laid out as Hypixel's dungeon sidebar is.
  *
- * <p>killer560 (2026-09-29): "Make this feel like I am in dungeons." A real run has a sidebar telling you the
- * floor, the secrets, the keys and the room you are standing in, and the sim had nothing.
+ * <p>A REAL server scoreboard: a vanilla objective in the sidebar slot on the integrated server, titled "SKYBLOCK",
+ * with every line a team prefix on a holder name that draws as nothing - exactly how Hypixel builds its sidebar, so
+ * every client-side reader (the Custom Scoreboard, {@code Sky2MLocation}'s floor and location, the Score Calculator's
+ * "Cleared"/"Time Elapsed", {@code DungeonScore}, {@code DungeonState}'s keys) reads it as it reads Hypixel's.
  *
- * <p>What this does NOT do is switch the mod's dungeon features on - I assumed it would and that was wrong.
- * {@code DungeonState.isInDungeon()} is already true inside the sim because {@code SimState.enter} calls
- * {@code setRoomSim(true)}, by a deliberate earlier decision ("they would every one of them sit out"). The
- * gates were open before this existed.
+ * <p>The objective is the server scoreboard's own (so a joining guest gets it like any objective), but the LINES are
+ * sent to each player separately as team and score packets, because they differ per player: the party block lists
+ * your teammates, not you, as Hypixel's does. Nothing per-player is kept in the server's scoreboard, so it is never
+ * re-broadcast over anyone's lines.
  *
- * <p>What it adds is the sidebar TEXT, which several things read rather than infer: {@code sidebarRoomName}
- * for the room he is in, and the secrets count (the clock, keys and floor lines went on 2026-10-04 - see
- * {@link #compose}). It is an ordinary scoreboard on the integrated server, which is ours, so anything that
- * reads a Hypixel sidebar reads this one the same way.
- *
- * <p>The lines are TEAM PREFIXES on short holder names, not the holder names themselves, because a score
- * holder name cannot contain a space - the same trick the anticheat harness uses for the same reason.
+ * <p>Top to bottom: date and server, the SkyBlock date and time, "⏣ The Catacombs (M7)", then the run (Keys, Time
+ * Elapsed, Cleared - or "Starting in:" during the countdown), the teammates, and a footer that names the sim, never a
+ * Hypixel domain: the sim must never present itself as Hypixel.
  */
 public final class SimSidebar {
 
     private static final String OBJECTIVE = "k560sim";
 
-    /**
-     * The holder names the sidebar used before 2026-10-04. A holder name is DRAWN after the team prefix, so these
-     * showed up on every line as "k560l4" and the like - killer560: "there still shows a lot of stuff like time,
-     * keys, k560l4". The sim world's scoreboard is saved with the world, so the old ones are cleared out once.
-     */
+    /** Holder names from before the per-player sidebar, cleared out of the saved scoreboard once per session. */
     private static final String OLD_HOLDER = "k560l";
+    private static final String OLD_TEAM = "k560t";
 
-    /** Team name per line. Teams carry the visible text as a prefix. */
-    private static final String TEAM = "k560t";
+    /** This sidebar's team per line. Sent to each client only; never in the server's scoreboard. */
+    private static final String TEAM = "s2msb";
+
+    /** Hypixel shows at most fifteen lines. */
+    private static final int MAX_LINES = 15;
+
+    /** The footer: the sim's own name in Hypixel's footer spot, never Hypixel's domain. */
+    public static final String FOOTER = "sky2m sim";
 
     /**
-     * Line {@code i}'s holder: a colour code and a reset and nothing else, which draws as nothing - what Hypixel
-     * does. {@code ScoreboardData.lineText} already drops an owner that is blank once formatting is stripped,
-     * so the Custom Scoreboard and every sidebar reader see the prefix alone.
+     * Line {@code i}'s holder: colour codes and a reset and nothing else, which draws as nothing - what Hypixel does.
+     * Doubled so it can never collide with the old shared sidebar's single-code holders.
      */
     private static String holder(int i) {
-        return "\u00a7" + "0123456789abcdef".charAt(i & 15) + "\u00a7r";
+        char c = "0123456789abcdef".charAt(i & 15);
+        return "§" + c + "§" + c + "§r";
+    }
+
+    /** Pre-2026-11 holders, for the one-off cleanup of the saved scoreboard. */
+    private static String oldHolder(int i) {
+        return "§" + "0123456789abcdef".charAt(i & 15) + "§r";
     }
 
     /** The tab list header. (The sidebar no longer starts with it, or ends with a Discord invite.) */
@@ -67,12 +85,29 @@ public final class SimSidebar {
     /** Said plainly, so a screenshot of the sim is never mistaken for a Hypixel run. */
     public static final String INFO_NOT_HYPIXEL = "Local practice world - not Hypixel";
 
+    private static final String[] MONTHS = {"Early Spring", "Spring", "Late Spring", "Early Summer", "Summer",
+            "Late Summer", "Early Autumn", "Autumn", "Late Autumn", "Early Winter", "Winter", "Late Winter"};
+    private static final long SKYBLOCK_EPOCH_MS = 1560275700000L;
+    private static final long SB_HOUR_MS = 50_000L;
+    private static final long SB_DAY_MS = SB_HOUR_MS * 24;
+    private static final long SB_MONTH_MS = SB_DAY_MS * 31;
+    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("MM/dd/yy", Locale.US);
 
-    /** What the sidebar said last tick, so the scoreboard is only touched when something changed. */
-    private static List<String> lastLines = List.of();
+    /** What the shared part said last tick, so the per-player send runs only when something moved. */
+    private static Shared lastShared;
     private static boolean built;
+    private static int ticks;
 
-    private static boolean built;
+    /** Per connection: the line each holder shows on that client (null: not shown), and which teams it has. */
+    private static final Map<Object, Sent> SENT = new WeakHashMap<>();
+
+    private static final class Sent {
+        final String[] lines = new String[MAX_LINES];
+        final boolean[] teams = new boolean[MAX_LINES];
+    }
+
+    /** A scratch board for building team packets; the packets copy what they need. Server thread only. */
+    private static final Scoreboard SCRATCH = new Scoreboard();
 
     private SimSidebar() {
     }
@@ -84,7 +119,7 @@ public final class SimSidebar {
     /** Forgets everything, so the next sim session rebuilds rather than inheriting the last one's lines. */
     public static void reset() {
         built = false;
-        lastLines = List.of();
+        lastShared = null;
     }
 
     /**
@@ -103,6 +138,10 @@ public final class SimSidebar {
         tab.setFooter(null);
     }
 
+    /** The lines every player shares, read on the host's client thread where the run's state lives. */
+    private record Shared(List<String> top, List<String> run, boolean started) {
+    }
+
     private static void tick(Minecraft client) {
         if (!SimState.canAct(client)) {
             return;
@@ -111,85 +150,202 @@ public final class SimSidebar {
         if (server == null) {
             return;
         }
-        List<String> lines = compose(client);
-        if (lines.equals(lastLines)) {
+        Shared shared = compose();
+        // The teammates' health lines move on their own: twice a second, whatever else changed.
+        boolean due = ++ticks % 10 == 0;
+        if (shared.equals(lastShared) && !due) {
             return;
         }
-        lastLines = lines;
-        // On the server thread: the scoreboard belongs to the server, and touching it from the render thread
-        // is the kind of cross-thread write that works until it does not.
-        server.execute(() -> apply(server, lines));
+        lastShared = shared;
+        // On the server thread: the scoreboard and the connections belong to the server.
+        server.execute(() -> apply(server, shared));
     }
 
-    /**
-     * The sidebar text, top line first.
-     *
-     * <p>killer560 (2026-10-04): "For the sim scoreboard there still shows a lot of stuff like time, keys,
-     * k560l4 and stuff like that." So: the two things worth glancing at while
-     * practising - secrets and the room he is in. No title line or Discord invite either. No clock, no keys/doors, no "not
-     * Hypixel" line (the tab list footer still says that). The Catacombs line STAYS: the floor change it
-     * produces in {@code DungeonState} is what starts the run timer, Score Calc's run and the Live Map's grid
-     * reset (his 2026-10-04 log, the three lines right after "Dungeon floor changed"), and Hypixel shows it too.
-     * {@code SkyblockGate} reads only the objective TITLE, which stays "SKYBLOCK".
-     */
-    private static List<String> compose(Minecraft client) {
-        List<String> lines = new ArrayList<>();
-        lines.add("");
-        lines.add("The Catacombs (" + SimState.floorLabel() + ")");
-        lines.add("Secrets: " + SimScore.secretsFound() + "/" + SimScore.secretsTotal());
-        String room = SimState.currentRoomName();
-        lines.add("Room: " + (room == null || room.isBlank() ? "Entrance" : room));
-        return lines;
-    }
+    private static Shared compose() {
+        List<String> top = new ArrayList<>();
+        top.add("§7" + LocalDate.now().format(DATE) + " §8sim");
+        top.add("");
+        long sb = System.currentTimeMillis() - SKYBLOCK_EPOCH_MS;
+        long inYear = Math.floorMod(sb, SB_MONTH_MS * 12);
+        int month = (int) (inYear / SB_MONTH_MS);
+        int day = (int) ((inYear % SB_MONTH_MS) / SB_DAY_MS) + 1;
+        long inDay = inYear % SB_DAY_MS;
+        int hour = (int) (inDay / SB_HOUR_MS);
+        int minute = (int) ((inDay % SB_HOUR_MS) * 60 / SB_HOUR_MS) / 10 * 10;
+        top.add(" " + MONTHS[month] + " " + day + suffix(day));
+        boolean daytime = hour >= 6 && hour < 19;
+        top.add(String.format(Locale.US, " §7%d:%02d%s %s", hour % 12 == 0 ? 12 : hour % 12, minute,
+                hour < 12 ? "am" : "pm", daytime ? "§e☀" : "§b☽"));
+        top.add(" §7⏣ §cThe Catacombs §7(" + SimState.floorLabel() + ")");
+        top.add("");
 
-    private static void apply(MinecraftServer server, List<String> lines) {
-        ServerLevel level = server.overworld();
-        if (level == null) {
-            return;
+        List<String> run = new ArrayList<>();
+        boolean started = SimRun.hasStarted();
+        boolean floor = SimState.isGeneratedFloor();
+        if (floor && !started) {
+            // Before the gate opens Hypixel shows only the countdown, once everyone is ready.
+            if (SimRun.isArmed()) {
+                int seconds = (SimRun.countdownTicks() + 19) / 20;
+                run.add("Starting in: §a" + seconds / 60 + ":" + String.format(Locale.US, "%02d", seconds % 60));
+            }
+        } else {
+            boolean blood = SimKeys.bloodKey();
+            run.add("Keys: §c■ " + (blood ? "§a✓" : "§c✗") + " §8■ §a"
+                    + Math.min(9, Math.max(0, SimKeys.witherKeys())) + "x");
+            if (started) {
+                run.add("Time Elapsed: §a" + elapsed(SimRun.elapsedMs()));
+            }
+            int total = SimScore.roomsTotal();
+            int percent = total > 0 ? (int) Math.floor(100.0 * SimScore.roomsCleared() / total) : 0;
+            String colour = percent >= 100 ? "§a" : percent >= 50 ? "§e" : "§c";
+            run.add("Cleared: " + colour + percent + "% §8(" + SimScore.totalScore() + ")");
         }
+        return new Shared(List.copyOf(top), List.copyOf(run), started || !floor);
+    }
+
+    /** Hypixel's "Time Elapsed": "23s", "01m 23s", "1h 01m 23s". */
+    private static String elapsed(long ms) {
+        long s = Math.max(0, ms / 1000);
+        long h = s / 3600;
+        long m = (s % 3600) / 60;
+        long sec = s % 60;
+        if (h > 0) {
+            return String.format(Locale.US, "%dh %02dm %02ds", h, m, sec);
+        }
+        if (m > 0) {
+            return String.format(Locale.US, "%02dm %02ds", m, sec);
+        }
+        return String.format(Locale.US, "%02ds", sec);
+    }
+
+    private static String suffix(int day) {
+        if (day % 100 >= 11 && day % 100 <= 13) {
+            return "th";
+        }
+        return switch (day % 10) {
+            case 1 -> "st";
+            case 2 -> "nd";
+            case 3 -> "rd";
+            default -> "th";
+        };
+    }
+
+    // ------------------------------------------------------------------ server thread
+
+    private static void apply(MinecraftServer server, Shared shared) {
         Scoreboard board = server.getScoreboard();
         Objective objective = board.getObjective(OBJECTIVE);
+        Component title = Component.literal("SKYBLOCK").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD);
         if (objective == null) {
-            objective = board.addObjective(OBJECTIVE, ObjectiveCriteria.DUMMY,
-                    Component.literal("SKYBLOCK"), ObjectiveCriteria.RenderType.INTEGER, true,
+            objective = board.addObjective(OBJECTIVE, ObjectiveCriteria.DUMMY, title,
+                    ObjectiveCriteria.RenderType.INTEGER, true,
                     net.minecraft.network.chat.numbers.BlankFormat.INSTANCE);
         }
-        // No red score numbers down the right - they are only the line order. Set every time, because an
-        // objective saved with the world before this existed has none.
-        objective.setNumberFormat(net.minecraft.network.chat.numbers.BlankFormat.INSTANCE);
-        board.setDisplayObjective(DisplaySlot.SIDEBAR, objective);
-
+        if (!title.equals(objective.getDisplayName())) {
+            objective.setDisplayName(title);
+        }
+        // No red score numbers down the right - they are only the line order. An objective saved with the world
+        // before this existed has none.
+        if (!(objective.numberFormat() instanceof net.minecraft.network.chat.numbers.BlankFormat)) {
+            objective.setNumberFormat(net.minecraft.network.chat.numbers.BlankFormat.INSTANCE);
+        }
+        if (board.getDisplayObjective(DisplaySlot.SIDEBAR) != objective) {
+            board.setDisplayObjective(DisplaySlot.SIDEBAR, objective);
+        }
         if (!built) {
-            // The visible "k560l0".."k560l15" holders and their teams, from sidebars saved before 2026-10-04.
+            // The shared sidebar's teams and scores, saved with the world before the sidebar went per-player.
             for (int i = 0; i < 16; i++) {
-                board.resetAllPlayerScores(net.minecraft.world.scores.ScoreHolder.forNameOnly(OLD_HOLDER + i));
-                PlayerTeam old = board.getPlayerTeam(OLD_HOLDER + i);
-                if (old != null) {
-                    board.removePlayerTeam(old);
+                for (String old : new String[]{OLD_HOLDER + i, oldHolder(i)}) {
+                    board.resetAllPlayerScores(ScoreHolder.forNameOnly(old));
+                }
+                for (String name : new String[]{OLD_HOLDER + i, OLD_TEAM + i}) {
+                    PlayerTeam old = board.getPlayerTeam(name);
+                    if (old != null) {
+                        board.removePlayerTeam(old);
+                    }
                 }
             }
+            built = true;
         }
+        for (ServerPlayer viewer : server.getPlayerList().getPlayers()) {
+            if (viewer.connection != null) {
+                send(viewer, linesFor(server, viewer, shared));
+            }
+        }
+    }
 
-        // Clear the lines that are no longer used before writing the new ones, or a shorter sidebar keeps the
-        // tail of the longer one it replaced.
-        for (int i = lines.size(); i < 16; i++) {
-            board.resetSinglePlayerScore(net.minecraft.world.scores.ScoreHolder.forNameOnly(holder(i)), objective);
+    /** One player's sidebar: the shared lines with his teammates (not himself) in the party block. */
+    private static List<String> linesFor(MinecraftServer server, ServerPlayer viewer, Shared shared) {
+        List<String> lines = new ArrayList<>(shared.top());
+        lines.addAll(shared.run());
+        if (!shared.run().isEmpty()) {
+            lines.add("");
         }
-        for (int i = 0; i < lines.size(); i++) {
+        List<String> party = new ArrayList<>();
+        for (ServerPlayer p : SimParty.players(server)) {
+            if (p == viewer) {
+                continue;
+            }
+            String letter = SimParty.dungeonClass(p).label.substring(0, 1);
+            String tail;
+            if (!shared.started()) {
+                tail = "§e[Lvl" + SimParty.classLevel(p) + "]";
+            } else if (SimDeath.isGhost(p)) {
+                tail = "§cDEAD";
+            } else {
+                double[] v = SimVitals.snapshot(p.getUUID());
+                tail = v == null ? "§a0§c❤"
+                        : (v[1] > 0 && v[0] < v[1] / 2 ? "§e" : "§a")
+                                + SimDamage.commas(Math.max(0, Math.round(v[0]))) + "§c❤";
+            }
+            party.add("§e[" + letter + "] §b" + p.getGameProfile().name() + " " + tail);
+        }
+        if (party.isEmpty()) {
+            party.add("§3§lSolo");
+        }
+        // Room for the footer and the blank above it; the blank goes first when it does not fit.
+        int room = MAX_LINES - lines.size() - 2;
+        if (party.size() > room) {
+            room++;
+        }
+        lines.addAll(party.subList(0, Math.max(0, Math.min(party.size(), room))));
+        if (lines.size() + 2 <= MAX_LINES) {
+            lines.add("");
+        }
+        lines.add("§e" + FOOTER);
+        return lines.size() > MAX_LINES ? lines.subList(0, MAX_LINES) : lines;
+    }
+
+    /** Sends only what changed on this player's sidebar: team prefixes for text, scores for lines that came or went. */
+    private static void send(ServerPlayer viewer, List<String> lines) {
+        Sent sent = SENT.computeIfAbsent(viewer.connection, k -> new Sent());
+        for (int i = 0; i < MAX_LINES; i++) {
+            String want = i < lines.size() ? lines.get(i) : null;
+            String had = sent.lines[i];
+            if (Objects.equals(want, had)) {
+                continue;
+            }
             String holder = holder(i);
-            PlayerTeam team = board.getPlayerTeam(TEAM + i);
+            PlayerTeam team = SCRATCH.getPlayerTeam(TEAM + i);
             if (team == null) {
-                team = board.addPlayerTeam(TEAM + i);
+                team = SCRATCH.addPlayerTeam(TEAM + i);
+                SCRATCH.addPlayerToTeam(holder, team);
             }
-            team.setPlayerPrefix(Component.literal(lines.get(i)));
-            if (!team.getPlayers().contains(holder)) {
-                board.addPlayerToTeam(holder, team);
+            // A line that goes away is emptied as well as hidden: readers that scan every team's prefix
+            // (Sky2MLocation.teamLines) would otherwise still see it.
+            team.setPlayerPrefix(Component.literal(want == null ? "" : want));
+            viewer.connection.send(ClientboundSetPlayerTeamPacket.createAddOrModifyPacket(team, !sent.teams[i]));
+            sent.teams[i] = true;
+            if (want != null && had == null) {
+                // Highest at the top, which is how Hypixel orders it; fixed per line, so a line coming or going
+                // never has to renumber the others.
+                viewer.connection.send(new ClientboundSetScorePacket(holder, OBJECTIVE, MAX_LINES - i,
+                        Optional.empty(), Optional.empty()));
+            } else if (want == null) {
+                viewer.connection.send(new ClientboundResetScorePacket(holder, OBJECTIVE));
             }
-            // Highest score at the top, which is how Hypixel orders it.
-            board.getOrCreatePlayerScore(net.minecraft.world.scores.ScoreHolder.forNameOnly(holder), objective)
-                    .set(lines.size() - i);
+            sent.lines[i] = want;
         }
-        built = true;
     }
 
     public static boolean isBuilt() {

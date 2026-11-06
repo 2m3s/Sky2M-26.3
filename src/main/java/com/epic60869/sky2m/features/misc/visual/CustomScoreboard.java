@@ -76,7 +76,8 @@ public final class CustomScoreboard {
     private static final Pattern DATE = Pattern.compile("(?:Early |Late )?(?:Spring|Summer|Autumn|Winter) \\d{1,2}(?:st|nd|rd|th)");
     private static final Pattern TIME = Pattern.compile("(\\d{1,2}):(\\d{2})(am|pm)\\b.*");
     private static final Pattern AREA = Pattern.compile("(?:[⏣ф] .+|Plot -.+|✌ \\(\\d+/\\d+\\))");
-    private static final Pattern FOOTER = Pattern.compile("(?:www|alpha)\\.hypixel\\.net");
+    /** Hypixel's footer, or the Dungeon Sim's own in its place (SimSidebar.FOOTER), which never names Hypixel. */
+    private static final Pattern FOOTER = Pattern.compile("(?:www|alpha)\\.hypixel\\.net|sky2m sim");
     private static final Pattern OBJECTIVE = Pattern.compile("(?:Objective|Quest)\\b.*");
     private static final Pattern SLAYER = Pattern.compile("Slayer(?::| Quest).*");
     private static final Pattern NUMBER = Pattern.compile("(Purse|Piggy|Motes|Bits|Copper|Sowdust|Heat|Cold|North Stars): ([\\d,.]+)(.*)");
