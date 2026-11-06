@@ -191,6 +191,7 @@ public final class SimItems {
                     // P3: a left click on a terminal, a lever or a device button is a right click (SimTerms).
                     if (SimTerms.leftClickBlock(player, level, pos.immutable(), direction)) {
                         return net.minecraft.world.InteractionResult.FAIL;
+                    }
                     // Everything else: no client-side mining, and the START goes to the server.
                     //
                     // killer560 (2026-09-29): "Make sure I cannot break blocks with anything besides the
@@ -213,6 +214,7 @@ public final class SimItems {
                     if (player instanceof ServerPlayer guest && SimState.isActive() && !SimParty.isHost(guest)
                             && SimAbilities.simServer(guest)) {
                         return false;
+                    }
                     if (!SimState.isActive() || client == null || player != client.player) {
                         return true;
                     }
@@ -352,6 +354,7 @@ public final class SimItems {
         if (SimParty.sendAction("give", item.skyblockId)) {
             // A party guest: the host's server hands it to him.
             return;
+        }
         var server = client.getSingleplayerServer();
         if (server == null) {
             return;
@@ -367,6 +370,8 @@ public final class SimItems {
                 sp.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
             }
         });
+    }
+
     /** One item by its Skyblock id, into one player's inventory (a party guest's; his client says so). */
     static boolean giveOnServer(ServerPlayer sp, String skyblockId) {
         for (GiveItem item : GiveItem.values()) {
@@ -374,14 +379,21 @@ public final class SimItems {
                 ItemStack stack = build(item);
                 if (!sp.getInventory().add(stack)) {
                     sp.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
+                }
                 return true;
+            }
+        }
         return false;
+    }
+
     /** The whole set into one player's inventory. Server thread. */
     static void giveAllOnServer(ServerPlayer sp) {
         for (GiveItem item : GiveItem.values()) {
             ItemStack stack = build(item);
             if (!sp.getInventory().add(stack)) {
                 sp.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
+            }
+        }
     }
 
     /**
@@ -422,7 +434,19 @@ public final class SimItems {
         // rather than as a bare item that has to be built up by hand.
         if (SimItemData.def(item.skyblockId) != null) {
             stack = SimItemData.fullBuild(item.skyblockId).applyTo(stack);
+        }
+        // A skull item wears Hypixel's own head texture, not a Steve or wither skeleton skull.
+        if (isSkull(stack)) {
+            stack = SimHeads.apply(stack, item.skyblockId);
+        }
         return stack;
+    }
+
+    /** Whether a stack is one of the vanilla skulls the sim stands in for Hypixel's textured heads with. */
+    static boolean isSkull(ItemStack stack) {
+        return stack.is(Items.PLAYER_HEAD) || stack.is(Items.WITHER_SKELETON_SKULL) || stack.is(Items.SKELETON_SKULL);
+    }
+
     /**
      * What a few items carry beyond their id: the Empowered reforge on the Mender Crown, the Dark Claymore's +2 swing
      * range (a vanilla reach modifier, so the client and the server both swing further), the Ham Radio's channel, and
@@ -445,6 +469,8 @@ public final class SimItems {
                                     net.minecraft.world.entity.EquipmentSlotGroup.MAINHAND)
                             .build());
             default -> {
+            }
+        }
     }
 
     /**
@@ -558,9 +584,11 @@ public final class SimItems {
                                                                         net.minecraft.core.Direction face) {
         if (!SimAbilities.simServer(sp)) {
             return net.minecraft.world.InteractionResult.PASS;
+        }
         if (SimDeath.isGhost(sp)) {
             // A ghost cannot break anything (SimDeath).
             return net.minecraft.world.InteractionResult.FAIL;
+        }
         // A party guest's left click on a Creeper Beams lantern: his client has no puzzle to give it to (the host's
         // client half above does that for the host), so it is picked here, on the host's board.
         if (SimParty.guestOnServer(sp)
@@ -969,16 +997,21 @@ public final class SimItems {
         // The rest of the wiki's rules: not on doors (the wither and blood doors' blocks), not on crypt blocks (a
         // smooth stone slab crypt lid), and not in a boss room - except the Wither Lords' (F7/M7).
         BlockState aimedAt = level.getBlockState(target);
+        // The floor's own door blocks, not every coal block: the Storm room is full of coal.
+        if (SimDoors.isDoorBlock(target)) {
             failOnServer(sp, "the Dungeonbreaker does not work on doors");
             return false;
+        }
         if (aimedAt.is(net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB)
                 && connectedSlabs(level, target).size() >= MIN_CRYPT_SLABS) {
             failOnServer(sp, "the Dungeonbreaker does not work on crypts");
             return false;
+        }
         String bossFloor = SimState.floorLabel();
         if (SimBoss.isActive() && (bossFloor == null || !bossFloor.endsWith("7"))) {
             failOnServer(sp, "the Dungeonbreaker does not work in this boss room");
             return false;
+        }
         if (!SimBreakerState.trySpend()) {
             failOnServer(sp, "no Dungeonbreaker charges left");
             return false;
