@@ -44,6 +44,8 @@ public final class CataCalculator {
         Map.entry("M2", 15000.0), Map.entry("M3", 36500.0), Map.entry("M4", 48500.0), Map.entry("M5", 70000.0),
         Map.entry("M6", 100000.0), Map.entry("M7", 300000.0));
     private static final Gson GSON = new Gson();
+    /** How many of your newest runs on a floor are your recent pace. */
+    private static final int RECENT_RUNS = 10;
 
     private static final class Saved {
         Map<String, Double> lastXp = new LinkedHashMap<>();
@@ -64,6 +66,10 @@ public final class CataCalculator {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("catacalc")
                     // Alone: the calculator screen. With a level (and floor or XP): the answer in chat, as before.
                     .executes(c -> Compat.queueOpenScreen(new CataCalcScreen(null)))
+                    .then(ClientCommands.literal("next")
+                        .executes(c -> next(startFloor()))
+                        .then(ClientCommands.argument("floor", StringArgumentType.word())
+                            .executes(c -> next(StringArgumentType.getString(c, "floor").toUpperCase(Locale.ROOT)))))
                     .then(ClientCommands.argument("level", IntegerArgumentType.integer(1, 100))
                         .executes(c -> run(IntegerArgumentType.getInteger(c, "level"), ""))
                         .then(ClientCommands.argument("floor", StringArgumentType.word())
@@ -74,6 +80,50 @@ public final class CataCalculator {
 
     private static int run(int level, String arg) {
         Minecraft.getInstance().execute(() -> calculate(level, arg));
+        return 1;
+    }
+
+    /** The next level: which, the XP to it, the runs (-1 without an XP per run) and the seconds (-1 without a run time). */
+    public record NextLevel(int level, double xpToGo, long runs, double seconds) {}
+
+    /** The next Catacombs level at this XP per run and time per run. Public for the game test. */
+    public static NextLevel nextLevel(double xp, double perRun, double runSeconds) {
+        int level = (int) Math.floor(level(xp)) + 1;
+        while (xpFor(level) <= xp) level++;
+        double need = xpFor(level) - xp;
+        long runs = perRun > 0 ? (long) Math.ceil(need / perRun) : -1;
+        return new NextLevel(level, need, runs, runs > 0 && runSeconds > 0 ? runs * runSeconds : -1);
+    }
+
+    /** How long a run of the floor takes you lately, with your usual gap to the next one, in seconds, or -1 with no runs. */
+    public static double recentPace(String floor) {
+        double run = com.epic60869.sky2m.features.tracker.DungeonProfitHour.recentRunSeconds(floor, com.epic60869.sky2m.features.tracker.DungeonProfitHour.runHistory(), RECENT_RUNS);
+        if (run <= 0) return -1;
+        return run + Math.max(0, com.epic60869.sky2m.features.tracker.DungeonProfitHour.history(floor).gapSeconds());
+    }
+
+    /** /s2 catacalc next [floor]: the runs and time to your next level, in chat. */
+    private static int next(String floor) {
+        Minecraft mc = Minecraft.getInstance();
+        PerRun per = perRun(floor);
+        if (per.xp() <= 0) {
+            say(Component.literal("Unknown floor \"" + floor + "\". Use E, F1-F7 or M1-M7.").withStyle(ChatFormatting.RED));
+            return 0;
+        }
+        double pace = recentPace(floor);
+        yourXp().whenComplete((xp, error) -> mc.execute(() -> {
+            if (error != null || xp == null) {
+                say(Component.literal("Couldn't load your profile: " + ProfileApi.reason(error)).withStyle(ChatFormatting.RED));
+                return;
+            }
+            NextLevel next = nextLevel(xp, per.xp(), pace);
+            say(Component.literal(String.format(Locale.US, "Catacombs %.2f → %d: ", level(xp), next.level())).withStyle(ChatFormatting.GOLD)
+                .append(Component.literal(String.format(Locale.US, "%,d %s runs", next.runs(), floor)).withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(next.seconds() > 0 ? ", about " + com.epic60869.sky2m.features.tracker.DungeonProfitHour.hours(next.seconds()) : "").withStyle(ChatFormatting.GREEN)));
+            say(Component.literal(CombatFeatures.formatCoins(next.xpToGo()) + " XP to go at " + CombatFeatures.formatCoins(per.xp()) + " a run (" + per.source() + ")"
+                + (pace > 0 ? ", " + com.epic60869.sky2m.features.tracker.DungeonProfitHour.time(pace) + " a run lately with the gap between runs." : ". No " + floor + " runs in your Run History for a time."))
+                .withStyle(ChatFormatting.GRAY));
+        }));
         return 1;
     }
 

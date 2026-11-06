@@ -47,6 +47,8 @@ public class CataCalcScreen extends Screen {
     private final List<String[]> totals = new ArrayList<>(), levels = new ArrayList<>();
     private String perRunSource = "";
     private final List<Hit> hits = new ArrayList<>();
+    /** Your recent seconds per run on this floor with the gap between runs, -1 with none. */
+    private double recentPace = -1;
 
     private record Hit(int x, int y, int w, int h, Runnable action) {}
 
@@ -111,6 +113,7 @@ public class CataCalcScreen extends Screen {
 
     @Override
     protected void init() {
+        recentPace = CataCalculator.recentPace(floor);
         targetBox = box(targetText, 0);
         xpBox = box(xpText, 1);
         timeBox = box(timeText, 2);
@@ -183,6 +186,12 @@ public class CataCalcScreen extends Screen {
         afterRuns(perRun, runSeconds);
         totals.add(new String[]{"Now", String.format(Locale.US, "§fCatacombs %.2f", CataCalculator.level(xp))});
         totals.add(new String[]{"§8  XP", "§8" + DungeonProfitHour.whole(xp)});
+        if (perRun > 0) {
+            CataCalculator.NextLevel next = CataCalculator.nextLevel(xp, perRun, recentPace);
+            totals.add(new String[]{"Next: Catacombs " + next.level(), "§b" + DungeonProfitHour.whole(next.runs()) + " runs"
+                + (next.seconds() > 0 ? " §a" + DungeonProfitHour.hours(next.seconds()) : "")});
+            if (recentPace > 0) totals.add(new String[]{"§8  Recent pace", "§8" + DungeonProfitHour.time(recentPace) + " a run"});
+        }
         if (target < 1 || target > 100) {
             totals.add(new String[]{"§cType a target level, 1-100", ""});
             return;
