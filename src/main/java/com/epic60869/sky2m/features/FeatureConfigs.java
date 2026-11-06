@@ -6630,6 +6630,11 @@ public final class FeatureConfigs {
         public boolean bossesLeft = false;
 
         @Expose
+        @ConfigOption(name = "Cost Forecast", desc = "Instead of Bosses Left, show the bosses, coins and time to the drop: the coins are what you last paid for that slayer's quest (or the wiki's price for your last boss's tier), the time is from this session's bosses per hour. The coins are the quest fees only.")
+        @ConfigEditorBoolean
+        public boolean costForecast = true;
+
+        @Expose
         @ConfigOption(name = "Warn Without a Drop", desc = "After a boss, say in chat when that slayer has no RNG Meter drop selected.")
         @ConfigEditorBoolean
         public boolean warnEmpty = false;
