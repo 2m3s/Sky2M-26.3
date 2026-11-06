@@ -602,46 +602,67 @@ public final class ProfileViewerScreen extends Screen {
         return pages;
     }
 
+    /** Slots on a wardrobe page: four armour rows over four equipment rows, nine sets across. */
+    public static final int WARDROBE_PAGE = 72;
+
     /**
-     * The wardrobe, laid out like the in-game one: each set a column (helmet to boots), 9 sets a page. Hypixel's
-     * loadout rework moved the sets to {@code loadout.armor} (one entry per set, HELMET to BOOTS); only profiles nobody
-     * has opened since still have the old {@code wardrobe_contents} (from Killer560's Mod, MIT).
+     * The wardrobe, laid out like the in-game one: each set a column, 9 sets a page, its armour (helmet to boots) in the
+     * top four rows and the Equipment Wardrobe's set of the same number (necklace, cloak, belt, gloves) in the four under
+     * it. Hypixel's loadout rework moved the sets to {@code loadout.armor} (one entry per set, HELMET to BOOTS) and
+     * {@code loadout.equipment} (EQUIPMENT_SLOT_1 to 4); only profiles nobody has opened since still have the old
+     * {@code wardrobe_contents}, armour only (from Killer560's Mod, MIT).
      */
     List<List<PvItem>> wardrobe() {
+        return wardrobe(member());
+    }
+
+    /** {@link #wardrobe()} for a profile member's JSON, for the game test. */
+    public static List<List<PvItem>> wardrobe(JsonObject member) {
         List<List<PvItem>> out = new ArrayList<>();
-        JsonObject armour = Json.path(member(), "loadout.armor");
-        int maxSet = -1;
-        java.util.Map<Integer, List<PvItem>> sets = new java.util.TreeMap<>();
-        if (armour != null) for (String key : armour.keySet()) {
-            if (key.equals("equipped_set")) continue;
-            int set;
-            try {
-                set = Integer.parseInt(key);
-            } catch (NumberFormatException e) {
-                continue;
-            }
-            JsonObject pieces = Json.obj(armour, key);
-            List<PvItem> four = new ArrayList<>();
-            for (String piece : new String[]{"HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS"}) {
-                List<PvItem> one = ProfileItems.decode(Json.obj(pieces, piece));
-                four.add(one.isEmpty() ? null : one.getFirst());
-            }
-            sets.put(set, four);
-            maxSet = Math.max(maxSet, set);
-        }
-        if (sets.isEmpty()) {
-            split(out, ProfileItems.decode(Json.obj(Json.obj(member(), "inventory"), "wardrobe_contents")), 36);
+        java.util.Map<Integer, List<PvItem>> armour = loadoutSets(Json.path(member, "loadout.armor"),
+            new String[]{"HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS"});
+        java.util.Map<Integer, List<PvItem>> equipment = loadoutSets(Json.path(member, "loadout.equipment"),
+            new String[]{"EQUIPMENT_SLOT_1", "EQUIPMENT_SLOT_2", "EQUIPMENT_SLOT_3", "EQUIPMENT_SLOT_4"});
+        if (armour.isEmpty() && equipment.isEmpty()) {
+            split(out, ProfileItems.decode(Json.obj(Json.obj(member, "inventory"), "wardrobe_contents")), 36);
             return out;
         }
+        int maxSet = Math.max(armour.isEmpty() ? -1 : ((java.util.TreeMap<Integer, List<PvItem>>) armour).lastKey(),
+            equipment.isEmpty() ? -1 : ((java.util.TreeMap<Integer, List<PvItem>>) equipment).lastKey());
         for (int start = 0; start <= maxSet; start += 9) {
-            List<PvItem> page = new ArrayList<>(java.util.Collections.nCopies(36, (PvItem) null));
+            List<PvItem> page = new ArrayList<>(java.util.Collections.nCopies(WARDROBE_PAGE, (PvItem) null));
             for (int col = 0; col < 9; col++) {
-                List<PvItem> four = sets.get(start + col);
+                List<PvItem> four = armour.get(start + col);
                 if (four != null) for (int row = 0; row < 4; row++) page.set(row * 9 + col, four.get(row));
+                List<PvItem> gear = equipment.get(start + col);
+                if (gear != null) for (int row = 0; row < 4; row++) page.set((row + 4) * 9 + col, gear.get(row));
             }
             out.add(page);
         }
         return out;
+    }
+
+    /** A loadout section's numbered sets ({"0": {piece: items}, ..., "equipped_set": n}), each as its four pieces. */
+    private static java.util.Map<Integer, List<PvItem>> loadoutSets(JsonObject section, String[] pieces) {
+        java.util.TreeMap<Integer, List<PvItem>> sets = new java.util.TreeMap<>();
+        if (section == null) return sets;
+        for (String key : section.keySet()) {
+            int set;
+            try {
+                set = Integer.parseInt(key);
+            } catch (NumberFormatException e) {
+                continue;    // "equipped_set" and the like
+            }
+            JsonObject entry = Json.obj(section, key);
+            if (entry == null) continue;
+            List<PvItem> four = new ArrayList<>();
+            for (String piece : pieces) {
+                List<PvItem> one = ProfileItems.decode(Json.obj(entry, piece));
+                four.add(one.isEmpty() ? null : one.getFirst());
+            }
+            sets.put(set, four);
+        }
+        return sets;
     }
 
     static void split(List<List<PvItem>> pages, List<PvItem> items, int size) {
@@ -682,10 +703,13 @@ public final class ProfileViewerScreen extends Screen {
         int rows = Math.max(1, (items.size() + cols - 1) / cols);
         int sy = gy + 12;
         for (int i = 0; i < rows * cols; i++) {
-            int x = gx + (i % cols) * SLOT, y = sy + (i / cols) * SLOT + (inventory == 0 && i >= 27 ? 4 : 0);
+            // A small gap above the hotbar, and between the wardrobe's armour and its equipment.
+            boolean gap = (inventory == 0 && i >= 27) || (inventory == 4 && items.size() == WARDROBE_PAGE && i >= 36);
+            int x = gx + (i % cols) * SLOT, y = sy + (i / cols) * SLOT + (gap ? 4 : 0);
             slot(g, i < items.size() ? items.get(i) : null, x, y, mouseX, mouseY);
         }
-        if (pages.size() > 1) pageArrows(g, gx, sy + rows * SLOT + 8, cols * SLOT, mouseX, mouseY);
+        int below = inventory == 4 && items.size() == WARDROBE_PAGE ? 4 : 0;
+        if (pages.size() > 1) pageArrows(g, gx, sy + rows * SLOT + below + 8, cols * SLOT, mouseX, mouseY);
     }
 
     /** Slots per row: Armour & Equipment has only its four armour and four equipment slots, everything else nine. */
