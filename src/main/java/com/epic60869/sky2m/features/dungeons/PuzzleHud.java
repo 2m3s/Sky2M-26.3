@@ -55,8 +55,16 @@ public final class PuzzleHud {
     private record Pending(ChatLine line, long at) {}
 
     private static final class Visited {
+        final int slot;
         String room;
-        final Set<String> players = new LinkedHashSet<>();
+
+        Visited(int slot) {
+            this.slot = slot;
+        }
+
+        List<String> players() {
+            return List.copyOf(ENTERED.getOrDefault(slot, Set.of()));
+        }
     }
 
     private static final Pattern COUNT = Pattern.compile("Puzzles: \\((\\d+)\\)");
@@ -69,8 +77,10 @@ public final class PuzzleHud {
     private static List<Entry> puzzles = List.of();
     /** Who did each puzzle, from chat, for tab lines that don't name them. */
     private static final Map<String, String> WHO = new HashMap<>();
-    /** Who has stood in each puzzle room on the map, by its first tile, with the room's name once the map gives it. */
-    private static final Map<Integer, Visited> ENTERED = new LinkedHashMap<>();
+    /** Who has stood in each room slot on the map. By slot, not puzzle: the map can take a while to mark a room as one, and you may have left by then. */
+    private static final Map<Integer, Set<String>> ENTERED = new HashMap<>();
+    /** The puzzle rooms the map knows of, by slot, with their name once it gives it. */
+    private static final Map<Integer, Visited> PUZZLE_ROOMS = new LinkedHashMap<>();
     private static final List<Pending> PENDING = new ArrayList<>();
     private static int count;
     private static int ticks;
@@ -96,9 +106,10 @@ public final class PuzzleHud {
                 reset();
             }
             Config c = config();
-            if (++ticks % 10 != 0 || c == null || !c.enabled || !Sky2MLocation.inDungeon()) return;
-            readTab();
-            if (c.showEntered) watchRooms(com.epic60869.sky2m.sim.livemap.MapViewSource.current());
+            ticks++;
+            if (c == null || !c.enabled || !Sky2MLocation.inDungeon()) return;
+            if (c.showEntered && ticks % 2 == 0) watchRooms(com.epic60869.sky2m.sim.livemap.MapViewSource.current());
+            if (ticks % 10 == 0) readTab();
         });
         Sky2MHuds.setting("puzzle_hud", () -> config() != null && config().enabled);
         Sky2MHuds.register("puzzle_hud", "Puzzle HUD",
@@ -116,27 +127,26 @@ public final class PuzzleHud {
         puzzles = List.of();
         WHO.clear();
         ENTERED.clear();
+        PUZZLE_ROOMS.clear();
         PENDING.clear();
         count = 0;
     }
 
-    /** Notes whose head is inside a puzzle room on the map, so one someone walked into and left unsolved shows who. */
+    /** Notes whose head is in which room slot, so a puzzle someone walked into and left unsolved shows who. */
     private static void watchRooms(MapView view) {
         if (!view.valid() || view.inBoss()) return;
+        int step = view.roomSize() + view.gap();
+        for (MapView.Head head : view.heads()) {
+            if (inGap(head.x(), view.startX(), view) || inGap(head.y(), view.startY(), view)) continue;
+            int col = Math.floorDiv((int) Math.floor(head.x()) - view.startX(), step);
+            int row = Math.floorDiv((int) Math.floor(head.y()) - view.startY(), step);
+            ENTERED.computeIfAbsent(col * 100 + row, s -> new LinkedHashSet<>()).add(head.name());
+        }
         for (MapView.Room room : view.rooms()) {
             if (room.type() != MapView.RoomType.PUZZLE || room.tiles().isEmpty()) continue;
             int[] tile = room.tiles().get(0);
-            Visited visited = ENTERED.get(tile[0] * 100 + tile[1]);
-            for (MapView.Head head : view.heads()) {
-                if (!RoomClears.inRoom(view, room, head.x(), head.y())) continue;
-                if (inGap(head.x(), view.startX(), view) || inGap(head.y(), view.startY(), view)) continue;
-                if (visited == null) {
-                    visited = new Visited();
-                    ENTERED.put(tile[0] * 100 + tile[1], visited);
-                }
-                visited.players.add(head.name());
-            }
-            if (visited != null && room.name() != null) visited.room = room.name();
+            Visited visited = PUZZLE_ROOMS.computeIfAbsent(tile[0] * 100 + tile[1], Visited::new);
+            if (room.name() != null) visited.room = room.name();
         }
     }
 
@@ -154,7 +164,7 @@ public final class PuzzleHud {
 
     /** Who went into each listed puzzle, in the list's order. A "???" line gets the next entered room the tab hasn't named. */
     private static List<List<String>> enteredLists(List<Entry> entries) {
-        List<Visited> left = new ArrayList<>(ENTERED.values());
+        List<Visited> left = new ArrayList<>(PUZZLE_ROOMS.values());
         List<List<String>> out = new ArrayList<>();
         for (Entry entry : entries) {
             Visited match = null;
@@ -165,10 +175,10 @@ public final class PuzzleHud {
                 }
             }
             if (match != null) left.remove(match);
-            out.add(match == null ? null : List.copyOf(match.players));
+            out.add(match == null ? null : match.players());
         }
         for (int i = 0; i < entries.size() && !left.isEmpty(); i++) {
-            if (out.get(i) == null && entries.get(i).name().equals("???")) out.set(i, List.copyOf(left.removeFirst().players));
+            if (out.get(i) == null && entries.get(i).name().equals("???")) out.set(i, left.removeFirst().players());
         }
         return out;
     }
