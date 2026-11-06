@@ -50,6 +50,28 @@ public final class SlayerTimes {
     private static String boss;
     /** Set after a kill until your boss's nametag is gone, so the lingering tag doesn't start a new timer. */
     private static boolean killed;
+    /** When the sidebar first said "Slay the boss!" for this boss: its real spawn, if its nametag is only seen later. */
+    private static long slayLineAt;
+    /** A slay line older than this is from an earlier boss, not this one. */
+    private static final long SLAY_LINE_MAX_MS = 5 * 60_000;
+
+     * The fastest kill the Sky2M leaderboard believes per boss key (the server's table, mod-server slayer-pbs.js): a
+     * faster "kill" is a timing miss (the boss was only seen as it died), so it isn't kept as a personal best, which
+     * would otherwise block every real time from ever being sent. Anything not listed: 1 s.
+    private static final Map<String, Long> MIN_KILL_MS = Map.ofEntries(
+        Map.entry("Tarantula Broodfather III", 2_000L), Map.entry("Tarantula Broodfather IV", 2_000L),
+        Map.entry("Tarantula Broodfather V", 5_000L), Map.entry("Voidgloom Seraph III", 2_000L),
+        Map.entry("Voidgloom Seraph IV", 10_000L), Map.entry("Inferno Demonlord II", 2_000L),
+        Map.entry("Inferno Demonlord III", 4_000L), Map.entry("Inferno Demonlord IV", 6_000L),
+        Map.entry("Riftstalker Bloodfiend I", 10_000L), Map.entry("Riftstalker Bloodfiend II", 10_000L),
+        Map.entry("Riftstalker Bloodfiend III", 15_000L), Map.entry("Riftstalker Bloodfiend IV", 15_000L),
+        Map.entry("Riftstalker Bloodfiend V", 15_000L));
+
+    public static long minKillMs(String boss) {
+        return Math.max(1_000L, MIN_KILL_MS.getOrDefault(boss, 1_000L));
+    /** The sidebar shows "Slay the boss!" ({@link SlayerBossSpawnAlert}, every tick it's there). */
+    static void onSlayLine(long now) {
+        if (slayLineAt == 0 && spawnedAt == 0) slayLineAt = now;
 
     private SlayerTimes() {}
 
@@ -90,7 +112,8 @@ public final class SlayerTimes {
         if (killed) return;
         boolean spawned = spawnedAt == 0;
         if (spawned) {
-            spawnedAt = now;
+            // The sidebar says the boss spawned before you saw its nametag (it spawned out of view): time from then.
+            spawnedAt = slayLineAt > 0 && now - slayLineAt < SLAY_LINE_MAX_MS ? slayLineAt : now;
             SlayerBossProfit.onSpawn();
         }
         if (healthLine.isEmpty() || ZERO_HEALTH.matcher(healthLine).find()) {
@@ -174,6 +197,7 @@ public final class SlayerTimes {
     private static void reset() {
         questStartedAt = 0;
         spawnedAt = 0;
+        slayLineAt = 0;
         zeroAt = 0;
         boss = null;
     }
@@ -194,10 +218,16 @@ public final class SlayerTimes {
         SlayerBossProfit.onKill(name);
         spawnedAt = 0;
         zeroAt = 0;
+        slayLineAt = 0;
         boss = null;
         killed = true;
         Sky2MConfig.PersonalBest config = config();
         if (config == null) return;
+            // Seen only as it died: not a real time, so it can't become a PB that no real kill could beat.
+            if (config.timeToKill || config.personalBests) {
+                Sky2MAlerts.chat(Component.literal(name + " kill timed at " + format(time) + ", too fast to be real (the boss was "
+                    + "only seen as it died), so it wasn't counted.").withStyle(ChatFormatting.GRAY));
+            return;
 
         Map<String, Long> bests = BESTS.computeIfAbsent(player(), p -> new ConcurrentHashMap<>());
         Long previous = bests.get(name);
@@ -294,6 +324,11 @@ public final class SlayerTimes {
             System.err.println("[Sky2M] Could not read slayer-personal-bests.json: " + e.getMessage());
         }
         resetTarantulaOnce();
+        dropImpossible();
+    private static void dropImpossible() {
+        boolean removed = false;
+        for (Map<String, Long> bests : BESTS.values()) {
+        if (removed) save();
     }
 
     /**
