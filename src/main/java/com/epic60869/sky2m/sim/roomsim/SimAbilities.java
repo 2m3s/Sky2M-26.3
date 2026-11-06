@@ -153,6 +153,9 @@ public final class SimAbilities {
                 || clicked instanceof net.minecraft.world.level.block.ChestBlock
                 // A P3 terminal's command block: it opens the terminal whatever is held, as on Hypixel.
                 || SimTerms.BLOCKS.contains(hit.getBlockPos())
+                // A wither or blood door: a right click with a key collected opens it whatever is held, as on
+                // Hypixel. Without this an AOTV, Hyperion or Dungeonbreaker in hand fired instead.
+                || SimDoors.isDoorBlock(hit.getBlockPos())
                 || com.epic60869.sky2m.sim.util.SimRaycast.isWitherEssence(level, hit.getBlockPos()));
     }
 
@@ -234,6 +237,9 @@ public final class SimAbilities {
             // A ghost uses nothing but a Revive Stone: no abilities, no pearls, no chests (SimDeath).
             if (id != null && isAbilityItem(id)) {
                 SimDeath.sayDead(sp);
+            }
+            return InteractionResult.FAIL;
+        }
         if (id == null) {
             return InteractionResult.PASS;
         }
@@ -252,24 +258,33 @@ public final class SimAbilities {
             return InteractionResult.PASS;
         }
         boolean sneaking = sp.isShiftKeyDown();
-        if (ETHERWARP_ITEMS.contains(id) && sneaking && etherwarpLocked(room)) {
-            sayEtherwarpLocked();
+        // No Instant or Ether Transmission in a boss room, as on Hypixel (the F7/M7 room included). APPROXIMATE
+        // wording: Hypixel's own refusal line isn't recorded here.
+        if (ETHERWARP_ITEMS.contains(id) && (SimBoss.isActive() || SimTerms.isActive())) {
+            sp.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§cYou can't use Transmission abilities in a boss room!"));
             return InteractionResult.FAIL;
         }
         if (ETHERWARP_ITEMS.contains(id) && sneaking && etherwarpLocked(room)) {
             sayEtherwarpLocked(sp);
+            return InteractionResult.FAIL;
+        }
         if (SimParty.isHost(sp)) {
             // The grace window is the HOST's client's (it keeps his Mage beam off his own swing); a party
             // guest's ability must not hold it.
             markAbilityUsed();
+        }
         // Mana and cooldown first, as on Hypixel: an ability he cannot afford does nothing but say so.
         if (!payFor(sp, id, sneaking)) {
+            return InteractionResult.FAIL;
+        }
         boolean fired;
         if (ETHERWARP_ITEMS.contains(id)) {
             fired = sneaking ? etherwarp(sp, held) : instantTransmission(sp, held);
             if (!fired && sneaking) {
                 // Hypixel takes nothing for an etherwarp with nowhere to land.
                 SimVitals.refund(sp, ETHERWARP_MANA * ultimateWise(held));
+            }
         } else if (WITHER_BLADES.contains(id)) {
             fired = witherImpact(sp);
             SimItemEffects.powerScroll(sp, held);
@@ -283,9 +298,12 @@ public final class SimAbilities {
         // A teleport arms the Shadow Assassin Cloak's next melee hit (SimGear).
         if (fired && (ETHERWARP_ITEMS.contains(id) || WITHER_BLADES.contains(id))) {
             SimGear.markTeleport(sp);
+        }
         // On a block the click is consumed even when the ability declines: a Superboom aimed at plain stone should
         // do nothing at all - not place a block of TNT.
         return fired || onBlock != null ? InteractionResult.SUCCESS : InteractionResult.PASS;
+    }
+
     /**
      * Mana costs, Hypixel's tooltip values before Ultimate Wise: Instant Transmission 45 (AOTV), Ether Transmission 180,
      * Wither Impact 300, Guided Bat 200. Each is cut by the held item's Ultimate Wise (10% a level,
@@ -312,11 +330,15 @@ public final class SimAbilities {
         var data = held == null ? null : held.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
         if (data == null) {
             return 0.5;
+        }
         var tag = data.copyTag();
         if (!tag.contains("enchantments")) {
             return 0.5;
+        }
         int level = tag.getCompoundOrEmpty("enchantments").getIntOr("ultimate_wise", 0);
         return Math.max(0, 1 - 0.1 * Math.min(5, level));
+    }
+
     /**
      * Charges an ability's mana and starts its cooldown ({@link SimVitals#cast}), or refuses it with Hypixel's
      * message. Items with no mana cost or cooldown (Terminator, Superboom, the Architect's draft) always pass.
@@ -327,19 +349,25 @@ public final class SimAbilities {
             return sneaking
                     ? SimVitals.cast(sp, "Ether Transmission", ETHERWARP_MANA * wise, 0)
                     : SimVitals.cast(sp, "Instant Transmission", INSTANT_TRANSMISSION_MANA * wise, 0);
+        }
         if (WITHER_BLADES.contains(id)) {
             long now = SimVitals.now();
             Long next = NEXT_WITHER_IMPACT.get(sp.getUUID());
             if (next != null && now < next) {
                 return false;
+            }
             if (!SimVitals.cast(sp, "Wither Impact", WITHER_IMPACT_MANA * wise, 0)) {
                 return false;
+            }
             NEXT_WITHER_IMPACT.put(sp.getUUID(), now + WITHER_IMPACT_COOLDOWN_TICKS);
             return true;
+        }
         if (TACTICAL_INSERTION.equals(id)) {
             return SimVitals.cast(sp, "Tactical Insertion", 0, TACTICAL_INSERTION_COOLDOWN_TICKS);
+        }
         if ("BAT_WAND".equals(id)) {
             return SimVitals.cast(sp, "Guided Bat", GUIDED_BAT_MANA * wise, 0);
+        }
         return true;
     }
 
@@ -484,6 +512,7 @@ public final class SimAbilities {
                 // further than its faces. Same check, same reason as the Spirit Sceptre.
                 if (target.getBoundingBox().distanceToSqr(centre) > WITHER_BLAST_RADIUS * WITHER_BLAST_RADIUS) {
                     continue;
+                }
                 target.hurtServer(level, source, WITHER_BLAST_DAMAGE);
                 hit[0]++;
             }
@@ -710,8 +739,11 @@ public final class SimAbilities {
         Long last = LAST_TRAP_MESSAGE.get(sp.getUUID());
         if (last != null && now - last < 1000L) {
             return false;
+        }
         LAST_TRAP_MESSAGE.put(sp.getUUID(), now);
         return true;
+    }
+
     private static final java.util.Map<java.util.UUID, Long> LAST_TRAP_MESSAGE =
             new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -768,11 +800,13 @@ public final class SimAbilities {
             if (left > 0) {
                 INSERTION_TICKS.put(owner, left);
                 continue;
+            }
             Vec3 back = INSERTIONS.remove(owner);
             INSERTION_TICKS.remove(owner);
             ServerPlayer sp = server.getPlayerList().getPlayer(owner);
             if (sp != null && back != null) {
                 teleport(sp, back.x, back.y, back.z);
+            }
         }
     }
 
