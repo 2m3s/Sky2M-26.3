@@ -21,7 +21,9 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,9 +41,17 @@ public final class LeapMenu {
 
     private record Teammate(String name, DungeonClass dungeonClass, boolean alive) {}
 
+    /** Which corner each teammate got this run, and their last class seen while alive. */
+    private static final Map<String, Integer> assignedCorner = new HashMap<>();
+    private static final Map<String, DungeonClass> lastClass = new HashMap<>();
+
     private LeapMenu() {}
 
     public static void init() {
+        com.epic60869.sky2m.sb.events.DungeonEvents.DUNGEON_LOADED.register(() -> {
+            assignedCorner.clear();
+            lastClass.clear();
+        });
         // Keybinds: press a box's key to leap to that teammate.
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof AbstractContainerScreen<?> container)) return;
@@ -90,28 +100,51 @@ public final class LeapMenu {
         List<Teammate> players = new ArrayList<>();
         for (DungeonPlayerManager.DungeonPlayer p : DungeonPlayerManager.getPlayers()) {
             if (p == null || p.name().equals(selfName)) continue;
-            players.add(new Teammate(p.name(), p.dungeonClass(), p.alive()));
+            // A dead player's class reads as UNKNOWN, so keep showing (and sorting by) the last one we saw.
+            if (p.dungeonClass() != DungeonClass.UNKNOWN) lastClass.put(p.name(), p.dungeonClass());
+            players.add(new Teammate(p.name(), lastClass.getOrDefault(p.name(), p.dungeonClass()), p.alive()));
         }
 
-        // Odin's sorting: each class takes its chosen corner, extras fill the free ones.
+        // Corners stick for the whole run, so deaths, revives and tab list reshuffles never move anyone.
+        List<Teammate> unplaced = new ArrayList<>();
         for (Teammate t : players) {
+            Integer corner = assignedCorner.get(t.name());
+            if (corner != null && result[corner] == null) result[corner] = t;
+            else unplaced.add(t);
         }
+        // Odin's sorting for anyone new: each class takes its chosen corner, extras fill the free ones.
         List<Teammate> secondRound = new ArrayList<>();
-        for (Teammate t : players) {
+        for (Teammate t : unplaced) {
             int corner = corner(config, t.dungeonClass()).ordinal();
-            if (result[corner] == null) result[corner] = t;
+            if (result[corner] == null && !takenByAbsent(corner, players)) place(result, corner, t);
             else secondRound.add(t);
         }
         for (int i = 0; i < 4 && !secondRound.isEmpty(); i++) {
-            if (result[i] == null) result[i] = secondRound.removeFirst();
+            if (result[i] == null && !takenByAbsent(i, players)) place(result, i, secondRound.removeFirst());
         }
+        // Only if there's no room left, take over corners of players who've dropped off the tab list.
+        for (int i = 0; i < 4 && !secondRound.isEmpty(); i++) {
+            if (result[i] == null) place(result, i, secondRound.removeFirst());
         }
         return result;
     }
 
+    private static void place(Teammate[] result, int corner, Teammate t) {
+        result[corner] = t;
+        // Before the run starts classes aren't known yet, so don't lock a corner in.
+        if (t.dungeonClass() == DungeonClass.UNKNOWN) return;
+        assignedCorner.values().remove(corner);
+        assignedCorner.put(t.name(), corner);
     }
 
+    /** Whether a corner belongs to a teammate who's briefly missing from the tab list. */
+    private static boolean takenByAbsent(int corner, List<Teammate> players) {
+        for (var e : assignedCorner.entrySet()) {
+            if (e.getValue() != corner) continue;
+            for (Teammate t : players) if (t.name().equals(e.getKey())) return false;
+            return true;
         }
+        return false;
     }
 
     private static FeatureConfigs.LeapCorner corner(FeatureConfigs.LeapMenu config, DungeonClass dungeonClass) {
