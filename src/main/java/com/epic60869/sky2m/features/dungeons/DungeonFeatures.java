@@ -171,6 +171,7 @@ public final class DungeonFeatures {
         LividTimer.init();
         TerracottaTimer.init();
         AutoRequeue.init();
+        RoomClears.init();
         PartyFinderStats.init();
         PfRequirements.init();
         BlessingDisplay.init();
