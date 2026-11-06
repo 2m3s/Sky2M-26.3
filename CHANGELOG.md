@@ -103,6 +103,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ### Changed
 
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
+- Dungeon Sim death barriers and borders: falling below a floor (into the void under a room or out of a gap) or walking off the map puts you back where you last stood, instead of dying.
 - Terracotta Timer (F6/M6) counts 10 seconds on both floors, the wiki's respawn time (it counted 15 on F6 and 12 on M6).
 - Dungeon Sim bosses reworked to Hypixel's mechanics (checked against the wiki; numbers the wiki doesn't give are approximations), with Hypixel's lines word for word:
   - Bonzo: phase 1 is Undead summons and wither skulls; after "Oh I'm dead!" ... "Sike!" phase 2 brings melee, aimed balloons and the Balloon Barrage from the centre (hide behind the pillars). M1: more summons, faster skulls, lobbed balloons.

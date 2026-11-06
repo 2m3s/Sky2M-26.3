@@ -42,9 +42,34 @@ public final class SimSurvival {
     /** Remembered by the builder once it knows where the room's floor is. */
     public static void setHome(BlockPos pos) {
         homePoint = pos == null ? null : pos.immutable();
+        // A new floor or room: the last floor's safe spots may be inside walls now.
+        LAST_SAFE.clear();
     /** The current home, so a boss room can borrow it and give it back. */
     public static BlockPos home() {
         return homePoint;
+    /** Each player's last safe spot on the floor: standing on something inside one of the map's rooms. */
+    private static final java.util.Map<java.util.UUID, net.minecraft.world.phys.Vec3> LAST_SAFE =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+     * The dungeon's death barriers and borders: falling below the floor's lowest block (into the void under a room,
+     * or out of a gap) or walking off the map puts him back where he last stood safely, instead of a void death.
+     * Not in a boss arena or the terminal drill (they are off the map and handle their own falls). Server thread.
+    private static void keepInBounds(ServerPlayer sp) {
+        if (SimBoss.isActive() || SimTerms.isActive() || sp.isSpectator()) {
+        // Off the map counts only near the dungeon grid: the holding area a build waits in is far away on purpose.
+        BlockPos middle = com.epic60869.sky2m.sim.livemap.DungeonLayout.cellCenter(60);
+        if (Math.abs(sp.getX() - middle.getX()) > 220 || Math.abs(sp.getZ() - middle.getZ()) > 220) {
+        boolean onMap = SimState.roomIdAt(sp.getBlockX(), sp.getBlockZ()) >= 0;
+        boolean below = sp.getY() < SimAltitude.minWorldY() - 4;
+        if (!below && onMap) {
+            if (sp.onGround()) {
+                LAST_SAFE.put(sp.getUUID(), sp.position());
+        net.minecraft.world.phys.Vec3 back = LAST_SAFE.get(sp.getUUID());
+        if (back == null && homePoint != null) {
+            back = net.minecraft.world.phys.Vec3.atBottomCenterOf(homePoint);
+        if (back == null) {
+        sp.teleportTo(sp.level(), back.x, back.y, back.z, java.util.Set.of(), sp.getYRot(), sp.getXRot(), false);
+        sp.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
     }
 
     public static void register() {
@@ -79,6 +104,7 @@ public final class SimSurvival {
                 if (sp.getFoodData().getFoodLevel() < 20) {
                     sp.getFoodData().eat(20, 1.0f);
                 }
+                keepInBounds(sp);
             }
         });
 
@@ -163,5 +189,6 @@ public final class SimSurvival {
     public static void reset() {
         flying = false;
         homePoint = null;
+        LAST_SAFE.clear();
     }
 }
