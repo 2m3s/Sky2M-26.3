@@ -20,6 +20,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Hide Claimed Runs (Dungeons > Dungeon Extras > Croesus, on by default), like Odin's: runs you've already opened a chest of disappear from Croesus's list. Keep Runs With A Key Left (off by default) keeps the ones you could still use a Dungeon Chest Key on.
 - Leap Menu Tint Dead Players and Show Last Door Opener (Dungeons > Leap Menu, both on by default), like NoammAddons': dead teammates' boxes turn dark red, and the menu says who opened the last door, until the boss.
 - Predict Unopened Rooms (Dungeons > Dungeon Map, on by default): a faint tint on grey rooms that are probably a puzzle, trap or miniboss, in every map style. It's only a guess from what Hypixel's map shows, so a guessed room can turn out to be a normal one.
+- Dungeon Sim Sadan's Sleeping Golems: they stand in his hall, wake when hit and chase you, with Sadan's lines for each one waking.
 - Dungeon Sim F7/M7 lines: Storm's lightning, pillar and "Not a single intact pillar remains!" lines, Goldor's lines when hit at terminals, when a gate goes down and when someone runs ahead of the gates, the Wither King's Defeat lines, and each wither's lines when the whole party dies.
 - Drop Tracker (/s2 tracker, Misc > Profit Trackers, on by default): your RNG drops in tabs for Dungeons, Slayer, Fishing, Diana, Mining, Farming and Foraging, most expensive first, with a search bar and an RNG only / Everything switch. Dungeons counts the loot of every dungeon chest you open from when it's on, priced when you claimed it, with how many chests each floor took, what they cost and your profit; the other tabs come from Sky2M's own trackers. /s2 tracker reset clears the Dungeons tab after you confirm in chat.
 - Dungeon Profit per Hour (/s2 hour, Misc > Profit Trackers, on by default): your profit per hour on a floor at your run speed, from Chest History and Run History, with and without the RNG meter, and how many runs and how long a boss collection target takes. /s2 hour 1:20 m1 says it in chat.
@@ -122,6 +123,9 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
 - Dungeon Sim terminals work like Hypixel's: each P3 section deals its terminals from the six types with no repeats and at most one Melody, and a terminal keeps its type for the run. Several players can open the same terminal, each on their own board; the first to finish completes it and the others' menus close. Walking away closes a terminal, and pressing Melody's button at the wrong time freezes the pane for 2 seconds.
 - Dungeon Sim hurt immunity like Hypixel's: one mob or attack can hit you at most once every half second, and overlapping boss hits landing at the same moment count once.
+- Dungeon Sim Thorn: his Spirit Wolves deal 3.5x damage to Tanks, the Spirit Bear heals slowly and shoots its Spirit Bow, and M4 Thorn takes 6 hits.
+- Dungeon Sim Livids have Hypixel's 100 Defense, and Frog Livid's poison deals a small hit each second.
+- Dungeon Sim Sadan: all four Giants close in and hit you, the Diamond Giant throws his sword at a marked spot, and Sadan hits with his own damage.
 - Dungeon Sim Professor's Rogue Guardians have Hypixel's health and damage on F3 and M3, and he says "Revive, (name)!".
 - Dungeon Sim F7/M7 withers only take damage in their windows, as on Hypixel: Maxor while the Energy Laser stuns him (the first stun can only take him to 25%, so the laser is charged twice), Storm for 10 seconds after each crush (the first down to about 45%, so he's crushed twice), and Necron down to his 80% and 5% frenzies, which make him immune for a moment once the ring closes.
 - Dungeon Sim Storm's crushers work like Hypixel's: stand on the purple, green or yellow pad (red stays broken) and the crusher drops on Storm about a second after he drifts over it, with "Ouch, that hurt!" and "⚠ Storm is enraged! ⚠"; none work before his first Giga Lightning.
@@ -207,6 +211,8 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - GitHub releases and their download are named "Sky2M Mod" instead of "SkyBalls Mod".
 
 ### Removed
+
+- Remove the Dungeon Sim's M6 Terracottas that kept rising during Sadan's Giants phase.
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 - Remove the Cross-Mod Bridge (Dungeons): Sky2M no longer connects to Odin's, NoammAddons' or Devonian's party sockets, and no longer signs in to them. Teammates' Melody progress still comes from their Sky2M or from party chat, and the dungeon map no longer shows rooms and doors other mods' users reported.
 - Remove THIRD_PARTY_NOTICES.md and the links to it from the README and source file headers.
