@@ -6,6 +6,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Added
 
+- Reroll Protection (Dungeons > Chest Profit, 5M by default): stops you rerolling a reward chest worth at least that much. Hold Ctrl to reroll anyway, and 0 turns it off.
 - Worth A Key (Dungeons > Dungeon Extras > Croesus, on by default): after you've looked inside a run, Croesus marks it `KEY` if a Dungeon Chest Key would pay off, and Hide Claimed Runs keeps it showing.
 - Pace vs PB (Dungeons > Timers, on by default): the split HUD shows how far ahead or behind your best run on that floor you are, like `vs PB: -4.2s`.
 - Live Room Splits (Dungeons > Secrets, on by default): a HUD in the room you're clearing with secrets found and how far ahead or behind your room best you are at each one. Move it in /s2 gui.

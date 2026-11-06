@@ -907,6 +907,12 @@ public final class FeatureConfigs {
         public float profitHighThreshold = 5_000_000;
 
         @Expose
+        @ConfigOption(name = "Reroll Protection", desc = "Stop you rerolling a reward chest whose profit is at least this. Hold Ctrl to reroll anyway. 0 turns it off.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 100_000_000, minStep = 250_000)
+        @ConfigAccordionId(id = 2002)
+        public float rerollProtection = 5_000_000;
+
+        @Expose
         @ConfigOption(name = "Unopened Color", desc = "Croesus runs with no chests opened yet.")
         @ConfigEditorColour
         @ConfigAccordionId(id = 2002)
