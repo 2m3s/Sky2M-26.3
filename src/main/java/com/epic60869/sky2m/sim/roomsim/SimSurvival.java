@@ -122,11 +122,11 @@ public final class SimSurvival {
         // Flight has to be re-asserted: the server resets abilities on respawn, on dimension change and
         // whenever it feels like syncing them, so setting the flag once does not keep it.
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            if (!flying || !SimState.isActive()) {
+            if (!SimState.isActive() || !flying && GUEST_FLYERS.isEmpty()) {
                 return;
             }
             for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
-                if (!sp.getAbilities().mayfly) {
+                if ((flying || GUEST_FLYERS.contains(sp.getUUID())) && !sp.getAbilities().mayfly) {
                     sp.getAbilities().mayfly = true;
                     sp.onUpdateAbilities();
                 }
@@ -145,6 +145,9 @@ public final class SimSurvival {
     }
 
     private static boolean flying;
+    /** Staff party guests who turned /fly on for themselves (the host's own /fly is everyone's). Server thread. */
+    private static final java.util.Set<java.util.UUID> GUEST_FLYERS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     /** Whether /fly is on, so a ghost brought back gets the flight he had before. */
     static boolean flightOn() {
         return flying;
@@ -163,8 +166,19 @@ public final class SimSurvival {
             player.teleportTo(level, home.getX() + 0.5, home.getY(), home.getZ() + 0.5,
                     java.util.Set.of(), player.getYRot(), player.getXRot(), false);
         ModChat.send("Sim", ModChat.dim("back to the middle of the room"));
+    /** A staff party guest's /fly, on the host: flight for that player alone. Server thread. */
+    static void toggleFor(ServerPlayer sp) {
+        boolean on = GUEST_FLYERS.add(sp.getUUID());
+        if (!on) {
+            GUEST_FLYERS.remove(sp.getUUID());
+        sp.getAbilities().mayfly = on || flying;
+        if (!sp.getAbilities().mayfly) {
+            sp.getAbilities().flying = false;
+        sp.onUpdateAbilities();
+        sp.sendSystemMessage(ModChat.line("Sim", ModChat.text("Flight "), ModChat.value(on ? "ON" : "OFF")));
 
     private static void toggle() {
+        if (SimParty.sendAction("staff_fly", "")) {
         Minecraft client = Minecraft.getInstance();
         var server = client.getSingleplayerServer();
         if (server == null) {
@@ -188,6 +202,7 @@ public final class SimSurvival {
     /** Turns flight back off and forgets the room, for leaving the sim. */
     public static void reset() {
         flying = false;
+        GUEST_FLYERS.clear();
         homePoint = null;
         LAST_SAFE.clear();
     }

@@ -89,15 +89,7 @@ public final class SimMobs {
      * Which miniboss {@link Kind#MINIBOSS} places when the caller does not say: Lost Adventurer, the one that
      * turns up in the most rooms.
      */
-    private static final double MINIBOSS_HEALTH = 20.0;
-
-    /**
-     * Which miniboss {@link Kind#MINIBOSS} places when the caller does not say.
-     *
-     * <p>Lost Adventurer, because it is the Catacombs miniboss that turns up in the most rooms - and because it
-     * is one of the four whose name fits in a game profile (see {@link SimMiniboss.Name#FROZEN_ADVENTURER}).
-     */
-    private static final SimMiniboss.Name DEFAULT_MINIBOSS = SimMiniboss.Name.LOST_ADVENTURER;
+    static final SimMiniboss.Name DEFAULT_MINIBOSS = SimMiniboss.Name.LOST_ADVENTURER;
 
     /** Every entity this class has spawned (dummies and woken Fels), for {@link #clear}. */
     private static final List<UUID> SPAWNED = new CopyOnWriteArrayList<>();
@@ -200,6 +192,9 @@ public final class SimMobs {
         if (room >= 0) {
             HOME_ROOM.put(mob.getUUID(), room);
             LAST_IN_ROOM.put(mob.getUUID(), mob.position());
+        }
+    }
+
     /**
      * Keeps every pinned mob in its own room, as Hypixel's are: it drops a player who is not in its room, and one
      * that has stepped into another room stops and goes back to where it last stood in its own. Server thread.
@@ -207,28 +202,37 @@ public final class SimMobs {
     private static void keepInRooms(ServerLevel level) {
         if (HOME_ROOM.isEmpty()) {
             return;
+        }
         for (var it = HOME_ROOM.entrySet().iterator(); it.hasNext(); ) {
             var entry = it.next();
             Entity entity = level.getEntity(entry.getKey());
             if (entity == null) {
                 continue;   // its section is not ticking: it is not moving either
+            }
             if (!entity.isAlive() || !(entity instanceof Mob mob)) {
                 it.remove();
                 LAST_IN_ROOM.remove(entry.getKey());
                 continue;
+            }
             int home = entry.getValue();
             if (mob.getTarget() instanceof net.minecraft.world.entity.player.Player target
                     && SimState.roomIdAt(target.getBlockX(), target.getBlockZ()) != home) {
                 mob.setTarget(null);
                 mob.getNavigation().stop();
+            }
             if (SimState.roomIdAt(mob.getBlockX(), mob.getBlockZ()) == home) {
                 LAST_IN_ROOM.put(entry.getKey(), mob.position());
                 continue;
+            }
             mob.getNavigation().stop();
             mob.setTarget(null);
             net.minecraft.world.phys.Vec3 back = LAST_IN_ROOM.get(entry.getKey());
             if (back != null) {
                 mob.teleportTo(back.x, back.y, back.z);
+            }
+        }
+    }
+
     /** Rooms holding at least one starred mob (alive, dead or still queued), refreshed with the room clears. */
     private static volatile java.util.Set<String> ROOMS_WITH_STARRED = java.util.Set.of();
 
@@ -238,6 +242,7 @@ public final class SimMobs {
      */
     static boolean roomHasStarred(String room) {
         return room != null && ROOMS_WITH_STARRED.contains(room);
+    }
 
     /**
      * Where each starred mob stood when it was spawned (or woken), so its ROOM is known. Hypixel clears a room the moment
@@ -260,6 +265,9 @@ public final class SimMobs {
         if (marker != null) {
             handingOver = null;
             SimKeys.handOver(marker, id);
+        }
+    }
+
     /** The stand-in id of the pending mob being placed right now, for {@link #recordStarred}. Server thread. */
     private static UUID handingOver;
 
@@ -272,6 +280,8 @@ public final class SimMobs {
         for (java.util.Map.Entry<UUID, double[]> e : STARRED_AT.entrySet()) {
             if (!STARRED_DEAD.contains(e.getKey())) {
                 out.put(e.getKey(), e.getValue().clone());
+            }
+        }
         return out;
     }
 
@@ -333,82 +343,20 @@ public final class SimMobs {
         if (server == null) {
             return;
         }
-        server.execute(() -> {
-            ServerLevel level = server.overworld();
-            switch (kind) {
-                case ZOMBIE -> spawnDummy(level, new SimZombie(McEntities.ZOMBIE, level), pos, starred);
-                case SKELETON -> spawnDummy(level, new SimSkeleton(McEntities.SKELETON, level), pos, starred);
-                case MINIBOSS -> spawnMiniboss(level, pos, boss, starred);
-                case FEL -> spawnFel(level, pos, starred);
-                // A bat is a SECRET on Hypixel, not a mob worth points - which is exactly why it is here: a
-                // 300 run needs every secret, and a player who cannot tell a bat secret from a chest secret
-                // cannot tell why their count is short.
-                case BAT -> spawnBat(level, pos);
-            }
-        });
+        server.execute(() -> spawnOnServer(server.overworld(), pos, kind, starred, boss));
     }
 
-    /**
-     * Places a one-HP zombie or skeleton. Server thread only - called from {@link #spawn}.
-     *
-     * <p>{@code setPersistenceRequired()} is the normal vanilla answer to "don't despawn", but it is not enough
-     * here: {@code Mob.checkDespawn()} discards any hostile mob whose {@code EntityType.isAllowedInPeaceful()}
-     * is false the moment the level's difficulty reads PEACEFUL, and it does that check BEFORE it ever looks at
-     * persistence (confirmed with {@code javap -c} against {@code Mob.class} in the 26.1.2 jar). SimWorld opens
-     * the sim on {@code Difficulty.PEACEFUL} on purpose, so a plain {@code Zombie}/{@code Skeleton} would vanish
-     * on its very next tick. {@link #SimZombie} and {@link #SimSkeleton} fix that the one place this file can
-     * reach without touching SimWorld: they override {@code checkDespawn()} to do nothing at all, which also
-     * satisfies "not despawn" more completely than persistence alone would.
-     */
-    /**
-     * Places a real miniboss, falling back to the durable starred zombie this kind used to be.
-     *
-     * <p>The fallback is not decoration: the player-entity form depends on a Fabric API class, on a version-2
-     * UUID reaching the client before the entity does, and on three {@code ServerPlayer} behaviours being
-     * overridden - and if any of that ever stops working the sim must still put something in the room that takes
-     * more than one hit, rather than leaving it empty with only a log line. There is no setting either way;
-     * killer560, 2026-09-29: "it will be something that is done basically on your end only and that the user
-     * should never have to do."
-     */
-    private static void spawnMiniboss(ServerLevel level, BlockPos pos, SimMiniboss.Name name, boolean starred) {
-        SimMiniboss.Placed placed = SimMiniboss.place(level, pos, name, MINIBOSS_HEALTH);
-        if (placed == null) {
-            spawnDummy(level, new SimZombie(McEntities.ZOMBIE, level), pos, starred, MINIBOSS_HEALTH);
-            return;
-        }
-        ServerPlayer boss = placed.boss();
-        SPAWNED.add(boss.getUUID());
-        if (starred) {
-            STARRED.add(boss.getUUID());
-            recordStarred(boss.getUUID(), boss.getX(), boss.getY(), boss.getZ());
-            // WITH a star stand, because that is how Hypixel does it - see attachStarTag for the log lines
-            // off his own client. The stand was CONSTRUCTED alongside the boss in SimMiniboss.place so its
-            // entity id is the boss's plus one, which is the first thing MobEspFeature.resolveMob looks at;
-            // building it here instead left a gap of two and the ESP could not resolve the miniboss at all.
-            attachStarTag(level, boss, name.text(), MINIBOSS_HEALTH, placed.tag());
-        }
-    }
-
-    private static void spawnDummy(ServerLevel level, Mob mob, BlockPos pos, boolean starred) {
-        spawnDummy(level, mob, pos, starred, ONE_HP);
-    }
-
-    private static void spawnDummy(ServerLevel level, Mob mob, BlockPos pos, boolean starred, double health) {
-        mob.getAttribute(Attributes.MAX_HEALTH).setBaseValue(health);
-        mob.setHealth((float) health);
-        mob.setPersistenceRequired();
-        // NEVER MOVES. killer560 (2026-09-28): "on the main their movement is dependent on where you are and
-        // will be far too hard to replicate I would rather just have them never move". So a sim mob stands
-        // exactly where the capture found it, which is also the only way a practised route means anything -
-        // a route timed against mobs that chase you is a route timed against your own path.
-        mob.setNoAi(true);
-        mob.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
-        level.addFreshEntity(mob);
-        SPAWNED.add(mob.getUUID());
-        if (starred) {
-            STARRED.add(mob.getUUID());
-            recordStarred(mob.getUUID(), mob.getX(), mob.getY(), mob.getZ());
-            attachStarTag(level, mob);
+    /** {@link #spawn} on the server thread: also a staff party guest's /summon, sent to the host (SimParty). */
+    static void spawnOnServer(ServerLevel level, BlockPos pos, Kind kind, boolean starred, SimMiniboss.Name boss) {
+        switch (kind) {
+            case ZOMBIE -> spawnDummy(level, new SimZombie(McEntities.ZOMBIE, level), pos, starred);
+            case SKELETON -> spawnDummy(level, new SimSkeleton(McEntities.SKELETON, level), pos, starred);
+            case MINIBOSS -> spawnMiniboss(level, pos, boss, starred);
+            case FEL -> spawnFel(level, pos, starred);
+            // A bat is a SECRET on Hypixel, not a mob worth points - which is exactly why it is here: a
+            // 300 run needs every secret, and a player who cannot tell a bat secret from a chest secret
+            // cannot tell why their count is short.
+            case BAT -> spawnBat(level, pos);
         }
     }
 
@@ -422,6 +370,7 @@ public final class SimMobs {
                 MINIBOSS_HOME_RADIUS);
         if (pool != null) {
             SimMiniboss.tunePool(boss, pool);
+        }
     }
 
     /**
@@ -436,8 +385,11 @@ public final class SimMobs {
         if (head != null && !head.isEmpty()) {
             mob.setItemSlot(EquipmentSlot.HEAD, head);
             mob.setDropChance(EquipmentSlot.HEAD, 0f);
+        }
         SimHealth.Pool pool = spawnDummy(level, mob, pos, false, SimHealth.Role.STARRED, name, HOME_RADIUS);
         return pool == null ? null : mob.getUUID();
+    }
+
     /** A zombie or skeleton, regular or starred, at this floor's health. Server thread only. */
     private static void spawnDummy(ServerLevel level, Mob mob, BlockPos pos, boolean starred) {
         spawnDummy(level, mob, pos, starred, starred ? SimHealth.Role.STARRED : SimHealth.Role.REGULAR,
@@ -466,8 +418,10 @@ public final class SimMobs {
         mob.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
         if (mob instanceof net.minecraft.world.entity.PathfinderMob pm) {
             pm.setHomeTo(pos, homeRadius);
+        }
         if (!level.addFreshEntity(mob)) {
             return null;
+        }
         SPAWNED.add(mob.getUUID());
         pinToRoom(mob);
         ArmorStand tag = attachTag(level, mob);
@@ -476,7 +430,10 @@ public final class SimMobs {
             STARRED.add(mob.getUUID());
             recordStarred(mob.getUUID(), mob.getX(), mob.getY(), mob.getZ());
             STAR_TAGS.put(mob.getUUID(), tag.getUUID());
+        }
         return pool;
+    }
+
     /**
      * The parts of making a sim mob fight that every kind shares: persistent, hitting for the floor's damage,
      * no zombie reinforcements, and a bow in a skeleton's hand (vanilla only hands one out in
@@ -488,15 +445,21 @@ public final class SimMobs {
         var attack = mob.getAttribute(Attributes.ATTACK_DAMAGE);
         if (attack != null) {
             attack.setBaseValue(damage);
+        }
         var range = mob.getAttribute(Attributes.FOLLOW_RANGE);
         if (range != null) {
             range.setBaseValue(24);
+        }
         var reinforcements = mob.getAttribute(Attributes.SPAWN_REINFORCEMENTS_CHANCE);
         if (reinforcements != null) {
             reinforcements.setBaseValue(0);
+        }
         if (mob instanceof SimSkeleton skeleton) {
             skeleton.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
             skeleton.reassessWeaponGoal();
+        }
+    }
+
     /**
      * Gives a sim mob the name-tag armour stand Hypixel gives it, as an invisible marker above the mob that
      * {@link SimHealth} keeps over it and writes the live health into.
@@ -535,6 +498,8 @@ public final class SimMobs {
      * @param marker the stand-in id the room-clear bookkeeping knows a pending STARRED mob by, or null
      */
     private record PendingMob(BlockPos at, Kind kind, boolean starred, UUID marker, SimMiniboss.Name boss) {
+    }
+
     /** Captured room mobs not yet placed. Server thread writes and reads; cleared with everything else. */
     private static final List<PendingMob> PENDING = new CopyOnWriteArrayList<>();
 
@@ -564,6 +529,8 @@ public final class SimMobs {
      */
     static void queueRoomMob(BlockPos at, Kind kind, boolean starred) {
         queueRoomMob(at, kind, starred, null);
+    }
+
     /**
      * {@link #queueRoomMob(BlockPos, Kind, boolean)} for a room's miniboss as well: {@code boss} names which one
      * a {@link Kind#MINIBOSS} is (null means the default). Used by {@link SimRoomMobs} for the rooms the room
@@ -576,9 +543,13 @@ public final class SimMobs {
             recordStarred(marker, at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
         }
         PENDING.add(new PendingMob(at.immutable(), kind, starred, marker, boss));
+    }
+
     /** How many captured room mobs are still waiting to be placed - for tests and the build log. */
     public static int pendingRoomMobs() {
         return PENDING.size();
+    }
+
     /** Places the queued room mobs a player has come close to. Server thread, every tick. */
     private static void spawnPendingRoomMobs(ServerLevel level) {
         if (PENDING.isEmpty()) {
@@ -587,6 +558,7 @@ public final class SimMobs {
         List<ServerPlayer> players = level.players();
         if (players.isEmpty()) {
             return;
+        }
         for (PendingMob mob : PENDING) {
             boolean near = false;
             for (ServerPlayer player : players) {
@@ -595,8 +567,11 @@ public final class SimMobs {
                 if (dx * dx + dz * dz <= ROOM_MOB_PLACE_RADIUS * ROOM_MOB_PLACE_RADIUS) {
                     near = true;
                     break;
+                }
+            }
             if (!near || !level.isPositionEntityTicking(mob.at())) {
                 continue;
+            }
             PENDING.remove(mob);
             BlockPos at = toFloor(level, mob.at());
             handingOver = mob.marker();
@@ -606,10 +581,15 @@ public final class SimMobs {
                 case MINIBOSS -> spawnMiniboss(level, at, mob.boss() == null ? DEFAULT_MINIBOSS : mob.boss(),
                         mob.starred());
                 default -> spawnDummy(level, new SimZombie(McEntities.ZOMBIE, level), at, mob.starred());
+            }
             handingOver = null;
             if (mob.marker() != null) {
                 // The real mob was recorded above; the stand-in goes, the same hand-over a waking Fel does.
                 STARRED_DEAD.add(mob.marker());
+            }
+        }
+    }
+
     /**
      * The floor under a captured position: the first spot at or below it (within {@link #FLOOR_SEARCH_DOWN})
      * with two blocks of room and something solid underneath, else a little above it, else the position itself.
@@ -619,11 +599,17 @@ public final class SimMobs {
             BlockPos p = at.below(dy);
             if (standable(level, p)) {
                 return p;
+            }
+        }
         for (int dy = 1; dy <= 3; dy++) {
             BlockPos p = at.above(dy);
             if (standable(level, p)) {
                 return p;
+            }
+        }
         return at;
+    }
+
     private static boolean standable(ServerLevel level, BlockPos feet) {
         return level.getBlockState(feet).getCollisionShape(level, feet).isEmpty()
                 && level.getBlockState(feet.above()).getCollisionShape(level, feet.above()).isEmpty()
@@ -683,6 +669,7 @@ public final class SimMobs {
             undead.setHomeTo(pos, HOME_RADIUS);
             if (!level.addFreshEntity(undead)) {
                 return;
+            }
             SPAWNED.add(undead.getUUID());
             SimHealth.register(undead, SimHealth.maxHealth(floor, SimHealth.Role.REGULAR), name, false, null);
             CRYPT_MOBS.put(undead.getUUID(), scoringPrince);
@@ -750,6 +737,7 @@ public final class SimMobs {
             // found secret (the same rule as the starred mobs, refreshStarred).
             if (e == null && !level.isPositionEntityTicking(entry.getValue())) {
                 continue;
+            }
             if (e == null || !e.isAlive()) {
                 it.remove();
                 com.epic60869.sky2m.sim.roomsim.SimScore.batKilled();
@@ -757,6 +745,7 @@ public final class SimMobs {
                 ServerPlayer finder = nearestPlayer(level, entry.getValue());
                 if (finder != null) {
                     SimBlessings.itemSecret(level.getServer(), finder.getGameProfile().name(), entry.getValue());
+                }
             }
         }
     }
@@ -766,17 +755,26 @@ public final class SimMobs {
         int room = SimState.roomIdAt((int) Math.floor(at[0]), (int) Math.floor(at[2]));
         if (room < 0) {
             return false;
+        }
         for (double[] other : starredPositions().values()) {
             if (SimState.roomIdAt((int) Math.floor(other[0]), (int) Math.floor(other[2])) == room) {
                 return false;
+            }
+        }
         return true;
+    }
+
     /** The player nearest a spot, or null with nobody in the world. */
     private static ServerPlayer nearestPlayer(ServerLevel level, BlockPos at) {
         ServerPlayer best = null;
         for (ServerPlayer p : level.players()) {
             if (best == null || p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(at)) < best.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(at))) {
                 best = p;
+            }
+        }
         return best;
+    }
+
     /** Bats spawned by the sim and where, so their death can be counted as a secret rather than as a kill. */
     private static final java.util.Map<UUID, BlockPos> BATS = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -854,6 +852,7 @@ public final class SimMobs {
         enderman.setHomeTo(BlockPos.containing(x, y, z), HOME_RADIUS);
         if (!level.addFreshEntity(enderman)) {
             return;
+        }
         SPAWNED.add(enderman.getUUID());
         pinToRoom(enderman);
         ArmorStand tag = attachTag(level, enderman);
@@ -863,8 +862,11 @@ public final class SimMobs {
         for (ServerPlayer p : level.players()) {
             if (nearest == null || p.distanceToSqr(enderman) < nearest.distanceToSqr(enderman)) {
                 nearest = p;
+            }
+        }
         if (nearest != null && !nearest.isCreative() && !nearest.isSpectator()) {
             enderman.setTarget(nearest);
+        }
         if (fel.starred) {
             STARRED.add(enderman.getUUID());
             STAR_TAGS.put(enderman.getUUID(), tag.getUUID());
@@ -905,6 +907,8 @@ public final class SimMobs {
                         if (finder != null) {
                             SimBlessings.lastStarredMob(level.getServer(), finder.getGameProfile().name(),
                                     BlockPos.containing(at[0], at[1], at[2]));
+                        }
+                    }
                     // Hypixel's "star ... heart" name goes with its mob; the sim's stand used to stay up forever,
                     // a starred name with nothing under it.
                     UUID tag = STAR_TAGS.remove(id);
@@ -918,6 +922,8 @@ public final class SimMobs {
         for (FelMarker fel : FELS) {
             if (fel.starred && !fel.woken && !fel.skull.isRemoved()) {
                 alive.add(new StarredEntry(fel.skull.getUUID(), fel.skull.getX(), fel.skull.getY(), fel.skull.getZ()));
+            }
+        }
         // A captured starred mob not placed yet has not died either - same reasoning as the dormant Fel.
         for (PendingMob mob : PENDING) {
             if (mob.marker() != null) {
@@ -1108,11 +1114,16 @@ public final class SimMobs {
         @Override
         protected boolean convertsInWater() {
             return false;
+        }
+
         @Override
         public void igniteForTicks(int ticks) {
+        }
+
         @Override
         public boolean fireImmune() {
             return true;
+        }
     }
 
     /** Plain {@link Skeleton} that never despawns and never burns - see {@link SimZombie}. Holds a bow
@@ -1120,6 +1131,8 @@ public final class SimMobs {
     private static final class SimSkeleton extends Skeleton {
         SimSkeleton(EntityType<? extends Skeleton> type, Level level) {
             super(type, level);
+        }
+
         /**
          * Its arrows hit for the floor too. Vanilla arrow damage is the arrow's base damage times its speed
          * (about 1.6 from a skeleton's bow), so half the floor's melee damage lands about where a zombie's
@@ -1145,9 +1158,12 @@ public final class SimMobs {
 
         @Override
         public void igniteForTicks(int ticks) {
+        }
+
         @Override
         public boolean fireImmune() {
             return true;
+        }
     }
 
     /**
@@ -1173,28 +1189,40 @@ public final class SimMobs {
                     net.minecraft.world.entity.player.Player.class, 8f));
             targetSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(
                     this, net.minecraft.world.entity.player.Player.class, true));
+        }
+
         @Override
         protected boolean teleport() {
             return false;
+        }
+
         @Override
         public boolean hurtServer(ServerLevel level, net.minecraft.world.damagesource.DamageSource source,
                                   float amount) {
             if (source.is(net.minecraft.tags.DamageTypeTags.IS_PROJECTILE)
                     && source.getEntity() instanceof net.minecraft.world.entity.player.Player shooter) {
                 return super.hurtServer(level, level.damageSources().playerAttack(shooter), amount);
+            }
             return super.hurtServer(level, source, amount);
+        }
+
         @Override
         public boolean isInvulnerableTo(ServerLevel level, net.minecraft.world.damagesource.DamageSource source) {
             return environmental(source) || super.isInvulnerableTo(level, source);
+        }
+
         @Override
         public void checkDespawn() {
         }
 
         @Override
         public void igniteForTicks(int ticks) {
+        }
+
         @Override
         public boolean fireImmune() {
             return true;
+        }
     }
     // ------------------------------------------------------------------ training dummy
 
@@ -1213,9 +1241,11 @@ public final class SimMobs {
     public static void spawnTrainingDummy(Minecraft client, BlockPos pos, double health, double defense) {
         if (!SimState.canAct(client)) {
             return;
+        }
         MinecraftServer server = client.getSingleplayerServer();
         if (server == null) {
             return;
+        }
         server.execute(() -> {
             ServerLevel level = server.overworld();
             SimZombie dummy = new SimZombie(McEntities.ZOMBIE, level);
@@ -1224,6 +1254,7 @@ public final class SimMobs {
             dummy.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
             if (!level.addFreshEntity(dummy)) {
                 return;
+            }
             SPAWNED.add(dummy.getUUID());
             DUMMIES.add(dummy.getUUID());
             ArmorStand tag = attachTag(level, dummy);
@@ -1232,19 +1263,26 @@ public final class SimMobs {
             pool.taken = 100.0 / (100.0 + Math.max(0, defense));
             pool.dirty = true;
         });
+    }
+
     private static void clearDummies(Minecraft client) {
         MinecraftServer server = SimState.canAct(client) ? client.getSingleplayerServer() : null;
         List<UUID> doomed = List.copyOf(DUMMIES);
         DUMMIES.clear();
         if (server == null) {
             return;
+        }
         server.execute(() -> {
             ServerLevel level = server.overworld();
             for (UUID id : doomed) {
                 Entity e = level.getEntity(id);
                 if (e != null) {
                     e.discard();
+                }
+            }
         });
+    }
+
     /**
      * {@code /simdummy [health] [defense]} - a training dummy three blocks in front of him; {@code /simdummy clear}
      * removes them. Health takes k/m/b ("50m"). Sim-only, like {@code /summon}.
@@ -1270,29 +1308,38 @@ public final class SimMobs {
                                                         "health")),
                                         com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx,
                                                 "defense"))))));
+    }
+
     /** "10m" is 10,000,000; also "2.5k", "1b", "750000". Unreadable or not positive gives -1. */
     public static double parseAmount(String text) {
         if (text == null || text.isBlank()) {
             return -1;
+        }
         String t = text.trim().toLowerCase(java.util.Locale.ROOT).replace(",", "").replace("_", "");
         double mult = 1;
         char last = t.charAt(t.length() - 1);
         if (last == 'k' || last == 'm' || last == 'b') {
             mult = last == 'k' ? 1e3 : last == 'm' ? 1e6 : 1e9;
             t = t.substring(0, t.length() - 1);
+        }
         try {
             double v = Double.parseDouble(t) * mult;
             return v > 0 && Double.isFinite(v) ? v : -1;
         } catch (NumberFormatException e) {
             return -1;
+        }
+    }
+
     private static int placeDummy(double health, int defense) {
         Minecraft client = Minecraft.getInstance();
         if (!SimState.canAct(client) || client.player == null) {
             com.epic60869.sky2m.sim.util.ModChat.send("Sim", com.epic60869.sky2m.sim.util.ModChat.text("Training dummies only work inside the sim."));
             return 1;
+        }
         if (health <= 0) {
             com.epic60869.sky2m.sim.util.ModChat.send("Sim", com.epic60869.sky2m.sim.util.ModChat.text("Health must be a positive number, like 10m or 500k."));
             return 1;
+        }
         net.minecraft.world.phys.Vec3 look = client.player.getLookAngle();
         net.minecraft.world.phys.Vec3 flat = new net.minecraft.world.phys.Vec3(look.x, 0, look.z);
         flat = flat.lengthSqr() < 1e-4 ? new net.minecraft.world.phys.Vec3(0, 0, 1) : flat.normalize();
@@ -1302,6 +1349,8 @@ public final class SimMobs {
                 com.epic60869.sky2m.sim.util.ModChat.value(SimHealth.shortHealth(health) + "❤" + (defense > 0 ? ", " + defense + " defense" : "")),
                 com.epic60869.sky2m.sim.util.ModChat.dim("  (/simdummy clear to remove)"));
         return 1;
+    }
+
     /**
      * {@code /summon <kind>} - one mob of that kind, standing on him.
      *
@@ -1325,15 +1374,23 @@ public final class SimMobs {
                     node = node.then(net.fabricmc.fabric.api.client.command.v2.ClientCommands
                             .literal(name.name().toLowerCase(java.util.Locale.ROOT))
                             .executes(ctx -> summonMiniboss(name)));
+                }
+            }
             root = root.then(node);
         }
         dispatcher.register(root);
+    }
+
     private static int summonMiniboss(SimMiniboss.Name name) {
         Minecraft client = Minecraft.getInstance();
         if (!SimState.canAct(client) || client.player == null) {
             com.epic60869.sky2m.sim.util.ModChat.send("Sim",
                     com.epic60869.sky2m.sim.util.ModChat.text("Summoning only works inside the sim."));
             return 1;
+        }
+        if (!SimParty.sendAction("staff_summon", "miniboss " + name.name())) {
+            spawnMiniboss(client, client.player.blockPosition(), name, true);
+        }
         com.epic60869.sky2m.sim.util.ModChat.send("Sim",
                 com.epic60869.sky2m.sim.util.ModChat.text("Summoned "),
                 com.epic60869.sky2m.sim.util.ModChat.value(name.text()));
@@ -1348,7 +1405,9 @@ public final class SimMobs {
             return 1;
         }
         net.minecraft.core.BlockPos at = client.player.blockPosition();
-        spawnStarred(client, at, kind);
+        if (!SimParty.sendAction("staff_summon", kind.name())) {
+            spawnStarred(client, at, kind);
+        }
         com.epic60869.sky2m.sim.util.ModChat.send("Sim",
                 com.epic60869.sky2m.sim.util.ModChat.text("Summoned "),
                 com.epic60869.sky2m.sim.util.ModChat.value(kind.name().toLowerCase(java.util.Locale.ROOT)));
