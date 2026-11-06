@@ -69,6 +69,33 @@ if (project.hasProperty('sky2mAddons')) {
     }
 }
 
+// Scripted test client for the local server: `gradlew runBridgeClient`, then drive it over HTTP on 127.0.0.1:25599
+// (see src/gametest/.../TestBridge). Its own run dir keeps run/'s settings untouched.
+// -Psky2mBridgeHost=<ip[:port]> joins another test server (e.g. the home server); -Psky2mBridgePort, -Psky2mBridgeUser
+// and -Psky2mBridgeDir run more than one bridge client at once; -Psky2mAddons=<jar> loads add-ons too.
+if (hasGameTests) {
+    def bridgeHost = project.findProperty('sky2mBridgeHost') ?: 'localhost:25565'
+    def bridgeIp = bridgeHost.toString().split(':')[0]
+    loom {
+        runs {
+            bridgeClient {
+                client()
+                source sourceSets.gametest
+                runDir project.findProperty('sky2mBridgeDir') ?: 'run-bridge'
+                vmArgs "-Dsky2m.bridge=${project.findProperty('sky2mBridgePort') ?: 25599}", '-Xmx2G',
+                    "-Dsky2m.hypixelHosts=localhost,127.0.0.1,${bridgeIp}"
+                if (project.hasProperty('sky2mAddons')) vmArgs "-Dfabric.addMods=${project.property('sky2mAddons')}"
+                // -Psky2mSimPartyOffline: a Dungeon Sim party hosted by this offline test client accepts the other
+                // offline test clients (dev only; the real mod always requires Mojang sign-in).
+                if (project.hasProperty('sky2mSimPartyOffline')) vmArgs '-Dsky2m.simPartyOffline=true'
+                programArgs '--username', (project.findProperty('sky2mBridgeUser') ?: 'S2Test1')
+                // -Psky2mBridgeNoJoin starts on the title screen (join later with /connect?host=).
+                if (!project.hasProperty('sky2mBridgeNoJoin')) programArgs '--quickPlayMultiplayer', bridgeHost
+            }
+        }
+    }
+}
+
 repositories {
     mavenCentral()
     maven { url = uri('https://maven.notenoughupdates.org/releases/') }
