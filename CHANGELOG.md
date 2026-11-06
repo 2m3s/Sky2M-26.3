@@ -122,6 +122,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
 - Dungeon Sim terminals work like Hypixel's: each P3 section deals its terminals from the six types with no repeats and at most one Melody, and a terminal keeps its type for the run. Several players can open the same terminal, each on their own board; the first to finish completes it and the others' menus close. Walking away closes a terminal, and pressing Melody's button at the wrong time freezes the pane for 2 seconds.
 - Dungeon Sim hurt immunity like Hypixel's: one mob or attack can hit you at most once every half second, and overlapping boss hits landing at the same moment count once.
+- Dungeon Sim Professor's Rogue Guardians have Hypixel's health and damage on F3 and M3, and he says "Revive, (name)!".
 - Dungeon Sim F7/M7 withers only take damage in their windows, as on Hypixel: Maxor while the Energy Laser stuns him (the first stun can only take him to 25%, so the laser is charged twice), Storm for 10 seconds after each crush (the first down to about 45%, so he's crushed twice), and Necron down to his 80% and 5% frenzies, which make him immune for a moment once the ring closes.
 - Dungeon Sim Storm's crushers work like Hypixel's: stand on the purple, green or yellow pad (red stays broken) and the crusher drops on Storm about a second after he drifts over it, with "Ouch, that hurt!" and "⚠ Storm is enraged! ⚠"; none work before his first Giga Lightning.
 - Dungeon Sim P3 gates go down two seconds after a section is done, with "The gate has been destroyed!" and Goldor's "I will replace that gate with a stronger one!" as they drop, and Sharp Shooter (i4) can be done from section 1, counting in that section like on Hypixel.
@@ -226,6 +227,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Fix single rooms and map codes in the Dungeon Sim using the previous map's floor for mob damage (often F7's); a map with no floor picked plays as F7.
 - Fix Wither armour not reducing damage from Maxor, Storm, Goldor and Necron in the Dungeon Sim.
 - Fix unknown hits in the Dungeon Sim (explosions and the like) hitting for many times a mob's damage: they're capped at three mob hits.
+- Fix Dungeon Sim Bonzo's Balloon Barrage and Scarf's Skull and Arrow Barrages hitting you several times per wave.
 - Fix the Dungeon Sim's F7 being able to start at, or reach, the Wither King phase.
 - Fix the terminal-complete sound and Team Melody not reacting to Hypixel's "activated a terminal!" line.
 - Fix the Croesus "Chests: n/60" overlay not matching "Unclaimed chests" in the tab list: chests opened at the end of a run or with a Dungeon Chest Key only reached it once you opened Croesus, so it could still count a run you'd opened. It now shows Hypixel's own count from the tab whenever it's there (plus any runs finished since), and its own list only until then.
