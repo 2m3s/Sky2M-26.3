@@ -125,6 +125,7 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.misc.profit.ProfitTracker.init(configDir); lap("ProfitTracker.init");
         com.epic60869.sky2m.features.combat.DianaLobbyCompromised.init(); lap("DianaLobbyCompromised.init");
         com.epic60869.sky2m.features.slayer.SlayerFeatures.init(); lap("SlayerFeatures.init");
+        com.epic60869.sky2m.features.slayer.SlayerQuestWarning.init(); lap("SlayerQuestWarning.init");
         com.epic60869.sky2m.features.slayer.EndermanSlayer.init(); lap("EndermanSlayer.init");
         com.epic60869.sky2m.features.slayer.BlazeSlayer.init(); lap("BlazeSlayer.init");
         com.epic60869.sky2m.features.slayer.RngMeterValue.init(); lap("RngMeterValue.init");

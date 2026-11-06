@@ -760,6 +760,9 @@ public final class Sky2MConfig extends Config {
         @Category(name = "Vampire", desc = "Riftstalker Bloodfiend helpers.")
         public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.VampireSlayer vampire = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.VampireSlayer();
 
+        @ConfigOption(name = "Slayer Quest Warning", desc = "A title and a chat line when you hit slayer mobs in a slayer area (Zombies in the Graveyard, Endermen in the End...) with no slayer quest, or with a quest for a different slayer. At most every 30 seconds.")
+        public boolean questWarning = true;
+
         @ConfigOption(name = "Boss Fight", desc = "Boss phase HUD, boss and miniboss highlights, egg hits and the miniboss alert.")
         @ConfigEditorAccordion(id = 501)
         public boolean bossFightGroup = false;
