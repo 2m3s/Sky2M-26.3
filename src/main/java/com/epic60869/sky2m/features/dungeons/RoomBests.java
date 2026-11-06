@@ -249,6 +249,76 @@ public final class RoomBests {
         });
     }
 
+    /** Adds a point unless you've barely moved, and thins the path once it's over the cap, keeping both ends. Public for the game test. */
+    public static void addPathPoint(List<Vec3> path, Vec3 point, int cap) {
+        if (!path.isEmpty() && path.getLast().distanceToSqr(point) < PATH_MIN_STEP * PATH_MIN_STEP) return;
+        path.add(point);
+        if (path.size() <= cap) return;
+        List<Vec3> thinned = new ArrayList<>();
+        for (int i = 0; i < path.size(); i += 2) thinned.add(path.get(i));
+        if (path.size() % 2 == 0) thinned.add(path.getLast());
+        path.clear();
+        path.addAll(thinned);
+    }
+
+    /** "x,y,z x,y,z", to a tenth of a block: a line per number in the pretty-printed file would make it far bigger. Public for the game test. */
+    public static String encodePath(List<Vec3> path) {
+        StringBuilder text = new StringBuilder();
+        for (Vec3 point : path) {
+            if (!text.isEmpty()) text.append(' ');
+            text.append(String.format(java.util.Locale.ROOT, "%.1f,%.1f,%.1f", point.x, point.y, point.z));
+        }
+        return text.toString();
+    }
+
+    /** Back from {@link #encodePath}. A bad point is skipped, as the best itself is still good. Public for the game test. */
+    public static List<Vec3> decodePath(String text) {
+        List<Vec3> path = new ArrayList<>();
+        for (String point : text.trim().split(" ")) {
+            String[] parts = point.split(",");
+            if (parts.length != 3) continue;
+            try {
+                path.add(new Vec3(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]), Double.parseDouble(parts[2])));
+            } catch (NumberFormatException ignored) {
+                // Only this point is lost.
+            }
+        }
+        return List.copyOf(path);
+    }
+
+    private static void samplePath(Room room, Attempt attempt) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || !room.isMatched()) return;
+        addPathPoint(attempt.path, room.actualToRelative(mc.player.position()), PATH_MAX_POINTS);
+    }
+
+    /** Room Ghost: the path of the room's best, as a thin line that walls hide. */
+    private static void renderGhost(PrimitiveCollector collector) {
+        Sky2MConfig config = Sky2MConfig.current();
+        if (config == null || !config.dungeons.secrets.roomGhost || !Sky2MLocation.inDungeon() || DungeonManager.isInBoss()) return;
+        Room room = DungeonManager.getCurrentRoom();
+        if (room == null || !room.isMatched() || room.getName() == null) return;
+        Best best = store.get(DungeonRoutes.normalize(room.getName()));
+        if (best == null || best.path().size() < 2) return;
+        if (room != ghostRoom || best != ghostBest) {
+            ghostRoom = room;
+            ghostBest = best;
+            ghostPoints = new Vec3[best.path().size()];
+            for (int i = 0; i < ghostPoints.length; i++) ghostPoints[i] = room.relativeToActual(best.path().get(i)).add(0, GHOST_LIFT, 0);
+        }
+        collector.submitLinesFromPoints(ghostPoints, GHOST_COLOUR, 0.7f, 1.5f, false);
+    }
+
+    /** A run started: forget the last one's room times. */
+    static void startRun() {
+        RUN_ROOMS.clear();
+    }
+
+    /** This run's counted room times, for the Run Review. */
+    static List<RunRoom> runRooms() {
+        return List.copyOf(RUN_ROOMS);
+    }
+
     /** A file that can't be read is copied aside first, so the next save can't overwrite what's in it. */
     private static void load() {
         try {
@@ -324,7 +394,7 @@ public final class RoomBests {
     }
 
     /** Whether no other head is on your room on the map. True when the map can't tell. */
-    private static boolean aloneInRoom() {
+    static boolean aloneInRoom() {
         MapView view = MapViewSource.current();
         if (!view.valid()) return true;
         for (MapView.Head head : view.heads()) {

@@ -127,6 +127,7 @@ public final class RunHistory {
             current.startedAt = System.currentTimeMillis();
             current.floor = Sky2MLocation.dungeonFloor();
             RouteReplay.begin(current.floor, current.startedAt);
+            RoomBests.startRun();
             java.util.concurrent.CompletableFuture.runAsync(RunHistory::runs); // read the saved runs off the client thread
             goldorStart = 0;
             finishIn = -1;

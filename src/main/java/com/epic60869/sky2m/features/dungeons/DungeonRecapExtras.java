@@ -62,6 +62,7 @@ public final class DungeonRecapExtras {
         try {
             DeathRecap.onRunFinished(run);
             RunSummary.onRunFinished(run);
+            RunReview.onRunFinished(run);
         } catch (Exception e) {
             Sky2MAlerts.chat(Component.literal("Run recap failed: " + e.getMessage()).withStyle(ChatFormatting.RED));
         }

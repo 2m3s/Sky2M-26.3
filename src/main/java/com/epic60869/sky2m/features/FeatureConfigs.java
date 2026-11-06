@@ -5769,6 +5769,11 @@ public final class FeatureConfigs {
         public boolean announceBests = true;
 
         @Expose
+        @ConfigOption(name = "Run Review", desc = "After each run, a chat summary of which splits lost or gained time against your best finished run on that floor, and which rooms were slower than your room best. Hover for the times.")
+        @ConfigEditorBoolean
+        public boolean runReview = true;
+
+        @Expose
         @ConfigOption(name = "Runs Kept", desc = "How many runs to keep; the oldest go first.")
         @ConfigEditorSlider(minValue = 50, maxValue = 2000, minStep = 50)
         public int maxRuns = 500;
