@@ -56,6 +56,10 @@ public final class ScoreCalculator {
         "prince dead", "prince dead!", "$skytils-dungeon-score-prince$", "prince killed", "prince slain", "prince killed!",
         "a prince falls. +1 bonus score");
 
+    /** Each Bat killed in a run is +1: Hypixel tells only the killer, and teammates' mods say so in party chat. */
+    private static final Pattern BAT_PARTY = Pattern.compile("^Party > (.+): (?:Bat dead!?|Bat Killed!)$");
+    private static final String BAT_HYPIXEL = "A Bat has been slain. +1 Bonus Score";
+
     private static boolean started;
     private static boolean watcherCleared;
     private static boolean bloodDone;
@@ -63,6 +67,7 @@ public final class ScoreCalculator {
     private static boolean had300;
     private static boolean mimicKilled;
     private static boolean princeKilled;
+    private static int batsKilled;
     private static int deathCount;
     /** Who died first this run, and whether they have a Legendary Spirit pet (null while that isn't known yet). */
     private static String firstDeath;
@@ -114,6 +119,7 @@ public final class ScoreCalculator {
         had300 = false;
         mimicKilled = false;
         princeKilled = false;
+        batsKilled = 0;
         deathCount = 0;
         firstDeath = null;
         firstDeathSpirit = null;
@@ -142,8 +148,17 @@ public final class ScoreCalculator {
     public static boolean mimicSeenKilled() { return mimicKilled || DungeonScore.wasMimicSeenKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.MIMIC_KILLED); }
     public static boolean princeKilled() { return princeKilled || DungeonScore.wasPrinceKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.PRINCE_KILLED); }
 
+    public static int bats() { return batsKilled; }
     /**
+     * Whether a chat line is a Bat kill to count. Your own party line is skipped: Hypixel's line already counted that
+     * kill. Public for the game test.
      */
+    public static boolean isBatKill(String text, String ownName) {
+        if (text.equals(BAT_HYPIXEL)) return true;
+        Matcher party = BAT_PARTY.matcher(text);
+        if (!party.matches()) return false;
+        for (String word : party.group(1).split(" ")) if (word.equalsIgnoreCase(ownName)) return false;
+        return true;
     }
 
     /**
@@ -206,6 +221,7 @@ public final class ScoreCalculator {
         if (text.equals("[NPC] Mort: Here, I found this map when I first entered the dungeon.")) started = true;
         else if (text.equals("[BOSS] The Watcher: You have proven yourself. You may pass.")) watcherCleared = true;
         else if (text.startsWith(" ☠ ") && !text.contains("reconnected") && DEATH.matcher(text).matches()) deathCount++;
+        else if (isBatKill(text, Minecraft.getInstance().getUser().getName())) batsKilled++;
         else if (text.startsWith(" ☠ ") && !text.contains("reconnected")) {
             Matcher death = DEATH.matcher(text);
             if (death.matches()) onDeath(death.group(1));

@@ -649,7 +649,8 @@ public final class DungeonFeatures {
             lines.add(Component.literal("§6Secrets: §b" + ScoreCalculator.foundSecrets() + " §7(" + fixed((float) ScoreCalculator.secretPercentage()) + "%)"));
             lines.add(Component.literal(ScoreCalculator.colorByPercent(crypts, 5, false) + "Crypts: " + crypts));
             lines.add(Component.literal("§cDeaths: " + ScoreCalculator.colorByPercent(deaths, 4, true) + deaths));
-            String prince = "§eP: " + (ScoreCalculator.princeKilled() ? "§a§l✔" : "§c§l✖");
+            String prince = "§eP: " + (ScoreCalculator.princeKilled() ? "§a§l✔" : "§c§l✖") + " §dBats: " + ScoreCalculator.bats()
+                + (ScoreCalculator.isPaul() ? " §bPaul +10" : "");
             lines.add(Component.literal(ScoreCalculator.floorNumber() > 5
                 ? "§cM: " + (ScoreCalculator.mimicKilled() ? "§a§l✔" : "§c§l✖") + " " + prince
                 : prince));

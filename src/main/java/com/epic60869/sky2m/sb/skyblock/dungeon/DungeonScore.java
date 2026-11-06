@@ -235,7 +235,7 @@ public class DungeonScore {
 		int mimicScore = mimicKilled ? 2 : 0;
 		if (getSecretsPercentage() >= 100 && floorHasMimics) mimicScore = 2; //If mimic kill is not announced but all secrets are found, mimic must've been killed
 		int princeScore = princeKilled ? 1 : 0;
-		int batScore = batKilled ? 1 : 0;
+		int batScore = com.epic60869.sky2m.features.dungeons.ScoreCalculator.bats();
 		return paulScore + cryptsScore + mimicScore + princeScore + batScore;
 	}
 
@@ -305,8 +305,7 @@ public class DungeonScore {
 	}
 
 	public static void onBatKill(boolean fromHypixel) {
-		if (batKilled) return;
-
+		// Every Bat is +1, so each of your kills is announced.
 		// Ensure that we don't send a bat kill message if a teammate does
 		if (fromHypixel) {
 			if (BAT_MESSAGE_CONFIG.get().sendBatMessage) {
