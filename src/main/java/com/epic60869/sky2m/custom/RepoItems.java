@@ -210,8 +210,35 @@ public final class RepoItems {
 	public static @Nullable String displayName(String id) {
 		synchronized (ITEMS) {
 			RepoItem item = ITEMS.get(id);
-			return item == null ? null : item.name();
+			if (item != null) return item.name();
 		}
+		PetDrop pet = petDrop(id);
+		return pet == null ? null : pet.name();
+	}
+
+	/** A pet drop id ("LVL_1_EPIC_HOUND") as its repo pet ("HOUND;3") at that level. */
+	private record PetDrop(RepoItem item, String level, String tier) {
+		String name() {
+			return item.name().replace("{LVL}", level);
+		}
+	}
+
+	private static final java.util.regex.Pattern PET_DROP = java.util.regex.Pattern.compile("^LVL_(\\d+)_(COMMON|UNCOMMON|RARE|EPIC|LEGENDARY|MYTHIC)_([A-Z0-9_]+)$");
+	private static final List<String> PET_TIERS = List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC");
+
+	/**
+	 * The profit trackers store a dropped pet as "LVL_1_EPIC_HOUND" (its price id), while the repo keys pets by type and
+	 * rarity, "HOUND;3". Null when {@code id} isn't a pet drop or the repo doesn't have that pet.
+	 */
+	private static @Nullable PetDrop petDrop(@Nullable String id) {
+		if (id == null) return null;
+		java.util.regex.Matcher m = PET_DROP.matcher(id);
+		if (!m.matches()) return null;
+		RepoItem item;
+		synchronized (ITEMS) {
+			item = ITEMS.get(m.group(3) + ";" + PET_TIERS.indexOf(m.group(2)));
+		}
+		return item == null ? null : new PetDrop(item, m.group(1), m.group(2));
 	}
 
 	/**
@@ -231,8 +258,10 @@ public final class RepoItems {
 	public static @Nullable String tier(String id) {
 		synchronized (ITEMS) {
 			RepoItem item = ITEMS.get(id);
-			return item == null ? null : item.tier();
+			if (item != null) return item.tier();
 		}
+		PetDrop pet = petDrop(id);
+		return pet == null ? null : pet.tier();
 	}
 
 	/** The colour of a rarity ("LEGENDARY" is gold), white when unknown. */
@@ -257,6 +286,13 @@ public final class RepoItems {
 			item = ITEMS.get(id);
 		}
 		if (item != null) return createStack(item);
+		PetDrop pet = petDrop(id);
+		if (pet != null) {
+			// The pet's own head, named as Hypixel does: "[Lvl 1]" in grey, the pet in its rarity colour.
+			ItemStack stack = createStack(pet.item());
+			stack.set(DataComponents.CUSTOM_NAME, Component.literal(pet.name()));
+			return stack;
+		}
 		ItemStack book = enchantedBook(id);
 		return book != null ? book : Compat.barrier();
 	}
