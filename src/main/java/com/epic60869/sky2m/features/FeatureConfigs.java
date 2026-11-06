@@ -2773,10 +2773,16 @@ public final class FeatureConfigs {
         public Waypoint.Type waypointType = Waypoint.Type.OUTLINE;
 
         @Expose
-        @ConfigOption(name = "Show Routes", desc = "Show a secret route for the current room: yours if you recorded one, otherwise a bundled one. Record with /s2 route start and /s2 route stop; share with /s2 export; import a route export with /s2 route import (clipboard) or /s2 route import <file>.")
+        @ConfigOption(name = "Show Routes", desc = "Show a secret route for the current room: yours if you recorded one, otherwise a bundled one. With several, the one that starts closest to you shows (/s2 route switch changes it). Record with /s2 route start and /s2 route stop; change one in game with /s2 route edit; share with /s2 route pack export or /s2 export; import a route export with /s2 route import (clipboard) or /s2 route import <file>.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1501)
         public boolean routes = true;
+
+        @Expose
+        @ConfigOption(name = "Pearl Angle Lines", desc = "On a route's pearl steps, draw a line showing the angle the pearl was thrown at, from eye height where it was thrown. It only draws: you do the aiming and the throwing. Routes recorded before this have no angle, so no line.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1501)
+        public boolean pearlLines = true;
 
         @ConfigOption(name = "Secrets Display", desc = "The secrets found HUD.")
         @ConfigEditorAccordion(id = 1502)
