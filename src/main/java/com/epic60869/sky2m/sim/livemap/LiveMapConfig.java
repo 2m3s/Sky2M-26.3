@@ -249,7 +249,8 @@ public final class LiveMapConfig {
                 // per-key readers above never throw; only an unreadable/non-object file lands here
             }
         }
-        instance = cfg;
+        try {
+        }
     }
 
     public void save() {
@@ -326,6 +327,7 @@ public final class LiveMapConfig {
             Files.writeString(CONFIG_PATH, GSON.toJson(obj), StandardCharsets.UTF_8);
         } catch (Exception ignored) {
         }
+    public boolean isEnabled() {
     }
 
     private static float clamp(float v, float min, float max) {
@@ -390,44 +392,6 @@ public final class LiveMapConfig {
         return roomLabels;
     }
 
-    public void setRoomLabels(int roomLabels) {
-        this.roomLabels = roomLabels < 0 || roomLabels >= ROOM_LABEL_NAMES.length ? 1 : roomLabels;
-    }
-
-    public int getPeekKeyCode() {
-        return peekKeyCode;
-    }
-
-    public void setPeekKeyCode(int peekKeyCode) {
-        this.peekKeyCode = peekKeyCode;
-    }
-
-    public float getPeekScale() {
-        return peekScale;
-    }
-
-    public void setPeekScale(float peekScale) {
-        this.peekScale = clamp(peekScale, 1.25f, 4f);
-    }
-
-    // ---------------------------------------------------------------- shared map appearance
-
-    public boolean isColourByType() {
-        return colourByType;
-    }
-
-    public void setColourByType(boolean v) {
-        this.colourByType = v;
-    }
-
-    public int getColorNormal() {
-        return colorNormal;
-    }
-
-    public void setColorNormal(int v) {
-        this.colorNormal = v;
-    }
-
     public int getColorEntrance() {
         return colorEntrance;
     }
@@ -470,26 +434,6 @@ public final class LiveMapConfig {
 
     public int getColorBlood() {
         return colorBlood;
-    }
-
-    public void setColorBlood(int v) {
-        this.colorBlood = v;
-    }
-
-    public int getColorRare() {
-        return colorRare;
-    }
-
-    public void setColorRare(int v) {
-        this.colorRare = v;
-    }
-
-    public int getColorUnopened() {
-        return colorUnopened;
-    }
-
-    public void setColorUnopened(int v) {
-        this.colorUnopened = v;
     }
 
     public int getColorWitherDoor() {
@@ -666,10 +610,6 @@ public final class LiveMapConfig {
 
     public float getFontScale() {
         return fontScale;
-    }
-
-    public void setFontScale(float v) {
-        this.fontScale = clamp(v, 0.5f, 3f);
     }
 
     public boolean isTextShadow() {

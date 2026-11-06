@@ -1,6 +1,5 @@
 package com.epic60869.sky2m.features;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.epic60869.sky2m.sb.utils.waypoint.Waypoint;
 import com.epic60869.sky2m.features.fishing.FishingData;
 import com.google.gson.annotations.Expose;
@@ -702,6 +701,8 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Terracotta Timer (F6/M6)", desc = "In the Sadan fight, seconds until each terracotta respawns (15 on F6, 12 on M6), over its flower pot.")
         @ConfigEditorBoolean
+        @Expose
+        @ConfigEditorBoolean
         @ConfigAccordionId(id = 1301)
         public boolean terracottaTimer = true;
 
@@ -714,6 +715,9 @@ public final class FeatureConfigs {
         @Accordion
         @ConfigOption(name = "Auto Requeue", desc = "Start the next run of the same floor by itself when a run ends.")
         public AutoRequeue autoRequeue = new AutoRequeue();
+
+        @Expose
+        @Accordion
 
         @Expose
         @Accordion
@@ -1029,6 +1033,8 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 3012)
         public boolean terminalBoxes = false;
+        @Expose
+        @ConfigEditorBoolean
 
         @Expose
         @ConfigOption(name = "Terminal Box Colour", desc = "")
@@ -2630,28 +2636,28 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         public boolean loadoutEnabled = false;
 
-        @Expose @ConfigOption(name = "Wardrobe Slot 1 Key", desc = "Select slot 1 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_1) public int slot1Key = InputConstants.KEY_1;
-        @Expose @ConfigOption(name = "Wardrobe Slot 2 Key", desc = "Select slot 2 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_2) public int slot2Key = InputConstants.KEY_2;
-        @Expose @ConfigOption(name = "Wardrobe Slot 3 Key", desc = "Select slot 3 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_3) public int slot3Key = InputConstants.KEY_3;
-        @Expose @ConfigOption(name = "Wardrobe Slot 4 Key", desc = "Select slot 4 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_4) public int slot4Key = InputConstants.KEY_4;
-        @Expose @ConfigOption(name = "Wardrobe Slot 5 Key", desc = "Select slot 5 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_5) public int slot5Key = InputConstants.KEY_5;
-        @Expose @ConfigOption(name = "Wardrobe Slot 6 Key", desc = "Select slot 6 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_6) public int slot6Key = InputConstants.KEY_6;
-        @Expose @ConfigOption(name = "Wardrobe Slot 7 Key", desc = "Select slot 7 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_7) public int slot7Key = InputConstants.KEY_7;
-        @Expose @ConfigOption(name = "Wardrobe Slot 8 Key", desc = "Select slot 8 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_8) public int slot8Key = InputConstants.KEY_8;
-        @Expose @ConfigOption(name = "Wardrobe Slot 9 Key", desc = "Select slot 9 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_9) public int slot9Key = InputConstants.KEY_9;
+        @Expose @ConfigOption(name = "Wardrobe Slot 1 Key", desc = "Select slot 1 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1) public int slot1Key = com.mojang.blaze3d.platform.InputConstants.KEY_1;
+        @Expose @ConfigOption(name = "Wardrobe Slot 2 Key", desc = "Select slot 2 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2) public int slot2Key = com.mojang.blaze3d.platform.InputConstants.KEY_2;
+        @Expose @ConfigOption(name = "Wardrobe Slot 3 Key", desc = "Select slot 3 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3) public int slot3Key = com.mojang.blaze3d.platform.InputConstants.KEY_3;
+        @Expose @ConfigOption(name = "Wardrobe Slot 4 Key", desc = "Select slot 4 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4) public int slot4Key = com.mojang.blaze3d.platform.InputConstants.KEY_4;
+        @Expose @ConfigOption(name = "Wardrobe Slot 5 Key", desc = "Select slot 5 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_5) public int slot5Key = com.mojang.blaze3d.platform.InputConstants.KEY_5;
+        @Expose @ConfigOption(name = "Wardrobe Slot 6 Key", desc = "Select slot 6 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_6) public int slot6Key = com.mojang.blaze3d.platform.InputConstants.KEY_6;
+        @Expose @ConfigOption(name = "Wardrobe Slot 7 Key", desc = "Select slot 7 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_7) public int slot7Key = com.mojang.blaze3d.platform.InputConstants.KEY_7;
+        @Expose @ConfigOption(name = "Wardrobe Slot 8 Key", desc = "Select slot 8 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_8) public int slot8Key = com.mojang.blaze3d.platform.InputConstants.KEY_8;
+        @Expose @ConfigOption(name = "Wardrobe Slot 9 Key", desc = "Select slot 9 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_9) public int slot9Key = com.mojang.blaze3d.platform.InputConstants.KEY_9;
 
-        @Expose @ConfigOption(name = "Loadout Slot 1 Key", desc = "Select loadout 1 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_1) public int loadoutSlot1Key = InputConstants.KEY_1;
-        @Expose @ConfigOption(name = "Loadout Slot 2 Key", desc = "Select loadout 2 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_2) public int loadoutSlot2Key = InputConstants.KEY_2;
-        @Expose @ConfigOption(name = "Loadout Slot 3 Key", desc = "Select loadout 3 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_3) public int loadoutSlot3Key = InputConstants.KEY_3;
-        @Expose @ConfigOption(name = "Loadout Slot 4 Key", desc = "Select loadout 4 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_4) public int loadoutSlot4Key = InputConstants.KEY_4;
-        @Expose @ConfigOption(name = "Loadout Slot 5 Key", desc = "Select loadout 5 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_5) public int loadoutSlot5Key = InputConstants.KEY_5;
-        @Expose @ConfigOption(name = "Loadout Slot 6 Key", desc = "Select loadout 6 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_6) public int loadoutSlot6Key = InputConstants.KEY_6;
-        @Expose @ConfigOption(name = "Loadout Slot 7 Key", desc = "Select loadout 7 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_7) public int loadoutSlot7Key = InputConstants.KEY_7;
-        @Expose @ConfigOption(name = "Loadout Slot 8 Key", desc = "Select loadout 8 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_8) public int loadoutSlot8Key = InputConstants.KEY_8;
-        @Expose @ConfigOption(name = "Loadout Slot 9 Key", desc = "Select loadout 9 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_9) public int loadoutSlot9Key = InputConstants.KEY_9;
-        @Expose @ConfigOption(name = "Loadout Slot 10 Key", desc = "Select loadout 10 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_0) public int loadoutSlot10Key = InputConstants.KEY_0;
-        @Expose @ConfigOption(name = "Loadout Slot 11 Key", desc = "Select loadout 11 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_MINUS) public int loadoutSlot11Key = InputConstants.KEY_MINUS;
-        @Expose @ConfigOption(name = "Loadout Slot 12 Key", desc = "Select loadout 12 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_EQUALS) public int loadoutSlot12Key = InputConstants.KEY_EQUALS;
+        @Expose @ConfigOption(name = "Loadout Slot 1 Key", desc = "Select loadout 1 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1) public int loadoutSlot1Key = com.mojang.blaze3d.platform.InputConstants.KEY_1;
+        @Expose @ConfigOption(name = "Loadout Slot 2 Key", desc = "Select loadout 2 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2) public int loadoutSlot2Key = com.mojang.blaze3d.platform.InputConstants.KEY_2;
+        @Expose @ConfigOption(name = "Loadout Slot 3 Key", desc = "Select loadout 3 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3) public int loadoutSlot3Key = com.mojang.blaze3d.platform.InputConstants.KEY_3;
+        @Expose @ConfigOption(name = "Loadout Slot 4 Key", desc = "Select loadout 4 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4) public int loadoutSlot4Key = com.mojang.blaze3d.platform.InputConstants.KEY_4;
+        @Expose @ConfigOption(name = "Loadout Slot 5 Key", desc = "Select loadout 5 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_5) public int loadoutSlot5Key = com.mojang.blaze3d.platform.InputConstants.KEY_5;
+        @Expose @ConfigOption(name = "Loadout Slot 6 Key", desc = "Select loadout 6 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_6) public int loadoutSlot6Key = com.mojang.blaze3d.platform.InputConstants.KEY_6;
+        @Expose @ConfigOption(name = "Loadout Slot 7 Key", desc = "Select loadout 7 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_7) public int loadoutSlot7Key = com.mojang.blaze3d.platform.InputConstants.KEY_7;
+        @Expose @ConfigOption(name = "Loadout Slot 8 Key", desc = "Select loadout 8 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_8) public int loadoutSlot8Key = com.mojang.blaze3d.platform.InputConstants.KEY_8;
+        @Expose @ConfigOption(name = "Loadout Slot 9 Key", desc = "Select loadout 9 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_9) public int loadoutSlot9Key = com.mojang.blaze3d.platform.InputConstants.KEY_9;
+        @Expose @ConfigOption(name = "Loadout Slot 10 Key", desc = "Select loadout 10 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_0) public int loadoutSlot10Key = com.mojang.blaze3d.platform.InputConstants.KEY_0;
+        @Expose @ConfigOption(name = "Loadout Slot 11 Key", desc = "Select loadout 11 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_MINUS) public int loadoutSlot11Key = com.mojang.blaze3d.platform.InputConstants.KEY_MINUS;
+        @Expose @ConfigOption(name = "Loadout Slot 12 Key", desc = "Select loadout 12 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_EQUALS) public int loadoutSlot12Key = com.mojang.blaze3d.platform.InputConstants.KEY_EQUALS;
     }
 
     public static final class CaseOpening {
@@ -2708,6 +2714,8 @@ public final class FeatureConfigs {
         public boolean roomLabels = true;
 
         @Expose
+        @ConfigEditorBoolean
+        @Expose
         @ConfigOption(name = "Predict Unopened Rooms", desc = "A faint tint on grey rooms that are probably a puzzle, trap or miniboss: purple for puzzle, orange for trap, yellow for miniboss, side by side when it could be more than one. It's only a guess from what Hypixel's own map shows (one door and no room to be any bigger), so a guessed room can turn out to be a normal one. Works in every map style.")
         @ConfigEditorBoolean
         public boolean predictRooms = true;
@@ -2762,6 +2770,7 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Teleport Maze", desc = "Visited pads in red, the right pad in green (orange while there are several), and a line to the best next pad.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean teleportMaze = false;
     }
 
+    /** SkyHanni's LividFinderConfig (LGPL-2.1). */
     public static final class LividFinder {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Help find the correct livid in F5 and in M5.")
@@ -3508,23 +3517,23 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Top Left Key", desc = "Leap to the teammate in the top left box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_1)
-        public int keyTopLeft = InputConstants.KEY_1;
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1)
+        public int keyTopLeft = com.mojang.blaze3d.platform.InputConstants.KEY_1;
 
         @Expose
         @ConfigOption(name = "Top Right Key", desc = "Leap to the teammate in the top right box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_2)
-        public int keyTopRight = InputConstants.KEY_2;
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2)
+        public int keyTopRight = com.mojang.blaze3d.platform.InputConstants.KEY_2;
 
         @Expose
         @ConfigOption(name = "Bottom Left Key", desc = "Leap to the teammate in the bottom left box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_3)
-        public int keyBottomLeft = InputConstants.KEY_3;
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3)
+        public int keyBottomLeft = com.mojang.blaze3d.platform.InputConstants.KEY_3;
 
         @Expose
         @ConfigOption(name = "Bottom Right Key", desc = "Leap to the teammate in the bottom right box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_4)
-        public int keyBottomRight = InputConstants.KEY_4;
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4)
+        public int keyBottomRight = com.mojang.blaze3d.platform.InputConstants.KEY_4;
 
         @Expose
         @ConfigOption(name = "Colored Boxes", desc = "Fill each box with the class colour. Off: dark boxes with class-coloured names.")
@@ -4412,9 +4421,24 @@ public final class FeatureConfigs {
         public boolean cancelOnLeave = false;
 
         @Expose
+        @ConfigEditorBoolean
+        @Expose
+        @ConfigEditorBoolean
+        @Expose
         @ConfigOption(name = "Announce", desc = "Say in chat (only you see it) that it's going to requeue.")
         @ConfigEditorBoolean
         public boolean announce = true;
+        @Expose
+        @ConfigEditorBoolean
+        @Expose
+        @ConfigEditorBoolean
+        @Expose
+        @ConfigEditorBoolean
+        @Expose
+        @Expose
+        @ConfigEditorBoolean
+        @Expose
+        @ConfigEditorBoolean
     }
 
     /** SkyHanni's Item Pickup Log. */
@@ -4664,6 +4688,8 @@ public final class FeatureConfigs {
     /** Skysoft's Farming Profit Tracker. */
     /** Profit Trackers, ported from Skysoft (LGPL-3.0): see features/misc/profit/ProfitTracker. */
     public static final class ProfitTrackers {
+        @Expose
+        @Accordion
         @Expose
         @Accordion
         @ConfigOption(name = "Session Tracker", desc = "/s2 session: your Diana, Mining and Farming this game session, with a Total of all three, until you restart the game.")
@@ -6300,6 +6326,8 @@ public final class FeatureConfigs {
 
     /** Dungeon Sim (Killer560's): practise dungeon rooms and whole floors in a singleplayer world of your own. */
     public static final class DungeonSim {
+        @Expose
+        @ConfigEditorBoolean
         @ConfigOption(name = "Open Dungeon Sim", desc = "Open the Dungeon Sim's menu: load any room or generate a whole floor (F1 to M7 sizes) in a singleplayer world, with secrets, puzzles, mobs, keys, the Mimic, a run timer and score. Also /s2 sim. It needs its own world, so leave the server first; from the title screen use the button below.")
         @ConfigEditorButton(buttonText = "OPEN")
         public Runnable open = com.epic60869.sky2m.sim.Sky2MSim::openMenu;
@@ -6562,6 +6590,9 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Show Election", desc = "While an election is open, who's leading and each candidate's share of the votes, in the HUD.")
         @ConfigEditorBoolean
         public boolean election = false;
+
+        @Expose
+        @ConfigEditorBoolean
 
         @ConfigOption(name = "Show In Chat", desc = "Everything (mayor, minister, perks, the election and the candidates' perks) in chat. Also /s2 mayor.")
         @ConfigEditorButton(buttonText = "Show")

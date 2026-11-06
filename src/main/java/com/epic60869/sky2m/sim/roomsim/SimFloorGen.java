@@ -85,7 +85,16 @@ public final class SimFloorGen {
         F4("Floor 4", "F4", 19, 33),
         F5("Floor 5", "F5", 21, 36),
         F6("Floor 6", "F6", 19, 33),
-        F7("Floor 7", "F7", 21, 36);
+        F7("Floor 7", "F7", 21, 36),
+        // Master Mode: the same floors at the same sizes as Hypixel builds them; only the label, and with it the
+        // mobs' health, the Watcher's blood mobs and the score's tables (time limit, 100% secrets), differ.
+        M1("Master 1", "M1", 13, 22),
+        M2("Master 2", "M2", 15, 26),
+        M3("Master 3", "M3", 16, 27),
+        M4("Master 4", "M4", 19, 33),
+        M5("Master 5", "M5", 21, 36),
+        M6("Master 6", "M6", 19, 33),
+        M7("Master 7", "M7", 21, 36);
 
         public final String label;
         /**

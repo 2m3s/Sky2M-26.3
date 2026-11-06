@@ -51,7 +51,7 @@ public final class DungeonMapStyles {
      */
     public static boolean needsScan() {
         FeatureConfigs.DungeonMap map = config();
-        return map != null && map.enabled && (selected() != DungeonMapStyle.SKYBLOCKER || map.predictRooms);
+        return map != null && map.enabled && (selected() != DungeonMapStyle.SKYBLOCKER || map.bloodRushPath || map.predictRooms);
     }
 
     /** Dungeons > Dungeon Map > Predict Unopened Rooms. */
@@ -87,6 +87,7 @@ public final class DungeonMapStyles {
             FeatureConfigs.DungeonMap map = config();
             if (map != null && map.predictRooms && selected() == DungeonMapStyle.SKYBLOCKER && !inSim()) {
                 SkyblockerMapStyle.drawGuesses(graphics, MapViewSource.current());
+            }
             }
         } finally {
             graphics.pose().popMatrix();

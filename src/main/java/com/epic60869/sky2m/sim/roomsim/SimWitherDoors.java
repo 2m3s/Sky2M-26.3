@@ -21,6 +21,10 @@ import java.util.List;
  * door on the room path from the Entrance to the Blood room, except the entrance's own gate and the blood door.
  * A sim floor is a tree (SimFloorGen refuses loops), so that path is unique.
  *
+ * <p>Since 2026-11-01 a generated floor BUILDS these as real wither doors ({@code SimBuilder}, with {@link #compute})
+ * and {@link SimKeys} hangs their keys on starred mobs along {@link #path}; the Map Designer still draws them as
+ * theoretical on a plan that has not been built.
+ *
  * <p>SIM AND DESIGNER ONLY. {@link #isTheoretical} answers false unless {@link SimState#isActive()}, and the
  * table is only ever filled from {@code LiveMapFeature.publishSimFloor}, which nothing on Hypixel calls. A real
  * floor's wither doors come from the map item and the world scan, and nothing here touches either.
@@ -56,8 +60,23 @@ public final class SimWitherDoors {
      */
     public static boolean[] compute(int[] roomCells, int[] doorCells, String[] names) {
         boolean[] out = new boolean[GRID * GRID];
+        for (int[] step : path(roomCells, doorCells, names)) {
+            if (doorCells[step[1]] == DungeonLayout.DOOR_NORMAL) {
+                out[step[1]] = true;
+            }
+        }
+        return out;
+    }
+
+    /**
+     * The Entrance-to-Blood room path as its doors, in walking order: {@code {room before, door cell, room after}}
+     * (name-table indexes), the last step being the one into the Blood room. Empty when the floor has no entrance or
+     * no blood room, or they are not joined. {@link SimKeys} hangs each door's key on a mob in the rooms before it.
+     */
+    public static List<int[]> path(int[] roomCells, int[] doorCells, String[] names) {
+        List<int[]> steps = new ArrayList<>();
         if (roomCells == null || doorCells == null || names == null) {
-            return out;
+            return steps;
         }
         int entrance = -1;
         int blood = -1;
@@ -71,7 +90,7 @@ public final class SimWitherDoors {
             }
         }
         if (entrance < 0 || blood < 0) {
-            return out;
+            return steps;
         }
         // Room graph: for each room, the (door cell, other room) pairs.
         List<List<int[]>> adj = new ArrayList<>();
@@ -119,14 +138,11 @@ public final class SimWitherDoors {
             }
         }
         if (from[blood] == -2) {
-            return out;
+            return steps;
         }
         for (int r = blood; from[r] >= 0; r = from[r]) {
-            int door = viaDoor[r];
-            if (doorCells[door] == DungeonLayout.DOOR_NORMAL) {
-                out[door] = true;
-            }
+            steps.addFirst(new int[]{from[r], viaDoor[r], r});
         }
-        return out;
+        return steps;
     }
 }

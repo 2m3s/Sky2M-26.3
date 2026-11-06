@@ -121,6 +121,7 @@ public final class SettingsButtonWidget extends AbstractWidget {
         graphics.outline(x0, y0, getWidth(), getHeight(), faded(border));
         graphics.centeredText(Minecraft.getInstance().font, getMessage(), x0 + getWidth() / 2,
                 y0 + (getHeight() - 8) / 2, faded(TEXT));
+            boolean selected) {
     }
 
     /**
@@ -134,7 +135,6 @@ public final class SettingsButtonWidget extends AbstractWidget {
         graphics.fill(x, y, x + w, y + h, hovered ? BG_HOVER : BG);
         graphics.outline(x, y, w, h, border);
     }
-
     /**
      * This colour at the widget's current opacity.
      *

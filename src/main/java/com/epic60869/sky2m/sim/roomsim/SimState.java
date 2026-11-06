@@ -181,6 +181,36 @@ public final class SimState {
         return decoded.nameTable()[id];
     }
 
+     * The room at this block column as its index in the map's name table, or -1 off the map: the same tile rule as
+     * {@link #roomNameAt}, but a room's own number, so two rooms are never mixed up by name. Cached per map code,
+     * since it runs for every sim mob every tick ({@code SimMobs.keepInRooms}). Any thread.
+    public static int roomIdAt(int blockX, int blockZ) {
+        String code = mapCode();
+        MapCode.Decoded decoded = decodedCache(code);
+        if (decoded == null) {
+            return -1;
+        var origin = com.epic60869.sky2m.sim.livemap.DungeonLayout.cellCenter(0);
+        int step = com.epic60869.sky2m.sim.livemap.DungeonLayout.cellCenter(1).getX() - origin.getX();
+        if (step == 0) {
+            return -1;
+        int gx = 2 * Math.floorDiv(blockX - origin.getX() + step, 2 * step);
+        int gz = 2 * Math.floorDiv(blockZ - origin.getZ() + step, 2 * step);
+        int grid = com.epic60869.sky2m.sim.livemap.DungeonLayout.GRID;
+        if (gx < 0 || gz < 0 || gx >= grid || gz >= grid) {
+            return -1;
+        int id = decoded.cellRoom()[gz * grid + gx];
+        return id < 0 || id >= decoded.nameTable().length ? -1 : id;
+    private static volatile Object[] decodedCache = {null, null};
+
+    private static MapCode.Decoded decodedCache(String code) {
+        if (code == null || code.isBlank()) {
+            return null;
+        Object[] cached = decodedCache;
+        if (code.equals(cached[0])) {
+            return (MapCode.Decoded) cached[1];
+        MapCode.Decoded decoded = MapCode.decode(code);
+        decodedCache = new Object[]{code, decoded};
+        return decoded;
     public static String mapCode() {
         return mapCode;
     }

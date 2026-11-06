@@ -94,6 +94,8 @@ public final class LeapMenu {
         }
 
         // Odin's sorting: each class takes its chosen corner, extras fill the free ones.
+        for (Teammate t : players) {
+        }
         List<Teammate> secondRound = new ArrayList<>();
         for (Teammate t : players) {
             int corner = corner(config, t.dungeonClass()).ordinal();
@@ -103,7 +105,13 @@ public final class LeapMenu {
         for (int i = 0; i < 4 && !secondRound.isEmpty(); i++) {
             if (result[i] == null) result[i] = secondRound.removeFirst();
         }
+        }
         return result;
+    }
+
+    }
+
+        }
     }
 
     private static FeatureConfigs.LeapCorner corner(FeatureConfigs.LeapMenu config, DungeonClass dungeonClass) {

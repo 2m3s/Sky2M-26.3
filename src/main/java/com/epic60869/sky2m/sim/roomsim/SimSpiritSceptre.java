@@ -90,8 +90,8 @@ public final class SimSpiritSceptre {
     /**
      * Damage one bat's explosion does.
      *
-     * <p>An approximation, deliberately: this is not Hypixel's real bat damage formula and must not be quoted
-     * as one. Sim mobs have one health (see {@link SimClass}), so what matters is that a hit kills.
+     * <p>The VANILLA damage, for anything without a health pool. A pooled sim mob takes Hypixel's Guided Bat
+     * damage instead ({@link SimDamage#GUIDED_BAT_BASE}, scaled by Intelligence).
      */
     private static final float BLAST_DAMAGE = 30.0f;
 
@@ -110,6 +110,8 @@ public final class SimSpiritSceptre {
         int ticksLeft = MAX_FLIGHT_TICKS;
         /** The real bat entity carrying this one, or null before it has been spawned. */
         java.util.UUID entity;
+        /** Who cast it: the blast's damage is his (a sim party guest's included). */
+        java.util.UUID shooter;
     }
 
     /**
@@ -208,6 +210,7 @@ public final class SimSpiritSceptre {
         Vec3 look = SimAim.look(client.player);
         for (int i = 0; i < BATS; i++) {
             Bat bat = new Bat();
+            bat.shooter = SimAim.shooter(client.player);
             bat.delay = i * LAUNCH_GAP;
             Vec3 dir = look.add(
                     (RNG.nextDouble() - 0.5) * 2 * SPREAD,
@@ -301,19 +304,19 @@ public final class SimSpiritSceptre {
 
         if (hitEntity != null && !wallFirst) {
             removeBatEntity(client, bat);
-            explode(client, hitEntity.getBoundingBox().getCenter());
+            explode(client, bat.shooter, hitEntity.getBoundingBox().getCenter());
             return false;
         }
         if (wallFirst) {
             removeBatEntity(client, bat);
-            explode(client, wall.getLocation());
+            explode(client, bat.shooter, wall.getLocation());
             return false;
         }
         bat.at = to;
         moveBatEntity(client, bat, to);
         if (--bat.ticksLeft <= 0) {
             removeBatEntity(client, bat);
-            explode(client, to);
+            explode(client, bat.shooter, to);
             return false;
         }
         return true;
@@ -338,7 +341,7 @@ public final class SimSpiritSceptre {
      * client picked, so it is the server's own view of what is in range that decides - the same rule
      * {@code SimAbilities.teleport} and {@code SimDoors.openDoor} follow.
      */
-    private static void explode(Minecraft client, Vec3 centre) {
+    private static void explode(Minecraft client, java.util.UUID shooter, Vec3 centre) {
         blastCount++;
         client.level.addParticle(ParticleTypes.EXPLOSION, centre.x, centre.y, centre.z, 0.0, 0.0, 0.0);
         for (int i = 0; i < 8; i++) {
@@ -355,7 +358,7 @@ public final class SimSpiritSceptre {
         if (server == null || client.player == null) {
             return;
         }
-        java.util.UUID uuid = client.player.getUUID();
+        java.util.UUID uuid = shooter != null ? shooter : client.player.getUUID();
         server.execute(() -> {
             var sp = server.getPlayerList().getPlayer(uuid);
             if (sp == null) {
@@ -364,19 +367,22 @@ public final class SimSpiritSceptre {
             ServerLevel level = (ServerLevel) sp.level();
             AABB blast = AABB.ofSize(centre, BLAST_RADIUS * 2, BLAST_RADIUS * 2, BLAST_RADIUS * 2);
             var source = level.damageSources().playerAttack(sp);
-            for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, blast,
-                    e -> e.isAlive() && e != sp)) {
-                // The BOX is a box; the blast is a sphere. Without this the corners reach 5.2 blocks while the
-                // faces reach 3, which is the same axis-dependent reach this file was written to get rid of.
-                if (target.getBoundingBox().distanceToSqr(centre) > BLAST_RADIUS * BLAST_RADIUS) {
-                    continue;
+            // Hypixel's Guided Bat damage for a pooled mob (SimDamage), summed into "Your Guided Bat hit ...".
+            SimDamage.ability(sp, "Guided Bat", SimDamage.GUIDED_BAT_BASE, SimDamage.GUIDED_BAT_SCALING, () -> {
+                for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, blast,
+                        e -> e.isAlive() && e != sp)) {
+                    // The BOX is a box; the blast is a sphere. Without this the corners reach 5.2 blocks while
+                    // the faces reach 3, which is the same axis-dependent reach this file was written to get rid of.
+                    if (target.getBoundingBox().distanceToSqr(centre) > BLAST_RADIUS * BLAST_RADIUS) {
+                        continue;
+                    }
+                    target.hurtServer(level, source, BLAST_DAMAGE);
+                    // Vanilla's own convention: the vector points FROM the target TO the blast, and knockback()
+                    // pushes the other way.
+                    com.epic60869.sky2m.sim.compat.McEntities.knockback(
+                            target, BLAST_KNOCKBACK, centre.x - target.getX(), centre.z - target.getZ());
                 }
-                target.hurtServer(level, source, BLAST_DAMAGE);
-                // Vanilla's own convention: the vector points FROM the target TO the blast, and knockback()
-                // pushes the other way.
-                com.epic60869.sky2m.sim.compat.McEntities.knockback(
-                        target, BLAST_KNOCKBACK, centre.x - target.getX(), centre.z - target.getZ());
-            }
+            });
         });
     }
 }

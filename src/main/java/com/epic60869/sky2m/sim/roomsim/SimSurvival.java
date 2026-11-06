@@ -42,6 +42,9 @@ public final class SimSurvival {
     /** Remembered by the builder once it knows where the room's floor is. */
     public static void setHome(BlockPos pos) {
         homePoint = pos == null ? null : pos.immutable();
+    /** The current home, so a boss room can borrow it and give it back. */
+    public static BlockPos home() {
+        return homePoint;
     }
 
     public static void register() {
@@ -79,21 +82,14 @@ public final class SimSurvival {
             }
         });
 
-        // Death goes back to the middle of the room instead of to a respawn screen.
+        // A vanilla death (the void, /kill) never reaches a respawn screen: it is a sim death like an emptied
+        // health pool - a ghost, or back to the middle of the room in the instant-teleport mode (SimDeath).
         ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
             if (!(entity instanceof ServerPlayer player) || !SimState.isActive()) {
                 return true;
             }
             player.setHealth(player.getMaxHealth());
-            player.getFoodData().eat(20, 1.0f);
-            player.clearFire();
-            player.fallDistance = 0;
-            BlockPos home = homePoint;
-            if (home != null && player.level() instanceof ServerLevel level) {
-                player.teleportTo(level, home.getX() + 0.5, home.getY(), home.getZ() + 0.5,
-                        java.util.Set.of(), player.getYRot(), player.getXRot(), false);
-            }
-            ModChat.send("Sim", ModChat.dim("back to the middle of the room"));
+            SimDeath.die(player, source);
             return false;
         });
 
@@ -123,6 +119,24 @@ public final class SimSurvival {
     }
 
     private static boolean flying;
+    /** Whether /fly is on, so a ghost brought back gets the flight he had before. */
+    static boolean flightOn() {
+        return flying;
+     * What a death does in the sim: full health, back to the middle of the room. Server thread.
+     *
+     * <p>Shared by a vanilla death (cancelled above) and by {@link SimVitals} emptying the Hypixel health pool,
+     * which is the usual way to die now that mobs hit for Hypixel numbers. Since the ghost deaths ({@link SimDeath}) this
+     * is the instant-teleport death mode only.
+    static void rescue(ServerPlayer player) {
+        player.setHealth(player.getMaxHealth());
+        player.getFoodData().eat(20, 1.0f);
+        player.clearFire();
+        player.fallDistance = 0;
+        BlockPos home = homePoint;
+        if (home != null && player.level() instanceof ServerLevel level) {
+            player.teleportTo(level, home.getX() + 0.5, home.getY(), home.getZ() + 0.5,
+                    java.util.Set.of(), player.getYRot(), player.getXRot(), false);
+        ModChat.send("Sim", ModChat.dim("back to the middle of the room"));
 
     private static void toggle() {
         Minecraft client = Minecraft.getInstance();

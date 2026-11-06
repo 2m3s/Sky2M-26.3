@@ -91,6 +91,8 @@ public final class ScoreCalculator {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 5 != 0 || !Sky2MLocation.inDungeon()) return;
             update();
+                }
+            }
         });
     }
 
@@ -128,6 +130,14 @@ public final class ScoreCalculator {
     public static boolean mimicSeenKilled() { return mimicKilled || DungeonScore.wasMimicSeenKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.MIMIC_KILLED); }
     public static boolean princeKilled() { return princeKilled || DungeonScore.wasPrinceKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.PRINCE_KILLED); }
 
+    /**
+     */
+    }
+
+    /**
+     */
+    }
+
     /** A teammate's Sky2M (or another mod's party socket) said this happened (Party Dungeon Data). */
     private static boolean teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag flag) {
         var fact = com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.flagFact(flag);
@@ -146,11 +156,22 @@ public final class ScoreCalculator {
         return floor.equals("E0") || floor.equals("F0") ? "E" : floor;
     }
 
+    /**
+     */
+                }
+        }
+    }
+
+    /**
+     */
+    }
+
     private static void onChat(String text) {
         if (!Sky2MLocation.inDungeon()) return;
         if (text.equals("[NPC] Mort: Here, I found this map when I first entered the dungeon.")) started = true;
         else if (text.equals("[BOSS] The Watcher: You have proven yourself. You may pass.")) watcherCleared = true;
         else if (text.startsWith(" ☠ ") && !text.contains("reconnected") && DEATH.matcher(text).matches()) deathCount++;
+        }
 
         String lower = text.toLowerCase(Locale.ROOT);
         if (!princeKilled && PRINCE_MESSAGES.stream().anyMatch(lower::contains)) princeKilled = true;
@@ -242,7 +263,7 @@ public final class ScoreCalculator {
      */
     public static int secretsForSPlus() {
         int total = totalSecrets();
-        int penalty = Math.max(0, deathCount * 2 - 1);
+        int penalty = simActive() ? com.epic60869.sky2m.sim.roomsim.SimScore.deathPenalty() : deathPenalty(deathCount, firstDeathSpirit);
         return total <= 0 ? 0 : secretsForSPlus(total, REQUIRED_SECRETS.getOrDefault(floorKey(), 1.0), bonusScore(), penalty);
     }
 
@@ -256,6 +277,7 @@ public final class ScoreCalculator {
         int bonus = Math.min(cryptsCount, 5);
         if (mimicKilled() && floorNumber() > 5) bonus += 2;
         if (princeKilled()) bonus += 1;
+        bonus += batsKilled;
         if (isPaul()) bonus += 10;
         return bonus;
     }

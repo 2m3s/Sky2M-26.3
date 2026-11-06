@@ -70,6 +70,7 @@ public final class SimSidebar {
 
     /** What the sidebar said last tick, so the scoreboard is only touched when something changed. */
     private static List<String> lastLines = List.of();
+    private static boolean built;
 
     private static boolean built;
 

@@ -4,53 +4,44 @@
  */
 package com.epic60869.sky2m.sim.roomsim;
 
-import com.mojang.authlib.GameProfile;
-
-import net.fabricmc.fabric.api.entity.FakePlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * A REAL Catacombs-style miniboss for the dungeon sim: a server-side player entity that Mob ESP recognises on
- * its own miniboss path, and that can be hit and killed like any other mob.
+ * The Catacombs minibosses for the Dungeon Sim, each with its own fight.
  *
- * <h2>The contract it has to satisfy</h2>
- * {@code mobesp/MobEspFeature} finds a miniboss with
- * <pre>entity instanceof Player p &amp;&amp; p != client.player &amp;&amp; p.getUUID().version() == 2
- *     &amp;&amp; MINIBOSS_NAMES.contains(p.getName().getString())</pre>
- * so the thing on the CLIENT has to be a {@code Player} instance, with a version-2 UUID, whose name is one of
- * Hypixel's five. Three of those are load-bearing and each one decided part of the design below:
+ * <p>Every one is a humanoid mob with real pathfinding that walks at you and swings, dressed the way Hypixel
+ * dresses it, with Hypixel's health and damage for that miniboss on the floor ({@link SimHealth#statsFor})
+ * and a "✯ Name 1.2M❤" stand that follows it. On top of the melee each has the mechanic that makes it that
+ * miniboss, approximated from how the fights play on Hypixel:
  * <ul>
- * <li><b>A client {@code Player} can only come from an AddEntity packet of type {@code PLAYER}.</b>
- * {@code ClientPacketListener.createEntityFromPacket} (26.1.2 bytecode) builds a {@code RemotePlayer} from
- * {@code getPlayerInfo(uuid).getProfile()} for that type - and if the UUID is not already in the client's player
- * info map it logs "Server attempted to add player prior to sending player info" and drops the entity. So a
- * {@link ClientboundPlayerInfoUpdatePacket} with {@code ADD_PLAYER} has to reach the client BEFORE the entity is
- * added to the level. That is exactly what Hypixel does for its NPCs, and why the ESP's check is written around
- * v2 UUIDs in the first place.
- * <li><b>{@code Player.getName()} is the game profile's name and nothing else</b> - {@code getfield gameProfile;
- * GameProfile.name(); Component.literal} - so the name is not a custom name tag, it is the profile, and the
- * profile is what has to read "Shadow Assassin".
- * <li><b>A profile name is capped at 16 characters on the wire.</b> {@code ADD_PLAYER} encodes it with
- * {@code ByteBufCodecs.PLAYER_NAME}, which is {@code stringUtf8(16)}, and singleplayer does NOT skip
- * serialization: {@code Connection$3.initChannel} calls {@code configureInMemoryPipeline} ->
- * {@code configureSerialization}, which installs a real {@code PacketEncoder}/{@code PacketDecoder}. So
- * "Frozen Adventurer" (17 characters) cannot be sent at all - see {@link Name#FROZEN_ADVENTURER}.
+ * <li><b>Lost Adventurer</b> - 100 Defense (takes half of every hit) and, the first time it drops below 30%,
+ * patches itself back up to 60%.</li>
+ * <li><b>King Midas</b> - gold armour, slow, hits very hard and slams the ground when you stand next to him;
+ * dies in a burst of gold.</li>
  * </ul>
  *
  * <h2>Why it is a Fabric {@link FakePlayer} subclass</h2>
@@ -65,34 +56,17 @@ import java.util.concurrent.ThreadLocalRandom;
  * What {@code FakePlayer} does NOT do is get added to a level, and two of its overrides have to be undone here:
  * {@code isInvulnerableTo} returns a flat {@code true}, and {@code tick()} is empty (see {@link Miniboss#tick}).
  *
- * <h2>Safety</h2>
- * Nothing here is reachable without passing {@link SimState#canAct}: {@link #place} is package-private and its
- * only caller is {@link SimMobs}'s already-gated spawn path, which hands it a {@link ServerLevel} it can only
- * have got from a singleplayer server. This file adds no second door into the sim.
+ * <p>All the fight logic runs in the entity's own server AI step, so a miniboss needs no tick of its own and goes
+ * away cleanly with its entity. Nothing here is reachable without passing {@link SimState#canAct}: the only
+ * caller is {@link SimMobs}'s already-gated spawn path.
  */
 public final class SimMiniboss {
 
-    private static final org.slf4j.Logger LOGGER = com.epic60869.sky2m.sim.util.ModLog.get("sky2m-simminiboss");
-
-    /**
-     * The five names {@code MobEspFeature.MINIBOSS_NAMES} matches, and the only names worth placing: any other
-     * string produces a player entity the ESP will not look at twice.
-     */
+    /** The minibosses the sim can place. */
     public enum Name {
-        SHADOW_ASSASSIN("Shadow Assassin"),
         LOST_ADVENTURER("Lost Adventurer"),
-        /**
-         * 17 characters, which is one more than {@code ByteBufCodecs.PLAYER_NAME} ({@code stringUtf8(16)}) can
-         * carry, and {@code Player.getName()} reads the profile name only - so there is no way to hand the
-         * client an entity whose {@code getName()} is this. {@link #place} refuses it and says so rather than
-         * placing something the ESP silently ignores.
-         */
-        FROZEN_ADVENTURER("Frozen Adventurer"),
-        DIAMOND_GUY("Diamond Guy"),
-        KING_MIDAS("King Midas");
-
-        /** Longest name a game profile can carry over the wire - {@code ByteBufCodecs.PLAYER_NAME}. */
-        static final int MAX_PROFILE_NAME = 16;
+        SHADOW_ASSASSIN("Shadow Assassin"),
+        ANGRY_ARCHAEOLOGIST("Angry Archaeologist"),
 
         private final String text;
 
@@ -100,6 +74,7 @@ public final class SimMiniboss {
             this.text = text;
         }
 
+            this.text = text;
         public String text() {
             return text;
         }
@@ -109,105 +84,18 @@ public final class SimMiniboss {
         }
     }
 
-    /** Placed minibosses, so their tab-list profile entry can be withdrawn once the entity is gone. */
-    private static final List<UUID> PLACED = new CopyOnWriteArrayList<>();
-
     private SimMiniboss() {
     }
 
-    /**
-     * Places one miniboss and tells every real client about it. Server thread only.
-     *
-     * @return the placed entity, or null if it could not be placed - in which case the caller is expected to
-     *         fall back to something that does work rather than leaving the room empty
-     */
-    static Placed place(ServerLevel level, BlockPos pos, Name name, double health) {
-        if (!name.sendable()) {
-            LOGGER.warn("Cannot place a \"{}\": a game profile name is capped at {} characters on the wire"
-                            + " (ByteBufCodecs.PLAYER_NAME) and Player.getName() reads the profile only",
-                    name.text(), Name.MAX_PROFILE_NAME);
-            return null;
-        }
-        MinecraftServer server = level.getServer();
-        if (server.getPlayerList().getPlayers().isEmpty()) {
-            // Nobody to send the ADD_PLAYER profile to. The entity would exist server-side and be dropped by
-            // every client that later saw its AddEntity packet ("Server attempted to add player prior to sending
-            // player info"), which is an invisible, unhittable miniboss - worse than none. Refuse, and let the
-            // caller place a mob instead.
-            LOGGER.warn("Not placing a miniboss at {}: no player is on the sim server yet to send its profile to",
-                    pos);
-            return null;
-        }
-        GameProfile profile = new GameProfile(npcUuid(), name.text());
-        Miniboss boss;
-        try {
-            boss = new Miniboss(level, profile);
-        } catch (RuntimeException | LinkageError e) {
-            // A ServerPlayer constructor touches the player list, stats and advancements. If any of that ever
-            // stops working, the sim must degrade to a mob rather than take the server tick down with it.
-            LOGGER.warn("Could not build a miniboss player entity; the caller will fall back to a mob", e);
-            return null;
-        }
-        // The star stand is CONSTRUCTED HERE, one line after the boss, and handed back for the caller to
-        // configure and add.
-        //
-        // Mob ESP resolves a starred stand to the entity at id-1, which is how Hypixel lays them out. The
-        // zombie and skeleton paths get that for free because their stand is built immediately after them,
-        // but the miniboss did not: something on the ServerPlayer path between here and the stand's old
-        // construction site consumed an id, so the sim produced mob 651 with its tag at 653 and the ESP
-        // could not resolve it. Scenario 89 caught it as "idAdjacent=false" on 2026-09-30.
-        //
-        // Reserving the next id by constructing the stand immediately is structural rather than a matter of
-        // ordering luck: whatever allocates later, these two were made back to back and cannot be separated.
-        ArmorStand tag = new ArmorStand(level, boss.getX(), boss.getY(), boss.getZ());
-
-        boss.getAttribute(Attributes.MAX_HEALTH).setBaseValue(health);
-        boss.setHealth((float) health);
-        // Nothing moves it: Miniboss.tick() runs no physics at all, so the position it is placed at is the
-        // position it keeps. killer560, 2026-09-28, on sim mobs generally: "I would rather just have them
-        // never move".
-        boss.setNoGravity(true);
-        boss.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0f, 0.0f);
-
-        // ADD_PLAYER *first*, and only ADD_PLAYER: with UPDATE_LISTED left out the client's PlayerInfo keeps its
-        // default listed=false, so the miniboss never shows up in the tab list. Sent straight to each real
-        // client's connection because this entity is not in the PlayerList and nothing will broadcast for it.
-        ClientboundPlayerInfoUpdatePacket info = new ClientboundPlayerInfoUpdatePacket(
-                ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, boss);
-        for (ServerPlayer real : server.getPlayerList().getPlayers()) {
-            real.connection.send(info);
-        }
-
-        if (!level.addFreshEntity(boss)) {
-            LOGGER.warn("Level refused the miniboss entity at {}", pos);
-            forget(server, List.of(boss.getUUID()));
-            return null;
-        }
-        PLACED.add(boss.getUUID());
-        LOGGER.info("Placed miniboss \"{}\" uuid={} (v{}) id={} tagId={} at {}",
-                name.text(), boss.getUUID(), boss.getUUID().version(), boss.getId(), tag.getId(), pos);
-        return new Placed(boss, tag);
+    /** Builds (but does not add) a miniboss, dressed and tuned for the floor. Server thread. */
+    static Zombie create(ServerLevel level, Name name) {
+        Miniboss boss = new Miniboss(level, name, SimState.floorLabel());
+        boss.dress();
+        return boss;
     }
 
-    /**
-     * A placed miniboss and the star stand reserved for it.
-     *
-     * <p>The stand is built but NOT added to the level - the caller decides whether this miniboss is starred,
-     * and an unstarred one simply never adds it. What matters is that its entity id was taken immediately
-     * after the boss's, which is the whole reason it is made here rather than where it is used.
-     */
-    public record Placed(ServerPlayer boss, ArmorStand tag) {
-    }
-
-    /**
-     * Withdraws the client-side profile entry of any miniboss whose entity has gone - killed, or cleared by
-     * {@link SimMobs#clear}. Server thread only, called once per server tick from {@link SimMobs}.
-     *
-     * <p>Left undone, the client's {@code playerInfoMap} would keep growing one dead NPC per kill for the whole
-     * session.
-     */
-    static void tick(ServerLevel level) {
-        if (PLACED.isEmpty()) {
+    /** Called by {@link SimMobs} once the miniboss's pool exists, to set the parts of its fight that live there. */
+    static void tunePool(Entity boss, SimHealth.Pool pool) {
             return;
         }
         List<UUID> gone = new ArrayList<>();
@@ -220,137 +108,255 @@ public final class SimMiniboss {
         if (!gone.isEmpty()) {
             PLACED.removeAll(gone);
             forget(level.getServer(), gone);
+            pool.taken = 0.5;
+            pool.surviveOnce = m.name == Name.LOST_ADVENTURER;
         }
     }
 
-    /** Drops the profile entries for these UUIDs on every real client. */
-    private static void forget(MinecraftServer server, List<UUID> ids) {
-        ClientboundPlayerInfoRemovePacket packet = new ClientboundPlayerInfoRemovePacket(ids);
-        for (ServerPlayer real : server.getPlayerList().getPlayers()) {
-            real.connection.send(packet);
-        }
-    }
+    /** A sim miniboss. */
+    private static final class Miniboss extends Zombie {
 
-    /**
-     * True for a miniboss this class placed.
-     *
-     * <p>Needed because a {@code ServerPlayer} added to a level lands in {@code ServerLevel.players()}
-     * ({@code ServerLevel$EntityCallbacks.onTrackingStart} adds every {@code ServerPlayer} to that list), so
-     * anything in the sim that walks the player list now sees minibosses too. Whatever the list is being used
-     * for - waking a Fel, finding where "the player" is - it means the real one.
-     */
-    static boolean isPlaced(Entity entity) {
-        return entity instanceof Miniboss;
-    }
+        final Name name;
+         * A special attack's Hypixel damage before Defense: the miniboss's own base damage for the floor
+         * ({@link SimHealth#damageOf}). APPROXIMATE as a per-attack number - the wiki gives the base damage but no
+        private final double ability;
+        private int cooldown;
+        /** Ticks left of a wind-up or vanish, 0 when none is running. */
+        private int windUp;
+        private boolean healed;
+        private int healCooldown;
+        private Map<EquipmentSlot, ItemStack> stashed;
 
-    /**
-     * A version-2 UUID, which is what {@code MobEspFeature.isMiniboss} tests for and what Hypixel's NPCs carry.
-     *
-     * <p>Not {@code UUID.nameUUIDFromBytes}, which produces version 3, and not {@code UUID.randomUUID}, which
-     * produces version 4 - the version nibble has to be written deliberately. Random rather than derived from
-     * the name, because two minibosses of the same name can stand in one floor and a duplicate UUID is silently
-     * refused by the entity manager.
-     */
-    private static UUID npcUuid() {
-        byte[] bytes = new byte[16];
-        ThreadLocalRandom.current().nextBytes(bytes);
-        bytes[6] = (byte) ((bytes[6] & 0x0F) | 0x20);
-        bytes[8] = (byte) ((bytes[8] & 0x3F) | 0x80);
-        long msb = 0L;
-        long lsb = 0L;
-        for (int i = 0; i < 8; i++) {
-            msb = (msb << 8) | (bytes[i] & 0xFFL);
-        }
-        for (int i = 8; i < 16; i++) {
-            lsb = (lsb << 8) | (bytes[i] & 0xFFL);
-        }
-        return new UUID(msb, lsb);
-    }
-
-    /**
-     * The entity. A {@link FakePlayer} for its fake packet listener (see this class's doc), with the three
-     * {@code FakePlayer}/{@code ServerPlayer} behaviours that would make it unfightable taken back out.
-     */
-    private static final class Miniboss extends FakePlayer {
-
-        Miniboss(ServerLevel level, GameProfile profile) {
-            super(level, profile);
+        Miniboss(Level level, Name name, String floor) {
+            super(level);
+            this.name = name;
+            this.ability = Double.isNaN(base) ? 0 : base;
+            float melee = SimHealth.meleeDamage(floor, SimHealth.Role.MINIBOSS);
+            double speed = 0.25;
+            switch (name) {
+                case ANGRY_ARCHAEOLOGIST -> speed = 0.34;
+                case SHADOW_ASSASSIN -> speed = 0.3;
+                case KING_MIDAS -> {
+                    speed = 0.21;
+                    melee *= 1.3f;
+                default -> {
+            getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(speed);
+            getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(melee);
+            getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(24);
+            getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0.6);
+            var reinforcements = getAttribute(Attributes.SPAWN_REINFORCEMENTS_CHANCE);
+            if (reinforcements != null) {
+                reinforcements.setBaseValue(0);
+            cooldown = 60 + ThreadLocalRandom.current().nextInt(40);
         }
 
-        /**
-         * <b>This is what makes it killable, and it is not obvious.</b> {@code FakePlayer.isInvulnerableTo}
-         * returns a flat {@code true}; underneath it {@code ServerPlayer.isInvulnerableTo} returns true unless
-         * {@code this.connection.hasClientLoaded()}, and a fake listener never receives the packet that sets
-         * that. Either one alone refuses every hit.
-         */
-        @Override
-        public boolean isInvulnerableTo(ServerLevel level, DamageSource source) {
-            return false;
+        void dress() {
+            switch (name) {
+                case LOST_ADVENTURER -> wear(Items.IRON_HELMET, Items.IRON_CHESTPLATE, Items.IRON_LEGGINGS,
+                        Items.IRON_BOOTS, Items.IRON_SWORD);
+                case FROZEN -> wear(Items.PACKED_ICE, Items.CHAINMAIL_CHESTPLATE, Items.CHAINMAIL_LEGGINGS,
+                        Items.CHAINMAIL_BOOTS, Items.DIAMOND_SWORD);
+                case SHADOW_ASSASSIN -> wear(Items.NETHERITE_HELMET, Items.NETHERITE_CHESTPLATE,
+                        Items.NETHERITE_LEGGINGS, Items.NETHERITE_BOOTS, Items.NETHERITE_SWORD);
+                case ANGRY_ARCHAEOLOGIST -> wear(Items.DIAMOND_HELMET, Items.DIAMOND_CHESTPLATE,
+                case KING_MIDAS -> wear(Items.GOLDEN_HELMET, Items.GOLDEN_CHESTPLATE, Items.GOLDEN_LEGGINGS,
+                        Items.GOLDEN_BOOTS, Items.GOLDEN_SWORD);
         }
 
-        /**
-         * {@code ServerPlayer.hurtServer} asks the victim {@code canHarmPlayer(attacker)} and
-         * {@code ServerPlayer.canHarmPlayer} returns false whenever {@code isPvpAllowed()} is false. Whether an
-         * integrated server has PvP on is not this file's business to depend on, so the answer is fixed here.
-         */
-        @Override
-        public boolean canHarmPlayer(Player other) {
-            return true;
-        }
-
-        /** {@code ChunkMap$TrackedEntity.updatePlayer} never sends a spectator to anyone, and
-         *  {@code Player.isPickable()} is false for one - a spectating miniboss would be invisible and
-         *  unclickable. Fixed rather than inherited from a game mode nothing here sets. */
-        @Override
-        public boolean isSpectator() {
-            return false;
+        private void wear(net.minecraft.world.item.Item head, net.minecraft.world.item.Item chest,
+                          net.minecraft.world.item.Item legs, net.minecraft.world.item.Item feet,
+                          net.minecraft.world.item.Item hand) {
+            setItemSlot(EquipmentSlot.HEAD, new ItemStack(head));
+            setItemSlot(EquipmentSlot.CHEST, new ItemStack(chest));
+            setItemSlot(EquipmentSlot.LEGS, new ItemStack(legs));
+            setItemSlot(EquipmentSlot.FEET, new ItemStack(feet));
+            setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(hand));
         }
 
         @Override
-        public boolean isCreative() {
-            return false;
-        }
+        protected void customServerAiStep(ServerLevel level) {
+            super.customServerAiStep(level);
+            SimHealth.Pool pool = SimHealth.get(this);
+            if (pool == null || pool.dying || !isAlive()) {
+            LivingEntity target = getTarget();
+            ServerPlayer player = target instanceof ServerPlayer sp && sp.isAlive() ? sp : null;
+            if (cooldown > 0) {
+                cooldown--;
+            switch (name) {
+                case LOST_ADVENTURER -> lostAdventurer(level, pool);
+                case FROZEN -> frozen(level, player);
+                case SHADOW_ASSASSIN -> shadowAssassin(level, pool, player);
+                case ANGRY_ARCHAEOLOGIST -> archaeologist(level, pool, player);
+                case KING_MIDAS -> midas(level, player);
+        // ------------------------------------------------------------------------------------- Lost Adventurer
 
-        /**
-         * A deliberately tiny tick, and it must not be empty.
-         *
-         * <p>{@code FakePlayer.tick()} is empty, which is what keeps a fake player out of every
-         * {@code ServerPlayer.tick} path that wants a real connection. But the damage cooldown counter is
-         * decremented in a tick and <b>only</b> in {@code ServerPlayer.tick} for a player:
-         * {@code LivingEntity.baseTick} guards its own decrement with {@code !(this instanceof ServerPlayer)}
-         * (verified in the 26.1.2 bytecode). With nothing decrementing it, {@code invulnerableTime} sticks at 20
-         * after the first hit and {@code LivingEntity.hurtServer}'s {@code invulnerableTime > 10} branch then
-         * refuses every later hit of the same size ({@code amount <= lastHurt}) - so the miniboss would take
-         * exactly one hit and become immortal. That bug is invisible in any test that only hits it once.
-         *
-         * <p>No physics, no AI, no movement: see {@link #place}.
-         */
+        /** Once, below 30%: back up to 60%. The pool's surviveOnce stops one big hit skipping past the heal. */
+        private void lostAdventurer(ServerLevel level, SimHealth.Pool pool) {
+            if (healed || pool.fraction() >= 0.3) {
+            healed = true;
+            pool.surviveOnce = false;
+            pool.heal(pool.max * 0.6 - pool.hp);
+            level.sendParticles(ParticleTypes.HEART, getX(), getY() + 2.2, getZ(), 8, 0.5, 0.3, 0.5, 0.1);
+            level.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + 1, getZ(), 25, 0.5, 0.8, 0.5, 0.1);
+            level.playSound(null, getX(), getY(), getZ(), SoundEvents.TOTEM_USE, SoundSource.HOSTILE, 0.7f, 1.2f);
+        private static final int SPRAY_WINDUP = 20;
+        private static final double SPRAY_RANGE = 7.0;
+        /** Cosine of the cone's half-angle: 35 degrees either side of where it faces. */
+        private static final double SPRAY_CONE = Math.cos(Math.toRadians(35));
+
+        private void frozen(ServerLevel level, ServerPlayer player) {
+            if (windUp > 0) {
+                if (player != null) {
+                    getLookControl().setLookAt(player, 30f, 30f);
+                level.sendParticles(ParticleTypes.SNOWFLAKE, getX(), getY() + 1.6, getZ(), 4, 0.3, 0.3, 0.3, 0.02);
+                if (--windUp == 0) {
+                    spray(level);
+                    cooldown = 100;
+            if (cooldown == 0 && player != null && distanceToSqr(player) < SPRAY_RANGE * SPRAY_RANGE
+                    && hasLineOfSight(player)) {
+                windUp = SPRAY_WINDUP;
+                level.playSound(null, getX(), getY(), getZ(), SoundEvents.POWDER_SNOW_STEP, SoundSource.HOSTILE,
+                        1.2f, 0.6f);
+        /** The ice spray: a cone of snow in front of it, damaging and slowing anyone inside. */
+        private void spray(ServerLevel level) {
+            Vec3 look = getLookAngle();
+            Vec3 flat = new Vec3(look.x, 0, look.z);
+            if (flat.lengthSqr() < 1.0e-4) {
+                flat = Vec3.directionFromRotation(0f, getYRot());
+            flat = flat.normalize();
+            Vec3 eye = new Vec3(getX(), getY() + 1.4, getZ());
+            ThreadLocalRandom rnd = ThreadLocalRandom.current();
+            for (int i = 0; i < 60; i++) {
+                double d = 1 + rnd.nextDouble() * (SPRAY_RANGE - 1);
+                double a = (rnd.nextDouble() - 0.5) * Math.toRadians(70);
+                double cx = flat.x * Math.cos(a) - flat.z * Math.sin(a);
+                double cz = flat.x * Math.sin(a) + flat.z * Math.cos(a);
+                level.sendParticles(i % 2 == 0 ? ParticleTypes.SNOWFLAKE : ParticleTypes.ITEM_SNOWBALL,
+                        eye.x + cx * d, eye.y - 0.4 + rnd.nextDouble() * 0.8, eye.z + cz * d, 1, 0, 0, 0, 0);
+            level.playSound(null, getX(), getY(), getZ(), SoundEvents.GLASS_BREAK, SoundSource.HOSTILE, 1f, 1.6f);
+                Vec3 to = new Vec3(p.getX() - getX(), 0, p.getZ() - getZ());
+                double dist = to.length();
+                if (dist > SPRAY_RANGE || Math.abs(p.getY() - getY()) > 3) {
+                if (dist > 0.8 && to.normalize().dot(flat) < SPRAY_CONE) {
+                p.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 60, 2), this);
         @Override
-        public void tick() {
-            if (isDeadOrDying()) {
-                // Removal is done here rather than inside die(), so nothing is torn down in the middle of the
-                // damage path that is still using it.
-                discard();
-                return;
-            }
-            if (getInvulnerableTime() > 0) {
-                setInvulnerableTime(getInvulnerableTime() - 1);
-            }
-            if (hurtTime > 0) {
-                hurtTime--;
-            }
-        }
+        public boolean doHurtTarget(ServerLevel level, Entity target) {
+            boolean hit = super.doHurtTarget(level, target);
+            if (hit && name == Name.FROZEN && target instanceof LivingEntity living) {
+                living.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 40, 1), this);
+                level.sendParticles(ParticleTypes.SNOWFLAKE, target.getX(), target.getY() + 1, target.getZ(), 10,
+                        0.3, 0.5, 0.3, 0.02);
+            return hit;
+        // ------------------------------------------------------------------------------------- Shadow Assassin
 
-        /**
-         * No vanilla player death. {@code ServerPlayer.die} broadcasts a death message to the real player
-         * through {@code PlayerList.broadcastSystemMessage}, sends a combat-kill packet down a connection that
-         * drops everything, and leaves the corpse lying there waiting for a respawn that can never come. The
-         * miniboss just stops existing, which is what Hypixel's NPC minibosses do - {@link #tick} removes it on
-         * the next server tick.
-         */
+        private static final int VANISH_TICKS = 30;
+        /** Vanish, then reappear behind the player and strike. */
+        private void shadowAssassin(ServerLevel level, SimHealth.Pool pool, ServerPlayer player) {
+            if (windUp > 0) {
+                if (--windUp == 0) {
+                    reappear(level, pool, player);
+            if (cooldown == 0 && player != null && distanceToSqr(player) < 16 * 16) {
+                vanish(level, pool);
+        private void vanish(ServerLevel level, SimHealth.Pool pool) {
+            windUp = VANISH_TICKS;
+            level.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 1, getZ(), 25, 0.3, 0.6, 0.3, 0.02);
+            level.playSound(null, getX(), getY(), getZ(), SoundEvents.ILLUSIONER_MIRROR_MOVE, SoundSource.HOSTILE,
+                    1f, 1f);
+            stashed = new EnumMap<>(EquipmentSlot.class);
+            for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.HEAD, EquipmentSlot.CHEST,
+                    EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.MAINHAND}) {
+                stashed.put(slot, getItemBySlot(slot).copy());
+                setItemSlot(slot, ItemStack.EMPTY);
+        private void reappear(ServerLevel level, SimHealth.Pool pool, ServerPlayer player) {
+            if (player != null && player.isAlive() && distanceToSqr(player) < 24 * 24) {
+                // Behind is opposite the way he is looking, on the flat.
+                Vec3 look = Vec3.directionFromRotation(0f, player.getYRot());
+                double x = player.getX() - look.x * 1.6;
+                double z = player.getZ() - look.z * 1.6;
+                AABB box = getDimensions(getPose()).makeBoundingBox(x, player.getY(), z);
+                if (level.noCollision(this, box)) {
+                    teleportTo(x, player.getY(), z);
+                } else {
+                    teleportTo(player.getX(), player.getY(), player.getZ());
+                getLookControl().setLookAt(player, 180f, 180f);
+            setInvisible(false);
+            pool.hideLabel = false;
+                stashed.forEach(this::setItemSlot);
+                stashed = null;
+            level.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 1, getZ(), 25, 0.3, 0.6, 0.3, 0.02);
+            level.playSound(null, getX(), getY(), getZ(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE,
+                    1f, 0.7f);
+            if (player != null && distanceToSqr(player) < 3.5 * 3.5) {
+                swing(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, false);
+                doHurtTarget(level, player);
+                level.sendParticles(ParticleTypes.CRIT, player.getX(), player.getY() + 1, player.getZ(), 15,
+                        0.3, 0.5, 0.3, 0.2);
+        // --------------------------------------------------------------------------------- Angry Archaeologist
+
+        private void archaeologist(ServerLevel level, SimHealth.Pool pool, ServerPlayer player) {
+                level.levelEvent(2007, blockPosition(), 0xF82423);   // the instant-effect splash, healing red
+                level.sendParticles(ParticleTypes.HEART, getX(), getY() + 2, getZ(), 5, 0.4, 0.3, 0.4, 0.1);
+                level.playSound(null, getX(), getY(), getZ(), SoundEvents.SPLASH_POTION_BREAK, SoundSource.HOSTILE,
+                        1f, 1f);
+        // ------------------------------------------------------------------------------------------ King Midas
+
+        /** Stand next to him for a moment and he slams the ground: damage and a shove. */
+        private void midas(ServerLevel level, ServerPlayer player) {
+            if (cooldown > 0 || player == null || distanceToSqr(player) > 3.5 * 3.5) {
+            cooldown = 140;
+            level.sendParticles(new ItemParticleOption(ParticleTypes.ITEM, Items.GOLD_BLOCK), getX(), getY() + 0.2,
+                    getZ(), 40, 1.5, 0.1, 1.5, 0.15);
+            level.playSound(null, getX(), getY(), getZ(), SoundEvents.ANVIL_LAND, SoundSource.HOSTILE, 0.6f, 0.8f);
+                if (p.distanceToSqr(this) > 4 * 4) {
+                SimVitals.dealHypixel(level, p, level.damageSources().indirectMagic(this, this), ability * 1.5, false);
+                p.setDeltaMovement(dx / len * 1.2, 0.5, dz / len * 1.2);
+                p.syncVelocity = true;
+        /** King Midas goes out in a burst of gold - coins you can see but not keep. */
         @Override
         public void die(DamageSource source) {
-            this.dead = true;
+            super.die(source);
+            if (name != Name.KING_MIDAS || !(level() instanceof ServerLevel level)) {
+            level.sendParticles(new ItemParticleOption(ParticleTypes.ITEM, Items.GOLD_INGOT), getX(), getY() + 1,
+                    getZ(), 60, 0.6, 0.8, 0.6, 0.25);
+            level.playSound(null, getX(), getY(), getZ(), SoundEvents.PLAYER_LEVELUP, SoundSource.HOSTILE, 1f, 0.6f);
+            ThreadLocalRandom rnd = ThreadLocalRandom.current();
+            for (int i = 0; i < 14; i++) {
+                ItemEntity gold = new ItemEntity(level, getX(), getY() + 1, getZ(),
+                        new ItemStack(i % 3 == 0 ? Items.GOLD_INGOT : Items.GOLD_NUGGET),
+                        (rnd.nextDouble() - 0.5) * 0.5, 0.3 + rnd.nextDouble() * 0.3, (rnd.nextDouble() - 0.5) * 0.5);
+                // Can't be picked up and is gone in a few seconds: the burst, not loot.
+                gold.makeFakeItem();
+                level.addFreshEntity(gold);
+        // ------------------------------------------------------------------------------- plain-mob behaviour
+
+        @Override
+        public void checkDespawn() {
+        @Override
+        protected boolean isSunSensitive() {
+            return false;
+        }
+
+        @Override
+        protected boolean convertsInWater() {
+            return false;
+        }
+
+        @Override
+        public void igniteForTicks(int ticks) {
+        }
+
+        @Override
+        public boolean fireImmune() {
+            return true;
+        @Override
+        protected SoundEvent getAmbientSound() {
+            return null;
+        @Override
+        protected SoundEvent getHurtSound(DamageSource source) {
+            return SoundEvents.PLAYER_HURT;
+        @Override
+        protected SoundEvent getDeathSound() {
+            return SoundEvents.PLAYER_DEATH;
         }
     }
 }

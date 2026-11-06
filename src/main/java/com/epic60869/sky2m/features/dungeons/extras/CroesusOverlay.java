@@ -372,6 +372,15 @@ public final class CroesusOverlay {
         return Sky2MLocation.inDungeon() || Sky2MLocation.area().equals("Dungeon Hub") || Sky2MLocation.location().contains("Forgotten Skull");
     }
 
+    /**
+     */
+        }
+    }
+
+    }
+
+    }
+
     private static List<Component> lines() {
         int n;
         synchronized (CroesusOverlay.class) {

@@ -44,6 +44,8 @@ public class DungeonMap {
 	private static final Identifier DUNGEON_MAP = SkyblockerMod.id("dungeon_map");
 	private static final MapId DEFAULT_MAP_ID_COMPONENT = new MapId(1024);
 	private static @Nullable MapId cachedMapIdComponent = null;
+	/** Sky2M: an add-on (the Funny mod's Cheater Map) can replace this map while it's on. */
+	public static java.util.function.BooleanSupplier replaced = () -> false;
 
 	@Init
 	public static void init() {
@@ -59,6 +61,7 @@ public class DungeonMap {
 		DungeonsConfig.DungeonMap dungeonMap = SkyblockerConfigManager.get().dungeons.dungeonMap;
 		// Sky2M: Dungeons > Dungeon Map > Map Style picks the look (Skyblocker, Stella, Devonian); the Dungeon Sim always draws it.
 		if (com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.inSim() || (shouldProcess() && dungeonMap.enableMap)) {
+		if (replaced.getAsBoolean()) return;
 			com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles.render(graphics, dungeonMap.mapX, dungeonMap.mapY, dungeonMap.mapScaling);
 		}
 	}

@@ -1,0 +1,67 @@
+{
+  "class": "TANK",
+  "name": "Tank",
+  "notes": "The user's Tank setup (2026-11-01), green choices. Wardrobe slot 1 is the boss set, slot 2 the P3 terminals set (Giant Spirit Mask + Giant Goldor's, Fortified equipment).",
+  "wardrobe": [
+    {
+      "name": "Boss",
+      "armour": [
+        {"id": "GOLD_NECRON_HEAD", "totalStars": 8, "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6}},
+        {"id": "SKELETON_MASTER_CHESTPLATE", "totalStars": 8, "floorTier": 10, "quality": 50, "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6}},
+        {"id": "POWER_WITHER_LEGGINGS", "totalStars": 8, "gems": ["FLAWLESS JASPER", "FLAWLESS JASPER"], "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6}},
+        {"id": "SPEED_WITHER_BOOTS", "totalStars": 8, "gems": ["FLAWLESS JASPER", "FLAWLESS JASPER"], "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6}}
+      ],
+      "equipment": [
+        {"id": "BONE_NECKLACE", "fragged": true, "totalStars": 6, "reforge": "blended"},
+        {"id": "SHADOW_ASSASSIN_CLOAK", "fragged": true, "totalStars": 6, "reforge": "waxed"},
+        {"id": "ADAPTIVE_BELT", "fragged": true, "totalStars": 6, "reforge": "blended"},
+        {"id": "SOULWEAVER_GLOVES", "totalStars": 6, "reforge": "blended"}
+      ]
+    },
+    {
+      "name": "Terminals",
+      "armour": [
+        {"id": "SPIRIT_MASK", "totalStars": 5, "reforge": "giant", "recombobulated": true, "potatoBooks": 15, "enchantments": {"ultimate_last_stand": 5, "growth": 6, "protection": 6}},
+        {"id": "TANK_WITHER_CHESTPLATE", "totalStars": 5, "reforge": "giant", "recombobulated": true, "potatoBooks": 15, "enchantments": {"ultimate_last_stand": 5, "growth": 6, "protection": 6}},
+        {"id": "TANK_WITHER_LEGGINGS", "totalStars": 5, "reforge": "giant", "recombobulated": true, "potatoBooks": 15, "enchantments": {"ultimate_last_stand": 5, "growth": 6, "protection": 6}},
+        {"id": "TANK_WITHER_BOOTS", "totalStars": 5, "reforge": "giant", "recombobulated": true, "potatoBooks": 15, "enchantments": {"ultimate_last_stand": 5, "growth": 6, "protection": 6}}
+      ],
+      "equipment": [
+        {"id": "BONE_NECKLACE", "fragged": true, "reforge": "fortified"},
+        {"id": "VANQUISHED_GHAST_CLOAK", "reforge": "fortified"},
+        {"id": "DOJO_BLACK_BELT", "reforge": "fortified"},
+        {"id": "SOULWEAVER_GLOVES", "reforge": "fortified"}
+      ]
+    }
+  ],
+  "pets": [
+    {"id": "BLACK_CAT", "level": 100, "rarity": "LEGENDARY", "item": "UNALLOYED_SPEED"},
+    {"id": "GOLDEN_DRAGON", "level": 200, "rarity": "LEGENDARY", "item": "UNALLOYED_SPEED"},
+    {"id": "BLUE_WHALE", "level": 100, "rarity": "LEGENDARY", "item": "CROCHET_TIGER_PLUSHIE"},
+    {"id": "PHOENIX", "level": 100, "rarity": "SPECIAL"}
+  ],
+  "petRules": {"mode": "toggle", "clear": "GOLDEN_DRAGON", "boss": "BLACK_CAT"},
+  "hotbar": [
+    {"id": "TERMINATOR", "totalStars": 8, "reforge": "precise", "enchantments": {"ultimate_soul_eater": 5, "power": 6, "overload": 5, "toxophilite": 1}},
+    "ASPECT_OF_THE_VOID",
+    "INFINITE_SPIRIT_LEAP",
+    {"id": "SOUL_WHIP", "totalStars": 5, "powerScroll": "RUBY", "enchantments": {"lethality": 6, "life_steal": 4}},
+    "HYPERION",
+    "GYROKINETIC_WAND",
+    "BONZO_STAFF",
+    "PET_RULES_ROD",
+    "DUNGEON_ORB"
+  ],
+  "inventory": [
+    {"id": "LAST_BREATH", "totalStars": 5, "enchantments": {"ultimate_reiterate": 1, "power": 6, "flame": 1}},
+    {"id": "AXE_OF_THE_SHREDDED", "enchantments": {"lethality": 6}},
+    "GLOOMLOCK_GRIMOIRE",
+    "SOUL_ESOWARD",
+    "ICE_SPRAY_WAND",
+    "DUNGEONBREAKER",
+    "SPIRIT_MASK",
+    "BONZO_MASK",
+    "BOUNCY_ARROW",
+    "INFINITE_TWILIGHT_ARROW_POISON"
+  ]
+}

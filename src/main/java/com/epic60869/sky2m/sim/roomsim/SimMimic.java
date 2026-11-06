@@ -99,8 +99,34 @@ public final class SimMimic {
                 if ((level.getBlockState(pos).is(Blocks.CHEST) || level.getBlockState(pos).is(Blocks.TRAPPED_CHEST))
                         && !PUZZLE_REWARDS.contains(pos) && OPENED.add(pos.immutable())) {
                     SimScore.secretFound(pos.immutable());
+                    // A secret chest can hold a dungeon blessing (SimBlessings).
+                    SimBlessings.secretChest(client.getSingleplayerServer(), client.player.getGameProfile().name(),
+                            pos.immutable());
+                } else if (PUZZLE_REWARDS.contains(pos)) {
+                    SimBlessings.puzzleChest(client.getSingleplayerServer(), client.player.getGameProfile().name(),
+                            pos.immutable());
                 }
                 onChestOpened(client, pos);
+            }
+            // A SIM PARTY GUEST's chest, on the host's server: his own client has no secrets or mimic to count.
+            if (!level.isClientSide() && player instanceof net.minecraft.server.level.ServerPlayer sp
+                    && !SimParty.isHost(sp) && SimAbilities.simServer(sp)) {
+                net.minecraft.core.BlockPos pos = hit.getBlockPos().immutable();
+                if ((level.getBlockState(pos).is(Blocks.CHEST) || level.getBlockState(pos).is(Blocks.TRAPPED_CHEST))
+                        && !PUZZLE_REWARDS.contains(pos) && OPENED.add(pos)) {
+                    SimScore.secretFound(pos);
+                    SimBlessings.secretChest(sp.level().getServer(), sp.getGameProfile().name(), pos);
+                } else if (PUZZLE_REWARDS.contains(pos)) {
+                    SimBlessings.puzzleChest(sp.level().getServer(), sp.getGameProfile().name(), pos);
+                }
+                if (!found && mimic != null && mimic.equals(pos)) {
+                    found = true;
+                    var server = sp.level().getServer();
+                    server.overworld().setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+                    mimicMob = SimMobs.spawnMimic(server.overworld(), pos);
+                    sp.sendSystemMessage(ModChat.line("Sim", ModChat.text("MIMIC - kill it for "),
+                            ModChat.value("+2 bonus")));
+                }
             }
             // Never consumes the interaction: the chest should still open. This only decides whether it bites.
             return net.minecraft.world.InteractionResult.PASS;
@@ -184,7 +210,7 @@ public final class SimMimic {
      */
     private static boolean floorHasMimic() {
         String floor = SimState.floorLabel();
-        if (floor == null || floor.length() < 2 || floor.charAt(0) != 'F') {
+        if (floor == null || floor.length() < 2 || (floor.charAt(0) != 'F' && floor.charAt(0) != 'M')) {
             return false;   // the Entrance, and anything that did not name a floor
         }
         try {

@@ -95,7 +95,56 @@ public final class SimItems {
         ENDER_PEARL("ENDER_PEARL", Items.ENDER_PEARL, "Ender Pearl", 16),
         // Moved off the blaze rod so it is not the same item in the hand as the Spirit Sceptre above.
         TACTICAL_INSERTION("TACTICAL_INSERTION", Items.BLAZE_ROD, "Tactical Insertion", 1),
-        DUNGEON_BREAKER("DUNGEONBREAKER", Items.DIAMOND_PICKAXE, "Dungeon Breaker", 1);
+        DUNGEON_BREAKER("DUNGEONBREAKER", Items.DIAMOND_PICKAXE, "Dungeon Breaker", 1),
+        // The class item (SimClassKit): right-click for the class ability, left-click or drop for the Ultimate.
+        // A lookalike: Hypixel's orb is a skull, and a heart of the sea has no vanilla use to keep off it.
+        DUNGEON_ORB(SimClassKit.ORB_ID, Items.HEART_OF_THE_SEA, "Dungeon Orb", 1),
+        // Death and revive (SimDeath). Lookalikes: Hypixel's three are textured skulls. The masks go in the helmet
+        // slot by hand and save you from a lethal hit; the stone brings a ghost back.
+        REVIVE_STONE(SimDeath.REVIVE_STONE_ID, Items.SKELETON_SKULL, "Revive Stone", 1),
+        BONZO_MASK(SimDeath.BONZO_MASK_ID, Items.PLAYER_HEAD, "Bonzo's Mask", 1),
+        SPIRIT_MASK(SimDeath.SPIRIT_MASK_ID, Items.WITHER_SKELETON_SKULL, "Spirit Mask", 1),
+        // Leaping to a teammate in a sim party (SimLeap). Lookalikes: Hypixel's Spirit Leap is an ender pearl
+        // reskin too; the Infinileap is never used up.
+        SPIRIT_LEAP(SimLeap.SPIRIT_LEAP_ID, Items.ENDER_EYE, "Spirit Leap", 16),
+        INFINILEAP(SimLeap.INFINILEAP_ID, Items.ENDER_EYE, "Infinileap", 1),
+        PET_RULES_ROD(SimPetRules.ROD_ID, Items.FISHING_ROD, "Pet Rules Rod", 1), // casting fires Pet Rules (SimPetRules)
+        // The class setups' weapons, masks, utility items, arrows and poisons (user, 2026-11-01). Real Hypixel ids and
+        // Hypixel's own materials where vanilla has them; the abilities are SimWeapons', SimItemEffects' and
+        // SimArrows'. The Terminator above is every Terminator - its reforge and enchantments are the item build's.
+        LAST_BREATH(SimArrows.LAST_BREATH_ID, Items.BOW, "Last Breath", 1),
+        DEATH_BOW(SimArrows.DEATH_BOW_ID, Items.BOW, "Death Bow", 1),
+        HALBERD_OF_THE_SHREDDED(SimWeapons.HALBERD_ID, Items.DIAMOND_SWORD, "Halberd of the Shredded", 1),
+        DARK_CLAYMORE("DARK_CLAYMORE", Items.STONE_SWORD, "Dark Claymore", 1),
+        SOUL_WHIP("SOUL_WHIP", Items.FISHING_ROD, "Soul Whip", 1),
+        FLAMING_FLAY("FLAMING_FLAY", Items.FISHING_ROD, "Flaming Flay", 1),
+        RAGNAROCK("RAGNAROCK_AXE", Items.GOLDEN_SWORD, "Ragnarock", 1),
+        SWORD_OF_BAD_HEALTH("SWORD_OF_BAD_HEALTH", Items.WOODEN_SWORD, "Sword of Bad Health", 1),
+        ROGUE_SWORD("ROGUE_SWORD", Items.GOLDEN_SWORD, "Rogue Sword", 1),
+        WITHER_CLOAK_SWORD("WITHER_CLOAK", Items.STONE_SWORD, "Wither Cloak Sword", 1),
+        SOUL_ESOWARD("SOUL_ESOWARD", Items.OAK_SAPLING, "Soul Esoward", 1),
+        GLOOMLOCK_GRIMOIRE("GLOOMLOCK_GRIMOIRE", Items.BOOK, "Gloomlock Grimoire", 1),
+        BONZO_STAFF("BONZO_STAFF", Items.BLAZE_ROD, "Bonzo's Staff", 1),
+        JERRY_CHINE_GUN("JERRY_STAFF", Items.GOLDEN_HORSE_ARMOR, "Jerry-chine Gun", 1),
+        ICE_SPRAY_WAND("ICE_SPRAY_WAND", Items.STICK, "Ice Spray Wand", 1),
+        GYROKINETIC_WAND("GYROKINETIC_WAND", Items.BLAZE_ROD, "Gyrokinetic Wand", 1),
+        // Lookalikes: Hypixel's tuba and radio are textured paper and a skull.
+        WEIRDER_TUBA("WEIRDER_TUBA", Items.GOAT_HORN, "Weirder Tuba", 1),
+        SPRING_BOOTS(SimItemEffects.SPRING_BOOTS_ID, Items.CHAINMAIL_BOOTS, "Spring Boots", 1),
+        // The Mender Crown with the Empowered reforge on it (SimItems.decorate). A lookalike: Hypixel's is a skull.
+        EMPOWERED_MENDER_CROWN(SimItemEffects.MENDER_CROWN_ID, Items.GOLDEN_HELMET, "Empowered Mender Crown", 1),
+        BLAZETEKK_HAM_RADIO(SimItemEffects.HAM_RADIO_ID, Items.CLOCK, "Blazetekk Ham Radio", 1),
+        ALERT_FLARE(SimItemEffects.ALERT_FLARE_ID, Items.FIREWORK_ROCKET, "Alert Flare", 1),
+        SOS_FLARE(SimItemEffects.SOS_FLARE_ID, Items.FIREWORK_ROCKET, "SOS Flare", 1),
+        JALAPENO_BOOK(SimItemEffects.JALAPENO_BOOK_ID, Items.ENCHANTED_BOOK, "Jalapeno Book", 1),
+        FLINT_ARROW(SimArrows.FLINT_ARROW_ID, Items.ARROW, "Flint Arrow", 64),
+        BOUNCY_ARROW(SimArrows.BOUNCY_ARROW_ID, Items.ARROW, "Bouncy Arrow", 64),
+        ARMORSHRED_ARROW(SimArrows.ARMORSHRED_ARROW_ID, Items.ARROW, "Armorshred Arrow", 64),
+        NANSORB_ARROW(SimArrows.NANSORB_ARROW_ID, Items.ARROW, "Nansorb Arrow", 64),
+        TWILIGHT_ARROW_POISON(SimArrows.TWILIGHT_POISON_ID, Items.DYE.purple(), "Twilight Arrow Poison", 64),
+        INFINITE_TWILIGHT_ARROW_POISON(SimArrows.INFINITE_TWILIGHT_POISON_ID, Items.DYE.purple(),
+                "Infinite Twilight Arrow Poison", 1),
+        TOXIC_ARROW_POISON(SimArrows.TOXIC_POISON_ID, Items.DYE.lime(), "Toxic Arrow Poison", 64);
 
         final String skyblockId;
         final Item base;
@@ -112,6 +161,8 @@ public final class SimItems {
 
     /** Call once from {@code Killer560ModClient#onInitializeClient}, alongside {@code SimAbilities.register()}. */
     public static void register() {
+        // The new items' state: buffs, Vitality, the masks' death saves (registered here, before SimDeath's), arrows.
+        SimItemEffects.register();
         // LEFT CLICKS are a START_DESTROY_BLOCK packet, and on Hypixel the Dungeon Breaker and a left-click
         // Superboom are the server's answer to that packet. AttackBlockCallback is a common event: Fabric fires
         // it on the client in MultiPlayerGameMode.startDestroyBlock (where a SUCCESS sends the START packet and
@@ -137,6 +188,9 @@ public final class SimItems {
                     if (com.epic60869.sky2m.sim.roomsim.puzzles.SimCreeperPuzzle.tryConnectAt(pos.immutable())) {
                         return net.minecraft.world.InteractionResult.FAIL;
                     }
+                    // P3: a left click on a terminal, a lever or a device button is a right click (SimTerms).
+                    if (SimTerms.leftClickBlock(player, level, pos.immutable(), direction)) {
+                        return net.minecraft.world.InteractionResult.FAIL;
                     // Everything else: no client-side mining, and the START goes to the server.
                     //
                     // killer560 (2026-09-29): "Make sure I cannot break blocks with anything besides the
@@ -155,6 +209,10 @@ public final class SimItems {
         net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.BEFORE.register(
                 (level, player, pos, state, entity) -> {
                     Minecraft client = Minecraft.getInstance();
+                    // A sim party guest's break reaches only the host's server: the same rule, there.
+                    if (player instanceof ServerPlayer guest && SimState.isActive() && !SimParty.isHost(guest)
+                            && SimAbilities.simServer(guest)) {
+                        return false;
                     if (!SimState.isActive() || client == null || player != client.player) {
                         return true;
                     }
@@ -291,6 +349,9 @@ public final class SimItems {
      * ours in the sim.
      */
     private static void giveOnServer(Minecraft client, GiveItem item) {
+        if (SimParty.sendAction("give", item.skyblockId)) {
+            // A party guest: the host's server hands it to him.
+            return;
         var server = client.getSingleplayerServer();
         if (server == null) {
             return;
@@ -306,6 +367,21 @@ public final class SimItems {
                 sp.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
             }
         });
+    /** One item by its Skyblock id, into one player's inventory (a party guest's; his client says so). */
+    static boolean giveOnServer(ServerPlayer sp, String skyblockId) {
+        for (GiveItem item : GiveItem.values()) {
+            if (item.skyblockId.equalsIgnoreCase(skyblockId)) {
+                ItemStack stack = build(item);
+                if (!sp.getInventory().add(stack)) {
+                    sp.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
+                return true;
+        return false;
+    /** The whole set into one player's inventory. Server thread. */
+    static void giveAllOnServer(ServerPlayer sp) {
+        for (GiveItem item : GiveItem.values()) {
+            ItemStack stack = build(item);
+            if (!sp.getInventory().add(stack)) {
+                sp.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
     }
 
     /**
@@ -339,9 +415,36 @@ public final class SimItems {
             // he was aiming an etherwarp in here with no highlight at all.
             tag.putInt("ethermerge", 1);
         }
+        decorate(stack, tag, item.skyblockId);
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         applySkyblockTooltip(stack, item.skyblockId);
+        // Handed out maxed (stars, Recombobulator, books, reforge, gems, enchantments), as a maxed player has it,
+        // rather than as a bare item that has to be built up by hand.
+        if (SimItemData.def(item.skyblockId) != null) {
+            stack = SimItemData.fullBuild(item.skyblockId).applyTo(stack);
         return stack;
+    /**
+     * What a few items carry beyond their id: the Empowered reforge on the Mender Crown, the Dark Claymore's +2 swing
+     * range (a vanilla reach modifier, so the client and the server both swing further), the Ham Radio's channel, and
+     * a glint on the infinite poison so it is told apart from the real one.
+     */
+    private static void decorate(ItemStack stack, CompoundTag tag, String id) {
+        switch (id) {
+            case SimItemEffects.MENDER_CROWN_ID -> tag.putString("modifier", "empowered");
+            case SimItemEffects.HAM_RADIO_ID -> tag.putInt("channel", 0);
+            case SimArrows.INFINITE_TWILIGHT_POISON_ID -> stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+            case "DARK_CLAYMORE" -> stack.set(DataComponents.ATTRIBUTE_MODIFIERS,
+                    net.minecraft.world.item.component.ItemAttributeModifiers.builder()
+                            .add(net.minecraft.world.entity.ai.attributes.Attributes.ENTITY_INTERACTION_RANGE,
+                                    new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                                            net.minecraft.resources.Identifier.fromNamespaceAndPath("sky2m",
+                                                    "dark_claymore_swing_range"),
+                                            2.0,
+                                            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation
+                                                    .ADD_VALUE),
+                                    net.minecraft.world.entity.EquipmentSlotGroup.MAINHAND)
+                            .build());
+            default -> {
     }
 
     /**
@@ -390,25 +493,31 @@ public final class SimItems {
             case "TERMINATOR" -> {
                 SimAim.Aim aim = SimAim.of(sp);
                 SimAbilities.onClient(() -> {
-                    if (SimTerminator.readyToFire()) {
+                    if (SimTerminator.readyToFire(aim.shooter())) {
                         SimAim.with(aim, () -> SimTerminator.use(Minecraft.getInstance(), false));
                     }
                 });
                 yield true;
             }
             case "ARCHITECT_FIRST_DRAFT" -> architectDraft(sp);
+            case SimDeath.REVIVE_STONE_ID -> SimDeath.useReviveStone(sp);
+            case SimLeap.SPIRIT_LEAP_ID -> SimLeap.open(sp, false);
+            case SimLeap.INFINILEAP_ID -> SimLeap.open(sp, true);
+            case SimClassKit.ORB_ID -> SimClassKit.useAbility(sp);
             case "SUPERBOOM_TNT" -> {
                 if (onBlock != null) {
                     yield superboom(sp, onBlock.getBlockPos().immutable(), onBlock.getDirection());
                 }
                 BlockHitResult hit = lookedAtBlock(sp);
                 if (hit == null) {
-                    failOnServer("not looking at a block");
+                    failOnServer(sp, "not looking at a block");
                     yield false;
                 }
                 // getDirection() points OUT of the block, towards him, so the chamber is behind it.
                 yield superboom(sp, hit.getBlockPos().immutable(), hit.getDirection());
             }
+            // The class setups' weapons, wands and utility items (SimWeapons).
+            case String w when SimWeapons.consumesUse(w) -> SimWeapons.useOnServer(sp, w, sp.getMainHandItem());
             // NO DUNGEONBREAKER HERE. It is a left-click tool - see onServerAttack. It used to be on the right-click
             // path as well, which meant right-clicking ANYTHING while holding the breaker broke the block in front
             // of him instead - killer560 (2026-09-30): "if i right click a chest it tries to mine it instead."
@@ -429,7 +538,9 @@ public final class SimItems {
             return false;
         }
         return switch (skyblockId) {
-            case "BAT_WAND", "TERMINATOR", "ARCHITECT_FIRST_DRAFT", "SUPERBOOM_TNT" -> true;
+            case "BAT_WAND", "TERMINATOR", "ARCHITECT_FIRST_DRAFT", "SUPERBOOM_TNT", SimClassKit.ORB_ID,
+                 SimDeath.REVIVE_STONE_ID, SimLeap.SPIRIT_LEAP_ID, SimLeap.INFINILEAP_ID -> true;
+            case String w when SimWeapons.consumesUse(w) -> true;
             // Ender pearls and the Dungeon Breaker are deliberately absent: the pearl is plain vanilla and
             // the breaker is a left-click tool.
             default -> false;
@@ -447,6 +558,14 @@ public final class SimItems {
                                                                         net.minecraft.core.Direction face) {
         if (!SimAbilities.simServer(sp)) {
             return net.minecraft.world.InteractionResult.PASS;
+        if (SimDeath.isGhost(sp)) {
+            // A ghost cannot break anything (SimDeath).
+            return net.minecraft.world.InteractionResult.FAIL;
+        // A party guest's left click on a Creeper Beams lantern: his client has no puzzle to give it to (the host's
+        // client half above does that for the host), so it is picked here, on the host's board.
+        if (SimParty.guestOnServer(sp)
+                && com.epic60869.sky2m.sim.roomsim.puzzles.SimCreeperPuzzle.guestConnectAt(sp, pos)) {
+            return net.minecraft.world.InteractionResult.FAIL;
         }
         String id = com.epic60869.sky2m.sim.util.SimItemIds.skyblockId(sp.getItemInHand(hand));
         if ("DUNGEONBREAKER".equals(id)) {
@@ -840,15 +959,28 @@ public final class SimItems {
         // Dungeonbreaker cannot be used in puzzle rooms, on doors, or to pass through a wall into another room.
         if (inPuzzleRoom(sp, target)
                 || SimAbilities.isTeleportMaze(SimState.roomNameAt(sp.getBlockX(), sp.getBlockZ()))) {
-            failOnServer("the Dungeonbreaker does not work in puzzle rooms");
+            failOnServer(sp, "the Dungeonbreaker does not work in puzzle rooms");
             return false;
         }
         if (isSecretBlock(level, target)) {
             // Silent. killer560 (2026-10-04) asked for this chat line to go; the refusal itself stays.
             return false;
         }
+        // The rest of the wiki's rules: not on doors (the wither and blood doors' blocks), not on crypt blocks (a
+        // smooth stone slab crypt lid), and not in a boss room - except the Wither Lords' (F7/M7).
+        BlockState aimedAt = level.getBlockState(target);
+            failOnServer(sp, "the Dungeonbreaker does not work on doors");
+            return false;
+        if (aimedAt.is(net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB)
+                && connectedSlabs(level, target).size() >= MIN_CRYPT_SLABS) {
+            failOnServer(sp, "the Dungeonbreaker does not work on crypts");
+            return false;
+        String bossFloor = SimState.floorLabel();
+        if (SimBoss.isActive() && (bossFloor == null || !bossFloor.endsWith("7"))) {
+            failOnServer(sp, "the Dungeonbreaker does not work in this boss room");
+            return false;
         if (!SimBreakerState.trySpend()) {
-            failOnServer("no Dungeonbreaker charges left");
+            failOnServer(sp, "no Dungeonbreaker charges left");
             return false;
         }
         breakIfBreakable(level, target, sp);
@@ -884,9 +1016,9 @@ public final class SimItems {
         ModChat.send("Sim", ModChat.dim(why));
     }
 
-    /** A refusal said from the server thread: chat belongs on the client's. */
-    private static void failOnServer(String why) {
-        SimAbilities.onClient(() -> ModChat.send("Sim", ModChat.dim(why)));
+    /** A refusal said from the server thread, to the player it is about (a party guest too). */
+    private static void failOnServer(ServerPlayer sp, String why) {
+        sp.sendSystemMessage(ModChat.line("Sim", ModChat.dim(why)));
     }
     /**
      * Every fragile block joined to {@code start}, so one charge opens a whole crypt wall.

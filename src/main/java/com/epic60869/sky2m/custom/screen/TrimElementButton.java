@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 
+import net.minecraft.data.AtlasIds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;

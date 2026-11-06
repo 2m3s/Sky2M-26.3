@@ -445,6 +445,8 @@ public final class SimWorld {
         SimArchitect.reset();
         SimBreakerState.reset();
         SimSurvival.reset();
+        SimVitals.reset();
+        SimDeath.reset(client);
         // His speed back, every time - see SimSpeed.saved().
         SimSpeed.applySaved(client);
         // The saved hotbar goes back every time a dungeon opens - muscle memory for a route is partly muscle
@@ -527,6 +529,9 @@ public final class SimWorld {
         SimTabList.reset();
         SimBuilder.clearEntranceDoor();
         com.epic60869.sky2m.sim.roomsim.puzzles.SimPuzzles.resetAll();
+        SimBoss.reset(client);
+        SimWatcher.reset(client);
+        SimDeath.reset(client);
     }
     /**
      * Stops the sim world changing itself underneath him.

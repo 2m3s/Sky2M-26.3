@@ -7,6 +7,7 @@
   "key.sky2m.toggle_sprint": "Toggle Sprint",
   "key.sky2m.peek_chat": "Peek Chat (hold)",
   "key.sky2m.global_search": "Search Settings, HUDs and Commands",
+  "key.sky2m.sim_wardrobe_swap": "Dungeon Sim: Swap Wardrobe Slot",
   "sky2m.customAnimatedDyes.added": "Set a custom animated dye for your currently held item!",
   "sky2m.customAnimatedDyes.neverHad": "This item doesn't have a custom animated dye set, but why not add one? ;)",
   "sky2m.customAnimatedDyes.noItemUuid": "§cYou must be holding an item that has a uuid to set a custom animated dye.",
