@@ -23,14 +23,12 @@ import com.epic60869.sky2m.sb.annotations.Init;
 import com.epic60869.sky2m.sb.config.SkyblockerConfigManager;
 import com.epic60869.sky2m.sb.config.configs.DungeonsConfig;
 import com.epic60869.sky2m.sb.events.DungeonEvents;
-import com.epic60869.sky2m.sb.events.SkyblockEvents;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.epic60869.sky2m.sb.skyblock.tabhud.util.PlayerListManager;
 import com.epic60869.sky2m.sb.utils.Constants;
 import com.epic60869.sky2m.sb.utils.ItemUtils;
 import com.epic60869.sky2m.sb.utils.ProfileUtils;
 import com.epic60869.sky2m.sb.utils.Utils;
-import com.epic60869.sky2m.sb.utils.mayor.MayorUtils;
 import com.epic60869.sky2m.sb.utils.scheduler.MessageScheduler;
 import com.epic60869.sky2m.sb.utils.scheduler.Scheduler;
 
@@ -67,8 +65,6 @@ public class DungeonScore {
 	private static final Pattern DEAD_MIMIC_TAG = Pattern.compile("\\bMimic\\b.*(?<![\\d,.])0(?:/\\S+)?❤");
 	private static final String PRINCE_MESSAGE = "Prince dead!";
 	private static final String BAT_MESSAGE = "Bat dead!";
-
-	private static boolean isMayorPaul = false;
 
 	private static FloorRequirement floorRequirement = FloorRequirement.NONE;
 	private static String currentFloor = "";
@@ -107,7 +103,6 @@ public class DungeonScore {
 				checkMessageForBat(str);
 			}
 		});
-		SkyblockEvents.MAYOR_CHANGE.register(() -> isMayorPaul = MayorUtils.getActivePerks().contains("EZPZ"));
 	}
 
 	public static void tick() {
@@ -235,7 +230,7 @@ public class DungeonScore {
 	}
 
 	private static int calculateBonusScore() {
-		int paulScore = isMayorPaul ? 10 : 0;
+		int paulScore = com.epic60869.sky2m.features.dungeons.ScoreCalculator.isPaul() ? 10 : 0;
 		int cryptsScore = Math.clamp(getCrypts(), 0, 5);
 		int mimicScore = mimicKilled ? 2 : 0;
 		if (getSecretsPercentage() >= 100 && floorHasMimics) mimicScore = 2; //If mimic kill is not announced but all secrets are found, mimic must've been killed

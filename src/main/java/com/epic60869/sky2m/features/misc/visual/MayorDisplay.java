@@ -235,6 +235,8 @@ public final class MayorDisplay {
                     election = parse(JsonParser.parseString(response.body()).getAsJsonObject());
                 } catch (Exception ignored) {}
             }
+            // No data yet (Paul's +10 on the score depends on it): try again in 30 seconds, not 10 minutes.
+            if (election == null) fetchedAt = System.currentTimeMillis() - REFRESH_MS + 30_000L;
             if (then != null) Minecraft.getInstance().execute(then);
         });
     }

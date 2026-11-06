@@ -325,7 +325,8 @@ public final class ScoreCalculator {
         return completedRooms > 0 && clearedPercentage > 0 ? (int) Math.floor(completedRooms / (clearedPercentage / 100.0) + 0.4) : 36;
     }
 
-    private static boolean isPaul() {
+    /** Whether Paul's EZPZ (+10 score) is active: from Hypixel's election data, or the Force Paul setting. */
+    public static boolean isPaul() {
         // The sim has no mayor: /simscore paul decides, the same switch the sim's own score reads.
         if (simActive()) return com.epic60869.sky2m.sim.roomsim.SimScore.isPaulEzpz();
         FeatureConfigs.Score config = config();
