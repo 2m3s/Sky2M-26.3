@@ -17,12 +17,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(targets = "net.minecraft.client.gui.Font$PreparedTextBuilder")
 public abstract class Sky2MChromaTextMixin {
     @Shadow @Final private int color;
+    @Shadow private float x;
+    @Shadow private float y;
 
     @Inject(method = "getTextColor", at = @At("HEAD"), cancellable = true)
     private void sky2m$chroma(TextColor textColor, CallbackInfoReturnable<Integer> cir) {
         if (textColor == null) return;
         int value = textColor.getValue();
-        if ((value & 0xFFFF00) != Sky2MNick.CHROMA_MARK) return;
-        cir.setReturnValue(ARGB.color(ARGB.alpha(color), Sky2MNick.chroma((value & 0xFF) / 256f)));
+        int mark = value & 0xFFFF00;
+        if (mark == Sky2MNick.CHROMA_MARK) {
+            cir.setReturnValue(ARGB.color(ARGB.alpha(color), Sky2MNick.chroma((value & 0xFF) / 256f)));
+        } else if (mark == Sky2MNick.CHROMA_SCREEN_MARK) {
+            // x is where this glyph starts, so the hue moves smoothly letter by letter and line by line.
+            cir.setReturnValue(ARGB.color(ARGB.alpha(color), Sky2MNick.screenChroma(x, y)));
+        }
     }
 }

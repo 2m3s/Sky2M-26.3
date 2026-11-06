@@ -417,7 +417,7 @@ public final class EnchantParser {
         }
     }
 
-    /** One enchant line's text in its colour (or chroma, letter by letter), optionally bold. */
+    /** One enchant line's text in its colour (or screen-space chroma), optionally bold. */
     private static MutableComponent styled(String text, EnchantParsingConfig.EnchantColour colour, String customColour, boolean bold) {
         Style base = Style.EMPTY.withItalic(false).withBold(bold);
         if (customColour != null) {
@@ -432,13 +432,8 @@ public final class EnchantParser {
         if (colour != EnchantParsingConfig.EnchantColour.CHROMA) {
             return Component.literal(text).withStyle(base.withColor(colour.formatting));
         }
-        MutableComponent out = Component.empty().withStyle(base);
-        int n = Math.max(1, text.length());
-        for (int i = 0; i < text.length(); i++) {
-            int offset = Math.min(255, Math.round((float) i / n * 256f));
-            out.append(Component.literal(String.valueOf(text.charAt(i))).withStyle(base.withColor(Sky2MNick.CHROMA_MARK | offset)));
-        }
-        return out;
+        // The text renderer colours each letter by where it's drawn, so all chroma enchants flow as one rainbow.
+        return Component.literal(text).withStyle(base.withColor(Sky2MNick.CHROMA_SCREEN_MARK));
     }
 
     private static final class FormattedEnchant implements Comparable<FormattedEnchant> {
