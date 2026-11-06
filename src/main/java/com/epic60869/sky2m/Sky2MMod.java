@@ -202,6 +202,8 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair.init(); lap("CustomCrosshair.init");
         com.epic60869.sky2m.features.misc.items.InventoryHud.init(); lap("InventoryHud.init");
         com.epic60869.sky2m.features.misc.items.ItemPickupLog.init(); lap("ItemPickupLog.init");
+        com.epic60869.sky2m.features.misc.items.ItemOrigin.init(); lap("ItemOrigin.init");
+        com.epic60869.sky2m.features.misc.items.UpgradeAdvisor.init(); lap("UpgradeAdvisor.init");
         com.epic60869.sky2m.features.misc.chat.PetDropRarity.init(); lap("PetDropRarity.init");
         com.epic60869.sky2m.features.misc.chat.ChatTranslator.init(); lap("ChatTranslator.init");
         com.epic60869.sky2m.features.profileviewer.ProfileViewer.init(); lap("ProfileViewer.init");

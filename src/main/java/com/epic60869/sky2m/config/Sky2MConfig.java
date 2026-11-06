@@ -228,6 +228,12 @@ public final class Sky2MConfig extends Config {
         public PriceTooltip priceTooltip = new PriceTooltip();
 
         @Expose
+        @ConfigOption(name = "Item Origin", desc = "On items with a SkyBlock UUID, when and where you got them, like \"Got 6 Nov, M6 chest\". It starts counting when you turn it on: what you already have says nothing, and items seen in your storage first say nothing either.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2301)
+        public boolean itemOrigin = false;
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Economy", desc = "Item value breakdown, Bazaar best sell method and daily sales, trade value, bits, reforge and anvil helpers.")
         @ConfigAccordionId(id = 2301)
