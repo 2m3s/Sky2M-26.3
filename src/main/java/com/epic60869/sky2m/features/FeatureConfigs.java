@@ -719,6 +719,8 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Team Secrets", desc = "How many secrets each teammate found in the run, in chat when it ends.")
+        public TeamSecrets teamSecrets = new TeamSecrets();
 
         @Expose
         @Accordion
@@ -4443,8 +4445,13 @@ public final class FeatureConfigs {
         @Expose
         @ConfigEditorBoolean
         @Expose
+    /** Odin's and NoammAddons' secrets per teammate at the end of a run. */
+    public static final class TeamSecrets {
         @Expose
+        @ConfigOption(name = "Enabled", desc = "When a dungeon run ends, say in chat (only you see it) how many secrets each teammate found, with their class in its colour. From their total secrets at the start and end of the run (live, the same source as Odin's Secrets Counter); anyone still on 0 is checked again 30 seconds later.")
         @ConfigEditorBoolean
+        public boolean enabled = true;
+
         @Expose
         @ConfigEditorBoolean
     }
@@ -6337,6 +6344,8 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Load the Dungeon Sim. Off: none of it loads (its rooms, commands, menus and everything that runs inside it), so it uses no memory or time. Takes effect after a game restart. The dungeon map, puzzle solvers and other dungeon features on Hypixel work either way.")
         @ConfigEditorBoolean
+        public boolean enabled = true;
+
         @ConfigOption(name = "Open Dungeon Sim", desc = "Open the Dungeon Sim's menu: load any room or generate a whole floor (F1 to M7 sizes) in a singleplayer world, with secrets, puzzles, mobs, keys, the Mimic, a run timer and score. Also /s2 sim. It needs its own world, so leave the server first; from the title screen use the button below.")
         @ConfigEditorButton(buttonText = "OPEN")
         public Runnable open = com.epic60869.sky2m.sim.Sky2MSim::openMenu;

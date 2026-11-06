@@ -259,6 +259,15 @@ public final class ProfileApi {
         return first;
     }
 
+    /**
+     * A player's total dungeon secrets, live, from the proxy's secrets endpoint (what Odin's Secrets Counter uses). The
+     * profile's dungeons.secrets only updates once Hypixel saves the profile, so it's still the old count when a run ends.
+     */
+    public static CompletableFuture<Long> secrets(String name) {
+        return lookup(name).thenCompose(found -> get(baseUrl() + "secrets/" + found.plainId()))
+            .thenApply(body -> Long.parseLong(body.trim()));
+    }
+
     /** Why a lookup failed, in a few words. */
     public static String reason(Throwable error) {
         if (error == null) return "no SkyBlock profiles";
