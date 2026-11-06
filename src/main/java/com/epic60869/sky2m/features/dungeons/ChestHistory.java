@@ -173,10 +173,8 @@ public final class ChestHistory {
         Chest chest = new Chest();
         chest.time = System.currentTimeMillis();
         chest.type = type;
-        String floor = Sky2MLocation.dungeonFloor();
-        boolean inRun = Sky2MLocation.inDungeon() && floor != null && !floor.isEmpty();
-        chest.floor = inRun ? floor : croesusFloor.isEmpty() ? "?" : croesusFloor;
-        chest.source = inRun ? "Run" : "Croesus";
+        chest.floor = currentFloor();
+        chest.source = inRun() ? "Run" : "Croesus";
         // The button's lore: "Cost", then "2,000,000 Coins" (or "FREE") and maybe "Dungeon Chest Key".
         boolean cost = false;
         for (String line : lore) {
@@ -235,7 +233,7 @@ public final class ChestHistory {
         return price > 0 ? price : price("DUNGEON_CHEST_KEY");
     }
 
-    private static double price(String id) {
+    static double price(String id) {
         double price = ItemPriceResolver.value(id);
         return price > 0 ? price : 0;
     }

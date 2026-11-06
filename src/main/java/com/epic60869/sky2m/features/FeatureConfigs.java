@@ -861,6 +861,18 @@ public final class FeatureConfigs {
         public boolean valueTooltip = true;
 
         @Expose
+        @ConfigOption(name = "Reroll Advisor", desc = "On the Reroll Chest's tooltip, this chest's profit against your own average for that floor and chest type, less a Kismet Feather. It's your Chest Spending History's average of the chests you opened, not real odds, and needs 5 chests saved.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2001)
+        public boolean rerollAdvisor = true;
+
+        @Expose
+        @ConfigOption(name = "Chest Luck", desc = "Under Dungeon Chest Value, what this chest is worth against your own average, like \"+24% vs your M6 Bedrock average\", from your Chest Spending History. Needs 3 chests saved.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2001)
+        public boolean chestLuck = true;
+
+        @Expose
         @ConfigOption(name = "Floor Label", desc = "Show each run's floor (F7, M7) on it in Croesus's list.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2001)

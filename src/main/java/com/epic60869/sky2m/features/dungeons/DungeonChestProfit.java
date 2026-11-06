@@ -58,6 +58,8 @@ public final class DungeonChestProfit {
 
     /** The open reward chest's value (0 = nothing to show). */
     private static double currentValue;
+    /** Chest Luck's line for the open reward chest, or null. */
+    private static String currentLuck;
     /** Slot index -> background colour (ARGB), and floor labels, for the open Croesus menus. */
     private static Map<Integer, Integer> backgrounds = Map.of();
     private static Map<Integer, String> labels = Map.of();
@@ -119,6 +121,7 @@ public final class DungeonChestProfit {
     }
 
     public static void init() {
+        ChestAdvice.init();
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             clear();
             if (!(screen instanceof AbstractContainerScreen<?> container)) return;
@@ -149,13 +152,14 @@ public final class DungeonChestProfit {
 
     private static void clear() {
         currentValue = 0;
+        currentLuck = null;
         if (!backgrounds.isEmpty()) backgrounds = Map.of();
         if (!labels.isEmpty()) labels = Map.of();
         if (!chestValues.isEmpty()) chestValues = Map.of();
         if (!keyMarks.isEmpty()) keyMarks = java.util.Set.of();
     }
 
-    private static boolean isInLootArea() {
+    static boolean isInLootArea() {
         return Compat.isOnSkyblock() && (Sky2MLocation.inDungeon() || LOOT_AREAS.contains(Sky2MLocation.area()));
     }
 
@@ -167,7 +171,9 @@ public final class DungeonChestProfit {
         FeatureConfigs.ChestProfit config = config();
         if (config == null) return;
         String title = title(screen);
-        currentValue = config.chestValue && isChest(title) ? rewardChestValue(screen) : 0;
+        double[] chest = config.chestValue && isChest(title) ? rewardChestParts(screen) : new double[]{0, 0};
+        currentValue = chest[0];
+        currentLuck = config.chestLuck && chest[1] > 0 ? ChestAdvice.luck(title, chest[1]) : null;
         if (!config.croesusSolver) {
             backgrounds = Map.of();
             labels = Map.of();
@@ -194,8 +200,13 @@ public final class DungeonChestProfit {
         return false;
     }
 
-    private static double rewardChestValue(AbstractContainerScreen<?> screen) {
-        double value = 0;
+    static double rewardChestValue(AbstractContainerScreen<?> screen) {
+        return rewardChestParts(screen)[0];
+    }
+
+    /** {what the chest is worth minus its cost, what its contents are worth}. */
+    private static double[] rewardChestParts(AbstractContainerScreen<?> screen) {
+        double value = 0, cost = 0;
         for (Slot slot : screen.getMenu().slots) {
             if (slot.container instanceof Inventory) continue;
             ItemStack stack = slot.getItem();
@@ -206,7 +217,7 @@ public final class DungeonChestProfit {
                 if (name.equals("Open Reward Chest")) {
                     for (String line : lore(stack)) {
                         if (line.endsWith(" Coins")) {
-                            value -= parseInt(line.replace(" Coins", "").replace(",", ""));
+                            cost += parseInt(line.replace(" Coins", "").replace(",", ""));
                             break;
                         }
                     }
@@ -215,7 +226,7 @@ public final class DungeonChestProfit {
             }
             value += lootValue(id) * lootQuantity(stack, name);
         }
-        return value;
+        return new double[]{value - cost, value};
     }
 
     /** NoFrills' getLootValue: the fish and discs at their NPC price, the rest lowest BIN, else bazaar instant sell. */
@@ -272,6 +283,11 @@ public final class DungeonChestProfit {
         int baseX = accessor.getX() + target.x + 8, baseY = accessor.getY() + target.y + 8;
         g.fill((int) Math.floor(baseX - 2 - width * 0.5), baseY - 6, (int) Math.ceil(baseX + 2 + width * 0.5), baseY + 6, colour(config.background, 0xCC202020));
         g.centeredText(font, Component.literal(text), baseX, baseY - 4, currentValue > 0 ? 0xFF55FF55 : 0xFFFF5555);
+        if (currentLuck != null) {
+            int luckWidth = font.width(currentLuck);
+            g.fill((int) Math.floor(baseX - 2 - luckWidth * 0.5), baseY + 6, (int) Math.ceil(baseX + 2 + luckWidth * 0.5), baseY + 18, colour(config.background, 0xCC202020));
+            g.centeredText(font, Component.literal(currentLuck), baseX, baseY + 8, currentLuck.startsWith("-") ? 0xFFFF5555 : 0xFF55FF55);
+        }
     }
 
     // ------------------------------------------------------------------------------------------------ croesus solver
