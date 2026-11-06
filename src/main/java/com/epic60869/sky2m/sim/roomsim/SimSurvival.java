@@ -44,9 +44,13 @@ public final class SimSurvival {
         homePoint = pos == null ? null : pos.immutable();
         // A new floor or room: the last floor's safe spots may be inside walls now.
         LAST_SAFE.clear();
+    }
+
     /** The current home, so a boss room can borrow it and give it back. */
     public static BlockPos home() {
         return homePoint;
+    }
+
     /** Each player's last safe spot on the floor: standing on something inside one of the map's rooms. */
     private static final java.util.Map<java.util.UUID, net.minecraft.world.phys.Vec3> LAST_SAFE =
             new java.util.concurrent.ConcurrentHashMap<>();
@@ -59,24 +63,32 @@ public final class SimSurvival {
     private static void keepInBounds(ServerPlayer sp) {
         if (SimBoss.isActive() || SimTerms.isActive() || sp.isSpectator()) {
             return;
+        }
         // Off the map counts only near the dungeon grid: the holding area a build waits in is far away on purpose.
         BlockPos middle = com.epic60869.sky2m.sim.livemap.DungeonLayout.cellCenter(60);
         if (Math.abs(sp.getX() - middle.getX()) > 220 || Math.abs(sp.getZ() - middle.getZ()) > 220) {
             return;
+        }
         boolean onMap = SimState.roomIdAt(sp.getBlockX(), sp.getBlockZ()) >= 0;
         boolean below = sp.getY() < SimAltitude.minWorldY() - 4;
         if (!below && onMap) {
             if (sp.onGround()) {
                 LAST_SAFE.put(sp.getUUID(), sp.position());
+            }
             return;
+        }
         net.minecraft.world.phys.Vec3 back = LAST_SAFE.get(sp.getUUID());
         if (back == null && homePoint != null) {
             back = net.minecraft.world.phys.Vec3.atBottomCenterOf(homePoint);
+        }
         if (back == null) {
             return;
+        }
         sp.teleportTo(sp.level(), back.x, back.y, back.z, java.util.Set.of(), sp.getYRot(), sp.getXRot(), false);
         sp.fallDistance = 0;
         sp.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+    }
+
     /** When each player last bounced off lava, in server ticks, so one dip is one bounce. */
     private static final java.util.Map<java.util.UUID, Integer> LAST_BOUNCE = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -88,10 +100,12 @@ public final class SimSurvival {
     private static void lavaBounce(ServerPlayer sp) {
         if (!sp.isInLava() || sp.isSpectator() || sp.getAbilities().flying) {
             return;
+        }
         int now = sp.level().getServer().getTickCount();
         Integer last = LAST_BOUNCE.get(sp.getUUID());
         if (last != null && now - last < 8) {
             return;
+        }
         LAST_BOUNCE.put(sp.getUUID(), now);
         // -90 is straight up: from level to straight up the bounce grows from 1.0 to 1.9 blocks a tick.
         double up = Math.max(0, -sp.getXRot()) / 90.0;
@@ -99,6 +113,8 @@ public final class SimSurvival {
         sp.setDeltaMovement(v.x, 1.0 + 0.9 * up, v.z);
         sp.syncVelocity = true;
         sp.fallDistance = 0;
+    }
+
     private static final net.minecraft.world.entity.EquipmentSlot[] ARMOUR_SLOTS = {
             net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.CHEST,
             net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET};
@@ -114,8 +130,10 @@ public final class SimSurvival {
             net.minecraft.world.item.ItemStack worn = sp.getItemBySlot(slot);
             if (worn.isEmpty() || !worn.isDamageableItem()) {
                 continue;
+            }
             worn.set(net.minecraft.core.component.DataComponents.UNBREAKABLE, net.minecraft.util.Unit.INSTANCE);
             worn.setDamageValue(0);
+        }
     }
 
     public static void register() {
@@ -140,6 +158,10 @@ public final class SimSurvival {
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             if (!SimState.isActive()) {
                 return;
+            }
+            if (server.getTickCount() % 20 == 0) {
+                // Nobody left in the void of the build's holding area once the build is done.
+                SimBuilder.rescueHeld(server.overworld());
             }
             for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
                 if (sp.isOnFire()) {
@@ -199,6 +221,8 @@ public final class SimSurvival {
     /** Whether /fly is on, so a ghost brought back gets the flight he had before. */
     static boolean flightOn() {
         return flying;
+    }
+
     /**
      * What a death does in the sim: full health, back to the middle of the room. Server thread.
      *
@@ -215,21 +239,28 @@ public final class SimSurvival {
         if (home != null && player.level() instanceof ServerLevel level) {
             player.teleportTo(level, home.getX() + 0.5, home.getY(), home.getZ() + 0.5,
                     java.util.Set.of(), player.getYRot(), player.getXRot(), false);
+        }
         ModChat.send("Sim", ModChat.dim("back to the middle of the room"));
+    }
+
     /** A staff party guest's /fly, on the host: flight for that player alone. Server thread. */
     static void toggleFor(ServerPlayer sp) {
         boolean on = GUEST_FLYERS.add(sp.getUUID());
         if (!on) {
             GUEST_FLYERS.remove(sp.getUUID());
+        }
         sp.getAbilities().mayfly = on || flying;
         if (!sp.getAbilities().mayfly) {
             sp.getAbilities().flying = false;
+        }
         sp.onUpdateAbilities();
         sp.sendSystemMessage(ModChat.line("Sim", ModChat.text("Flight "), ModChat.value(on ? "ON" : "OFF")));
+    }
 
     private static void toggle() {
         if (SimParty.sendAction("staff_fly", "")) {
             return;
+        }
         Minecraft client = Minecraft.getInstance();
         var server = client.getSingleplayerServer();
         if (server == null) {

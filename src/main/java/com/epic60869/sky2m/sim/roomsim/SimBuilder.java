@@ -362,6 +362,8 @@ public final class SimBuilder {
             for (int cell = 0; cell < builtDoors.length && cell < onPath.length; cell++) {
                 if (onPath[cell]) {
                     builtDoors[cell] = DungeonLayout.DOOR_WITHER;
+                }
+            }
             final java.util.List<int[]> doorCells = new java.util.ArrayList<>();
             for (int cell = 0; cell < builtDoors.length; cell++) {
                 if (builtDoors[cell] == DungeonLayout.DOOR_NONE) {
@@ -994,6 +996,8 @@ public final class SimBuilder {
     static void snapPlayerTo(java.util.UUID uuid, ServerLevel level, int gridX, int gridZ,
                              RoomLibrary.Room room) {
         snapPlayerTo(uuid, level, gridX, gridZ, room, false);
+    }
+
     /** {@code party}: a build's landing, which brings every player out of the holding area, not only this one. */
     private static void snapPlayerTo(java.util.UUID uuid, ServerLevel level, int gridX, int gridZ,
                                      RoomLibrary.Room room, boolean party) {
@@ -1103,12 +1107,19 @@ public final class SimBuilder {
         // The same spot death sends him back to - one definition of "the middle of the room", so the place he
         // starts and the place he returns to cannot drift apart.
         SimSurvival.setHome(new net.minecraft.core.BlockPos(fx, y, fz));
-        if (uuid == null) {
+        landingSpot = new net.minecraft.core.BlockPos(fx, y, fz);
+        landingYaw = faceYaw;
+        if (uuid == null && !party) {
             return;
         }
         level.getServer().execute(() -> {
-            ServerPlayer sp = level.getServer().getPlayerList().getPlayer(uuid);
-            if (sp != null) {
+            ServerPlayer host = uuid == null ? null : level.getServer().getPlayerList().getPlayer(uuid);
+            // The party guests come along, out of the holding area (holdPlayer) into the same room. A build's
+            // landing moves everyone on the server, so it no longer depends on finding the host by the client's
+            // player: read on the server thread, that could be null (the client between players) and the host was
+            // left in the holding area's void (2026-11-04, an M7 floor).
+            java.util.List<ServerPlayer> moving = party ? level.getServer().getPlayerList().getPlayers()
+                    : host == null ? java.util.List.of() : java.util.List.of(host);
             for (ServerPlayer sp : moving) {
                 // A room that names a facing (the trap rooms and Teleport Maze face in from their doorway) is
                 // turned by the shortest way from where he was looking - the yaw stays a running value rather
@@ -1119,6 +1130,10 @@ public final class SimBuilder {
                     yaw += delta;
                 }
                 sp.teleportTo(level, fx + 0.5, y, fz + 0.5, java.util.Set.of(), yaw, sp.getXRot(), false);
+            }
+            if (party) {
+                // The build is over: anyone still at the holding area from here on is stuck (rescueHeld).
+                holding = false;
             }
         });
     }
@@ -1287,6 +1302,36 @@ public final class SimBuilder {
     private static final net.minecraft.core.BlockPos HOLDING_AREA =
             new net.minecraft.core.BlockPos(8000, 200, 8000);
 
+    /** Where the last build put everyone (its landing), and the way it faced them; null before the first build. */
+    private static volatile net.minecraft.core.BlockPos landingSpot;
+    private static volatile Float landingYaw;
+    /** Set while a build has players in the holding area on purpose, so {@link #rescueHeld} leaves them there. */
+    private static volatile boolean holding;
+
+    /**
+     * The safety net for the holding area (2026-11-04: a generated M7 floor built but left the player in the void
+     * at the holding area). Once no build is holding anyone, a player still out there is put on the last build's
+     * landing. Server thread, every 20 ticks from {@link SimSurvival}'s tick or anything that calls it.
+     */
+    static void rescueHeld(ServerLevel level) {
+        net.minecraft.core.BlockPos spot = landingSpot;
+        if (holding || spot == null) {
+            return;
+        }
+        for (ServerPlayer sp : level.getServer().getPlayerList().getPlayers()) {
+            if (sp.level() != level || Math.abs(sp.getX() - HOLDING_AREA.getX()) > 64
+                    || Math.abs(sp.getZ() - HOLDING_AREA.getZ()) > 64) {
+                continue;
+            }
+            float yaw = landingYaw != null ? landingYaw : sp.getYRot();
+            sp.teleportTo(level, spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, java.util.Set.of(), yaw,
+                    sp.getXRot(), false);
+            sp.fallDistance = 0;
+            LOGGER.error("[SimPhase] {} was still in the holding area after the build - moved to the landing at {}",
+                    sp.getGameProfile().name(), spot);
+        }
+    }
+
     /**
      * Moves the player out to the holding area for the duration of a build.
      *
@@ -1300,13 +1345,16 @@ public final class SimBuilder {
         if (uuid == null) {
             return;
         }
+        holding = true;
         level.getServer().execute(() -> {
             level.setBlockAndUpdate(HOLDING_AREA.below(),
                     net.minecraft.world.level.block.Blocks.BARRIER.defaultBlockState());
             // Party guests too: one left standing in the old map keeps its chunks, and the build writes them
             // without telling his client, so he was left in ghost blocks he could neither see nor walk on.
+            for (ServerPlayer sp : level.getServer().getPlayerList().getPlayers()) {
                 sp.teleportTo(level, HOLDING_AREA.getX() + 0.5, HOLDING_AREA.getY(), HOLDING_AREA.getZ() + 0.5,
                         java.util.Set.of(), sp.getYRot(), sp.getXRot(), false);
+            }
         });
     }
 
@@ -1495,9 +1543,13 @@ public final class SimBuilder {
      */
     private static void queueCapturedMobs(RoomLibrary.Room room, int gridX, int gridZ, int rotation) {
         if (room == null) {
+            return;
+        }
         if (room.mobSpawns.isEmpty()) {
             // Nothing recorded: the room gets generated mobs (and a miniboss room its miniboss) - see SimRoomMobs.
             SimRoomMobs.generate(room, gridX, gridZ, rotation, true);
+            return;
+        }
         var origin = DungeonLayout.cellCenter(gridZ * DungeonLayout.GRID + gridX);
         int x0 = origin.getX() - RoomLibrary.TILE / 2 - room.margin;
         int z0 = origin.getZ() - RoomLibrary.TILE / 2 - room.margin;
@@ -1507,8 +1559,11 @@ public final class SimBuilder {
         for (String entry : room.mobSpawns) {
             if (kept.size() >= MAX_CAPTURED_MOBS) {
                 break;
+            }
             String[] part = entry.split(",");
             if (part.length < 3) {
+                continue;
+            }
             int x;
             int y;
             int z;
@@ -1517,6 +1572,8 @@ public final class SimBuilder {
                 y = Integer.parseInt(part[1].trim());
                 z = Integer.parseInt(part[2].trim());
             } catch (NumberFormatException e) {
+                continue;
+            }
             String tag = part.length > 3 ? part[3].trim().toUpperCase(Locale.ROOT) : "STARRED";
             SimMobs.Kind kind;
             switch (tag) {
@@ -1525,14 +1582,22 @@ public final class SimBuilder {
                 case "FEL" -> kind = SimMobs.Kind.FEL;
                 default -> {
                     continue;   // BAT (a secret, placed from the database) or something unknown
+                }
+            }
             if (x < 0 || z < 0 || x >= room.sizeX || z >= room.sizeZ) {
+                continue;
+            }
             int tagId = tag.hashCode();
             boolean duplicate = false;
             for (int[] k : kept) {
                 if (k[3] == tagId && Math.abs(k[0] - x) + Math.abs(k[2] - z) <= 3 && Math.abs(k[1] - y) <= 2) {
                     duplicate = true;
                     break;
+                }
+            }
             if (duplicate) {
+                continue;
+            }
             kept.add(new int[]{x, y, z, tagId});
             boolean starred;
             if ("STARRED".equals(tag)) {
@@ -1540,18 +1605,25 @@ public final class SimBuilder {
                 kind = starredSeen++ % 2 == 0 ? SimMobs.Kind.ZOMBIE : SimMobs.Kind.SKELETON;
             } else {
                 starred = plainSeen++ % 3 != 2;
+            }
             int[] local = RoomPlacer.rotateLocal(x, z, room.sizeX, room.sizeZ, rotation);
             // A capture is the room's whole box: an L-shaped room's empty quarter is another room's tile on the
             // floor, and a mob recorded there (the next room's, seen through the capture) belongs to that room.
             String at = SimState.roomNameAt(x0 + local[0], z0 + local[1]);
             if (at != null && !at.equalsIgnoreCase(room.name)) {
+                continue;
+            }
             SimMobs.queueRoomMob(new net.minecraft.core.BlockPos(x0 + local[0], SimAltitude.toWorld(y),
                     z0 + local[1]), kind, starred);
+        }
         if (!kept.isEmpty()) {
             LOGGER.info("Sim build: {} captured mob(s) queued for {}", kept.size(), room.name);
+        }
         // Recorded entries that were all bats or duplicates leave the room empty: fill it like an unrecorded one.
         // A miniboss room gets its miniboss either way.
         SimRoomMobs.generate(room, gridX, gridZ, rotation, kept.isEmpty());
+    }
+
     /**
      * Builds ONE room in the middle of the grid, for drilling a single room.
      *

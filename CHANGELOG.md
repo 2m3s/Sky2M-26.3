@@ -238,6 +238,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Fix Key & Door Alerts missing keys and doors from players with an emblem before their name, like "🐟 2m3s opened a WITHER door!".
 - Fix the Mimic not being detected when it's killed very fast with a Terminator: its "Mimic 0❤" nametag now counts, for the Mimic Message, score and Kill Titles.
 - Fix the Mimic not being detected when it dies the moment it spawns, such as a bow shot as the chest opens: the Mimic Message, score and Kill Titles now count it.
+- Fix the Dungeon Sim sometimes leaving you in the void after generating a floor: the build now moves everyone in the sim into the Entrance whether or not it can find you through the client, and anyone still at the build's waiting spot afterwards is moved there too.
 - Fix the Dungeon Sim not putting your wardrobe armour on when a session or floor starts, so your gear counted for nothing and low floors hit far too hard.
 - Fix the Dungeon Sim giving no armour or pet to players who had used it before (an older stats file), so they played with no gear.
 - Fix single rooms and map codes in the Dungeon Sim using the previous map's floor for mob damage (often F7's); a map with no floor picked plays as F7.
