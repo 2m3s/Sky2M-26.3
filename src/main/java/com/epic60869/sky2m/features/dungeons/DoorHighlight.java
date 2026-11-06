@@ -57,7 +57,6 @@ public final class DoorHighlight {
     private static final List<Door> DOORS = new ArrayList<>();
     /** The door into the Fairy room, when it isn't already a wither door in {@link #DOORS}. */
     private static final List<BlockPos> FAIRY_DOORS = new ArrayList<>();
-    private static boolean fairyEntered;
     private static int witherKeys;
     private static boolean bloodKey;
     private static boolean bloodOpened;
@@ -108,8 +107,8 @@ public final class DoorHighlight {
             if (config.fairyDoorHighlight) {
                 for (BlockPos c : FAIRY_DOORS) {
                     AABB box = new AABB(c.getX() - 1, c.getY(), c.getZ() - 1, c.getX() + 2, c.getY() + 4, c.getZ() + 2);
-                    collector.submitFilledBox(box, FAIRY, 0.3f, true);
-                    collector.submitOutlinedBox(box, FAIRY, 3f, true);
+                    collector.submitFilledBox(box, FAIRY, 0.3f, false);
+                    collector.submitOutlinedBox(box, FAIRY, 3f, false);
                 }
             }
             if (config.keyHighlight && keyEntity != null && keyEntity.isAlive()) {
@@ -122,7 +121,6 @@ public final class DoorHighlight {
     private static void reset() {
         DOORS.clear();
         FAIRY_DOORS.clear();
-        fairyEntered = false;
         witherKeys = 0;
         bloodKey = false;
         bloodOpened = false;
@@ -174,25 +172,53 @@ public final class DoorHighlight {
     }
 
 
-    /** The door into the Fairy room, using only what the dungeon map shows, until anyone's head is in the room. */
+    /**
+     * The door before the Fairy room, using only what the dungeon map shows. It stays once the door is open: the map only
+     * says which room is Fairy after someone has walked in, so stopping there would hide it straight away.
+     */
     private static void findFairyDoors() {
         MapView view = MapViewSource.current();
-        if (!view.valid() || view.inBoss() || fairyEntered) return;
-        for (MapView.Room room : view.rooms()) {
-            if (room.type() != MapView.RoomType.FAIRY) continue;
-            for (MapView.Head head : view.heads()) {
-                if (RoomClears.inRoom(view, room, head.x(), head.y())) {
-                    fairyEntered = true;
-                    FAIRY_DOORS.clear();
-                    return;
+        if (!view.valid() || view.inBoss()) return;
+        for (MapView.Door door : doorsBeforeFairy(view.rooms(), view.doors())) {
+            BlockPos pos = DungeonLayout.doorBlock(door.gz() * DungeonLayout.GRID + door.gx());
+            if (DOORS.stream().noneMatch(d -> d.centre().equals(pos))) FAIRY_DOORS.add(pos);
+        }
+    }
+
+    /**
+     * The doors into a Fairy room from the Entrance's side, not any door leading on from it: walks the rooms out from the
+     * Entrance without going through Fairy. If the map doesn't link them up yet, every door touching Fairy. Public for the game test.
+     */
+    public static List<MapView.Door> doorsBeforeFairy(List<MapView.Room> rooms, List<MapView.Door> doors) {
+        List<MapView.Room> reached = new ArrayList<>();
+        for (MapView.Room room : rooms) if (room.type() == MapView.RoomType.ENTRANCE) reached.add(room);
+        for (boolean grew = !reached.isEmpty(); grew; ) {
+            grew = false;
+            for (MapView.Door door : doors) {
+                if (!touchesAny(door, reached)) continue;
+                for (MapView.Room room : rooms) {
+                    if (room.type() == MapView.RoomType.FAIRY || reached.contains(room) || !touchesRoom(door.gx(), door.gz(), room.tiles())) continue;
+                    reached.add(room);
+                    grew = true;
                 }
             }
-            for (MapView.Door door : view.doors()) {
+        }
+        List<MapView.Door> before = new ArrayList<>();
+        List<MapView.Door> touching = new ArrayList<>();
+        for (MapView.Room room : rooms) {
+            if (room.type() != MapView.RoomType.FAIRY) continue;
+            for (MapView.Door door : doors) {
                 if (!touchesRoom(door.gx(), door.gz(), room.tiles())) continue;
-                BlockPos pos = DungeonLayout.doorBlock(door.gz() * DungeonLayout.GRID + door.gx());
-                if (DOORS.stream().noneMatch(d -> d.centre().equals(pos))) FAIRY_DOORS.add(pos);
+                touching.add(door);
+                if (touchesAny(door, reached)) before.add(door);
             }
         }
+        return before.isEmpty() ? touching : before;
+    }
+
+    private static boolean touchesAny(MapView.Door door, List<MapView.Room> rooms) {
+        for (MapView.Room room : rooms) if (touchesRoom(door.gx(), door.gz(), room.tiles())) return true;
+        return false;
     }
 
     /** Whether a door on the 11x11 grid (one odd coordinate) opens onto one of a room's {col, row} slots. Public for the game test. */
