@@ -63,7 +63,7 @@ public final class PuzzleHud {
         }
 
         List<String> players() {
-            return List.copyOf(ENTERED.getOrDefault(slot, Set.of()));
+            return firstIn(ENTERED.getOrDefault(slot, Set.of()));
         }
     }
 
@@ -118,7 +118,7 @@ public final class PuzzleHud {
             List.of(Component.literal(header(3)),
                 Component.literal(row(new Entry("Ice Path", Status.FAILED, "Steve"), true)),
                 Component.literal(row(new Entry("Boulder", Status.DONE, "Alex"), true)),
-                Component.literal(row(new Entry("Water Board", Status.REMAINING, null), true, List.of("Steve", "Alex"))),
+                Component.literal(row(new Entry("Water Board", Status.REMAINING, null), true, List.of("Steve"))),
                 Component.literal(row(new Entry("???", Status.REMAINING, null), true))),
             10, 340);
     }
@@ -162,7 +162,12 @@ public final class PuzzleHud {
         return tabName.equalsIgnoreCase(room.contains("blaze") ? "Higher Or Lower" : roomName);
     }
 
-    /** Who went into each listed puzzle, in the list's order. A "???" line gets the next entered room the tab hasn't named. */
+    /** The first of those who went in, who are kept in the order they did. Public for the game test. */
+    public static List<String> firstIn(Set<String> entered) {
+        return entered.isEmpty() ? List.of() : List.of(entered.iterator().next());
+    }
+
+    /** Who went first into each listed puzzle, in the list's order. A "???" line gets the next entered room the tab hasn't named. */
     private static List<List<String>> enteredLists(List<Entry> entries) {
         List<Visited> left = new ArrayList<>(PUZZLE_ROOMS.values());
         List<List<String>> out = new ArrayList<>();
@@ -297,7 +302,7 @@ public final class PuzzleHud {
         return row(entry, showName, null);
     }
 
-    /** "Water Board: [✦] in: Steve, Alex", with who went in when anyone has. Public for the game test. */
+    /** "Water Board: [✦] in: Steve", with who went in first when anyone has. Public for the game test. */
     public static String row(Entry entry, boolean showName, List<String> entered) {
         String who = showName && entry.player() != null ? " §7(§6" + entry.player() + "§7)" : "";
         String in = entered == null || entered.isEmpty() ? "" : " §8in: §7" + String.join(", ", entered);
@@ -316,7 +321,7 @@ public final class PuzzleHud {
         public boolean showNames = true;
 
         @Expose
-        @ConfigOption(name = "Show Who Entered", desc = "Also show who has gone into each puzzle room, so a puzzle someone walked into and skipped shows who. From the heads on the dungeon map.")
+        @ConfigOption(name = "Show Who Entered", desc = "Also show who went into each puzzle room first, so a puzzle someone walked into and skipped shows who. From the heads on the dungeon map.")
         @ConfigEditorBoolean
         public boolean showEntered = true;
     }
