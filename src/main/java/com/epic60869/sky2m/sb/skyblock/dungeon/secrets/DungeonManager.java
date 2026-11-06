@@ -1010,6 +1010,9 @@ public class DungeonManager {
 		if (isCurrentRoomMatched()) {
 			//noinspection DataFlowIssue - checked above
 			currentRoom.onChatMessage(message, overlay);
+		} else if (overlay && currentRoom != null) {
+			// Sky2M: a secret found while the room is still matching should still count.
+			currentRoom.updateSecretCount(message);
 		}
 
 		// Process key found messages for door highlight

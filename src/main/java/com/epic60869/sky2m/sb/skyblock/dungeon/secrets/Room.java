@@ -448,12 +448,12 @@ public class Room implements Tickable, Renderable {
 
 		int matchingRoomsSize = possibleRooms.stream().map(Triple::getRight).mapToInt(Collection::size).sum();
 		if (matchingRoomsSize == 0) {
-			// If no rooms match, reset the fields and scan again after 50 ticks.
+			// If no rooms match, reset the fields and scan again after 10 ticks. Sky2M: secrets aren't seen meanwhile, so not 50.
 			matchState = MatchState.FAILED;
 			assert checkedBlocks != null;
 			DungeonManager.LOGGER.warn("[Skyblocker Dungeon Secrets] No dungeon room matched after checking {} block(s) including double checking {} block(s)", checkedBlocks.size(), doubleCheckBlocks);
 			RenderHelper.runOnRenderThread(() -> {
-				Scheduler.INSTANCE.schedule(() -> matchState = MatchState.MATCHING, 50);
+				Scheduler.INSTANCE.schedule(() -> matchState = MatchState.MATCHING, 10);
 				reset();
 			});
 			return true;
@@ -729,12 +729,14 @@ public class Room implements Tickable, Renderable {
 						markSecretsFoundAndLogInfo(secretWaypoint, "[Skyblocker Dungeon Secrets] Detected already searched chest interaction, setting secret #{} as found", secretWaypoint.secretIndex);
 					});
 		}
-		if (secretCountOutdated && overlay) updateSecretCount(message);
+		if (overlay) updateSecretCount(message);
 	}
 
 	protected void updateSecretCount(String message) {
 		Matcher matcher = SECRETS.matcher(message);
-		if (!matcher.find()) return;
+		if (!matcher.find() || clearState == ClearState.GREEN_CHECKED) return;
+		// Sky2M: the action bar can still be showing the room you just left.
+		if (maxSecrets > 0 && Integer.parseInt(matcher.group(2)) != maxSecrets) return;
 		secretsFound = Integer.parseInt(matcher.group(1));
 		secretCountOutdated = false;
 		DungeonEvents.SECRET_COUNT_UPDATED.invoker().onSecretCountUpdate(this, false);
