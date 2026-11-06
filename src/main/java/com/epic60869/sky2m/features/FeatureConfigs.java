@@ -3521,6 +3521,16 @@ public final class FeatureConfigs {
         public boolean coloredBoxes = true;
 
         @Expose
+        @ConfigOption(name = "Tint Dead Players", desc = "Dead teammates' boxes and faces turn dark red.")
+        @ConfigEditorBoolean
+        public boolean tintDead = true;
+
+        @Expose
+        @ConfigOption(name = "Show Last Door Opener", desc = "Say who opened the last Wither or Blood door, on their box and at the top of the menu, until the boss.")
+        @ConfigEditorBoolean
+        public boolean lastDoor = true;
+
+        @Expose
         @ConfigOption(name = "Leap Announce", desc = "Send \"Leaped to <name>!\" to party chat after you leap.")
         @ConfigEditorBoolean
         public boolean announce = false;

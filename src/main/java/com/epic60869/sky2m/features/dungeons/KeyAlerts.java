@@ -29,7 +29,7 @@ public final class KeyAlerts {
     private static final Pattern KEY_PICKED_UP = Pattern.compile("^A (Wither|Blood) Key was picked up!$");
     private static final Pattern WITHER_DOOR = Pattern.compile(WHO + " opened a WITHER door!$");
 
-    private static String witherHolder, bloodHolder;
+    private static String witherHolder, bloodHolder, lastDoorOpener;
     private static long witherAt, bloodAt;
 
     private KeyAlerts() {}
@@ -52,8 +52,19 @@ public final class KeyAlerts {
     }
 
     private static void reset() {
-        witherHolder = bloodHolder = null;
+        witherHolder = bloodHolder = lastDoorOpener = null;
         witherAt = bloodAt = 0;
+    }
+
+    /** Who opened the last door this run, or null when no one has or the Blood Key's holder wasn't seen (Leap Menu). */
+    public static String lastDoorOpener() {
+        return lastDoorOpener;
+    }
+
+    /** Who a "... opened a WITHER door!" line names, or null. Public for the game test. */
+    public static String witherDoorOpener(String text) {
+        Matcher m = WITHER_DOOR.matcher(text);
+        return m.matches() ? m.group(1) : null;
     }
 
     private static void onChat(String text) {
@@ -85,10 +96,12 @@ public final class KeyAlerts {
         }
         if ((m = WITHER_DOOR.matcher(text)).matches()) {
             if (c != null && c.doorMessage) doorMessage("Wither Door", ChatFormatting.DARK_GRAY, m.group(1), witherAt);
+            lastDoorOpener = m.group(1);
             witherHolder = null;
             witherAt = 0;
         } else if (text.equals("The BLOOD DOOR has been opened!")) {
             if (c != null && c.doorMessage) doorMessage("Blood Door", ChatFormatting.RED, bloodHolder == null ? "Someone" : bloodHolder, bloodAt);
+            lastDoorOpener = "Someone".equals(bloodHolder) ? null : bloodHolder;
             bloodHolder = null;
             bloodAt = 0;
         }

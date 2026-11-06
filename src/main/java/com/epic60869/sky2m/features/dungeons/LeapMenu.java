@@ -33,6 +33,8 @@ public final class LeapMenu {
     private static final int BOX_WIDTH = 200;
     private static final int BOX_HEIGHT = 75;
     private static final int GAP = 24;
+    /** The box of a dead teammate: dark red (NoammAddons' Tint Dead Players, CC0-1.0). */
+    private static final int DEAD_TINT = 0xD0401010;
     private static final Pattern LEAPED = Pattern.compile("^You have teleported to (\\w{1,16})!$");
 
     private record Teammate(String name, DungeonClass dungeonClass, boolean alive) {}
@@ -148,6 +150,8 @@ public final class LeapMenu {
         graphics.fill(0, 0, width, height, 0x80000000);
 
         float scale = Math.min(1f, Math.min((halfW - GAP - 4) / (float) BOX_WIDTH, (halfH - GAP - 4) / (float) BOX_HEIGHT));
+        // Doors are done with once at the boss.
+        String lastDoor = config.lastDoor && !com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager.isInBoss() ? KeyAlerts.lastDoorOpener() : null;
         Teammate[] teammates = layout();
         for (int i = 0; i < 4; i++) {
             Teammate t = teammates[i];
@@ -163,22 +167,27 @@ public final class LeapMenu {
             int x = col == 0 ? -BOX_WIDTH : 0;
             int y = row == 0 ? -BOX_HEIGHT : 0;
 
-            int background = config.coloredBoxes ? ARGB.color(200, classColor) : 0xC0262626;
+            boolean tinted = config.tintDead && !t.alive();
+            int background = tinted ? DEAD_TINT : config.coloredBoxes ? ARGB.color(200, classColor) : 0xC0262626;
             graphics.fill(x, y, x + BOX_WIDTH, y + BOX_HEIGHT, background);
             graphics.outline(x, y, BOX_WIDTH, BOX_HEIGHT, hovered ? 0xFFFFFFFF : classColor);
 
             int face = (int) (BOX_HEIGHT * 0.76);
             PlayerInfo info = mc.getConnection() == null ? null : mc.getConnection().getPlayerInfo(t.name());
             if (info != null) PlayerFaceExtractor.extractRenderState(graphics, info.getSkin(), x + 9, y + 9, face);
+            if (tinted && info != null) graphics.fill(x + 9, y + 9, x + 9 + face, y + 9 + face, 0x80500000);
 
-            int textColor = config.coloredBoxes ? 0xFF1A1A1A : classColor;
+            int textColor = tinted ? classColor : config.coloredBoxes ? 0xFF1A1A1A : classColor;
             graphics.pose().pushMatrix();
             graphics.pose().translate(x + 15 + face, y + BOX_HEIGHT / 2.5f);
             graphics.pose().scale(1.5f, 1.5f);
-            graphics.text(mc.font, t.name(), 0, 0, textColor, !config.coloredBoxes);
+            graphics.text(mc.font, t.name(), 0, 0, textColor, tinted || !config.coloredBoxes);
             graphics.pose().popMatrix();
             graphics.text(mc.font, t.alive() ? t.dungeonClass().displayName() : "DEAD",
                 x + 15 + face, y + (int) (BOX_HEIGHT / 1.55), t.alive() ? 0xFFFFFFFF : 0xFFFF5555, true);
+            if (t.name().equals(lastDoor)) {
+                graphics.text(mc.font, "Opened the last door", x + 15 + face, y + (int) (BOX_HEIGHT / 1.55) + 11, 0xFFFFFF55, true);
+            }
             // The key that leaps here, in the corner of the box.
             String key = keyName(i);
             if (!key.isEmpty()) {
@@ -188,6 +197,7 @@ public final class LeapMenu {
             graphics.pose().popMatrix();
         }
         graphics.centeredText(mc.font, Component.literal("Spirit Leap").withStyle(ChatFormatting.GRAY), halfW, 6, 0xFFFFFFFF);
+        if (lastDoor != null) graphics.centeredText(mc.font, Component.literal("Last door: " + lastDoor).withStyle(ChatFormatting.YELLOW), halfW, 17, 0xFFFFFFFF);
     }
 
     /** Which box a key leaps to (0 top left, 1 top right, 2 bottom left, 3 bottom right), or -1. */
