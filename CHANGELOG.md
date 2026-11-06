@@ -31,6 +31,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Blood Rush Path (Dungeons > Dungeon Map, off by default): a red line on the Classic map along the fewest doors from your room to Blood. It only uses what Hypixel's own map shows, so it appears once Blood or its door is on the map.
 - Commission Waypoints and Emissary Waypoints (Mining > Commissions, off by default): in the Dwarven Mines, a beam on where each unfinished commission is done, and on the nearest Emissary once one is DONE.
 - Slayer Quest Warning (Slayers, on by default): a title and chat line when you hit slayer mobs in a slayer area with no slayer quest, or with a quest for a different slayer.
+- Minister In Calendar (Events > Mayor, on by default): in Hypixel's Calendar menu the minister's head sits next to the mayor, and hovering it shows the minister's perk laid out like the mayor's.
 - Start any F7/M7 phase in the Dungeon Sim: /boss maxor, /boss storm, /boss goldor, /boss necron and (Master Mode) /boss witherking. /boss necron now starts at Necron; /boss alone still runs the whole fight from Maxor.
 - Dungeon Sim lava bounce, like SkyBlock: touching lava throws you up, higher the more you look up.
 - Dungeon Sim party guests who are staff (/s2 stafflogin) can use /fly, /summon, /simrevive and /simstats: they act on the guest alone (their own flight, a mob at their feet, their own revive and stats).
