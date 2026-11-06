@@ -20,6 +20,8 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Hide Claimed Runs (Dungeons > Dungeon Extras > Croesus, on by default), like Odin's: runs you've already opened a chest of disappear from Croesus's list. Keep Runs With A Key Left (off by default) keeps the ones you could still use a Dungeon Chest Key on.
 - Leap Menu Tint Dead Players and Show Last Door Opener (Dungeons > Leap Menu, both on by default), like NoammAddons': dead teammates' boxes turn dark red, and the menu says who opened the last door, until the boss.
 - Predict Unopened Rooms (Dungeons > Dungeon Map, on by default): a faint tint on grey rooms that are probably a puzzle, trap or miniboss, in every map style. It's only a guess from what Hypixel's map shows, so a guessed room can turn out to be a normal one.
+- Start any F7/M7 phase in the Dungeon Sim: /boss maxor, /boss storm, /boss goldor, /boss necron and (Master Mode) /boss witherking. /boss necron now starts at Necron; /boss alone still runs the whole fight from Maxor.
+- Dungeon Sim lava bounce, like SkyBlock: touching lava throws you up, higher the more you look up.
 - Dungeon Sim party guests who are staff (/s2 stafflogin) can use /fly, /summon, /simrevive and /simstats: they act on the guest alone (their own flight, a mob at their feet, their own revive and stats).
 - Join Sim Party button on the title screen: paste a friend's party code (or LAN address) to join their Dungeon Sim party without opening a world first.
 - Terminal Waypoints (Dungeons > F7 > Extras, on by default): a beacon beam and an "Inactive Terminal" label on each inactive terminal of your P3 section, through walls. Works on Hypixel and in the Dungeon Sim.
@@ -105,6 +107,14 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ### Changed
 
 - Enchanted Book Labels: one-word Ultimate enchantments now show their first four letters (Chim for Chimera, Comb for Combo) instead of U plus one letter, so they no longer share a label.
+- The Dungeon Sim's F7/M7 boss room is now Stradivarius Violin's M7 Practice Map (MIT License): it has the real west side of P3 section 3 (its terminals and the Arrow Align wall) instead of a rebuilt approximation.
+- Water and lava no longer flow in the Dungeon Sim, so breaking a block beside them does not pour them into the room.
+- Dungeon Sim class presets come with a stack of arrows.
+- Your own explosions (Superboom, Explosive Shot) no longer hurt you in the Dungeon Sim.
+- Dungeon Sim bosses say Hypixel's dialogue: the Watcher's per-floor welcome, Livid's full speech and real-Livid lines, the Professor's guardian lines, Bonzo's phase-two lines, and the Wither Lords' and Wither King's intros, random lines and death lines. Maxor's made-up "HAH! MISSED ME!" and Storm's "Lure me under a pillar" are gone.
+- The Terminator always crits in the Dungeon Sim.
+- Dungeon Sim minibosses follow Hypixel's floors: King Midas (only in his room) and the Shadow Assassin from F3, the Frozen Adventurer from F4, the Lost Adventurer on every floor.
+- A new Dungeon Sim floor now starts with an empty inventory (only the class orb) instead of keeping the last sim's items. Worn armour stays, and Mort's class presets fill the hotbar again.
 - Dungeon Sim death barriers and borders: falling below a floor (into the void under a room or out of a gap) or walking off the map puts you back where you last stood, instead of dying.
 - Terracotta Timer (F6/M6) counts 10 seconds on both floors, the wiki's respawn time (it counted 15 on F6 and 12 on M6).
 - Dungeon Sim bosses reworked to Hypixel's mechanics (checked against the wiki; numbers the wiki doesn't give are approximations), with Hypixel's lines word for word:
@@ -184,6 +194,21 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Fix Key & Door Alerts missing keys and doors from players with an emblem before their name, like "🐟 2m3s opened a WITHER door!".
 - Fix the Mimic not being detected when it's killed very fast with a Terminator: its "Mimic 0❤" nametag now counts, for the Mimic Message, score and Kill Titles.
 - Fix the Mimic not being detected when it dies the moment it spawns, such as a bow shot as the chest opens: the Mimic Message, score and Kill Titles now count it.
+- Fix /boss softlocking on Floors 1-5 in the Dungeon Sim: you started behind the closed boss door; you now start just past it.
+- Fix Dungeon Sim ghosts damaging bosses and mobs with arrows and abilities.
+- Fix /boss into another boss room leaving you in ghost blocks or the old room's walls: the current boss room is left first, and the new one is cleared and resent.
+- Fix Dungeon Sim skull items showing as a Steve or wither skeleton skull: masks, Wither Goggles, the Necron heads, the Mender Crown, the Revive Stone, equipment and pets wear Hypixel's own head textures (from the item repo).
+- Fix the Dungeon Sim Mage beam: it now does damage at range (it stopped on mobs' invisible name tags and damage numbers), is a melee hit scaled by Intelligence as on Hypixel (30% + 0.09% per Intelligence, with Strength, crits and Crit Damage), and no longer hits twice in melee reach.
+- Fix the Aspect of the Void and Aspect of the End teleporting in Dungeon Sim boss rooms: Instant and Ether Transmission don't work there, as on Hypixel.
+- Fix Dungeon Sim bows showing their ultimate enchant as "Reiterate": it is Duplex, in the ultimate enchants' bold purple, as on Hypixel.
+- Fix the Gyrokinetic Wand's Gravity Storm pulling mobs into the floor.
+- Fix the Ragnarock Axe's Ragnarock only counting the axe's base Strength: it now gives 1.5x the axe's whole Strength (reforge, potato books, The Art of War, gems, and your pet's Strength through Chimera), as on Hypixel.
+- Fix Dungeon Sim Energy Crystals spawning on a pillar: they now spawn on Maxor's two top platforms, and the laser only stuns him when he is lured into it.
+- Fix Storm's crusher pads in the Dungeon Sim: stepping on a pad drops its crusher, crushing Storm if he is under it.
+- Fix the Dungeonbreaker refusing to break the Storm room's coal as if it were a door.
+- Fix losing your helmet, chestplate and boots after dying in the Dungeon Sim: party members can no longer hurt each other (no friendly fire, like Hypixel), and worn armour no longer wears out or breaks.
+- Fix Dungeon Sim wither and blood doors not opening on a right click while holding an item with an ability (AOTV, Hyperion, Dungeonbreaker...): a door now opens whatever you hold, like on Hypixel.
+- Fix Dungeon Sim parties closing with "Relay off: Log in first" when someone was invited right after /simparty open.
 - Fix being kicked from a Dungeon Sim party with "Failed to decode packet ... hypixel:party_info" when joining straight from Hypixel.
 - Fix /s2 sim getting stuck on the loading screen with "The process cannot access the file because another process has locked a portion of the file" when you were already in the sim world (opened from the Singleplayer list) or in another singleplayer world. The sim world opened from the list now works as the sim, a floor is built into it in place, another world is closed first, and if the save really is in use the loading screen closes and says so.
 - Fix Dungeon Sim blood mobs falling out of Blood into the void when you entered it in mid-air.
