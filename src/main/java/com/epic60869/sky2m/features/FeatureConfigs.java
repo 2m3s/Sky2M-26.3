@@ -2721,7 +2721,10 @@ public final class FeatureConfigs {
         public boolean roomLabels = true;
 
         @Expose
+        @ConfigOption(name = "Blood Rush Path", desc = "A red line on the map along the fewest doors from your room (or the Entrance) to Blood. Only uses the rooms and doors Hypixel's own map shows you, so nothing is revealed early: it appears once Blood (or its door) is on the map. Classic map style only.")
         @ConfigEditorBoolean
+        public boolean bloodRushPath = false;
+
         @Expose
         @ConfigOption(name = "Predict Unopened Rooms", desc = "A faint tint on grey rooms that are probably a puzzle, trap or miniboss: purple for puzzle, orange for trap, yellow for miniboss, side by side when it could be more than one. It's only a guess from what Hypixel's own map shows (one door and no room to be any bigger), so a guessed room can turn out to be a normal one. Works in every map style.")
         @ConfigEditorBoolean

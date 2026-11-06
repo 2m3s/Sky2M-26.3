@@ -92,6 +92,8 @@ public final class DungeonMapStyles {
             if (map != null && map.predictRooms && selected() == DungeonMapStyle.SKYBLOCKER && !inSim()) {
                 SkyblockerMapStyle.drawGuesses(graphics, MapViewSource.current());
             }
+            if (map != null && map.bloodRushPath && selected() == DungeonMapStyle.SKYBLOCKER) {
+                BloodRushPath.render(graphics, view.valid() ? view : MapViewSource.current());
             }
         } finally {
             graphics.pose().popMatrix();
