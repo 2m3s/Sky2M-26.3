@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 /**
  * Combat > Armor Stack Display, after SkyHanni's: the stacks of Crimson (Dominus ᝐ), Terror (Hydra Strike ⁑),
- * Aurora (Arcane Vision ҉) and Fervor (Ѫ) armor that Hypixel shows in the action bar, in a HUD with the time until the
+ * Aurora (Arcane Energy Ѫ) and Fervor (҉) armor that Hypixel shows in the action bar, in a HUD with the time until the
  * next stack decays. A stack is lost after 4 seconds without gaining one, so the timer restarts whenever the count
  * changes.
  */
@@ -77,8 +77,8 @@ public final class ArmorStacks {
     private static String name(char sym) {
         return switch (sym) {
             case '⁑' -> "Hydra Strike";
-            case '҉' -> "Arcane Vision";
-            case 'Ѫ' -> "Fervor";
+            case 'Ѫ' -> "Arcane Energy";
+            case '҉' -> "Fervor";
             default -> "Dominus";
         };
     }

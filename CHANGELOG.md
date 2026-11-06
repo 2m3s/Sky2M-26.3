@@ -170,6 +170,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - HUDs don't draw over the Held Item editor (/s2 helditem).
 - Setting descriptions that said "Move it in /s2 hud" now say /s2 gui, and Use /pv no longer says it's off by default.
 - Slayer profit takes the tier from the sidebar's quest line when a boss's name tag doesn't show it, so its quest cost is never counted as 0.
+- Armor Stack Display names Aurora's Ѫ stacks "Arcane Energy" and Fervor's ҉ stacks "Fervor" (they were swapped, and Aurora's was called "Arcane Vision").
 - Slayer profit always takes the quest's cost out, as the wiki's price for the slayer and tier (100k for a T5 Tarantula, whatever discount you got; Riftstalker costs motes, so 0), instead of "unknown" or a misread purse change.
 - Cocoon Label counts down to the hatch from the first cocoon (about 6.5s until one has been timed), and says "Hatching..." if it runs over.
 - The boss HUD finds your slayer boss again after it hatches from a cocoon (its "Spawned by" tag stays with the cocoon).
