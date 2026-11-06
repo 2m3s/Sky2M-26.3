@@ -177,6 +177,7 @@ public final class DungeonFeatures {
         BlessingDisplay.init();
         PuzzleHud.init();
         ArchitectDraftAlert.init();
+        BreakerHud.init();
         // A reconnect keeps the run's splits: leaving the dungeon or the next run's start clears them.
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> resetRunState());
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> resumeSplits());

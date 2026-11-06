@@ -727,6 +727,11 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Dungeon Breaker Charges", desc = "The charges left on your Dungeon Breaker, in a HUD.")
+        public com.epic60869.sky2m.features.dungeons.BreakerHud.Config breakerHud = new com.epic60869.sky2m.features.dungeons.BreakerHud.Config();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Party Finder Stats", desc = "Stats of players who join your dungeon group, with a kick button and optional auto kick.")
         public PartyFinderStats partyFinderStats = new PartyFinderStats();
 

@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Dungeon Breaker Charges HUD (Dungeons > Dungeon Breaker Charges, on by default), like Odin's: the charges left on the Dungeon Breaker in your inventory, shown once it isn't full (Show When Full, off by default). Move it in /s2 gui.
 - Architect's Draft Alert (Dungeons > Architect's Draft Alert, Tell Me and Tell Party on by default): when a puzzle fails, a title and chat line say who failed it and to get an Architect's First Draft, and party chat is told too. It only tells you; it doesn't get one.
 - Puzzle HUD (Dungeons > Puzzle HUD, on by default), like Odin's: each puzzle in the run, remaining, done or failed, who solved or failed it, and who has gone into it, so a skipped puzzle shows who, until the boss. Move it in /s2 gui.
 - Room Personal Bests (Dungeons > Secrets and Routes > Room Clear Alert, on by default): your fastest time for each room on the Room Secret Time clock, shown on the same chat line ("New best! (was 45.1s)"), with the time per secret when you hover the time. `/s2 route best`, `/s2 route bests` and `/s2 route best reset`. Personal Bests Solo Only (on by default) leaves out times with a teammate in the room. Saved in `config/sky2m/room-bests.json`.
