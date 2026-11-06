@@ -57,6 +57,8 @@ public final class DoorHighlight {
     private static final List<Door> DOORS = new ArrayList<>();
     /** The door into the Fairy room, when it isn't already a wither door in {@link #DOORS}. */
     private static final List<BlockPos> FAIRY_DOORS = new ArrayList<>();
+    /** Someone has been in the Fairy room this run, so its door is done with. */
+    private static boolean fairyEntered;
     private static int witherKeys;
     private static boolean bloodKey;
     private static boolean bloodOpened;
@@ -121,6 +123,7 @@ public final class DoorHighlight {
     private static void reset() {
         DOORS.clear();
         FAIRY_DOORS.clear();
+        fairyEntered = false;
         witherKeys = 0;
         bloodKey = false;
         bloodOpened = false;
@@ -173,12 +176,17 @@ public final class DoorHighlight {
 
 
     /**
-     * The door before the Fairy room, using only what the dungeon map shows. It stays once the door is open: the map only
-     * says which room is Fairy after someone has walked in, so stopping there would hide it straight away.
+     * The door before the Fairy room, using only what the dungeon map shows, until anyone's head has been in the room. It
+     * doesn't stop when the door opens, as the map only says which room is Fairy around then, so it would hardly ever show.
      */
     private static void findFairyDoors() {
         MapView view = MapViewSource.current();
-        if (!view.valid() || view.inBoss()) return;
+        if (fairyEntered || !view.valid() || view.inBoss()) return;
+        for (MapView.Room room : view.rooms()) {
+            if (room.type() != MapView.RoomType.FAIRY) continue;
+            for (MapView.Head head : view.heads()) fairyEntered |= RoomClears.inRoom(view, room, head.x(), head.y());
+        }
+        if (fairyEntered) return;
         for (MapView.Door door : doorsBeforeFairy(view.rooms(), view.doors())) {
             BlockPos pos = DungeonLayout.doorBlock(door.gz() * DungeonLayout.GRID + door.gx());
             if (DOORS.stream().noneMatch(d -> d.centre().equals(pos))) FAIRY_DOORS.add(pos);

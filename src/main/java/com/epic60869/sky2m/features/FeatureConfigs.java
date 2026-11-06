@@ -2967,7 +2967,7 @@ public final class FeatureConfigs {
         public boolean doorHighlight = true;
 
         @Expose
-        @ConfigOption(name = "Fairy Door Highlight", desc = "Highlight the door into the Fairy room in pink, also once it's open. Walls hide it. It only shows once your dungeon map has revealed the Fairy room.")
+        @ConfigOption(name = "Fairy Door Highlight", desc = "Highlight the door into the Fairy room in pink, until anyone has been in the room. Walls hide it. It only shows once your dungeon map has revealed the Fairy room.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1505)
         public boolean fairyDoorHighlight = true;
