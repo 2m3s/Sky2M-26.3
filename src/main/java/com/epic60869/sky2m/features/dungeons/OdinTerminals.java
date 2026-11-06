@@ -559,10 +559,19 @@ public final class OdinTerminals {
     static final class Numbers extends Handler {
         Type type() { return Type.NUMBERS; }
 
+        /** How many numbers the terminal has (10 since the Minister update's 0.27.2, 14 before). */
+        private int total;
+
         List<Integer> solve(List<Slot> slots, int updated) {
             List<Integer> out = new ArrayList<>();
-            for (int i = 0; i < slots.size(); i++) if (is(slots.get(i).getItem(), Items.STAINED_GLASS_PANE.pick(DyeColor.RED))) out.add(i);
+            int numbered = 0;
+            for (int i = 0; i < slots.size(); i++) {
+                ItemStack item = slots.get(i).getItem();
+                if (is(item, Items.STAINED_GLASS_PANE.pick(DyeColor.RED))) out.add(i);
+                if (is(item, Items.STAINED_GLASS_PANE.pick(DyeColor.RED)) || is(item, Items.STAINED_GLASS_PANE.pick(DyeColor.LIME))) numbered++;
+            }
             out.sort((a, b) -> Integer.compare(slots.get(a).getItem().getCount(), slots.get(b).getItem().getCount()));
+            total = numbered;
             return out;
         }
 
@@ -586,7 +595,9 @@ public final class OdinTerminals {
                 case 2 -> colour(c.numbersThirdColor, 0xFFFF5555);
                 default -> 0;
             };
-            return new Render(colour, String.valueOf(Math.abs((solution.size() - 14) - index) + 1));
+            // The number on the pane: the ones already clicked, plus its place in what's left. It assumed 14
+            // numbers, so on the Minister update's 10-number terminal the first one read 5.
+            return new Render(colour, String.valueOf(Math.max(0, total - solution.size()) + index + 1));
         }
     }
 
