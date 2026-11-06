@@ -274,9 +274,10 @@ public final class F7Extras {
         }
         Matcher pickup = CRYSTAL_PICKUP.matcher(text);
         if (pickup.matches() && pickup.group(1).equalsIgnoreCase(selfName())) crystalPickupMs = System.currentTimeMillis();
-        // Odin's Terminal Sounds: a sound when you finish a terminal.
+        // Odin's Terminal Sounds: a sound when you finish a terminal. Hypixel's line is "Name activated a terminal! (n/7)"
+        // (TerminalProgress' and Odin's regexes); "completed" is kept as a harmless fallback.
         FeatureConfigs.Terminals terms = terminals();
-        if (terms != null && terms.completeSound && text.startsWith(selfName() + " completed a terminal!")) {
+        if (terms != null && terms.completeSound && (text.startsWith(selfName() + " activated a terminal!") || text.startsWith(selfName() + " completed a terminal!"))) {
             Sky2MAlerts.play(SoundEvents.EXPERIENCE_ORB_PICKUP, 1f);
         }
     }
