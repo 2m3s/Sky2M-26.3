@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Hide Non-Starred Nametags (Dungeons > Mobs > Starred Mobs, on by default), like Skytils': while clearing, plain dungeon mobs without a star don't draw their nametags. The mobs still show.
 - Boss Bar Health (Dungeons > Boss Bar Health, on by default), like NoammAddons': The Watcher, Thorn, Maxor, Storm, Goldor and Necron's boss bars show their health as a number. Other dungeon boss bars, such as Sadan's and his Giants', show a percentage (Percent On Other Bosses, on by default).
 - Dungeon Breaker Charges HUD (Dungeons > Dungeon Breaker Charges, on by default), like Odin's: the charges left on the Dungeon Breaker in your inventory, shown once it isn't full (Show When Full, off by default). Move it in /s2 gui.
 - Architect's Draft Alert (Dungeons > Architect's Draft Alert, Tell Me and Tell Party on by default): when a puzzle fails, a title and chat line say who failed it and to get an Architect's First Draft, and party chat is told too. It only tells you; it doesn't get one.

@@ -3006,6 +3006,12 @@ public final class FeatureConfigs {
         @ConfigAccordionId(id = 1601)
         public float starredLineWidth = 2f;
 
+        @Expose
+        @ConfigOption(name = "Hide Non-Starred Nametags", desc = "While clearing, don't draw the nametags of dungeon mobs without a star (✯), so the starred ones stand out. The mobs themselves still show; minibosses, blood mobs and bosses keep their nametags.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1601)
+        public boolean hideNonStarredTags = true;
+
         @ConfigOption(name = "Teammates & Bats", desc = "Highlighting your teammates and bats.")
         @ConfigEditorAccordion(id = 1602)
         public boolean teammatesBatsGroup = false;
