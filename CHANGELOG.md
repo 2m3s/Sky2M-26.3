@@ -199,6 +199,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Fix Key & Door Alerts missing keys and doors from players with an emblem before their name, like "🐟 2m3s opened a WITHER door!".
 - Fix the Mimic not being detected when it's killed very fast with a Terminator: its "Mimic 0❤" nametag now counts, for the Mimic Message, score and Kill Titles.
 - Fix the Mimic not being detected when it dies the moment it spawns, such as a bow shot as the chest opens: the Mimic Message, score and Kill Titles now count it.
+- Fix Profile Icons In Chat never showing: an ironman (♲), Bingo or Stranded player's icon from the tab list wasn't added to their chat messages, because SkyBlock's tab rows were read by their placeholder names instead of the player's. Chat lines with emblems and extra tags before the name ("[318] ✭ [✌] [MVP++] Name") now get the icon too.
 - Fix /boss softlocking on Floors 1-5 in the Dungeon Sim: you started behind the closed boss door; you now start just past it.
 - Fix Dungeon Sim ghosts damaging bosses and mobs with arrows and abilities.
 - Fix /boss into another boss room leaving you in ghost blocks or the old room's walls: the current boss room is left first, and the new one is cleared and resent.

@@ -23,9 +23,18 @@ import java.util.regex.Pattern;
  */
 public final class ChatProfileIcons {
     private static final String ICONS = "♲Ⓑ☀";
-    /** Same sender shape as Clickable Names; the icon groups catch an icon Hypixel already put there. */
+    /**
+     * Same sender shape as Clickable Names, with any number of level, emblem and rank tags before the name
+     * ("[318] ✭ [✌] [MVP++] Name"); the icon groups catch an icon Hypixel already put there.
+     */
     private static final Pattern SENDER = Pattern.compile(
-        "^(?:(?:Party|Guild|Officer|Co-op) > |From |To )?(?:\\[\\d+] )?(?:[^\\w\\s\\[] )?(?:\\[[A-Z+]+] )?(\\w{3,16})(?<icon1> [" + ICONS + "])?(?: \\[[^]]+])?(?<icon2> [" + ICONS + "])?: ");
+        "^(?:(?:Party|Guild|Officer|Co-op) > |From |To )?(?:(?:\\[[^\\]\\s]{1,8}]|[^\\w\\s\\[]{1,3}) )*(\\w{3,16})(?<icon1> [" + ICONS + "])?(?: \\[[^]]+])?(?<icon2> [" + ICONS + "])?: ");
+    /**
+     * The player's name in a SkyBlock tab list row ("[102] Firewolf12900 ♲"). The row's own profile is a placeholder
+     * ("!B-a"), not the player, so the name has to come from the text. Player rows start with the SkyBlock level, which
+     * keeps rows like "Gems: 50" out.
+     */
+    private static final Pattern TAB_NAME = Pattern.compile("^\\s*\\[\\d+]\\s+(?:[^\\w\\s\\[]{1,3}\\s+)?(?:\\[[A-Z+]+]\\s+)?(\\w{3,16})\\b");
 
     /** Lower-case name -> the icon as it looks in the tab list. */
     private static final Map<String, Component> KNOWN = new ConcurrentHashMap<>();
@@ -42,7 +51,8 @@ public final class ChatProfileIcons {
             for (PlayerInfo info : mc.getConnection().getOnlinePlayers()) {
                 Component display = info.getTabListDisplayName();
                 if (display == null) continue;
-                String name = info.getProfile().name().toLowerCase(java.util.Locale.ROOT);
+                String name = tabName(display.getString());
+                if (name == null) continue;
                 Component icon = iconIn(display);
                 // Seen in the tab list without an icon: they are on a normal profile now.
                 if (icon == null) KNOWN.remove(name);
@@ -50,6 +60,19 @@ public final class ChatProfileIcons {
             }
         });
         ClientReceiveMessageEvents.MODIFY_GAME.register((message, overlay) -> overlay ? message : addIcon(message));
+    }
+
+    /** The player's lower-case name in a tab list row's text, or null for rows that aren't a player. */
+    public static String tabName(String row) {
+        String plain = net.minecraft.ChatFormatting.stripFormatting(row);
+        Matcher m = TAB_NAME.matcher(plain == null ? "" : plain);
+        return m.find() ? m.group(1).toLowerCase(java.util.Locale.ROOT) : null;
+    }
+
+    /** The sender's name in a chat line, as {@link #addIcon} reads it, or null. For the game test. */
+    public static String senderName(String line) {
+        Matcher m = SENDER.matcher(line);
+        return m.find() ? m.group(1) : null;
     }
 
     /** The first profile icon in a tab list name, with the colour it has there. */
