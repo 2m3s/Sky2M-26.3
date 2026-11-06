@@ -83,9 +83,11 @@ public final class SimRun {
                                     Minecraft mc = Minecraft.getInstance();
                                     if (SimParty.sendAction("start", "")) {
                                         return 1;   // a party guest: the host's server starts it (SimMort)
+                                    }
                                     var server = mc.getSingleplayerServer();
                                     if (server != null && SimState.isGeneratedFloor() && !armed && !everStarted) {
                                         server.execute(() -> SimMort.readyAll(server));
+                                    }
                                     // The door the builder recorded, so this finds the right one rather than
                                     // the nearest one - the nearest is whichever he happens to be standing by.
                                     begin(mc, SimBuilder.entranceDoor());
@@ -117,6 +119,8 @@ public final class SimRun {
         lastSecondAnnounced = -1;
         SimClassKit.announce(client);
         // The count itself ("Starting in 5 seconds." ...) is Hypixel's, printed by tick() to the whole party.
+    }
+
     /**
      * Stops a countdown that has not reached the gate yet: someone un-readied in Mort's menu. Nothing is printed
      * beyond that player's "is no longer ready!", as on Hypixel.
@@ -124,6 +128,7 @@ public final class SimRun {
     public static void cancel() {
         if (!armed || running || everStarted) {
             return;
+        }
         armed = false;
         ticksLeft = 0;
         lastSecondAnnounced = -1;
@@ -146,12 +151,17 @@ public final class SimRun {
      * server: the mod's run-start detection reads system chat, so these have to arrive as the real ones do.
      */
     private static void broadcast(Minecraft client, net.minecraft.network.chat.Component line) {
+        var server = client.getSingleplayerServer();
         if (server == null) {
             return;
+        }
         server.execute(() -> {
             for (net.minecraft.server.level.ServerPlayer p : server.getPlayerList().getPlayers()) {
                 p.sendSystemMessage(line);
+            }
         });
+    }
+
     /** "[NPC] Mort: ...", coloured as Hypixel's NPC lines are. */
     private static net.minecraft.network.chat.Component mort(String text) {
         return net.minecraft.network.chat.Component.literal("[NPC] ")
@@ -160,6 +170,8 @@ public final class SimRun {
                         .withStyle(net.minecraft.ChatFormatting.AQUA))
                 .append(net.minecraft.network.chat.Component.literal(": " + text)
                         .withStyle(net.minecraft.ChatFormatting.WHITE));
+    }
+
     /**
      * Stops the clock at the boss kill and keeps the time on show.
      *
@@ -169,8 +181,11 @@ public final class SimRun {
     public static void finish() {
         if (running) {
             finishedMs = System.currentTimeMillis() - startedAtMs;
+        }
         armed = false;
         running = false;
+    }
+
     /** The finished run's time, 0 until {@link #finish} stops a running clock. */
     private static long finishedMs;
 
@@ -222,7 +237,11 @@ public final class SimRun {
             // The gate, not just the one door that was registered. killer560 (2026-09-29): "Once the start
             // finishes it needs to remove the blocks for the gate. Those infested chizzledd blocks."
             SimDoors.openEntranceGate(client, entranceDoor);
-            ModChat.send("Sim", ModChat.text("GO"));
+            // Everyone through the gate at full health and mana, in whatever gear they started in.
+            var server = client.getSingleplayerServer();
+            if (server != null) {
+                server.execute(() -> SimParty.players(server).forEach(SimVitals::refill));
+            }
             // Mort's lines as the gate opens: the Score Calculator starts its run from the first, Skyblocker's
             // DungeonScore (DUNGEON_STARTED) from the second.
             broadcast(client, mort("Here, I found this map when I first entered the dungeon."));
