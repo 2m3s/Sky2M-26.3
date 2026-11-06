@@ -3461,7 +3461,7 @@ public final class FeatureConfigs {
         public boolean princeMessage = false;
 
         @Expose
-        @ConfigOption(name = "Bat Message", desc = "Say \"Bat dead!\" in party chat on the first bonus score bat of the run (\"A Bat has been slain. +1 Bonus Score\"), unless a teammate already said it.")
+        @ConfigOption(name = "Bat Message", desc = "Say \"Bat dead!\" in party chat for each bat you kill: on Hypixel's \"A Bat has been slain. +1 Bonus Score\", or when a bat dies near you just after you use a Wither blade.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1804)
         public boolean batMessage = false;

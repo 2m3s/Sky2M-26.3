@@ -152,6 +152,9 @@ public final class ScoreCalculator {
     public static boolean princeKilled() { return princeKilled || DungeonScore.wasPrinceKilled() || teammateSaw(com.epic60869.sky2m.features.dungeons.party.PartyDungeonState.Flag.PRINCE_KILLED); }
 
     public static int bats() { return batsKilled; }
+    /** A Bat you killed with no line from Hypixel ({@link WitherBladeBats}). */
+    public static void countBat() { batsKilled++; }
+
     /**
      * Whether a chat line is a Bat kill to count. Your own party line is skipped: Hypixel's line already counted that
      * kill. Public for the game test.
