@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Predict Unopened Rooms (Dungeons > Dungeon Map, on by default): a faint tint on grey rooms that are probably a puzzle, trap or miniboss, in every map style. It's only a guess from what Hypixel's map shows, so a guessed room can turn out to be a normal one.
 - Leap Menu Tint Dead Players and Show Last Door Opener (Dungeons > Leap Menu, both on by default), like NoammAddons': dead teammates' boxes turn dark red, and the menu says who opened the last door, until the boss.
 - Hide Claimed Runs (Dungeons > Dungeon Extras > Croesus, on by default), like Odin's: runs you've already opened a chest of disappear from Croesus's list. Keep Runs With A Key Left (off by default) keeps the ones you could still use a Dungeon Chest Key on.
 - Secrets For S+ (Dungeons > Score > Score Display, on by default): the Score Display HUD shows secrets found against how many are enough for 300 score if the rest of the run is perfect, counting your bonus score and deaths.

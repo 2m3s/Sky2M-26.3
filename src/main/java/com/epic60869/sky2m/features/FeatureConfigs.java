@@ -2708,6 +2708,11 @@ public final class FeatureConfigs {
         public boolean roomLabels = true;
 
         @Expose
+        @ConfigOption(name = "Predict Unopened Rooms", desc = "A faint tint on grey rooms that are probably a puzzle, trap or miniboss: purple for puzzle, orange for trap, yellow for miniboss, side by side when it could be more than one. It's only a guess from what Hypixel's own map shows (one door and no room to be any bigger), so a guessed room can turn out to be a normal one. Works in every map style.")
+        @ConfigEditorBoolean
+        public boolean predictRooms = true;
+
+        @Expose
         @ConfigOption(name = "Background", desc = "Draw a blurred background behind the dungeon map.")
         @ConfigEditorBoolean
         public boolean background = false;

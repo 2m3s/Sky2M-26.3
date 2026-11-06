@@ -25,9 +25,19 @@ public record MapView(
         List<Room> rooms,
         List<Door> doors,
         List<Head> heads,
-        RunInfo run) {
+        RunInfo run,
+        List<Guess> guesses) { // unopened rooms' likely types (Predict Unopened Rooms), never confirmed; see RoomPrediction
 
     public static final int MAP_SIZE = 128;
+
+    /** A view with no guesses. */
+    public MapView(boolean valid, boolean simulated, boolean inBoss, String floor, int cols, int rows, int roomSize, int gap,
+                   int startX, int startY, List<Room> rooms, List<Door> doors, List<Head> heads, RunInfo run) {
+        this(valid, simulated, inBoss, floor, cols, rows, roomSize, gap, startX, startY, rooms, doors, heads, run, List.of());
+    }
+
+    /** What an unopened room in slot {@code (col, row)} might be: one or more of {@code types}, a guess from the map alone. */
+    public record Guess(int col, int row, List<RoomType> types) {}
 
     public enum RoomType { ENTRANCE, NORMAL, PUZZLE, TRAP, MINIBOSS, FAIRY, BLOOD, RARE, UNKNOWN }
 

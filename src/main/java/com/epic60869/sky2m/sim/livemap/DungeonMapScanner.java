@@ -326,7 +326,7 @@ final class DungeonMapScanner {
         return true;
     }
 
-    private static int floorNumber() {
+    static int floorNumber() {
         String floor = DungeonState.getFloor();
         if (floor == null || floor.isEmpty()) {
             return -1;

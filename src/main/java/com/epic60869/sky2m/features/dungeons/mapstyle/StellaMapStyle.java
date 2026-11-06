@@ -116,6 +116,7 @@ public final class StellaMapStyle implements MapStyleRenderer {
         g.pose().scale(scale, scale);
         drawRooms(g, view);
         drawDoors(g, view);
+        drawGuesses(g, view);
         drawCheckmarks(g, font, view);
         if (cfg.showRoomLabels) drawLabels(g, font, view);
         if (!view.inBoss()) drawHeads(g, view, cfg.fancyMap, cfg.showSelfHead);
@@ -195,6 +196,17 @@ public final class StellaMapStyle implements MapStyleRenderer {
             int cz = d.gz() / 2;
             if (vertical) rect(g, cx * SPACING + 6, cz * SPACING + 18, 6, 4, color);
             else rect(g, cx * SPACING + 18, cz * SPACING + 6, 4, 6, color);
+        }
+    }
+
+    /** Predict Unopened Rooms, drawn under the room's own "?". */
+    private static void drawGuesses(GuiGraphicsExtractor g, MapView v) {
+        for (MapView.Guess guess : v.guesses()) {
+            RoomPrediction.draw(g, guess, guess.col() * SPACING, guess.row() * SPACING, ROOM, type -> switch (type) {
+                case TRAP -> TRAP;
+                case MINIBOSS -> MINIBOSS;
+                default -> PUZZLE;
+            });
         }
     }
 

@@ -57,6 +57,17 @@ public final class SkyblockerMapStyle implements MapStyleRenderer {
         if (cfg.fancyMap) drawHeads(g, view, cfg.showSelfHead);
     }
 
+    /** Predict Unopened Rooms, over the real map item's own grey tiles (and its question marks, which show through the tint). */
+    static void drawGuesses(GuiGraphicsExtractor g, MapView v) {
+        for (MapView.Guess guess : v.guesses()) {
+            RoomPrediction.draw(g, guess, v.cellX(guess.col() * 2), v.cellY(guess.row() * 2), v.roomSize(), type -> palette(switch (type) {
+                case TRAP -> 62;
+                case MINIBOSS -> 74;
+                default -> 66;
+            }));
+        }
+    }
+
     /** A vanilla map colour id as ARGB. */
     private static int palette(int packedId) {
         int abgr = MapColor.getColorFromPackedId(packedId);
