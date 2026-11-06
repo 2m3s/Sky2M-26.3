@@ -352,7 +352,8 @@ public final class Sky2MMod implements ClientModInitializer {
                 Minecraft.getInstance().execute(this::enterSky2MChat);
                 return false;
             }
-            if (lower.startsWith("chat ") && Sky2MGlobalChat.isInSky2MChannel()) {
+            // Another /chat channel, or a bare /r (into the private conversation), leaves it; the command still goes on.
+            if (Sky2MGlobalChat.leavesSky2MChannel(lower) && Sky2MGlobalChat.isInSky2MChannel()) {
                 Sky2MGlobalChat.leaveSky2MChannel();
             }
             return true;
