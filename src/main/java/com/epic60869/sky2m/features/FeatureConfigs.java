@@ -3012,6 +3012,12 @@ public final class FeatureConfigs {
         @ConfigAccordionId(id = 1506)
         public boolean roomLiveSplits = true;
 
+        @Expose
+        @ConfigOption(name = "Room Ghost", desc = "In a room you have a best for, draw the path you walked in that best as a thin line. Walls hide it. The path covers the time the best counts, first secret to last, and is saved with the best, so it comes with the next best you set in each room.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1506)
+        public boolean roomGhost = true;
+
     }
 
     public enum RoomClearMode {

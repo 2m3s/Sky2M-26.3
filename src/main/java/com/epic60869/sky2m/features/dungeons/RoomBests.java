@@ -8,6 +8,7 @@ import com.epic60869.sky2m.features.core.Sky2MWorldRender;
 import com.epic60869.sky2m.features.dungeons.mapstyle.MapView;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.Room;
+import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;
 import com.epic60869.sky2m.sim.livemap.MapViewSource;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -17,6 +18,7 @@ import com.google.gson.JsonParser;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
@@ -24,6 +26,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.world.phys.Vec3;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -51,8 +54,14 @@ import java.util.WeakHashMap;
  * Dungeon Sim runs don't count.
  */
 public final class RoomBests {
-    /** One room's best. {@code splits} are ms from the first secret to each secret, so the first is 0. */
-    public record Best(long ms, int secrets, long at, List<Long> splits) {}
+    /**
+     * One room's best. {@code splits} are ms from the first secret to each secret, so the first is 0. {@code path} is where
+     * you walked, relative to the room so it fits any rotation; empty for a best saved before paths were.
+     */
+    public record Best(long ms, int secrets, long at, List<Long> splits, List<Vec3> path) {}
+
+    /** A counted room time this run, with the room's best before it (null without one). */
+    public record RunRoom(String name, long ms, Long previous) {}
 
     /** What a timed room came to. {@code previous} is the best before it, null when there wasn't one. */
     public record Outcome(long ms, Long previous, boolean counted, boolean newBest, List<Long> splits) {}
@@ -108,9 +117,14 @@ public final class RoomBests {
 
         /** Keeps the time when it's the room's first or beats its best. Returns whether it did. */
         public boolean record(String room, long ms, int secrets, long at, List<Long> splits) {
+            return record(room, ms, secrets, at, splits, List.of());
+        }
+
+        /** The same with the path walked. */
+        public boolean record(String room, long ms, int secrets, long at, List<Long> splits, List<Vec3> path) {
             Best best = rooms.get(room);
             if (best != null && best.ms() <= ms) return false;
-            rooms.put(room, new Best(ms, secrets, at, List.copyOf(splits)));
+            rooms.put(room, new Best(ms, secrets, at, List.copyOf(splits), List.copyOf(path)));
             return true;
         }
 
@@ -126,6 +140,7 @@ public final class RoomBests {
                 JsonArray splits = new JsonArray();
                 best.splits().forEach(splits::add);
                 room.add("splits", splits);
+                if (!best.path().isEmpty()) room.addProperty("path", encodePath(best.path()));
                 list.add(name, room);
             });
             root.add("rooms", list);
@@ -162,7 +177,8 @@ public final class RoomBests {
                     long ms = room.get("ms").getAsLong();
                     if (ms < 0) continue;
                     store.rooms.put(entry.getKey(), new Best(ms, room.has("secrets") ? room.get("secrets").getAsInt() : 0,
-                        room.has("at") ? room.get("at").getAsLong() : 0, List.copyOf(splits)));
+                        room.has("at") ? room.get("at").getAsLong() : 0, List.copyOf(splits),
+                        room.has("path") ? decodePath(room.get("path").getAsString()) : List.of()));
                 } catch (RuntimeException ignored) {
                     // Only this room is lost.
                 }
@@ -178,6 +194,9 @@ public final class RoomBests {
         final int foundBefore;
         final List<Long> splits = new ArrayList<>();
         final Set<Integer> seen = new HashSet<>();
+        final List<Vec3> path = new ArrayList<>();
+        /** Every secret is in: the time has stopped, so the path should too. */
+        boolean pathDone;
         boolean stacked;
 
         Attempt(long startedAt, int foundBefore) {
@@ -186,9 +205,28 @@ public final class RoomBests {
         }
     }
 
+    private static final int PRACTICE_LISTED = 10;
+    /** A few samples a second is plenty for a line, and a long room's path is thinned to stay under the cap. */
+    private static final int PATH_SAMPLE_TICKS = 5;
+    private static final int PATH_MAX_POINTS = 200;
+    private static final double PATH_MIN_STEP = 0.25;
+    private static final double GHOST_LIFT = 0.1;
+    private static final float[] GHOST_COLOUR = {0.4f, 0.8f, 1f};
+    private static final List<RunRoom> RUN_ROOMS = new ArrayList<>();
     private static final Map<Room, Attempt> ATTEMPTS = new WeakHashMap<>();
     private static Store store = new Store();
     private static Path file;
+    /** Live Room Splits: the room being timed, and what the HUD says about it. */
+    private static Room liveRoom;
+    private static String liveName = "";
+    private static int liveFound, liveTotal;
+    private static Long liveDelta;
+    private static Long liveBest;
+    /** The ghost's world points, worked out once for the room and best it was drawn for. */
+    private static Room ghostRoom;
+    private static Best ghostBest;
+    private static Vec3[] ghostPoints;
+    private static int ticks;
 
     private RoomBests() {}
 
@@ -360,6 +398,17 @@ public final class RoomBests {
             while (attempt.splits.size() < found - attempt.foundBefore) attempt.splits.add(now);
         }
         attempt.stacked |= !aloneInRoom();
+        samplePath(room, attempt);
+        int max = room.getMaxSecretCount();
+        if (max > 0 && attempt.foundBefore + attempt.splits.size() >= max) attempt.pathDone = true;
+        if (room.getName() == null) return;
+        Best best = store.get(DungeonRoutes.normalize(room.getName()));
+        liveRoom = room;
+        liveName = RoomClears.displayName(room);
+        liveFound = attempt.foundBefore + attempt.splits.size();
+        liveTotal = room.getMaxSecretCount();
+        liveDelta = best == null ? null : splitDelta(best.splits(), attempt.splits.size() - 1, now);
+        liveBest = best == null ? null : best.ms();
     }
 
     /** When the last secret came up, in ms from the first, if all of {@code room}'s came up while you were in it, else null. */
