@@ -170,8 +170,14 @@ public final class Sky2MHuds {
         }
     }
 
-    /** The placement in use where you are: this area's layout when it has one for this HUD, else the default layout's. */
+    /**
+     * The placement in use where you are: this area's layout when it has one for this HUD, else the default layout's.
+     * Asking for it counts as the HUD being on screen ({@link #drawnRecently}): HUDs that draw themselves in a menu (the
+     * Storage Value, Profit Tracker, Composter, Anita shop...) never go through {@link #renderAll}, and read this just
+     * before drawing. Not while /s2 gui or the HUD overview is open, which read every HUD's.
+     */
     public static Placement placement(String id) {
+        noteDrawn(id);
         Placement base = PLACEMENTS.computeIfAbsent(id, k -> new Placement());
         String group = layoutGroup();
         return group.equals(LAYOUT_DEFAULT) ? base : resolveLayout(LAYOUTS.get(group), id, base);
@@ -273,6 +279,13 @@ public final class Sky2MHuds {
      */
     public static long lastLive() {
         return lastLiveMs == 0L ? System.currentTimeMillis() : lastLiveMs;
+    }
+
+    private static void noteDrawn(String id) {
+        if (!ELEMENTS.containsKey(id)) return;
+        var screen = Minecraft.getInstance().gui.screen();
+        if (screen instanceof com.epic60869.sky2m.gui.Sky2MHudEditorScreen || screen instanceof Sky2MHudOverviewScreen) return;
+        LAST_DRAWN.put(id, System.currentTimeMillis());
     }
 
     /** Whether the HUD drew within 10 seconds of {@code asOfMs}. */

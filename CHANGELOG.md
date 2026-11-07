@@ -191,6 +191,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Fix HUDs drawn in a menu (Storage Value, Profit Tracker, Composter, Anita shop and others) missing from /s2 gui's On screen list: any HUD on your screen when you press the Edit HUDs key, or open /s2 gui, is there to move.
 - Fix Bazaar Order Colours not colouring enchanted book orders (like Legion I), and orders seen before the bazaar prices loaded staying uncoloured until the menu was reopened.
 - Fix "Team secrets last run (updated)" showing during your next run: it now waits until you leave the dungeon, or at the end of that run it's one "Last run, updated" line under the new list, not a second list. Only numbers that went up are said again, not a "?" turning into 0.
 - Fix Slug Boots being counted as a Slug Pet on the RNG HUD. They now show like any other drop, when worth 5M or more.
