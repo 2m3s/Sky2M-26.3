@@ -117,6 +117,8 @@ public final class BazaarNotifications {
     public static void renderSlot(net.minecraft.client.gui.GuiGraphicsExtractor g, net.minecraft.world.inventory.Slot slot) {
         if (!slot.hasItem() || slot.container instanceof Inventory || !coloursEnabled()) return;
         if (!(Minecraft.getInstance().gui.screen() instanceof ContainerScreen screen) || !isOrdersScreen(screen)) return;
+        // Until the bazaar prices have loaded an enchantment's order can't be told apart, and the answer is kept for the menu.
+        if (com.epic60869.sky2m.price.Sky2MPriceTooltip.bazaarIds().isEmpty()) return;
         ItemStack stack = slot.getItem();
         ParsedSlot parsed = PARSED.computeIfAbsent(stack, s -> new ParsedSlot(parseOrderStack(s), isFull(s)));
         if (parsed.order == null || parsed.full) return;
@@ -240,11 +242,44 @@ public final class BazaarNotifications {
 
     private static WatchedOrder watchedOrder(String name, int amount, boolean buyOrder, double unitPrice) {
         if (name == null || name.isBlank() || amount <= 0 || unitPrice <= 0) return null;
-        String id = Portfolio.bazaarProductId(name);
+        String id = enchantmentId(name, com.epic60869.sky2m.price.Sky2MPriceTooltip.bazaarIds());
+        if (id == null) id = Portfolio.bazaarProductId(name);
         if (id == null) id = RepoItems.idByName(name);
         if (id == null || id.isBlank()) return null;
         String key = (buyOrder ? "buy:" : "sell:") + normalize(name) + ":" + amount;
         return new WatchedOrder(key, name, id, amount, buyOrder, unitPrice);
+    }
+
+    private static final Pattern ENCHANTMENT = Pattern.compile("^(?<name>.+?) (?<level>[IVXL]+|\\d+)$");
+
+    /**
+     * An enchanted book's bazaar id from its order's name: "Legion I" is ENCHANTMENT_ULTIMATE_LEGION_1, "Sharpness VI"
+     * ENCHANTMENT_SHARPNESS_6, "Turbo-Wheat V" ENCHANTMENT_TURBO_WHEAT_5. Null when no bazaar product has the name, as an
+     * item's name ("Shard of the Shredded I"...) can end the same way. Public for the game test.
+     */
+    public static String enchantmentId(String name, java.util.Set<String> bazaarIds) {
+        Matcher m = ENCHANTMENT.matcher(clean(name));
+        if (!m.matches()) return null;
+        String level = m.group("level");
+        int number = level.chars().allMatch(Character::isDigit) ? Integer.parseInt(level) : roman(level);
+        if (number <= 0) return null;
+        String base = m.group("name").toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_').replaceAll("[^A-Z0-9_]", "");
+        for (String id : List.of("ENCHANTMENT_ULTIMATE_" + base + "_" + number, "ENCHANTMENT_" + base + "_" + number)) {
+            if (bazaarIds.contains(id)) return id;
+        }
+        return null;
+    }
+
+    private static int roman(String text) {
+        String digits = "IVXL";
+        int[] values = {1, 5, 10, 50};
+        int total = 0;
+        for (int i = 0; i < text.length(); i++) {
+            int v = values[digits.indexOf(text.charAt(i))];
+            int next = i + 1 < text.length() ? values[digits.indexOf(text.charAt(i + 1))] : 0;
+            total += v < next ? -v : v;
+        }
+        return total;
     }
 
     private static void remember(WatchedOrder newOrder) {
