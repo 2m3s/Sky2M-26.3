@@ -13,6 +13,7 @@ import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 
 import java.util.ArrayList;
@@ -20,7 +21,8 @@ import java.util.List;
 
 /**
  * Copy Chat, from NoFrills' Chat Tweaks: with chat open, press the Copy Message Key (any key or mouse button, right
- * click by default) over a message to copy the whole message. A short preview of what was copied shows in chat. Sky2M rank prefixes like "[OWNER] " are left out of what's copied.
+ * click by default) over a message to copy the whole message, or with Left Ctrl held, its colours too ({@link ChatColourCodes}).
+ * A short preview of what was copied shows in chat. Sky2M rank prefixes like "[OWNER] " are left out of what's copied.
  */
 public final class CopyChat {
     private CopyChat() {}
@@ -50,16 +52,45 @@ public final class CopyChat {
         });
     }
 
-    /** Copies the chat message under the mouse; false if there's none there. */
+    /** Copies the chat message under the mouse, with its colours as "&c" codes if Left Ctrl is held; false if there's none there. */
     private static boolean copy(double mouseX, double mouseY) {
-        String text = hovered(mouseX, mouseY);
-        if (text.isEmpty()) return false;
-        text = stripRanks(text);
-        Sky2MConfig.CopyChat c = config();
-        if (c != null && c.trim) text = text.trim();
+        List<FormattedCharSequence> lines = hovered(mouseX, mouseY);
+        if (lines.isEmpty()) return false;
         Minecraft mc = Minecraft.getInstance();
+        boolean colours = InputConstants.isKeyDown(InputConstants.KEY_LCONTROL);
+        StringBuilder chars = new StringBuilder();
+        List<Style> styles = new ArrayList<>();
+        for (FormattedCharSequence line : lines) {
+            line.accept((index, style, codePoint) -> {
+                int before = chars.length();
+                chars.appendCodePoint(codePoint);
+                for (int i = before; i < chars.length(); i++) styles.add(style);
+                return true;
+            });
+        }
+        // Sky2M rank prefixes ("[OWNER] ") aren't part of what the player wrote.
+        for (Sky2MStaff.Rank rank : Sky2MStaff.allRanks()) {
+            String prefix = "[" + rank.label() + "] ";
+            for (int at = chars.indexOf(prefix); at >= 0; at = chars.indexOf(prefix)) {
+                chars.delete(at, at + prefix.length());
+                styles.subList(at, at + prefix.length()).clear();
+            }
+        }
+        Sky2MConfig.CopyChat c = config();
+        if (c != null && c.trim) {
+            while (!chars.isEmpty() && Character.isWhitespace(chars.charAt(chars.length() - 1))) {
+                chars.deleteCharAt(chars.length() - 1);
+                styles.removeLast();
+            }
+            while (!chars.isEmpty() && Character.isWhitespace(chars.charAt(0))) {
+                chars.deleteCharAt(0);
+                styles.removeFirst();
+            }
+        }
+        String text = colours ? ChatColourCodes.encode(chars.toString(), styles) : chars.toString();
+        if (text.isEmpty()) return false;
         mc.keyboardHandler.setClipboard(text);
-        showPreview("Message copied", text);
+        showPreview(colours ? "Message copied with colours" : "Message copied", text);
         return true;
     }
 
@@ -83,14 +114,6 @@ public final class CopyChat {
         mc.gui.hud.getChat().addClientSystemMessage(message);
     }
 
-    /** Sky2M rank prefixes ("[OWNER] ") aren't part of what the player wrote. */
-    private static String stripRanks(String text) {
-        String out = text;
-        for (Sky2MStaff.Rank rank : Sky2MStaff.allRanks()) out = out.replace("[" + rank.label() + "] ", "");
-        return out;
-    }
-
-    /** The plain text of the chat message under the mouse, like NoFrills' getHoveredMsg. */
     /** A key bound to a mouse button: MoulConfig uses 0-9 for mouse buttons (older versions -100 + button). */
     private static boolean isMouseBind(int bind, int button) {
         return com.epic60869.sky2m.custom.util.Input.isMouseBind(bind, button);
@@ -111,17 +134,17 @@ public final class CopyChat {
     }
 
     /**
-     * The plain text of the chat message under the mouse. Uses the lines exactly as vanilla drew them this frame, so
-     * the right line is found whatever the chat scale, line spacing or position (the old maths could land a couple of
-     * lines too high).
+     * The lines of the chat message under the mouse, empty if there's none. Uses the lines exactly as vanilla drew them this
+     * frame, so the right line is found whatever the chat scale, line spacing or position (the old maths could land a couple
+     * of lines too high).
      */
-    private static String hovered(double mouseX, double mouseY) {
+    private static List<FormattedCharSequence> hovered(double mouseX, double mouseY) {
         Minecraft mc = Minecraft.getInstance();
         Sky2MChatComponentAccessor access = (Sky2MChatComponentAccessor) mc.gui.hud.getChat();
         List<GuiMessage.Line> all = access.sky2m$trimmedMessages();
         double chatScale = mc.options.chatScale().get();
         double maxX = ChatComponent.getWidth(mc.options.chatWidth().get()) * chatScale + 8;
-        if (mouseX < 0 || mouseX > maxX) return "";
+        if (mouseX < 0 || mouseX > maxX) return List.of();
         DrawnLine found = null;
         float gap = DRAWN.size() > 1 ? Math.abs(DRAWN.get(0).top() - DRAWN.get(1).top()) : 9;
         for (DrawnLine line : DRAWN) {
@@ -133,7 +156,7 @@ public final class CopyChat {
                 break;
             }
         }
-        if (found == null) return "";
+        if (found == null) return List.of();
         int index = -1;
         for (int k = 0; k < all.size(); k++) {
             if (all.get(k).content() == found.content()) {
@@ -141,10 +164,10 @@ public final class CopyChat {
                 break;
             }
         }
-        if (index < 0) return plain(found.content());
-        StringBuilder out = new StringBuilder();
-        for (GuiMessage.Line line : fullMessage(all, index)) out.append(plain(line.content()));
-        return out.toString();
+        if (index < 0) return List.of(found.content());
+        List<FormattedCharSequence> out = new ArrayList<>();
+        for (GuiMessage.Line line : fullMessage(all, index)) out.add(line.content());
+        return out;
     }
 
     private static List<GuiMessage.Line> fullMessage(List<GuiMessage.Line> visible, int index) {
@@ -160,14 +183,5 @@ public final class CopyChat {
             if (line.endOfEntry()) break;
         }
         return lines;
-    }
-
-    private static String plain(FormattedCharSequence sequence) {
-        StringBuilder out = new StringBuilder();
-        sequence.accept((index, style, codePoint) -> {
-            out.appendCodePoint(codePoint);
-            return true;
-        });
-        return out.toString();
     }
 }

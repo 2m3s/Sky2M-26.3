@@ -742,7 +742,9 @@ public final class Sky2MGlobalChat {
                 } catch (Exception ignored) {
                     shownName = Sky2MNick.displayName(displayName);
                 }
-                Component messageComponent = com.epic60869.sky2m.features.misc.items.ItemEmojis.replace(Sky2MNopoFeatures.replaceChatEmojis(Component.literal(message)));
+                // "&c" colours (Copy Chat with Left Ctrl) are only read from messages sent from the mod.
+                Component typedMessage = "discord".equalsIgnoreCase(source) ? Component.literal(message) : com.epic60869.sky2m.features.misc.chat.ChatColourCodes.parse(message);
+                Component messageComponent = com.epic60869.sky2m.features.misc.items.ItemEmojis.replace(Sky2MNopoFeatures.replaceChatEmojis(typedMessage));
                 // [S2M] in dark green, like Hypixel's "Guild >"; messages from Discord add a blue [Discord] after it.
                 long messageId = packet.has("id") && !packet.get("id").isJsonNull() ? packet.get("id").getAsLong() : 0;
                 MutableComponent line = Component.empty()

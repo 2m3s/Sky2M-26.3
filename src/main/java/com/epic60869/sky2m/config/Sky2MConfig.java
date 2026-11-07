@@ -1729,7 +1729,7 @@ public final class Sky2MConfig extends Config {
 
     public static final class CopyChat {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Copy chat messages: with chat open, press the Copy Message Key over a message to copy it. Sky2M rank prefixes aren't copied.")
+        @ConfigOption(name = "Enabled", desc = "Copy chat messages: with chat open, press the Copy Message Key over a message to copy it. Hold Left Ctrl to copy its colours too, as &c codes that show in /s2c. Sky2M rank prefixes aren't copied.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
