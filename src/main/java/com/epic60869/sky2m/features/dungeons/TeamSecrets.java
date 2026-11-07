@@ -52,6 +52,12 @@ public final class TeamSecrets {
         boolean done;
         /** Its numbers changed during another run, so they wait until that run is over. */
         boolean unsaid;
+        /** The numbers as they were last said in chat. */
+        Map<String, Long> said = new LinkedHashMap<>();
+        /** The next run has ended: anything this one still finds isn't said any more (it would be a second list). */
+        boolean closed;
+        /** The last run's gains that waited for this one, said as one line under its list. */
+        Component carried;
 
         Finished(Map<String, Long> start, Map<String, DungeonClass> classes, Map<String, RoomClears.Counts> rooms, Map<String, Integer> deaths, int run) {
             this.start = start;
@@ -114,9 +120,32 @@ public final class TeamSecrets {
         return updateRun != currentRun && inDungeon && !currentEnded;
     }
 
+    /** Says a held update, unless all it did was turn "?" into 0 (Hypixel's API not caught up yet). */
     private static void sayUnsaid(Finished run) {
         run.unsaid = false;
-        show(run, "Team secrets last run (updated):");
+        if (!gains(run.said, run.found).isEmpty()) show(run, "Team secrets last run (updated):");
+    }
+
+    /** Who has more secrets than when they were last said, and above 0. Public for the game test. */
+    public static List<String> gains(Map<String, Long> said, Map<String, Long> found) {
+        return found.entrySet().stream().filter(e -> e.getValue() > 0 && e.getValue() > said.getOrDefault(e.getKey(), -1L))
+            .map(Map.Entry::getKey).toList();
+    }
+
+    /** " Last run, updated: Name: 10, Name: 7", or null with no gains. */
+    private static Component gainsLine(Finished run) {
+        List<String> names = gains(run.said, run.found);
+        if (names.isEmpty()) return null;
+        MutableComponent out = Component.literal(" Last run, updated: ").withStyle(ChatFormatting.GRAY);
+        for (int i = 0; i < names.size(); i++) {
+            String name = names.get(i);
+            Integer colour = PlayerNameColour.of(name);
+            if (i > 0) out.append(Component.literal(", ").withStyle(ChatFormatting.GRAY));
+            out.append(colour == null ? Component.literal(name).withStyle(ChatFormatting.WHITE) : Component.literal(name).withColor(colour))
+                .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(String.valueOf(run.found.get(name))).withStyle(ChatFormatting.AQUA));
+        }
+        return out;
     }
 
     private static void finishUp(Finished run) {
@@ -174,7 +203,10 @@ public final class TeamSecrets {
         if (run.found.isEmpty()) return;
         ended = true;
         if (finished != null) {
-            if (finished.unsaid) sayUnsaid(finished);
+            // One message at the end of a run: the last run's held gains go on a line under this run's list.
+            if (finished.unsaid) run.carried = gainsLine(finished);
+            finished.unsaid = false;
+            finished.closed = true;
             recordHistory(finished);
         }
         finished = run;
@@ -201,6 +233,7 @@ public final class TeamSecrets {
                 // The next run started from a total that was behind: this much of it is this run's, not that one's.
                 if (run.run != runId) before.computeIfPresent(e.getKey(), (name, from) -> from >= 0 && from < total ? total : from);
             }
+            if (run.closed) return;
             if (first || raised) {
                 if (holdUpdate(run.run, runId, Sky2MLocation.inDungeon(), ended)) run.unsaid = true;
                 else if (first) show(run, "Team secrets this run:");
@@ -235,6 +268,11 @@ public final class TeamSecrets {
             MutableComponent line = line(e.getKey(), run.classes.get(e.getKey()), e.getValue(), PlayerNameColour.of(e.getKey()));
             if (run.rooms != null) line.append(roomsPart(run.rooms.getOrDefault(e.getKey().toLowerCase(java.util.Locale.ROOT), new RoomClears.Counts(List.of(), List.of()))));
             mc.gui.hud.getChat().addClientSystemMessage(line);
+        }
+        run.said = new LinkedHashMap<>(run.found);
+        if (run.carried != null) {
+            mc.gui.hud.getChat().addClientSystemMessage(run.carried);
+            run.carried = null;
         }
     }
 
