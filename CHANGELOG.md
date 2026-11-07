@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Timer (`/s2 timer`): a countdown or stopwatch with its own GUI. Type a time or press a preset and Start. A HUD shows it only while it's on, and a countdown ends with a title, a ding and a chat line. Pause and Stop are in the GUI, and you can move the HUD in `/s2 gui`. A running timer isn't kept when the game closes.
 - Dungeon profit in `/s2 session`: a Dungeons tab with each day's chests from `/s2 tracker` (loot worth less chest costs, first chest, run time, profit per hour and the loot), also counted in the day's total, the All Days chart, Copy and the recaps. Needs Drop Tracker and Chest History on; run time comes from Run History. `/s2 tracker reset` also clears it.
 - Voice Callouts (General, off by default): speaks Sky2M's title alerts aloud with your computer's text to speech, at most one every 3 seconds. Voice Callout Words limits it to alerts with those words. The game's Narrator setting isn't touched and chat isn't read out.
 - `/s2 perf start [seconds]` (10 by default, `/s2 perf stop` ends it early): measures for that long, then says in chat which features cost the most, in ms per frame or tick, with your average FPS. Includes the tick features that have a safety guard; `/s2 perf` still opens the live table.
