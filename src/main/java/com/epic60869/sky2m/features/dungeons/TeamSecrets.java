@@ -48,6 +48,10 @@ public final class TeamSecrets {
         int laterLooks;
         long nextAt;
         boolean loading;
+        /** No more looks to come. */
+        boolean done;
+        /** Its numbers changed during another run, so they wait until that run is over. */
+        boolean unsaid;
 
         Finished(Map<String, Long> start, Map<String, DungeonClass> classes, Map<String, RoomClears.Counts> rooms, Map<String, Integer> deaths, int run) {
             this.start = start;
@@ -97,8 +101,27 @@ public final class TeamSecrets {
                 showAt = 0;
                 runEnded();
             }
-            if (finished != null && !finished.loading && finished.nextAt != 0 && now >= finished.nextAt) look(finished);
+            if (finished != null && !finished.loading && !finished.done && finished.nextAt != 0 && now >= finished.nextAt) look(finished);
+            if (finished != null && finished.unsaid && !holdUpdate(finished.run, runId, Sky2MLocation.inDungeon(), ended)) {
+                sayUnsaid(finished);
+                if (finished.done) finishUp(finished);
+            }
         });
+    }
+
+    /** An update waits while a different run is going on: not after that run has ended, or outside a dungeon. Public for the game test. */
+    public static boolean holdUpdate(int updateRun, int currentRun, boolean inDungeon, boolean currentEnded) {
+        return updateRun != currentRun && inDungeon && !currentEnded;
+    }
+
+    private static void sayUnsaid(Finished run) {
+        run.unsaid = false;
+        show(run, "Team secrets last run (updated):");
+    }
+
+    private static void finishUp(Finished run) {
+        recordHistory(run);
+        if (finished == run) finished = null;
     }
 
     private static void reset() {
@@ -150,7 +173,10 @@ public final class TeamSecrets {
         for (String name : classes.keySet()) run.found.put(name, -1L);
         if (run.found.isEmpty()) return;
         ended = true;
-        if (finished != null) recordHistory(finished);
+        if (finished != null) {
+            if (finished.unsaid) sayUnsaid(finished);
+            recordHistory(finished);
+        }
         finished = run;
         look(run);
     }
@@ -175,15 +201,19 @@ public final class TeamSecrets {
                 // The next run started from a total that was behind: this much of it is this run's, not that one's.
                 if (run.run != runId) before.computeIfPresent(e.getKey(), (name, from) -> from >= 0 && from < total ? total : from);
             }
-            if (first) show(run, "Team secrets this run:");
-            else if (raised) show(run, run.run == runId ? "Team secrets (updated):" : "Team secrets last run (updated):");
+            if (first || raised) {
+                if (holdUpdate(run.run, runId, Sky2MLocation.inDungeon(), ended)) run.unsaid = true;
+                else if (first) show(run, "Team secrets this run:");
+                else show(run, run.run == runId ? "Team secrets (updated):" : "Team secrets last run (updated):");
+            }
             boolean more = run.laterLooks < LATER_LOOKS_MS.length && stillToLook(run.found).stream().anyMatch(run.start::containsKey);
             if (more) {
                 run.nextAt = System.currentTimeMillis() + LATER_LOOKS_MS[run.laterLooks] - (run.laterLooks == 0 ? 0 : LATER_LOOKS_MS[run.laterLooks - 1]);
                 run.laterLooks++;
-            } else if (finished == run) {
-                recordHistory(run);
-                finished = null;
+            } else {
+                run.done = true;
+                // One that's still waiting to be said finishes when it has been.
+                if (finished == run && !run.unsaid) finishUp(run);
             }
         }));
     }
