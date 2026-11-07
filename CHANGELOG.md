@@ -155,6 +155,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - "Sky Mall & Lottery: Everywhere" (Chat > Spam Filters): hide or move the Sky Mall and Lottery buff messages on the mining and foraging islands too.
 
 ### Changed
+- Dungeon Sim Goldor walks down the middle of the terminal corridors at one height and waits at closed gates, instead of flying straight at the nearest player.
 - Say the time in chat every time you finish a puzzle with Puzzle Bests on, not only for a new best, including when you leave before the map goes green or aren't alone (those don't count as a best).
 - Time rooms with one secret, from walking in to that secret, in Room Secret Time and Room Personal Bests.
 

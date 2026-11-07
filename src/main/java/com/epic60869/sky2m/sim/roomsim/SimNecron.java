@@ -364,6 +364,18 @@ final class SimNecron extends SimBoss.Fight {
     private static final double GOLDOR_FRENZY_RADIUS = 5;
     /** Goldor's walk through the sections, and how much a hit slows him and for how long (APPROXIMATE numbers). */
     private static final double GOLDOR_SPEED = 0.12, GOLDOR_SLOWED = 0.06;
+    /**
+     * Goldor's walk at one height, down the middle of each section's corridor, {x, z, gate}: he waits at a point with a
+     * gate until that gate is open. Worked out from the arena (the middle of the gates in {@link #GATES}, stopping just
+     * short of them), since the M7 POV videos never show his route (APPROXIMATE).
+     */
+    private static final double[][] GOLDOR_ROUTE = {
+        {100.5, 120, 1}, {100.5, 132, 0},
+        {20, 132, 2}, {8, 132, 0},
+        {8, 52, 3}, {8, 40, 0},
+        {54.5, 40, 0},
+    };
+    private static final double GOLDOR_ROUTE_Y = 117;
     private static final int GOLDOR_SLOW_TICKS = 20;
     /** How often he says his hit or "passing a gate early" lines at most (APPROXIMATE). */
     private static final int GOLDOR_LINE_GAP = 100;
@@ -486,6 +498,9 @@ final class SimNecron extends SimBoss.Fight {
     private int nextFrenzyPulse;
     /** "Damaging him slows him down" (Goldor's page): until this tick he walks at {@link #GOLDOR_SLOWED}. */
     private int goldorSlowUntil = -1;
+    /** The route point Goldor is walking to, and how many gates have opened. */
+    private int goldorLeg;
+    private int goldorGatesOpen;
     private int goldorHitLineAt = -1000;
     private int goldorGateLineAt = -1000;
     /** When the last gate went down (the game test reads it), or -1. */
@@ -1534,7 +1549,9 @@ final class SimNecron extends SimBoss.Fight {
         toPhase(Phase.GOLDOR);
         moveAll(level, P3_LANDING, 0f);
         newPool("Goldor", GOLDOR_HEALTH);
-        body = spawnWither(level, new Vec3(100.5, 117, 70.5));
+        body = spawnWither(level, new Vec3(100.5, GOLDOR_ROUTE_Y, 70.5));
+        goldorLeg = 0;
+        goldorGatesOpen = 0;
         // Hypixel's line, word for word: Terminals 1, the death tick's resync and Rag Axe start on it.
         SimBoss.say(level.getServer(), "Goldor", "Who dares trespass into my domain?");
         // Boss Phases and Dungeon Features restart the death tick timer on this line, so the fight does too.
@@ -1568,6 +1585,16 @@ final class SimNecron extends SimBoss.Fight {
     private void sectionDone(int section) {
         pendingGates.add(new int[]{section, now + GATE_DELAY});
         pendingBlows.add(new int[]{section, now + GATE_DELAY + SECTION_BLOW_DELAY});
+    }
+
+    private static Vec3 goldorPoint(int leg) {
+        return new Vec3(GOLDOR_ROUTE[leg][0], GOLDOR_ROUTE_Y, GOLDOR_ROUTE[leg][1]);
+    }
+
+    /** The route point to walk to next: the next one once he has reached this one and any gate at it is open. */
+    private static int goldorNextLeg(int leg, Vec3 at, int gatesOpen) {
+        boolean arrived = at.distanceToSqr(goldorPoint(leg)) < 0.01;
+        return arrived && gatesOpen >= GOLDOR_ROUTE[leg][2] && leg < GOLDOR_ROUTE.length - 1 ? leg + 1 : leg;
     }
 
     private void tickGoldor(ServerLevel level) {
@@ -1632,11 +1659,8 @@ final class SimNecron extends SimBoss.Fight {
         boolean coreOpen = SimTerms.coreOpen() || !SimTerms.isActive();
         if (!coreOpen) {
             int section = Math.max(1, Math.min(4, SimTerms.section()));
-            ServerPlayer target = nearestIn(level, P3_SECTIONS[section - 1]);
-            if (target != null) {
-                glide(body, new Vec3(target.getX(), Math.max(108, target.getY() + 0.5), target.getZ()),
-                        goldorSlowUntil > now ? GOLDOR_SLOWED : GOLDOR_SPEED);
-            }
+            glide(body, goldorPoint(goldorLeg), goldorSlowUntil > now ? GOLDOR_SLOWED : GOLDOR_SPEED);
+            goldorLeg = goldorNextLeg(goldorLeg, body.position(), goldorGatesOpen);
             aheadOfGate(level, section);
             if (deathTickBase >= 0 && (now - deathTickBase) % DEATH_TICK == 0) {
                 deathTick(level, section);
@@ -1855,6 +1879,7 @@ final class SimNecron extends SimBoss.Fight {
 
     /** Takes a section's gate down: the portcullis sheet and the barriers behind it. */
     private void openGate(ServerLevel level, int section) {
+        goldorGatesOpen = Math.max(goldorGatesOpen, section);
         int[] g = GATES[section - 1];
         BlockState air = Blocks.AIR.defaultBlockState();
         for (int y = GATE_Y0; y <= GATE_Y1; y++) {
