@@ -116,6 +116,8 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Portfolio: set a row's quantity yourself with the Qty box instead of it being counted (leave it empty and Set qty to count again), and enter copies bought at different prices as "2x1.5m + 1x1.2m" in the buy box; profit uses their average.
 
 ### Changed
+- Storage Value Breakdown (Storage Overlay settings, off by default) prices items like the Estimated Item Value, upgrades included, and looks like its panel, with no background. In the storage overlay each page's title shows its value, and a panel left of the overlay shows the page under your mouse (or the open one), or with neither, your most valuable pages and the total of everything loaded.
+- The Estimated Item Value panel has no background: its text has a shadow instead.
 - Dungeon Sim Goldor walks down the middle of the terminal corridors at one height and waits at closed gates, instead of flying straight at the nearest player.
 - Say the time in chat every time you finish a puzzle with Puzzle Bests on, not only for a new best, including when you leave before the map goes green or aren't alone (those don't count as a best).
 - Time rooms with one secret, from walking in to that secret, in Room Secret Time and Room Personal Bests.

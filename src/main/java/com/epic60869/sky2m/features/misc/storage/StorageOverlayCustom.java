@@ -127,6 +127,7 @@ public class StorageOverlayCustom extends CustomGui {
             if (end > 9) pageSlots = all.subList(9, end);
         }
         overview.drawPages(drawContext, mouseX, mouseY, delta, activePage(), pageSlots, leftPos(), topPos());
+        overview.drawValuePanel(drawContext, activePage());
         overview.drawScrollBar(drawContext);
         overview.drawControls(drawContext, mouseX, mouseY, delta);
     }
