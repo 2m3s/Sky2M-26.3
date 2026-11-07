@@ -80,14 +80,27 @@ public final class DungeonDropTracker {
 
     private DungeonDropTracker() {}
 
-    static boolean on() {
+    public static boolean on() {
         var c = TrackLines.config();
         return c != null && c.dropTracker;
     }
 
+    /** Where the chests are saved. /s2 session can ask before {@link #init()} has run, so this works either way. */
+    private static Path saveFile() {
+        if (file == null) {
+            file = TrackLines.movedFrom(DungeonProfitHour.DIR.resolve("sky2m").resolve("drop-tracker.json"),
+                DungeonProfitHour.DIR.resolve("sky2m-personal").resolve("dungeon-drops.json"));
+        }
+        return file;
+    }
+
+    /** Whether tracking has begun, so /s2 session can read the chests without starting the tracker's clock itself. */
+    public static boolean started() {
+        return save != null || Files.exists(saveFile());
+    }
+
     public static void init() {
-        file = TrackLines.movedFrom(DungeonProfitHour.DIR.resolve("sky2m").resolve("drop-tracker.json"),
-            DungeonProfitHour.DIR.resolve("sky2m-personal").resolve("dungeon-drops.json"));
+        saveFile();
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registry) -> {
             for (String root : Compat.COMMAND_ROOTS) dispatcher.register(ClientCommands.literal(root).then(command()));
         });
@@ -116,7 +129,7 @@ public final class DungeonDropTracker {
                     ctx.getSource().sendFeedback(Component.literal("§eForget every dungeon chest the Drop Tracker counted? ")
                         .append(Component.literal("§c§l[Click to reset]").withStyle(s -> s
                             .withClickEvent(new ClickEvent.RunCommand("/s2 tracker reset confirm"))
-                            .withHoverEvent(new HoverEvent.ShowText(Component.literal("§cCan't be undone. Slayer, Fishing and the other tabs are Sky2M's trackers and aren't touched."))))));
+                            .withHoverEvent(new HoverEvent.ShowText(Component.literal("§cCan't be undone, and the chests leave /s2 session's dungeon profit too. Slayer, Fishing and the other tabs are Sky2M's trackers and aren't touched."))))));
                     return 1;
                 })
                 .then(ClientCommands.literal("confirm").executes(ctx -> {

@@ -108,11 +108,40 @@ public final class TrackerDrops {
 
     /** The dungeon chests opened from {@code since} on. Public for the game test. */
     public static Day dungeonDay(List<DungeonDropTracker.Drop> drops, List<DungeonDropTracker.Cost> costs, long since) {
+        return dungeonDay(drops, costs, since, Long.MAX_VALUE);
+    }
+
+    /** The dungeon chests opened from {@code from} up to (not including) {@code to}. Public for the game test. */
+    public static Day dungeonDay(List<DungeonDropTracker.Drop> drops, List<DungeonDropTracker.Cost> costs, long from, long to) {
         List<DungeonDropTracker.Drop> kept = new ArrayList<>();
-        for (DungeonDropTracker.Drop d : drops) if (d.time >= since) kept.add(d);
+        for (DungeonDropTracker.Drop d : drops) if (d.time >= from && d.time < to) kept.add(d);
         double spent = 0;
-        for (DungeonDropTracker.Cost c : costs) if (c.time >= since) spent += c.total();
+        for (DungeonDropTracker.Cost c : costs) if (c.time >= from && c.time < to) spent += c.total();
         return new Day("Dungeons", kept, 0, spent);
+    }
+
+    /** One local calendar day's dungeon chests, for /s2 session: the same numbers as /s2 tracker, worth what they were when claimed. */
+    public static Day dungeonDay(long epochDay) {
+        if (!DungeonDropTracker.started()) return new Day("Dungeons", List.of(), 0, 0);
+        return dungeonDay(DungeonDropTracker.drops(), DungeonDropTracker.costs(), dayStart(epochDay), dayStart(epochDay + 1));
+    }
+
+    /** The chests opened on one local calendar day. */
+    public static List<DungeonDropTracker.Cost> chestsOn(long epochDay) {
+        if (!DungeonDropTracker.started()) return List.of();
+        long from = dayStart(epochDay), to = dayStart(epochDay + 1);
+        List<DungeonDropTracker.Cost> out = new ArrayList<>();
+        for (DungeonDropTracker.Cost c : DungeonDropTracker.costs()) if (c.time >= from && c.time < to) out.add(c);
+        return out;
+    }
+
+    /** How long your dungeon runs that ended on one local calendar day took (Run History). */
+    public static long runTimeOn(long epochDay) {
+        return com.epic60869.sky2m.features.dungeons.RunHistory.runTime(dayStart(epochDay), dayStart(epochDay + 1));
+    }
+
+    private static long dayStart(long epochDay) {
+        return LocalDate.ofEpochDay(epochDay).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
     private static Day trackerDay(String name, ProfitTracker.Preset... presets) {
