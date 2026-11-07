@@ -2850,6 +2850,12 @@ public final class FeatureConfigs {
         public boolean routes = true;
 
         @Expose
+        @ConfigOption(name = "Adaptive Routes", desc = "Learns from how you clear rooms. Each clear on your own counts towards the route you followed, and a new secret order is saved as a learned route. The room then shows the route you're usually fastest on, allowing for how far away it starts. Learned routes have your secrets, levers and walked line, but not your pearls, warps or superbooms. Needs Room Personal Bests. /s2 route adaptive shows a room's numbers, /s2 route adaptive reset forgets them.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1501)
+        public boolean adaptiveRoutes = false;
+
+        @Expose
         @ConfigOption(name = "Pearl Angle Lines", desc = "On a route's pearl steps, draw a line showing the angle the pearl was thrown at, from eye height where it was thrown. It only draws: you do the aiming and the throwing. Routes recorded before this have no angle, so no line.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1501)

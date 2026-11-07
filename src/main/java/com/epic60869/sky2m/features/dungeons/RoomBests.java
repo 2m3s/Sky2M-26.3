@@ -459,6 +459,7 @@ public final class RoomBests {
         if (!counts) return new Outcome(ms, previous, false, false, splits);
         boolean newBest = store.record(key, ms, secrets, System.currentTimeMillis(), splits, attempt.path);
         store.addRecent(key, ms);
+        AdaptiveRoutes.onCleared(room, ms, secrets, attempt.stacked);
         RUN_ROOMS.add(new RunRoom(inRoom ? RoomClears.displayName(room) : room.getName(), ms, previous));
         save();
         return new Outcome(ms, previous, true, newBest, splits);

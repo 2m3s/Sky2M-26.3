@@ -187,6 +187,7 @@ public final class DungeonRoutes {
     private static final java.util.concurrent.atomic.AtomicInteger ROUTES_VERSION = new java.util.concurrent.atomic.AtomicInteger();
     private static String cachedRoom;
     private static int cachedVersion = -1;
+    private static boolean cachedAdaptive;
     private static List<Route> cachedRoutes = List.of();
 
     // Playback
@@ -238,7 +239,10 @@ public final class DungeonRoutes {
         ClientTickEvents.END_CLIENT_TICK.register(DungeonRoutes::tick);
         Sky2MWorldRender.register(DungeonRoutes::render);
         Sky2MChat.onChat(message -> {
-            if (message.text().trim().equalsIgnoreCase("That chest is locked!") && stepIndex > 0) stepIndex--;
+            if (!message.text().trim().equalsIgnoreCase("That chest is locked!")) return;
+            if (stepIndex > 0) stepIndex--;
+            Room room = currentRoom();
+            if (room != null && AdaptiveRoutes.enabled()) AdaptiveRoutes.onLockedChest(room);
         });
         UseItemCallback.EVENT.register((player, level, hand) -> {
             // Where the pearl was thrown from.
@@ -263,6 +267,7 @@ public final class DungeonRoutes {
         registerCommands();
         RouteEditor.init();
         RoutePacks.init();
+        AdaptiveRoutes.init();
     }
 
     // ----- Stella's route file -----
@@ -424,7 +429,7 @@ public final class DungeonRoutes {
             new Vec3(from.get(0).getAsDouble(), from.get(1).getAsDouble(), from.get(2).getAsDouble()));
     }
 
-    private static Map<String, List<Step>> parse(String json) {
+    static Map<String, List<Step>> parse(String json) {
         Map<String, List<Step>> routes = new LinkedHashMap<>();
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
         for (var entry : root.entrySet()) {
@@ -527,10 +532,11 @@ public final class DungeonRoutes {
         return routes;
     }
 
-    /** The room's routes: yours if you have any, else those from the route folder, else Stella's. */
+    /** The room's routes: yours if you have any, else those from the route folder, else Stella's; then, with Adaptive Routes on, those it learned. */
     static List<Route> routesFor(String roomName) {
         int version = ROUTES_VERSION.get();
-        if (roomName.equals(cachedRoom) && version == cachedVersion) return cachedRoutes;
+        boolean adaptive = AdaptiveRoutes.enabled();
+        if (roomName.equals(cachedRoom) && version == cachedVersion && adaptive == cachedAdaptive) return cachedRoutes;
         String key = normalize(roomName);
         List<Route> routes = routesIn(CUSTOM, key, true);
         if (routes.isEmpty()) {
@@ -543,10 +549,21 @@ public final class DungeonRoutes {
                 routes = routesIn(STELLA, key, false);
             }
         }
+        if (adaptive) routes.addAll(AdaptiveRoutes.learnedRoutes(key));
         cachedRoom = roomName;
         cachedVersion = version;
+        cachedAdaptive = adaptive;
         cachedRoutes = routes;
         return routes;
+    }
+
+    /** Adaptive Routes learned or forgot a route. */
+    static void routesChanged() {
+        ROUTES_VERSION.incrementAndGet();
+    }
+
+    static int routeIndex() {
+        return routeIndex;
     }
 
     /** The route showing in the room, or null when it has none. */
@@ -594,7 +611,10 @@ public final class DungeonRoutes {
         if (frame == null || mc.player == null) return;
         List<BlockPos> starts = new ArrayList<>();
         for (Route route : routes) starts.add(routeStart(route.steps()));
-        routeIndex = closestRoute(starts, frame.toRoom(mc.player.blockPosition()), Math.min(routeIndex, routes.size() - 1));
+        BlockPos at = frame.toRoom(mc.player.blockPosition());
+        int current = Math.min(routeIndex, routes.size() - 1);
+        int fastest = AdaptiveRoutes.enabled() ? AdaptiveRoutes.pick(room.getName(), routes, starts, at, current) : -1;
+        routeIndex = fastest >= 0 ? fastest : closestRoute(starts, at, current);
     }
 
     /** A key for one more route in a room: the room's name when it has none yet, else "name:2" and on. */
@@ -795,6 +815,10 @@ public final class DungeonRoutes {
             pickTicks = 0;
             pickClosestRoute(room, mc);
         }
+        if (room != null && recording == null && mc.player != null && AdaptiveRoutes.enabled() && !RouteEditor.active()) {
+            Frame walked = frame(room);
+            if (walked != null) AdaptiveRoutes.onMoved(room, walked.toRoom(mc.player.getOnPos().above()));
+        }
         if (recording == null || mc.player == null) return;
         if (room != recordRoom) {
             say("You left the room, so the recording was stopped. Use /s2 route stop to save it or /s2 route cancel to discard it.", ChatFormatting.RED);
@@ -824,7 +848,12 @@ public final class DungeonRoutes {
             : state.is(Blocks.LEVER) ? Type.LEVER : null;
         if (type == null) return;
         if (recording != null) addWaypoint(type, pos);
-        else if (type != Type.LEVER) secretFound(pos, 0);
+        else if (type != Type.LEVER) secretFound(pos, 0, type);
+        else if (AdaptiveRoutes.enabled() && !RouteEditor.active()) {
+            Room room = currentRoom();
+            Frame frame = room == null ? null : frame(room);
+            if (frame != null) AdaptiveRoutes.onLever(room, frame.toRoom(pos));
+        }
     }
 
     /**
@@ -860,22 +889,23 @@ public final class DungeonRoutes {
     /** Called when a dungeon item secret is picked up. */
     public static void onItemPickup(Entity item) {
         if (recording != null) addWaypoint(Type.ITEM, item.blockPosition());
-        else secretFound(item.blockPosition(), 25);
+        else secretFound(item.blockPosition(), 25, Type.ITEM);
     }
 
     /** Called when a bat secret dies. */
     public static void onBatKilled(Entity bat) {
         if (recording != null) addWaypoint(Type.BAT, bat.blockPosition());
-        else secretFound(bat.blockPosition(), 100);
+        else secretFound(bat.blockPosition(), 100, Type.BAT);
     }
 
     /** Moves to the next step when the current step's secret is collected. */
-    private static void secretFound(BlockPos pos, int maxDistanceSq) {
+    private static void secretFound(BlockPos pos, int maxDistanceSq, Type type) {
         Room room = currentRoom();
         if (room == null || RouteEditor.active()) return;
         Route showing = showingRoute(room);
         List<Step> route = showing == null ? null : showing.steps();
         Frame frame = frame(room);
+        if (frame != null && AdaptiveRoutes.enabled()) AdaptiveRoutes.onSecret(room, frame.toRoom(pos), type);
         if (route == null || frame == null || stepIndex >= route.size()) return;
         Waypoint secret = route.get(stepIndex).secret();
         if (secret == null) return;

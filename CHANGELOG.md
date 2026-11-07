@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.4
 
 ### Added
+- Adaptive Routes (Dungeons > Secrets and Routes > Waypoints & Routes, off by default): learns from how you clear rooms on your own. Each clear counts towards the route you followed, a new secret order is saved as a learned route, and the room shows the route you're usually fastest on. Learned routes have your secrets, levers and walked line, but not your pearls, warps or superbooms. A HUD shows the route and your usual time; `/s2 route adaptive` lists a room's numbers and `/s2 route adaptive reset` forgets them. Needs Room Personal Bests.
 - Copy Chat colours: hold Left Ctrl and press the Copy Message Key to copy a message with its colours as `&c` codes. Codes in a Sky2M chat message (`/s2c`) now show as colours, for anyone on this version or newer.
 - Timer (`/s2 timer`): a countdown or stopwatch with its own GUI. Type a time or press a preset and Start. A HUD shows it only while it's on, and a countdown ends with a title, a ding and a chat line. Pause and Stop are in the GUI, and you can move the HUD in `/s2 gui`. A running timer isn't kept when the game closes.
 - Dungeon profit in `/s2 session`: a Dungeons tab with each day's chests from `/s2 tracker` (loot worth less chest costs, first chest, run time, profit per hour and the loot), also counted in the day's total, the All Days chart, Copy and the recaps. Needs Drop Tracker and Chest History on; run time comes from Run History. `/s2 tracker reset` also clears it.
