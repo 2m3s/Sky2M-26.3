@@ -1,9 +1,12 @@
 package com.epic60869.sky2m.sb.skyblock.dungeon.secrets;
 
 import java.awt.Color;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -23,6 +26,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 import com.google.common.collect.HashBasedTable;
@@ -439,12 +443,52 @@ public class DungeonManager {
 		}
 	}
 
+	/** First bytes of a Sky2M-packed skeleton. Skyblocker's original files start with a zlib header (0x78) instead. */
+	private static final byte[] PACKED_SKELETON_MAGIC = {'S', '2', 'M', 'K'};
+
+	/**
+	 * Reads a room skeleton: the sorted int[] of the room's block checks. Sky2M ships them packed ({@code S2MK}, then
+	 * raw deflate of a varint count, the zigzag first value and the varint gaps between the sorted values), which is
+	 * about a ninth of Skyblocker's zlib + Java-serialised form. The original form is still read for any old file.
+	 */
 	private static int[] readRoom(Resource resource) throws RuntimeException {
-		try (ObjectInputStream in = new ObjectInputStream(new InflaterInputStream(resource.open()))) {
-			return (int[]) in.readObject();
+		try (BufferedInputStream raw = new BufferedInputStream(resource.open())) {
+			raw.mark(PACKED_SKELETON_MAGIC.length);
+			if (!Arrays.equals(raw.readNBytes(PACKED_SKELETON_MAGIC.length), PACKED_SKELETON_MAGIC)) {
+				raw.reset();
+				try (ObjectInputStream in = new ObjectInputStream(new InflaterInputStream(raw))) {
+					return (int[]) in.readObject();
+				}
+			}
+			Inflater inflater = new Inflater(true);
+			try (InputStream in = new BufferedInputStream(new InflaterInputStream(raw, inflater), 1 << 16)) {
+				int[] data = new int[Math.toIntExact(readVarint(in))];
+				long value = 0;
+				for (int i = 0; i < data.length; i++) {
+					long v = readVarint(in);
+					value = i == 0 ? (v >>> 1) ^ -(v & 1) : value + v;
+					data[i] = (int) value;
+				}
+				return data;
+			} finally {
+				inflater.end();
+			}
 		} catch (IOException | ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private static long readVarint(InputStream in) throws IOException {
+		long result = 0;
+		int shift = 0;
+		int b;
+		do {
+			b = in.read();
+			if (b < 0) throw new EOFException("Truncated room skeleton");
+			result |= (long) (b & 0x7F) << shift;
+			shift += 7;
+		} while ((b & 0x80) != 0);
+		return result;
 	}
 
 	private static RequiredArgumentBuilder<FabricClientCommandSource, Integer> markSecretsCommand(boolean found) {
