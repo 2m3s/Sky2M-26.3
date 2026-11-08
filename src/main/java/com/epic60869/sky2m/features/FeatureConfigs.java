@@ -23,6 +23,7 @@ import com.epic60869.sky2m.features.combat.kuudra.KuudraConfig;
 import com.epic60869.sky2m.features.dungeons.ArchitectDraftAlert;
 import com.epic60869.sky2m.features.dungeons.BossBarHealth;
 import com.epic60869.sky2m.features.dungeons.BreakerHud;
+import com.epic60869.sky2m.features.dungeons.PfRequirements;
 import com.epic60869.sky2m.features.dungeons.CataCalcScreen;
 import com.epic60869.sky2m.features.dungeons.ChestHistory;
 import com.epic60869.sky2m.features.dungeons.DungeonLividFinder;
@@ -4593,43 +4594,28 @@ public final class FeatureConfigs {
         public boolean kickButton = true;
 
         @Expose
-        @ConfigOption(name = "Auto Kick", desc = "While you lead, kick players who don't meet the requirements below (0 turns a requirement off).")
+        @ConfigOption(name = "Auto Kick", desc = "While you lead, kick players who don't meet the requirements (set them with the button below or /s2 autokick).")
         @ConfigEditorBoolean
         public boolean autoKick = false;
 
+        @ConfigOption(name = "Requirements", desc = "The Default requirements and each floor's own (F1-F7, M1-M7): slowest S+ (like 1:25), Catacombs level, secrets and magical power. Also /s2 autokick [floor].")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable requirements = PfRequirements::openFromSettings;
+
+        // The requirements before /s2 autokick: read once to fill in its Default (PfRequirements.load). Not shown.
         @Expose
-        @ConfigOption(name = "Per-Floor Requirements", desc = "Use different requirements for each floor (F1-F7 and M1-M7), set with /s2 pfreq: the ones for the floor you're queued for or playing. Floors without their own fall back to the requirements below.")
-        @ConfigEditorBoolean
         public boolean perFloor = false;
-
         @Expose
-        @ConfigOption(name = "Floor", desc = "The floor whose S+ time is checked.")
-        @ConfigEditorSlider(minValue = 1, maxValue = 7, minStep = 1)
         public int floor = 7;
-
         @Expose
-        @ConfigOption(name = "Master Mode", desc = "Check the Master Mode floor's time instead of the normal one.")
-        @ConfigEditorBoolean
         public boolean masterMode = false;
-
         @Expose
-        @ConfigOption(name = "Slowest S+ (seconds)", desc = "Kick when their fastest S+ on that floor is slower than this, or they have none. 0 = don't check.")
-        @ConfigEditorSlider(minValue = 0, maxValue = 600, minStep = 5)
         public int maxPbSeconds = 0;
-
         @Expose
-        @ConfigOption(name = "Minimum Secrets (thousands)", desc = "0 = don't check.")
-        @ConfigEditorSlider(minValue = 0, maxValue = 200, minStep = 1)
         public int minSecretsK = 0;
-
         @Expose
-        @ConfigOption(name = "Minimum Catacombs Level", desc = "0 = don't check.")
-        @ConfigEditorSlider(minValue = 0, maxValue = 50, minStep = 1)
         public int minCata = 0;
-
         @Expose
-        @ConfigOption(name = "Minimum Magical Power", desc = "0 = don't check. Skipped when their inventory API is off, unless the option below is on.")
-        @ConfigEditorSlider(minValue = 0, maxValue = 2000, minStep = 10)
         public int minMagicalPower = 0;
 
         @Expose
