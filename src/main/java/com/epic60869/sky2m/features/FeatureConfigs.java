@@ -17,6 +17,39 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorText;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigAccordionId;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorAccordion;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
+import com.epic60869.sky2m.custom.util.Compat;
+import com.epic60869.sky2m.features.combat.extra.CombatExtraConfig;
+import com.epic60869.sky2m.features.combat.kuudra.KuudraConfig;
+import com.epic60869.sky2m.features.dungeons.ArchitectDraftAlert;
+import com.epic60869.sky2m.features.dungeons.BossBarHealth;
+import com.epic60869.sky2m.features.dungeons.BreakerHud;
+import com.epic60869.sky2m.features.dungeons.CataCalcScreen;
+import com.epic60869.sky2m.features.dungeons.ChestHistory;
+import com.epic60869.sky2m.features.dungeons.DungeonLividFinder;
+import com.epic60869.sky2m.features.dungeons.DungeonRecapExtras;
+import com.epic60869.sky2m.features.dungeons.PuzzleHud;
+import com.epic60869.sky2m.features.dungeons.SecretChime;
+import com.epic60869.sky2m.features.dungeons.extras.DungeonExtras;
+import com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyle;
+import com.epic60869.sky2m.features.fishing.FishingExtras;
+import com.epic60869.sky2m.features.fishing.FishingFeatures;
+import com.epic60869.sky2m.features.fishing.FishingHookTimer;
+import com.epic60869.sky2m.features.fishing.FishingMore;
+import com.epic60869.sky2m.features.fishing.FishingVisuals;
+import com.epic60869.sky2m.features.fishing.RareSc;
+import com.epic60869.sky2m.features.fishing.TrophyFishTracker;
+import com.epic60869.sky2m.features.foraging.ForagingExtras;
+import com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair;
+import com.epic60869.sky2m.features.misc.items.SackValueHistory;
+import com.epic60869.sky2m.features.misc.profit.ProfitTracker;
+import com.epic60869.sky2m.features.misc.profit.SessionTrackerScreen;
+import com.epic60869.sky2m.features.misc.social.Sky2MAchievements;
+import com.epic60869.sky2m.features.misc.system.ServerInfo;
+import com.epic60869.sky2m.features.profileviewer.ProfileApi;
+import com.epic60869.sky2m.features.skills.SkillType;
+import com.epic60869.sky2m.sim.Sky2MSim;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorInfoText;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind;
 
 /**
  * Config sections for Sky2M's skill features. They are referenced as categories or
@@ -65,27 +98,27 @@ public final class FeatureConfigs {
         @Expose
         @Accordion
         @ConfigOption(name = "Boss Damage Indicator", desc = "Health, DPS, time left, hits and heal messages for the boss you are fighting.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.BossIndicator bossIndicator = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.BossIndicator();
+        public CombatExtraConfig.BossIndicator bossIndicator = new CombatExtraConfig.BossIndicator();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Ghost Counter", desc = "Ghost kills and drop profit in the Mist of the Dwarven Mines.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.GhostCounter ghostCounter = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.GhostCounter();
+        public CombatExtraConfig.GhostCounter ghostCounter = new CombatExtraConfig.GhostCounter();
 
         @Expose
         @Accordion
         @ConfigOption(name = "End Dragons", desc = "Dragon profit tracker, weight and Superior Dragon notification.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Dragons dragons = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Dragons();
+        public CombatExtraConfig.Dragons dragons = new CombatExtraConfig.Dragons();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Ender Node Tracker", desc = "Ender Nodes mined and their loot in the End.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.EnderNodes enderNodes = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.EnderNodes();
+        public CombatExtraConfig.EnderNodes enderNodes = new CombatExtraConfig.EnderNodes();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Area Bosses", desc = "Highlight, spawn alert and timer for Boss Corleone, Arachne's Keepers and Zealot Bruisers.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.AreaBosses areaBosses = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.AreaBosses();
+        public CombatExtraConfig.AreaBosses areaBosses = new CombatExtraConfig.AreaBosses();
 
         @Expose
         @Accordion
@@ -118,12 +151,12 @@ public final class FeatureConfigs {
         @Expose
         @Accordion
         @ConfigOption(name = "Kuudra", desc = "Supply and pile waypoints, pre-spot alerts, phase splits, chest profit, Fresh Tools, Kuudra's health and the Perk Menu cleaner.")
-        public com.epic60869.sky2m.features.combat.kuudra.KuudraConfig kuudra = new com.epic60869.sky2m.features.combat.kuudra.KuudraConfig();
+        public KuudraConfig kuudra = new KuudraConfig();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Ashfang", desc = "Ashfang's blazes, Blazing Souls, Gravity Orbs, freeze cooldown and next reset.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Ashfang ashfang = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Ashfang();
+        public CombatExtraConfig.Ashfang ashfang = new CombatExtraConfig.Ashfang();
     }
 
     /** SkyHanni's BestiaryConfig (LGPL-2.1). The overlay is moved and resized in /s2 gui. */
@@ -157,15 +190,8 @@ public final class FeatureConfigs {
             SHORT("Short"), LONG("Long");
 
             private final String label;
-
-            NumberFormat(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            NumberFormat(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum DisplayType {
@@ -179,15 +205,8 @@ public final class FeatureConfigs {
             HIGHEST_NEXT("Most Next");
 
             private final String label;
-
-            DisplayType(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            DisplayType(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
     }
 
@@ -237,15 +256,8 @@ public final class FeatureConfigs {
             RIGHT("Right"), LEFT("Left"), ABOVE("Above"), BELOW("Below");
 
             private final String label;
-
-            ProgressPosition(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            ProgressPosition(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -430,7 +442,7 @@ public final class FeatureConfigs {
         public boolean repeatEachEvent = false;
 
         @ConfigOption(name = "Achievements", desc = "See your achievements. Also /s2 achievements (/s2 achievements backtrack checks your saved seasons, /s2 achievements lock CONFIRM resets them).")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "OPEN")
+        @ConfigEditorButton(buttonText = "OPEN")
         public Runnable open = com.epic60869.sky2m.features.combat.DianaAchievements::open;
     }
 
@@ -445,7 +457,7 @@ public final class FeatureConfigs {
     /** The Diana warp keys (SBO's): set them in Options > Controls > Key Binds, under Sky2M. */
     public static final class DianaWarp {
         @ConfigOption(name = "Diana Warp", desc = "You must configure the warp keys from vanilla Minecraft settings, under (ESC) -> Options -> Controls -> Key Binds... scroll till you find Sky2M and configure it from there.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorInfoText
+        @ConfigEditorInfoText
         public boolean info = false;
 
         @Expose @ConfigOption(name = "Warp: Castle", desc = "Let the warp keys use /warp castle.") @ConfigEditorBoolean public boolean castle = true;
@@ -734,22 +746,22 @@ public final class FeatureConfigs {
         @Expose
         @Accordion
         @ConfigOption(name = "Puzzle HUD", desc = "The run's puzzles, remaining, done or failed, and who did each.")
-        public com.epic60869.sky2m.features.dungeons.PuzzleHud.Config puzzleHud = new com.epic60869.sky2m.features.dungeons.PuzzleHud.Config();
+        public PuzzleHud.Config puzzleHud = new PuzzleHud.Config();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Architect's Draft Alert", desc = "When a puzzle fails, tell you and optionally the party to get an Architect's First Draft.")
-        public com.epic60869.sky2m.features.dungeons.ArchitectDraftAlert.Config architectDraft = new com.epic60869.sky2m.features.dungeons.ArchitectDraftAlert.Config();
+        public ArchitectDraftAlert.Config architectDraft = new ArchitectDraftAlert.Config();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Dungeon Breaker Charges", desc = "The charges left on your Dungeon Breaker, in a HUD.")
-        public com.epic60869.sky2m.features.dungeons.BreakerHud.Config breakerHud = new com.epic60869.sky2m.features.dungeons.BreakerHud.Config();
+        public BreakerHud.Config breakerHud = new BreakerHud.Config();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Boss Bar Health", desc = "The boss's health as a number on its boss bar.")
-        public com.epic60869.sky2m.features.dungeons.BossBarHealth.Config bossBarHealth = new com.epic60869.sky2m.features.dungeons.BossBarHealth.Config();
+        public BossBarHealth.Config bossBarHealth = new BossBarHealth.Config();
 
         @Expose
         @Accordion
@@ -810,11 +822,11 @@ public final class FeatureConfigs {
 
         @Expose
         @Category(name = "Dungeon Extras", desc = "Waypoints, clutter, Croesus and more.")
-        public com.epic60869.sky2m.features.dungeons.extras.DungeonExtras.Config dungeonExtras = new com.epic60869.sky2m.features.dungeons.extras.DungeonExtras.Config();
+        public DungeonExtras.Config dungeonExtras = new DungeonExtras.Config();
 
         @Expose
         @Category(name = "Run Recap", desc = "Death recap, cooldowns and run summary.")
-        public com.epic60869.sky2m.features.dungeons.DungeonRecapExtras.Config recapExtras = new com.epic60869.sky2m.features.dungeons.DungeonRecapExtras.Config();
+        public DungeonRecapExtras.Config recapExtras = new DungeonRecapExtras.Config();
     }
 
     /** Odin's Blessing Display: which blessings to list, and their colours. */
@@ -961,7 +973,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Reset History", desc = "Delete the chest spending history of the current profile.")
         @ConfigEditorButton(buttonText = "Reset")
         @ConfigAccordionId(id = 2003)
-        public Runnable resetHistory = com.epic60869.sky2m.features.dungeons.ChestHistory::reset;
+        public Runnable resetHistory = ChestHistory::reset;
     }
 
     public static final class Floor7 {
@@ -1223,15 +1235,8 @@ public final class FeatureConfigs {
         ANVIL("Anvil"), BELL("Bell"), PLING("Pling"), LEVEL_UP("Level Up"), WITHER("Wither Spawn"), DRAGON("Dragon Growl");
 
         private final String label;
-
-        BossSpawnSound(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        BossSpawnSound(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     /** Voidgloom Seraph helpers, ported from SkyHanni's Enderman slayer features. */
@@ -1406,42 +1411,42 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Attack", desc = "Breaks crops (left click by default).")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int attack = -1;
 
         @Expose
         @ConfigOption(name = "Use", desc = "Uses the tool (right click by default).")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int use = -1;
 
         @Expose
         @ConfigOption(name = "Forward", desc = "Walk forward.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int forward = -1;
 
         @Expose
         @ConfigOption(name = "Left", desc = "Strafe left.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int left = -1;
 
         @Expose
         @ConfigOption(name = "Back", desc = "Walk back.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int back = -1;
 
         @Expose
         @ConfigOption(name = "Right", desc = "Strafe right.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int right = -1;
 
         @Expose
         @ConfigOption(name = "Jump", desc = "Jump.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int jump = -1;
 
         @Expose
         @ConfigOption(name = "Sneak", desc = "Sneak.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int sneak = -1;
     }
 
@@ -1625,7 +1630,7 @@ public final class FeatureConfigs {
     public static final class PestFinder {
         @Expose
         @ConfigOption(name = "Teleport Hotkey", desc = "Press this key to warp to the nearest plot with pests on it.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int teleportHotkey = -1;
 
         @Expose
@@ -1754,7 +1759,7 @@ public final class FeatureConfigs {
 
         @Expose
         @Category(name = "Rare Sea Creatures", desc = "Rare sea creature alerts and health.")
-        public com.epic60869.sky2m.features.fishing.RareSc.Config rareSc = new com.epic60869.sky2m.features.fishing.RareSc.Config();
+        public RareSc.Config rareSc = new RareSc.Config();
 
         @Expose
         @Category(name = "Catch Messages", desc = "Shorter sea creature catch messages.")
@@ -1770,23 +1775,23 @@ public final class FeatureConfigs {
 
         @Expose
         @Category(name = "Hook & Bobber", desc = "Bobber timer and hook countdown.")
-        public com.epic60869.sky2m.features.fishing.FishingHookTimer.Config hookTimer = new com.epic60869.sky2m.features.fishing.FishingHookTimer.Config();
+        public FishingHookTimer.Config hookTimer = new FishingHookTimer.Config();
 
         @Expose
         @Category(name = "Fishing Extras", desc = "Cast, armor and hotspot helpers.")
-        public com.epic60869.sky2m.features.fishing.FishingExtras.Config extras = new com.epic60869.sky2m.features.fishing.FishingExtras.Config();
+        public FishingExtras.Config extras = new FishingExtras.Config();
 
         @Expose
         @Category(name = "Trackers & Timers", desc = "Totems, trackers and fishing timers.")
-        public com.epic60869.sky2m.features.fishing.FishingMore.Config more = new com.epic60869.sky2m.features.fishing.FishingMore.Config();
+        public FishingMore.Config more = new FishingMore.Config();
 
         @Expose
         @Category(name = "Visuals", desc = "Lava as water and bobber visuals.")
-        public com.epic60869.sky2m.features.fishing.FishingVisuals.Config visuals = new com.epic60869.sky2m.features.fishing.FishingVisuals.Config();
+        public FishingVisuals.Config visuals = new FishingVisuals.Config();
 
         @Expose
         @Category(name = "Trophy Fish", desc = "Trophy fish counts by tier.")
-        public com.epic60869.sky2m.features.fishing.TrophyFishTracker.Config trophyFish = new com.epic60869.sky2m.features.fishing.TrophyFishTracker.Config();
+        public TrophyFishTracker.Config trophyFish = new TrophyFishTracker.Config();
     }
 
     public static final class FishingSeaCreatures {
@@ -1944,7 +1949,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Send Test Message", desc = "Shows a sample catch message and a sample double hook with your settings.")
         @ConfigEditorButton(buttonText = "SEND")
-        public Runnable test = () -> com.epic60869.sky2m.features.fishing.FishingFeatures.sendTestCatchMessages();
+        public Runnable test = () -> FishingFeatures.sendTestCatchMessages();
     }
 
     public static final class FishingAlerts {
@@ -2435,7 +2440,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Text", desc = "Choose what skills you want to see in the display.")
         @ConfigEditorDraggableList
-        public List<com.epic60869.sky2m.features.skills.SkillType> skillEntryList = new ArrayList<>(List.of(com.epic60869.sky2m.features.skills.SkillType.COMBAT, com.epic60869.sky2m.features.skills.SkillType.FARMING, com.epic60869.sky2m.features.skills.SkillType.FISHING, com.epic60869.sky2m.features.skills.SkillType.MINING, com.epic60869.sky2m.features.skills.SkillType.FORAGING, com.epic60869.sky2m.features.skills.SkillType.ENCHANTING, com.epic60869.sky2m.features.skills.SkillType.ALCHEMY, com.epic60869.sky2m.features.skills.SkillType.CARPENTRY, com.epic60869.sky2m.features.skills.SkillType.TAMING));
+        public List<SkillType> skillEntryList = new ArrayList<>(List.of(SkillType.COMBAT, SkillType.FARMING, SkillType.FISHING, SkillType.MINING, SkillType.FORAGING, SkillType.ENCHANTING, SkillType.ALCHEMY, SkillType.CARPENTRY, SkillType.TAMING));
     }
 
     public static final class SkillEtaDisplay {
@@ -2506,7 +2511,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Foraging Extras", desc = "Foraging Tracker, Tree Progress, Clean Tree View, tutorial quest helper, Birries and Hideonleaf highlights, Mute Phantoms, coupon profit and the Honeyhive reminder.")
         @Accordion
-        public com.epic60869.sky2m.features.foraging.ForagingExtras.Config extras = new com.epic60869.sky2m.features.foraging.ForagingExtras.Config();
+        public ForagingExtras.Config extras = new ForagingExtras.Config();
     }
 
     public static final class Enchanting {
@@ -2670,28 +2675,28 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         public boolean loadoutEnabled = false;
 
-        @Expose @ConfigOption(name = "Wardrobe Slot 1 Key", desc = "Select slot 1 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1) public int slot1Key = com.mojang.blaze3d.platform.InputConstants.KEY_1;
-        @Expose @ConfigOption(name = "Wardrobe Slot 2 Key", desc = "Select slot 2 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2) public int slot2Key = com.mojang.blaze3d.platform.InputConstants.KEY_2;
-        @Expose @ConfigOption(name = "Wardrobe Slot 3 Key", desc = "Select slot 3 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3) public int slot3Key = com.mojang.blaze3d.platform.InputConstants.KEY_3;
-        @Expose @ConfigOption(name = "Wardrobe Slot 4 Key", desc = "Select slot 4 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4) public int slot4Key = com.mojang.blaze3d.platform.InputConstants.KEY_4;
-        @Expose @ConfigOption(name = "Wardrobe Slot 5 Key", desc = "Select slot 5 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_5) public int slot5Key = com.mojang.blaze3d.platform.InputConstants.KEY_5;
-        @Expose @ConfigOption(name = "Wardrobe Slot 6 Key", desc = "Select slot 6 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_6) public int slot6Key = com.mojang.blaze3d.platform.InputConstants.KEY_6;
-        @Expose @ConfigOption(name = "Wardrobe Slot 7 Key", desc = "Select slot 7 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_7) public int slot7Key = com.mojang.blaze3d.platform.InputConstants.KEY_7;
-        @Expose @ConfigOption(name = "Wardrobe Slot 8 Key", desc = "Select slot 8 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_8) public int slot8Key = com.mojang.blaze3d.platform.InputConstants.KEY_8;
-        @Expose @ConfigOption(name = "Wardrobe Slot 9 Key", desc = "Select slot 9 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_9) public int slot9Key = com.mojang.blaze3d.platform.InputConstants.KEY_9;
+        @Expose @ConfigOption(name = "Wardrobe Slot 1 Key", desc = "Select slot 1 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1) public int slot1Key = com.mojang.blaze3d.platform.InputConstants.KEY_1;
+        @Expose @ConfigOption(name = "Wardrobe Slot 2 Key", desc = "Select slot 2 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2) public int slot2Key = com.mojang.blaze3d.platform.InputConstants.KEY_2;
+        @Expose @ConfigOption(name = "Wardrobe Slot 3 Key", desc = "Select slot 3 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3) public int slot3Key = com.mojang.blaze3d.platform.InputConstants.KEY_3;
+        @Expose @ConfigOption(name = "Wardrobe Slot 4 Key", desc = "Select slot 4 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4) public int slot4Key = com.mojang.blaze3d.platform.InputConstants.KEY_4;
+        @Expose @ConfigOption(name = "Wardrobe Slot 5 Key", desc = "Select slot 5 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_5) public int slot5Key = com.mojang.blaze3d.platform.InputConstants.KEY_5;
+        @Expose @ConfigOption(name = "Wardrobe Slot 6 Key", desc = "Select slot 6 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_6) public int slot6Key = com.mojang.blaze3d.platform.InputConstants.KEY_6;
+        @Expose @ConfigOption(name = "Wardrobe Slot 7 Key", desc = "Select slot 7 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_7) public int slot7Key = com.mojang.blaze3d.platform.InputConstants.KEY_7;
+        @Expose @ConfigOption(name = "Wardrobe Slot 8 Key", desc = "Select slot 8 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_8) public int slot8Key = com.mojang.blaze3d.platform.InputConstants.KEY_8;
+        @Expose @ConfigOption(name = "Wardrobe Slot 9 Key", desc = "Select slot 9 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_9) public int slot9Key = com.mojang.blaze3d.platform.InputConstants.KEY_9;
 
-        @Expose @ConfigOption(name = "Loadout Slot 1 Key", desc = "Select loadout 1 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1) public int loadoutSlot1Key = com.mojang.blaze3d.platform.InputConstants.KEY_1;
-        @Expose @ConfigOption(name = "Loadout Slot 2 Key", desc = "Select loadout 2 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2) public int loadoutSlot2Key = com.mojang.blaze3d.platform.InputConstants.KEY_2;
-        @Expose @ConfigOption(name = "Loadout Slot 3 Key", desc = "Select loadout 3 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3) public int loadoutSlot3Key = com.mojang.blaze3d.platform.InputConstants.KEY_3;
-        @Expose @ConfigOption(name = "Loadout Slot 4 Key", desc = "Select loadout 4 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4) public int loadoutSlot4Key = com.mojang.blaze3d.platform.InputConstants.KEY_4;
-        @Expose @ConfigOption(name = "Loadout Slot 5 Key", desc = "Select loadout 5 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_5) public int loadoutSlot5Key = com.mojang.blaze3d.platform.InputConstants.KEY_5;
-        @Expose @ConfigOption(name = "Loadout Slot 6 Key", desc = "Select loadout 6 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_6) public int loadoutSlot6Key = com.mojang.blaze3d.platform.InputConstants.KEY_6;
-        @Expose @ConfigOption(name = "Loadout Slot 7 Key", desc = "Select loadout 7 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_7) public int loadoutSlot7Key = com.mojang.blaze3d.platform.InputConstants.KEY_7;
-        @Expose @ConfigOption(name = "Loadout Slot 8 Key", desc = "Select loadout 8 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_8) public int loadoutSlot8Key = com.mojang.blaze3d.platform.InputConstants.KEY_8;
-        @Expose @ConfigOption(name = "Loadout Slot 9 Key", desc = "Select loadout 9 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_9) public int loadoutSlot9Key = com.mojang.blaze3d.platform.InputConstants.KEY_9;
-        @Expose @ConfigOption(name = "Loadout Slot 10 Key", desc = "Select loadout 10 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_0) public int loadoutSlot10Key = com.mojang.blaze3d.platform.InputConstants.KEY_0;
-        @Expose @ConfigOption(name = "Loadout Slot 11 Key", desc = "Select loadout 11 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_MINUS) public int loadoutSlot11Key = com.mojang.blaze3d.platform.InputConstants.KEY_MINUS;
-        @Expose @ConfigOption(name = "Loadout Slot 12 Key", desc = "Select loadout 12 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_EQUALS) public int loadoutSlot12Key = com.mojang.blaze3d.platform.InputConstants.KEY_EQUALS;
+        @Expose @ConfigOption(name = "Loadout Slot 1 Key", desc = "Select loadout 1 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1) public int loadoutSlot1Key = com.mojang.blaze3d.platform.InputConstants.KEY_1;
+        @Expose @ConfigOption(name = "Loadout Slot 2 Key", desc = "Select loadout 2 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2) public int loadoutSlot2Key = com.mojang.blaze3d.platform.InputConstants.KEY_2;
+        @Expose @ConfigOption(name = "Loadout Slot 3 Key", desc = "Select loadout 3 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3) public int loadoutSlot3Key = com.mojang.blaze3d.platform.InputConstants.KEY_3;
+        @Expose @ConfigOption(name = "Loadout Slot 4 Key", desc = "Select loadout 4 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4) public int loadoutSlot4Key = com.mojang.blaze3d.platform.InputConstants.KEY_4;
+        @Expose @ConfigOption(name = "Loadout Slot 5 Key", desc = "Select loadout 5 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_5) public int loadoutSlot5Key = com.mojang.blaze3d.platform.InputConstants.KEY_5;
+        @Expose @ConfigOption(name = "Loadout Slot 6 Key", desc = "Select loadout 6 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_6) public int loadoutSlot6Key = com.mojang.blaze3d.platform.InputConstants.KEY_6;
+        @Expose @ConfigOption(name = "Loadout Slot 7 Key", desc = "Select loadout 7 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_7) public int loadoutSlot7Key = com.mojang.blaze3d.platform.InputConstants.KEY_7;
+        @Expose @ConfigOption(name = "Loadout Slot 8 Key", desc = "Select loadout 8 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_8) public int loadoutSlot8Key = com.mojang.blaze3d.platform.InputConstants.KEY_8;
+        @Expose @ConfigOption(name = "Loadout Slot 9 Key", desc = "Select loadout 9 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_9) public int loadoutSlot9Key = com.mojang.blaze3d.platform.InputConstants.KEY_9;
+        @Expose @ConfigOption(name = "Loadout Slot 10 Key", desc = "Select loadout 10 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_0) public int loadoutSlot10Key = com.mojang.blaze3d.platform.InputConstants.KEY_0;
+        @Expose @ConfigOption(name = "Loadout Slot 11 Key", desc = "Select loadout 11 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_MINUS) public int loadoutSlot11Key = com.mojang.blaze3d.platform.InputConstants.KEY_MINUS;
+        @Expose @ConfigOption(name = "Loadout Slot 12 Key", desc = "Select loadout 12 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_EQUALS) public int loadoutSlot12Key = com.mojang.blaze3d.platform.InputConstants.KEY_EQUALS;
     }
 
     public static final class CaseOpening {
@@ -2735,7 +2740,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Map Style", desc = "Which style of dungeon map to draw. Classic: Hypixel's map with room names and player heads. Detailed: small rooms with run info lines below. Minimal: a faint map with no border or info lines. The Dungeon Sim draws the same style.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyle style = com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyle.SKYBLOCKER;
+        public DungeonMapStyle style = DungeonMapStyle.SKYBLOCKER;
 
         @Expose
         @ConfigOption(name = "Fancy Map", desc = "Show player heads and room colours on the map.")
@@ -2822,8 +2827,8 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Color Override", desc = "Forces the livid highlight to be a specific color.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.dungeons.DungeonLividFinder.LividColorHighlight colorOverride =
-            com.epic60869.sky2m.features.dungeons.DungeonLividFinder.LividColorHighlight.DEFAULT;
+        public DungeonLividFinder.LividColorHighlight colorOverride =
+            DungeonLividFinder.LividColorHighlight.DEFAULT;
     }
 
     public static final class Secrets {
@@ -2960,7 +2965,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Play Chime", desc = "Plays the chime with these settings.")
         @ConfigEditorButton(buttonText = "PLAY")
         @ConfigAccordionId(id = 1504)
-        public Runnable playChime = com.epic60869.sky2m.features.dungeons.SecretChime::play;
+        public Runnable playChime = SecretChime::play;
 
         @ConfigOption(name = "Doors & Keys", desc = "Door and key highlights, and announcing keys.")
         @ConfigEditorAccordion(id = 1505)
@@ -3047,15 +3052,8 @@ public final class FeatureConfigs {
         BOTH("Both"), GREEN("Secrets"), WHITE("Cleared");
 
         private final String label;
-
-        RoomClearMode(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        RoomClearMode(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class DungeonMobs {
@@ -3136,30 +3134,16 @@ public final class FeatureConfigs {
         ODIN("Overlay"), NOAMM("Centred Panel");
 
         private final String label;
-
-        TerminalStyle(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        TerminalStyle(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum NoammSlotStyle {
         RECT("Rect"), BORDERED("Bordered"), BUTTON("Button");
 
         private final String label;
-
-        NoammSlotStyle(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        NoammSlotStyle(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class Terminals {
@@ -3408,15 +3392,8 @@ public final class FeatureConfigs {
         BELL("Bell"), NOTE_BELL("Note Bell"), DING("Ding"), ORB("XP Orb"), NONE("None");
 
         private final String label;
-
-        ReleaseSound(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        ReleaseSound(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class Score {
@@ -3555,30 +3532,16 @@ public final class FeatureConfigs {
         AUTO("Auto"), ARCHER("Archer"), BERSERK("Berserk"), HEALER("Healer"), MAGE("Mage"), TANK("Tank");
 
         private final String label;
-
-        ClassOverride(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        ClassOverride(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum LeapCorner {
         TOP_LEFT("Top Left"), TOP_RIGHT("Top Right"), BOTTOM_LEFT("Bot Left"), BOTTOM_RIGHT("Bot Right");
 
         private final String label;
-
-        LeapCorner(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        LeapCorner(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     /** Defaults follow Odin's leap menu: class colours and quadrants. */
@@ -3590,22 +3553,22 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Top Left Key", desc = "Leap to the teammate in the top left box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1)
         public int keyTopLeft = com.mojang.blaze3d.platform.InputConstants.KEY_1;
 
         @Expose
         @ConfigOption(name = "Top Right Key", desc = "Leap to the teammate in the top right box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2)
         public int keyTopRight = com.mojang.blaze3d.platform.InputConstants.KEY_2;
 
         @Expose
         @ConfigOption(name = "Bottom Left Key", desc = "Leap to the teammate in the bottom left box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3)
         public int keyBottomLeft = com.mojang.blaze3d.platform.InputConstants.KEY_3;
 
         @Expose
         @ConfigOption(name = "Bottom Right Key", desc = "Leap to the teammate in the bottom right box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4)
         public int keyBottomRight = com.mojang.blaze3d.platform.InputConstants.KEY_4;
 
         @Expose
@@ -3781,15 +3744,8 @@ public final class FeatureConfigs {
         OUTLINE("Outline"), FILLED("Filled"), BOTH("Both");
 
         private final String label;
-
-        BoxStyle(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        BoxStyle(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class PlatformHighlight {
@@ -3835,30 +3791,16 @@ public final class FeatureConfigs {
         OFF("Off"), HEALER("Healer"), TANK("Tank");
 
         private final String label;
-
-        DragonSoloPriority(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        DragonSoloPriority(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum DragonWaypoints {
         OFF("Off"), SIMPLE("Simple"), ADVANCED("Advanced");
 
         private final String label;
-
-        DragonWaypoints(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        DragonWaypoints(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     /** NoFrills' Egg Hits Display. */
@@ -3992,15 +3934,8 @@ public final class FeatureConfigs {
             TEXT("Text"), GIF("GIF");
 
             private final String label;
-
-            Content(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Content(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -4100,15 +4035,8 @@ public final class FeatureConfigs {
             GUI("GUI Pixels"), PIXELS("Screen Pixels");
 
             private final String label;
-
-            SizeMode(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            SizeMode(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum Preset {
@@ -4116,15 +4044,8 @@ public final class FeatureConfigs {
             T_SHAPE("T-Shape"), X("X"), VALORANT("Valorant");
 
             private final String label;
-
-            Preset(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Preset(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -4335,7 +4256,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Open Crosshairs Folder", desc = "Open the folder to put crosshair pictures in.")
         @ConfigEditorButton(buttonText = "OPEN")
         @ConfigAccordionId(id = 3006)
-        public Runnable openFolder = com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair::openFolder;
+        public Runnable openFolder = CustomCrosshair::openFolder;
 
         @ConfigOption(name = "Import & Export", desc = "Presets, and sharing crosshairs as codes.")
         @ConfigEditorAccordion(id = 3007)
@@ -4344,12 +4265,12 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Import From Clipboard", desc = "Copy a crosshair code, then click this. Works with Valorant codes (0;P;c;5;...), CS2 share codes (CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx), Sky2M codes (KXH1-...), and the path or name of a PNG (it's copied into the crosshairs folder and used as an Image crosshair).")
         @ConfigEditorButton(buttonText = "IMPORT")
         @ConfigAccordionId(id = 3007)
-        public Runnable importCode = com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair::importFromClipboard;
+        public Runnable importCode = CustomCrosshair::importFromClipboard;
 
         @ConfigOption(name = "Export To Clipboard", desc = "Copy your crosshair as a code (KXH1-...) to share. Anyone with Sky2M can import it.")
         @ConfigEditorButton(buttonText = "EXPORT")
         @ConfigAccordionId(id = 3007)
-        public Runnable exportCode = com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair::exportToClipboard;
+        public Runnable exportCode = CustomCrosshair::exportToClipboard;
 
         @Expose
         @ConfigOption(name = "Preset", desc = "A ready-made crosshair to start from. Click Apply Preset to use it (your current look is replaced).")
@@ -4360,7 +4281,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Apply Preset", desc = "Replace your crosshair's look with the chosen preset.")
         @ConfigEditorButton(buttonText = "APPLY")
         @ConfigAccordionId(id = 3007)
-        public Runnable applyPreset = com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair::applyPreset;
+        public Runnable applyPreset = CustomCrosshair::applyPreset;
     }
 
     /** Inventory HUD, styled after Inventory HUD+. */
@@ -4369,45 +4290,24 @@ public final class FeatureConfigs {
             ALWAYS("Always"), HOLD_KEY("Hold Key"), TOGGLE_KEY("Toggle Key");
 
             private final String label;
-
-            Show(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Show(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum Style {
             DARK("Dark"), VANILLA("Vanilla");
 
             private final String label;
-
-            Style(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Style(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum Background {
             NONE("None"), PANEL("Panel"), SLOTS("Panel + Slots");
 
             private final String label;
-
-            Background(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Background(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -4422,7 +4322,7 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Key", desc = "The key for While Holding the Key and Toggled by the Key.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int key = -1;
 
         @Expose
@@ -4555,30 +4455,16 @@ public final class FeatureConfigs {
             TOP("Top"), CENTER("Center"), BOTTOM("Bottom");
 
             private final String label;
-
-            Alignment(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Alignment(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum Part {
             AMOUNT("Amount"), ICON("Icon"), NAME("Item Name");
 
             private final String label;
-
-            Part(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Part(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -4772,7 +4658,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Profile API", desc = "Where profiles are loaded from, for the Profile Viewer and Party Finder Stats: a public proxy of Hypixel's API, since Sky2M has no API key. Default: https://api.odtheking.com/hypixel/")
         @ConfigEditorText
-        public String apiUrl = com.epic60869.sky2m.features.profileviewer.ProfileApi.DEFAULT_URL;
+        public String apiUrl = ProfileApi.DEFAULT_URL;
 
         @Expose
         @ConfigOption(name = "Overflow Levels", desc = "Show levels past Hypixel's maximum: skills (the normal levels up to 60, then 7.6M XP for 61 and more for each after), Catacombs and classes past 50 (200M XP each), the garden level past its max (10,000 garden XP each) crop milestones past their max (each needing as many crops as the last) and pets past level 100 or 200 (each taking the XP of the last level). Off: everything stops at Hypixel's max. Skill Average always uses the capped levels.")
@@ -4909,7 +4795,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open", desc = "Open the Session Tracker (/s2 session).")
         @ConfigEditorButton(buttonText = "OPEN")
-        public Runnable open = () -> com.epic60869.sky2m.features.misc.profit.SessionTrackerScreen.open(-1);
+        public Runnable open = () -> SessionTrackerScreen.open(-1);
     }
 
     public static final class ProfitTrackerSettings {
@@ -4930,7 +4816,7 @@ public final class FeatureConfigs {
 
         /** Which totals the HUD shows (cycled with its Display Mode line). */
         @Expose
-        public com.epic60869.sky2m.features.misc.profit.ProfitTracker.Period period = com.epic60869.sky2m.features.misc.profit.ProfitTracker.Period.SESSION;
+        public ProfitTracker.Period period = ProfitTracker.Period.SESSION;
 
         public ProfitTrackerSettings() {
             this(ProfitSummaryLine.standardDefaults());
@@ -5007,30 +4893,16 @@ public final class FeatureConfigs {
         INSTANT_SELL("Insta-Sell"), SELL_ORDER("Sell Order"), BUY_ORDER("Buy Order"), NPC_SELL("NPC Sell");
 
         private final String label;
-
-        ProfitPriceSource(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        ProfitPriceSource(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum ProfitQuantityPosition {
         LEFT("Left"), RIGHT("Right");
 
         private final String label;
-
-        ProfitQuantityPosition(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        ProfitQuantityPosition(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum ProfitSummaryLine {
@@ -5040,15 +4912,8 @@ public final class FeatureConfigs {
         PACE("Slayer Pace");
 
         private final String label;
-
-        ProfitSummaryLine(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        ProfitSummaryLine(String label) { this.label = label; }
+        @Override public String toString() { return label; }
 
         static List<ProfitSummaryLine> farmingDefaults() {
             return List.of(COINS, KERNEL_PROFIT, QUEST_COSTS, TOTAL_PROFIT, PROFIT_PER_HOUR, ACTIONS, UPTIME);
@@ -5085,22 +4950,22 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Time Format", desc = "12-hour or 24-hour time, with optional seconds.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.system.ServerInfo.TimeFormat timeFormat = com.epic60869.sky2m.features.misc.system.ServerInfo.TimeFormat.TWENTY_FOUR_HOUR;
+        public ServerInfo.TimeFormat timeFormat = ServerInfo.TimeFormat.TWENTY_FOUR_HOUR;
 
         @Expose
         @ConfigOption(name = "Style", desc = "Simple: one HUD with everything. Split: a separate HUD for each value, each moved on its own.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.system.ServerInfo.Style style = com.epic60869.sky2m.features.misc.system.ServerInfo.Style.SIMPLE;
+        public ServerInfo.Style style = ServerInfo.Style.SIMPLE;
 
         @Expose
         @ConfigOption(name = "Simple Layout", desc = "Arrange the Simple display vertically or horizontally.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.system.ServerInfo.Layout layout = com.epic60869.sky2m.features.misc.system.ServerInfo.Layout.VERTICAL;
+        public ServerInfo.Layout layout = ServerInfo.Layout.VERTICAL;
 
         @Expose
         @ConfigOption(name = "Labels", desc = "Show text labels, symbols, or values only.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.system.ServerInfo.LabelStyle labelStyle = com.epic60869.sky2m.features.misc.system.ServerInfo.LabelStyle.TEXT;
+        public ServerInfo.LabelStyle labelStyle = ServerInfo.LabelStyle.TEXT;
 
         @Expose
         @ConfigOption(name = "Show Icons", desc = "Draw a small pixel icon before each value: signal bars for ping, arrows for TPS, a clock for the time and a bolt for FPS. With Labels on Symbols, the icons replace the symbols.")
@@ -5160,7 +5025,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open Value Graph", desc = "Your sacks' value over time. Also /s2 sacks history.")
         @ConfigEditorButton(buttonText = "Open")
-        public Runnable openHistory = com.epic60869.sky2m.features.misc.items.SackValueHistory::open;
+        public Runnable openHistory = SackValueHistory::open;
     }
 
     public static final class SackDisplay {
@@ -5220,15 +5085,8 @@ public final class FeatureConfigs {
         CHEAPEST("Cheapest"), MARKET("Market Only");
 
         private final String label;
-
-        MpPriceSource(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        MpPriceSource(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum SackPriceSource {
@@ -5236,45 +5094,24 @@ public final class FeatureConfigs {
         INSTA_BUY("Bazaar Insta-Buy"), LOWEST_BIN("Lowest BIN");
 
         private final String label;
-
-        SackPriceSource(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        SackPriceSource(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum SackSort {
         VALUE("Value"), AMOUNT("Amount"), NAME("Name");
 
         private final String label;
-
-        SackSort(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        SackSort(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum SacksPriceMode {
         INSTANT_SELL("Instant Sell"), SELL_OFFER("Sell Offer"), RANGE("Range");
 
         private final String label;
-
-        SacksPriceMode(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        SacksPriceMode(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class ItemNotification {
@@ -5284,7 +5121,7 @@ public final class FeatureConfigs {
         public boolean enabled = false;
 
         @ConfigOption(name = "Items", desc = "Open the list of items to watch for: one per line, with item name suggestions as you type. Also /s2 itemnotify.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "EDIT")
+        @ConfigEditorButton(buttonText = "EDIT")
         public Runnable editItems = com.epic60869.sky2m.features.misc.items.ItemNotification::openEditor;
 
         /** The items, one per line (edited in the Items window). */
@@ -5328,45 +5165,24 @@ public final class FeatureConfigs {
             RIGHT("Right"), LEFT("Left");
 
             private final String label;
-
-            Side(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Side(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum ClickAction {
             RECIPE("Show Recipes"), USAGE("Show Usages"), WIKI("Open Wiki"), NOTHING("Nothing");
 
             private final String label;
-
-            ClickAction(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            ClickAction(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum HideWhen {
             SEARCH("No Search"), FILTER("No Filter"), NEVER("Never");
 
             private final String label;
-
-            HideWhen(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            HideWhen(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         /** How the list is ordered, like NEU's sort buttons. */
@@ -5374,15 +5190,8 @@ public final class FeatureConfigs {
             DEFAULT("Default"), PRICE("Price"), RARITY("Rarity"), TYPE("Type"), NAME("Name");
 
             private final String label;
-
-            Sort(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Sort(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -5482,32 +5291,32 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Hide Key", desc = "Hold Ctrl and press this to hide or show the list and favourites.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_O)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_O)
         public int hideKey = com.mojang.blaze3d.platform.InputConstants.KEY_O;
 
         @Expose
         @ConfigOption(name = "Recipe Key", desc = "Over an item (in the list, a recipe or any menu): show its recipes.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_R)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_R)
         public int recipeKey = com.mojang.blaze3d.platform.InputConstants.KEY_R;
 
         @Expose
         @ConfigOption(name = "Usage Key", desc = "Over an item: show the recipes that use it.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_U)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_U)
         public int usageKey = com.mojang.blaze3d.platform.InputConstants.KEY_U;
 
         @Expose
         @ConfigOption(name = "Back Key", desc = "In a recipe: go back to the one before.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_BACKSPACE)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_BACKSPACE)
         public int backKey = com.mojang.blaze3d.platform.InputConstants.KEY_BACKSPACE;
 
         @Expose
         @ConfigOption(name = "Favourite Key", desc = "Over an item or a recipe: add it to (or remove it from) your favourites.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_F)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_F)
         public int favouriteKey = com.mojang.blaze3d.platform.InputConstants.KEY_F;
 
         @Expose
         @ConfigOption(name = "Search Key", desc = "Jump to the search bar while the list is open.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int searchKey = -1;
 
         /** Remembered between sessions. */
@@ -5586,7 +5395,7 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Key", desc = "Starts (or restarts) the countdown.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int key = -1;
 
         @Expose
@@ -5856,75 +5665,40 @@ public final class FeatureConfigs {
             REDSTONE("Redstone"), VOTING("Election"), ACTIVE_TABLIST("Tab List Event"), OTHER("Other Lines §7(anything unknown)");
 
             private final String label;
-
-            Event(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Event(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum Align {
             LEFT("Left"), CENTER("Centre"), RIGHT("Right");
 
             private final String label;
-
-            Align(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Align(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum HorizontalPosition {
             LEFT("Left"), CENTER("Centre"), RIGHT("Right"), FREE("Free");
 
             private final String label;
-
-            HorizontalPosition(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            HorizontalPosition(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum VerticalPosition {
             TOP("Top"), CENTER("Centre"), BOTTOM("Bottom"), FREE("Free");
 
             private final String label;
-
-            VerticalPosition(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            VerticalPosition(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum NumberFormat {
             LONG("1,234,567"), SHORT("1.23M");
 
             private final String label;
-
-            NumberFormat(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            NumberFormat(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum NumberDisplay {
@@ -5932,19 +5706,12 @@ public final class FeatureConfigs {
             NUMBER_TEXT("§6123 §fPurse"), NUMBER_ONLY("§6123");
 
             private final String label;
-
-            NumberDisplay(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            NumberDisplay(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @ConfigOption(name = "Open Editor", desc = "Set it up in its own screen: drag the lines and events into order, change the title, background and options, and see it change as you go. Also /s2 scoreboard.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "Open")
+        @ConfigEditorButton(buttonText = "Open")
         public Runnable openEditor = com.epic60869.sky2m.features.misc.visual.CustomScoreboard::openEditor;
 
         @Expose
@@ -6165,7 +5932,7 @@ public final class FeatureConfigs {
         public int imageOpacity = 90;
 
         @ConfigOption(name = "Open Picture Folder", desc = "Opens config/sky2m/scoreboard, where pictures for the background go.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "Open")
+        @ConfigEditorButton(buttonText = "Open")
         public Runnable openFolder = com.epic60869.sky2m.features.misc.visual.CustomScoreboard::openFolder;
     }
 
@@ -6449,7 +6216,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open Dungeon Sim", desc = "Open the Dungeon Sim's menu: load any room or generate a whole floor (F1 to M7 sizes) in a singleplayer world, with secrets, puzzles, mobs, keys, the Mimic, a run timer and score. Also /s2 sim. It needs its own world, so leave the server first; from the title screen use the button below.")
         @ConfigEditorButton(buttonText = "OPEN")
-        public Runnable open = com.epic60869.sky2m.sim.Sky2MSim::openMenu;
+        public Runnable open = Sky2MSim::openMenu;
 
         @Expose
         @ConfigOption(name = "Title Screen Button", desc = "A \"Dungeon Sim\" button on the title screen, in the top left, that opens the Sim's menu. Hidden while the Dungeon Sim is off (Enabled above).")
@@ -6592,8 +6359,8 @@ public final class FeatureConfigs {
     public static final class CataCalculator {
         @ConfigOption(name = "How To Use", desc = "/s2 catacalc opens the calculator: pick a floor and type a target level, XP per run and run time to see the runs and time to it, and to each level on the way. It reads your Catacombs XP from your profile, and uses the XP your last run of that floor gave you (from the run summary), else the floor's base XP with the bonus below. /s2 catacalc [level] [floor or XP per run] still answers in chat: /s2 catacalc 50 m7, /s2 catacalc 50 350000.")
         @ConfigEditorButton(buttonText = "Open")
-        public Runnable run = () -> com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(
-            new com.epic60869.sky2m.features.dungeons.CataCalcScreen(net.minecraft.client.Minecraft.getInstance().gui.screen()));
+        public Runnable run = () -> Compat.queueOpenScreen(
+            new CataCalcScreen(net.minecraft.client.Minecraft.getInstance().gui.screen()));
 
         @Expose
         @ConfigOption(name = "XP Bonus", desc = "Your Catacombs XP bonus in percent (Catacombs Expert Ring, Hecatomb, mayors...), used when a floor's XP isn't known from your own runs yet.")
@@ -6927,15 +6694,8 @@ public final class FeatureConfigs {
         H24("13:45"), H24_SECONDS("13:45:12"), H12("1:45 PM"), H12_SECONDS("1:45:12 PM");
 
         private final String label;
-
-        TimestampFormat(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        TimestampFormat(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class ChatTabs {
@@ -7094,15 +6854,8 @@ public final class FeatureConfigs {
             ONE_COIN("1 coin"), ONE_PERCENT("1%"), FIVE_PERCENT("5%");
 
             private final String label;
-
-            Undercut(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Undercut(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
     }
 
@@ -7168,7 +6921,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open", desc = "Your achievements and stats, with a tab for each activity. Also /s2 achievements.")
         @ConfigEditorButton(buttonText = "Open")
-        public Runnable open = com.epic60869.sky2m.features.misc.social.Sky2MAchievements::open;
+        public Runnable open = Sky2MAchievements::open;
     }
     /** Odin's Waypoints settings (BSD-3-Clause). */
     public static final class AreaWaypoints {
