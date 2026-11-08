@@ -182,7 +182,7 @@ public final class PartyCommands {
         // Your own !warp, !allinvite and !f7 work too (like Odin); transferring or promoting yourself doesn't.
         boolean self = sender.equalsIgnoreCase(me());
         // One !kick in a hundred from someone else, while you lead, kicks them instead.
-        if (command.equals("kick") && config.kick && arg != null && !self && me().equalsIgnoreCase(leader)
+        if ((command.equals("kick") || command.equals("k")) && config.kick && arg != null && !self && me().equalsIgnoreCase(leader)
             && ThreadLocalRandom.current().nextInt(100) == 0) {
             partyChat("The !kick backfired! Bye " + sender + "!");
             run("party kick " + sender);
@@ -197,8 +197,8 @@ public final class PartyCommands {
             case "ptme" -> config.transfer && !self ? "party transfer " + sender : null;
             case "promote" -> config.promote && (arg != null || !self) ? playerCommand("party promote ", arg == null ? sender : arg) : null;
             case "demote" -> config.promote && (arg != null || !self) ? playerCommand("party demote ", arg == null ? sender : arg) : null;
-            // "!kick nix" kicks NixJussid; never you.
-            case "kick" -> config.kick && arg != null ? playerCommand("party kick ", arg) : null;
+            // "!kick nix" / "!k nix" kicks NixJussid; "!kick" / "!k" alone kicks whoever sent it. Never you.
+            case "kick", "k" -> config.kick ? kickCommand(arg, sender) : null;
             default -> instance(config, command);
         };
         if (toRun == null) return;
@@ -278,6 +278,15 @@ public final class PartyCommands {
      * with it ("nix" -> NixJussid). Null when it would kick you or several members match (said in party chat); the
      * name as typed when no member matches (Hypixel then says who it couldn't find).
      */
+    /**
+     * !kick / !k: the player named after it ({@link #playerCommand}), or with no name the one who sent it. Null when
+     * that would kick you (your own "!k" with no name).
+     */
+    public static String kickCommand(String arg, String sender) {
+        if (arg != null) return playerCommand("party kick ", arg);
+        return sender.equalsIgnoreCase(me()) ? null : "party kick " + sender;
+    }
+
     private static String playerCommand(String command, String typed) {
         boolean kick = command.equals("party kick ");
         if (typed.equalsIgnoreCase(me())) return kick ? null : command + me();

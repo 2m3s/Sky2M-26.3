@@ -4974,7 +4974,7 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "!allinvite", desc = "Runs /party settings allinvite.") @ConfigEditorBoolean public boolean allInvite = true;
         @Expose @ConfigOption(name = "!pt / !transfer", desc = "Transfers the party to the player who asked, or the player named after it. The name can be just the start of it: !pt nix transfers to NixJussid.") @ConfigEditorBoolean public boolean transfer = true;
         @Expose @ConfigOption(name = "!promote / !demote", desc = "Promotes or demotes the player who asked, or the player named after it (!promote Name).") @ConfigEditorBoolean public boolean promote = false;
-        @Expose @ConfigOption(name = "!kick", desc = "Kicks the player named after it (!kick Name). The name can be just the start of it: !kick nix kicks NixJussid. Never kicks you.") @ConfigEditorBoolean public boolean kick = true;
+        @Expose @ConfigOption(name = "!kick / !k", desc = "Kicks the player named after it (!kick Name or !k Name), or with no name the player who sent it. The name can be just the start of it: !k nix kicks NixJussid. Never kicks you.") @ConfigEditorBoolean public boolean kick = true;
 
         @Expose @ConfigOption(name = "!f1 - !f7", desc = "Joins that Catacombs floor. Only while you're leader.") @ConfigEditorBoolean public boolean floors = true;
         @Expose @ConfigOption(name = "!m1 - !m7", desc = "Joins that Master Mode floor. Only while you're leader.") @ConfigEditorBoolean public boolean masterFloors = true;
