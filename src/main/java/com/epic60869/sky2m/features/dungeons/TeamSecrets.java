@@ -50,8 +50,10 @@ public final class TeamSecrets {
         boolean loading;
         /** No more looks to come. */
         boolean done;
-        /** Its numbers changed during another run, so they wait until that run is over. */
+        /** Its numbers changed outside a dungeon or during another run, so they wait (see {@link #holdUpdate}). */
         boolean unsaid;
+        /** Added to Teammate History (once, when its looks are done or the next run ends). */
+        boolean recorded;
         /** The numbers as they were last said in chat. */
         Map<String, Long> said = new LinkedHashMap<>();
         /** The next run has ended: anything this one still finds isn't said any more (it would be a second list). */
@@ -115,8 +117,16 @@ public final class TeamSecrets {
         });
     }
 
-    /** An update waits while a different run is going on: not after that run has ended, or outside a dungeon. Public for the game test. */
+    /**
+     * An update waits outside a dungeon, and while a different run is going on. It's said in the dungeon it's for, or
+     * when the next run ends (as a line under that run's list). Public for the game test.
+     */
     public static boolean holdUpdate(int updateRun, int currentRun, boolean inDungeon, boolean currentEnded) {
+        return !inDungeon || updateRun != currentRun && !currentEnded;
+    }
+
+    /** The end-of-run list itself waits only while a different run is going on, so it shows wherever you are. */
+    private static boolean holdFirst(int updateRun, int currentRun, boolean inDungeon, boolean currentEnded) {
         return updateRun != currentRun && inDungeon && !currentEnded;
     }
 
@@ -234,9 +244,12 @@ public final class TeamSecrets {
                 if (run.run != runId) before.computeIfPresent(e.getKey(), (name, from) -> from >= 0 && from < total ? total : from);
             }
             if (run.closed) return;
-            if (first || raised) {
-                if (holdUpdate(run.run, runId, Sky2MLocation.inDungeon(), ended)) run.unsaid = true;
-                else if (first) show(run, "Team secrets this run:");
+            boolean inDungeon = Sky2MLocation.inDungeon();
+            if (first) {
+                if (holdFirst(run.run, runId, inDungeon, ended)) run.unsaid = true;
+                else show(run, "Team secrets this run:");
+            } else if (raised) {
+                if (holdUpdate(run.run, runId, inDungeon, ended)) run.unsaid = true;
                 else show(run, run.run == runId ? "Team secrets (updated):" : "Team secrets last run (updated):");
             }
             boolean more = run.laterLooks < LATER_LOOKS_MS.length && stillToLook(run.found).stream().anyMatch(run.start::containsKey);
@@ -245,13 +258,17 @@ public final class TeamSecrets {
                 run.laterLooks++;
             } else {
                 run.done = true;
-                // One that's still waiting to be said finishes when it has been.
+                // One that's still waiting to be said finishes when it has been; its numbers are final already, so
+                // Teammate History gets them now (you may not play another run).
                 if (finished == run && !run.unsaid) finishUp(run);
+                else recordHistory(run);
             }
         }));
     }
 
     private static void recordHistory(Finished run) {
+        if (run.recorded) return;
+        run.recorded = true;
         TeammateHistory.record(new TeammateHistory.Run(run.found, run.rooms, run.deaths));
     }
 

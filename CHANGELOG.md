@@ -196,7 +196,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ### Fixed
 - Fix HUDs drawn in a menu (Storage Value, Profit Tracker, Composter, Anita shop and others) missing from /s2 gui's On screen list: any HUD on your screen when you press the Edit HUDs key, or open /s2 gui, is there to move.
 - Fix Bazaar Order Colours not colouring enchanted book orders (like Legion I), and orders seen before the bazaar prices loaded staying uncoloured until the menu was reopened.
-- Fix "Team secrets last run (updated)" showing during your next run: it now waits until you leave the dungeon, or at the end of that run it's one "Last run, updated" line under the new list, not a second list. Only numbers that went up are said again, not a "?" turning into 0.
+- Fix "Team secrets last run (updated)" showing during your next run or after you've left the dungeon: updated numbers are only said while you're still in the dungeon. Otherwise they wait for the end of your next run, as one "Last run, updated" line under the new list, not a second list. Only numbers that went up are said again, not a "?" turning into 0.
 - Fix Slug Boots being counted as a Slug Pet on the RNG HUD. They now show like any other drop, when worth 5M or more.
 - Fix Team Secrets showing 0 or ? for everyone, or nothing at all: it now keeps looking for up to 4 minutes after the run, even once you've left the dungeon, and says the updated numbers. A total that arrives late no longer adds to the next run's count.
 - Fix Live Room Splits showing more secrets than a room has (like 7/6), and the room time stopping a secret early, when one secret was counted twice, most often a bat.
