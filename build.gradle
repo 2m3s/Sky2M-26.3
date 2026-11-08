@@ -112,8 +112,9 @@ dependencies {
     // MoulConfig: the same config engine used by SkyHanni/NotEnoughUpdates.
     implementation "org.notenoughupdates.moulconfig:modern-${project.minecraft_version}:${project.moulconfig_version}"
     include "org.notenoughupdates.moulconfig:modern-${project.minecraft_version}:${project.moulconfig_version}"
+    // MoulConfig is written in Kotlin. Fabric Language Kotlin is not bundled (it was 8 MB of the jar): players install
+    // it as its own mod, and fabric.mod.json lists it under "depends" so the loader names it if it is missing.
     implementation "net.fabricmc:fabric-language-kotlin:${project.flk_version}"
-    include "net.fabricmc:fabric-language-kotlin:${project.flk_version}"
 }
 
 java {
