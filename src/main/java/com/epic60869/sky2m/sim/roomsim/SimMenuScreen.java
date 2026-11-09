@@ -119,6 +119,22 @@ public class SimMenuScreen extends Screen {
             capturing = 0;
             rebuildWidgets();
         }).bounds(x, y + 90, w, 22).build());
+        // The stats every hit and every mob's damage is worked out from (SimStats), also /simstats. Staff only:
+        // greyed out and labelled for everyone else, who plays with the default stats.
+        SettingsButtonWidget stats = SettingsButtonWidget.builder(SimStatsScreen.buttonLabel(), b ->
+                SimStatsScreen.open(this.minecraft, this))
+                .bounds(x, y + 120, w, 22).build();
+        stats.active = SimCommandGate.isStaff();
+        addRenderableWidget(stats);
+        // Classes, loadout presets, the wardrobe and pets (SimLoadoutScreen, SimWardrobeScreen), also /simloadout,
+        // /simwardrobe and /simpets.
+        int half = (w - 6) / 2;
+        addRenderableWidget(SettingsButtonWidget.builder(Component.literal("Class & Loadouts"), b ->
+                McCompat.setScreen(this.minecraft, new SimLoadoutScreen(this)))
+                .bounds(x, y + 150, half, 22).build());
+        addRenderableWidget(SettingsButtonWidget.builder(Component.literal("Wardrobe & Pets"), b ->
+                McCompat.setScreen(this.minecraft, new SimWardrobeScreen(this, false)))
+                .bounds(x + half + 6, y + 150, w - half - 6, 22).build());
     }
 
     /** Which route-practice key is waiting for a press: 0 none, 1 Next Room, 2 Previous Room. */
@@ -211,7 +227,7 @@ public class SimMenuScreen extends Screen {
         // Puzzles buttons that sat here (2026-09-30, 2026-10-05) are rows of the shared Filters panel now, on
         // Load a Room's own SimRoomFilters.PICKER; the button sits beside the search box.
         int fw = filtersWidth();
-        search = new EditBox(this.font, x, y, right - x - fw - 4, 18, Component.literal("Search"));
+        search = new com.epic60869.sky2m.sim.gui.SimTextField(this.font, x, y, right - x - fw - 4, 18, Component.literal("Search"));
         search.setHint(Component.literal("Search rooms..."));
         search.setValue(searchText);
         search.setResponder(v -> {
@@ -337,13 +353,8 @@ public class SimMenuScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        g.fill(0, 0, this.width, this.height, 0xCC000000);
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, ProfitPanels.PANEL_BG);
-        g.outline(panelX, panelY, panelW, panelH, ProfitPanels.BORDER);
-        g.fill(panelX, panelY, panelX + panelW, panelY + 30, 0xFF000000);
-        g.fill(panelX, panelY + 29, panelX + panelW, panelY + 30, ProfitPanels.ACCENT);
-        g.text(this.font, mode.title.toUpperCase(Locale.ROOT), panelX + 10, panelY + 11,
-                ProfitPanels.ACCENT, false);
+        ProfitPanels.frame(g, this.font, this.width, this.height, panelX, panelY, panelW, panelH, 30,
+                mode == Mode.HOME ? "" : mode.title);
         if (mode == Mode.HOME) {
             String hint = RoomLibrary.roomCount() == 0
                     ? "No rooms loaded - the shipped room library did not load"

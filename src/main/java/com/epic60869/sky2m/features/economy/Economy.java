@@ -23,12 +23,17 @@ import java.nio.file.Path;
 public final class Economy {
     /** Opens the Value Breakdown window for the hovered item. */
     public static KeyMapping VALUE_BREAKDOWN;
+    /** Opens the Price History Graph for the hovered item (unbound by default). */
+    public static KeyMapping PRICE_GRAPH;
 
     private Economy() {}
 
     public static void init(Path configDir) {
         VALUE_BREAKDOWN = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.sky2m.value_breakdown", InputConstants.Type.KEYBOARD, InputConstants.KEY_J,
+            com.epic60869.sky2m.input.Sky2MKeyMappings.CATEGORY));
+        PRICE_GRAPH = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.sky2m.price_graph", InputConstants.Type.KEYBOARD, InputConstants.UNKNOWN.getValue(),
             com.epic60869.sky2m.input.Sky2MKeyMappings.CATEGORY));
 
         ItemTooltipCallback.EVENT.register((stack, context, flag, lines) -> {
@@ -45,6 +50,13 @@ public final class Economy {
             ScreenEvents.afterExtract(screen).register((s, g, mouseX, mouseY, delta) -> ValueBreakdown.renderPanel(g, container));
             ScreenKeyboardEvents.allowKeyPress(screen).register((s, event) -> {
                 EconomyConfig c = config();
+                if (PRICE_GRAPH != null && PRICE_GRAPH.matches(event) && Compat.isOnSkyblock()) {
+                    Slot over = ((Sky2MContainerScreenAccessor) container).sky2m$getHoveredSlot();
+                    String id = over == null || !over.hasItem() ? "" : com.epic60869.sky2m.price.Sky2MPriceTooltip.marketId(over.getItem());
+                    if (id.isEmpty()) return true;
+                    com.epic60869.sky2m.price.Sky2MRecipeCommand.openPriceGraph(id);
+                    return false;
+                }
                 if (c == null || !c.breakdownScreen || VALUE_BREAKDOWN == null || !VALUE_BREAKDOWN.matches(event)) return true;
                 Slot hovered = ((Sky2MContainerScreenAccessor) container).sky2m$getHoveredSlot();
                 if (hovered == null || !hovered.hasItem() || !Compat.isOnSkyblock()) return true;

@@ -80,6 +80,42 @@ public final class Sky2MRecipeCommand {
                 .executes(Sky2MRecipeCommand::run));
     }
 
+    /** /s2 pricegraph [item]: the item's price history graph; with no item, the one in your hand. */
+    public static com.mojang.brigadier.builder.LiteralArgumentBuilder<FabricClientCommandSource> priceGraphCommand() {
+        return literal("pricegraph")
+            .executes(context -> {
+                var player = Minecraft.getInstance().player;
+                String id = player == null ? "" : com.epic60869.sky2m.price.Sky2MPriceTooltip.marketId(player.getMainHandItem());
+                if (id.isEmpty()) {
+                    message("Hold a SkyBlock item or use /s2 pricegraph <item>.", 0xFF5555);
+                    return 0;
+                }
+                return openPriceGraph(id);
+            })
+            .then(argument("item", StringArgumentType.greedyString())
+                .suggests(Sky2MRecipeCommand::suggestItems)
+                .executes(context -> {
+                    String raw = StringArgumentType.getString(context, "item").trim();
+                    String id = resolveId(raw);
+                    if (id == null) {
+                        message("Unknown SkyBlock item: " + raw, 0xFF5555);
+                        return 0;
+                    }
+                    return openPriceGraph(id);
+                }));
+    }
+
+    /** Opens the price graph for a price id; pets, books and runes ("WOLF;4") have no Coflnet history under that id. */
+    public static int openPriceGraph(String id) {
+        if (id.contains(";")) {
+            message("No price history for pets, enchanted books or runes yet.", 0xFF5555);
+            return 0;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> mc.gui.setScreen(new com.epic60869.sky2m.features.economy.PriceGraphScreen(mc.gui.screen(), id)));
+        return 1;
+    }
+
     private static CompletableFuture<Suggestions> suggestItems(
         CommandContext<FabricClientCommandSource> context, SuggestionsBuilder builder) {
         String input = builder.getRemaining().toLowerCase(Locale.ROOT);

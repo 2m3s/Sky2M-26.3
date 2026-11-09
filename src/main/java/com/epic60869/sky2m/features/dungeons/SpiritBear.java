@@ -93,7 +93,9 @@ public final class SpiritBear {
         return Component.literal("§6Bear: " + state);
     }
 
-    private static void onBlockUpdate(BlockPos pos, BlockState old, BlockState updated) {
+    private static void onBlockUpdate(BlockPos world, BlockState old, BlockState updated) {
+        // The Dungeon Sim pastes Thorn's arena away from Hypixel's coordinates; its ring is read back at Hypixel's.
+        BlockPos pos = com.epic60869.sky2m.sim.roomsim.SimState.isActive() ? com.epic60869.sky2m.sim.roomsim.SimBoss.toHypixel(world) : world;
         if (old == null || !inBoss() || !(masterMode() ? M4_BLOCKS : F4_BLOCKS).contains(pos)) return;
         int max = masterMode() ? 30 : 25;
         if (updated.is(Blocks.SEA_LANTERN) && old.is(Blocks.COAL_BLOCK)) {

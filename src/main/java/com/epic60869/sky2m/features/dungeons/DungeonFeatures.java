@@ -169,11 +169,23 @@ public final class DungeonFeatures {
         SpiritBear.init();
         DungeonLividFinder.init();
         LividTimer.init();
+        BonzoTimer.init();
         TerracottaTimer.init();
+        SadanInterest.init();
         AutoRequeue.init();
+        TeamSecrets.init();
+        RoomClears.init();
+        WitherBladeBats.init();
         PartyFinderStats.init();
         PfRequirements.init();
         BlessingDisplay.init();
+        PuzzleHud.init();
+        PuzzleBests.init();
+        DeathMap.init();
+        MissedSecrets.init();
+        TeammateHistory.init();
+        ArchitectDraftAlert.init();
+        BreakerHud.init();
         // A reconnect keeps the run's splits: leaving the dungeon or the next run's start clears them.
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> resetRunState());
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> resumeSplits());
@@ -232,7 +244,7 @@ public final class DungeonFeatures {
         Sky2MHuds.register("dungeon_score", "Dungeon Score",
             () -> config() != null && config().score.display && Sky2MLocation.inDungeon() && ScoreCalculator.started(),
             DungeonFeatures::scoreLines,
-            List.of(Component.literal("§eScore: §a300")),
+            List.of(Component.literal("§eScore: §a300"), secretsForSPlusLine(18, 25), scoreLossLine("-6 secrets, -2 crypts, -1 death")),
             200, 820);
     }
 
@@ -440,7 +452,46 @@ public final class DungeonFeatures {
             long eta = estimateTotal(rows);
             if (eta > 0) lines.add(Component.literal("§7ETA: §f" + formatTime(eta)));
         }
+        if (config.timers.splitPace) {
+            Long pace = paceAgainstBest(rows);
+            if (pace != null) lines.add(Component.literal("§7vs PB: " + paceText(pace)));
+        }
         return lines;
+    }
+
+    /** "§a-4.2s" ahead, "§c+4.2s" behind. Public for the game test. */
+    public static String paceText(long ms) {
+        return (ms <= 0 ? "§a-" : "§c+") + String.format(Locale.ROOT, "%.1fs", Math.abs(ms) / 1000.0);
+    }
+
+    /**
+     * How far behind (below 0, ahead of) your best finished run on this floor you are, over the splits done so far. A split
+     * that run doesn't have uses your best for it. The running split only counts once it's slower than that. Null if nothing
+     * is known.
+     */
+    private static Long paceAgainstBest(List<SplitRow> rows) {
+        if (splitFloor.isEmpty() || rows.size() < 2) return null;
+        RunHistory.Run bestRun = null;
+        for (RunHistory.Run run : RunHistory.runs()) {
+            if (!run.completed || !splitFloor.equals(run.floor) || run.totalMs <= 0) continue;
+            if (bestRun == null || run.totalMs < bestRun.totalMs) bestRun = run;
+        }
+        Map<String, Long> best = new HashMap<>();
+        if (bestRun != null) for (RunHistory.Split s : bestRun.splits) best.put(s.name(), s.ms());
+        Map<String, Float> pbs = personalBests.getOrDefault(splitFloor, Map.of());
+        long pace = 0;
+        boolean known = false;
+        for (SplitRow row : rows.subList(0, rows.size() - 1)) {
+            if (row.time() == 0) continue;
+            String name = ChatFormatting.stripFormatting(row.name());
+            Long expected = best.get(name);
+            if (expected == null && pbs.containsKey(name)) expected = (long) (pbs.get(name) * 1000f);
+            if (expected == null) continue;
+            if (row.current() && row.time() <= expected) continue;
+            pace += row.time() - expected;
+            known = true;
+        }
+        return known ? pace : null;
     }
 
     /**
@@ -634,18 +685,34 @@ public final class DungeonFeatures {
         List<Component> lines = new ArrayList<>();
         lines.add(Component.literal("§eScore: " + ScoreCalculator.colorizeScore(ScoreCalculator.score())));
         FeatureConfigs.Dungeons config = config();
+        if (config != null && config.score.secretsForSPlus && ScoreCalculator.totalSecrets() > 0) {
+            lines.add(secretsForSPlusLine(ScoreCalculator.foundSecrets(), ScoreCalculator.secretsForSPlus()));
+        }
+        if (config != null && config.score.lossExplainer) {
+            String loss = ScoreCalculator.lossText(ScoreCalculator.scoreLoss());
+            if (!loss.isEmpty()) lines.add(scoreLossLine(loss));
+        }
         if (config != null && config.score.detailed) {
             int crypts = ScoreCalculator.crypts();
             int deaths = ScoreCalculator.deaths();
             lines.add(Component.literal("§6Secrets: §b" + ScoreCalculator.foundSecrets() + " §7(" + fixed((float) ScoreCalculator.secretPercentage()) + "%)"));
             lines.add(Component.literal(ScoreCalculator.colorByPercent(crypts, 5, false) + "Crypts: " + crypts));
             lines.add(Component.literal("§cDeaths: " + ScoreCalculator.colorByPercent(deaths, 4, true) + deaths));
-            String prince = "§eP: " + (ScoreCalculator.princeKilled() ? "§a§l✔" : "§c§l✖");
+            String prince = "§eP: " + (ScoreCalculator.princeKilled() ? "§a§l✔" : "§c§l✖") + " §dBats: " + ScoreCalculator.bats()
+                + (ScoreCalculator.isPaul() ? " §bPaul +10" : "");
             lines.add(Component.literal(ScoreCalculator.floorNumber() > 5
                 ? "§cM: " + (ScoreCalculator.mimicKilled() ? "§a§l✔" : "§c§l✖") + " " + prince
                 : prince));
         }
         return lines;
+    }
+
+    private static Component scoreLossLine(String loss) {
+        return Component.literal("§7To 300: §c" + loss);
+    }
+
+    private static Component secretsForSPlusLine(int found, int needed) {
+        return Component.literal("§6S+ Secrets: " + (found >= needed ? "§a" : "§b") + found + "§7/§b" + needed);
     }
 
     // ----- Chat -----

@@ -234,6 +234,9 @@ public final class SimPuzzles {
         if (roomName != null) {
             com.epic60869.sky2m.sim.roomsim.SimRoomState.markFailed(roomName);
         }
+        // Counted for the score's skill part (a failed puzzle is -10 until it is redone) and for /simscore. No
+        // "PUZZLE FAIL!" chat line: see SimArchitect for why the sim never fakes that broadcast.
+        com.epic60869.sky2m.sim.roomsim.SimScore.puzzleFailed();
         com.epic60869.sky2m.sim.roomsim.SimArchitect.onPuzzleFail(puzzleName);
     }
 

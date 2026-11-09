@@ -4,7 +4,10 @@ import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;
+import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
+import com.epic60869.sky2m.sb.skyblock.dungeon.DungeonClass;
+import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonPlayerManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -12,13 +15,18 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Auto Requeue, like NoammAddons': when a dungeon run ends (Hypixel's "> EXTRA STATS <" line), /instancerequeue a few
  * seconds later, so the party goes straight into another run of the same floor. With Cancel If Someone Leaves, it
  * doesn't requeue when someone left, was kicked or disconnected at any point in that run (from "Starting in 1 second."),
- * not only during the delay. /s2 requeue cancel skips the next one. /instancerequeue only works for the leader.
+ * not only during the delay. /s2 requeue cancel and !dt in party chat skip the next one. /instancerequeue only works
+ * for the leader. With Leave Title, a teammate leaving shows their name and class (in the class colour) as a title.
+ * Leave Class In Chat (its own switch, on by default) adds that class to Hypixel's leave line itself while in a dungeon.
  */
 public final class AutoRequeue {
     private static final Pattern MEMBER_GONE = Pattern.compile("(?:has left the party|has been removed from the party|was removed from your party because they disconnected|has disconnected|has been kicked from the party|You left the party|The party was disbanded)");
@@ -26,6 +34,11 @@ public final class AutoRequeue {
     private static boolean skipNext;
     /** Someone left the party since this run started, so the run's end must not requeue. */
     private static boolean memberLeft;
+    /** "[MVP+] Name has left the party." and the like: the name of who's gone. */
+    private static final Pattern GONE_NAME = Pattern.compile("^(?:\\[[^\\]]+] )?(?<name>[A-Za-z0-9_]{1,16}) (?:has|was) ");
+    /** The last class seen in the dungeon tab for each teammate, kept after they leave the tab list. */
+    private static final Map<String, DungeonClass> classes = new HashMap<>();
+    private static int colourTicks;
 
     private AutoRequeue() {}
 
@@ -41,7 +54,9 @@ public final class AutoRequeue {
             String text = message.text().trim();
             if (text.equals("Starting in 1 second.")) {
                 memberLeft = false;
-            } else if (text.equals("> EXTRA STATS <") && Sky2MLocation.inDungeon()) {
+            } else if (text.equals("> EXTRA STATS <") && Sky2MLocation.inDungeon()
+                    // The Dungeon Sim has no /instancerequeue; it rebuilds floors from its own menu.
+                    && !com.epic60869.sky2m.sim.roomsim.SimState.isActive()) {
                 if (skipNext) {
                     skipNext = false;
                     say("Skipped this requeue.");
@@ -58,13 +73,24 @@ public final class AutoRequeue {
                 // Remembered for the whole run, not only the delay after it: a teammate who left mid-run used to be
                 // forgotten by the time the run ended, so it still requeued.
                 memberLeft = true;
+                if (c.leaveTitle && !text.contains(":")) leaveTitle(text);
                 if (requeueAt != 0 && c.cancelOnLeave) {
                     requeueAt = 0;
                     say("Not requeueing: someone left the party.");
                 }
             }
         });
+        // Leave Class In Chat: its own switch, so it works with Auto Requeue off.
+        net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.MODIFY_GAME.register((message, overlay) -> {
+            FeatureConfigs.AutoRequeue c = config();
+            if (overlay || c == null || !c.leaveClassInChat || !Sky2MLocation.inDungeon()) return message;
+            String text = message.getString().trim();
+            if (!MEMBER_GONE.matcher(text).find() || text.contains(":")) return message;
+            String name = leftName(text);
+            return name == null ? message : withClass(message, classes.get(name));
+        });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            rememberClasses();
             if (requeueAt == 0 || System.currentTimeMillis() < requeueAt) return;
             requeueAt = 0;
             FeatureConfigs.AutoRequeue c = config();
@@ -91,6 +117,76 @@ public final class AutoRequeue {
                     }))));
             }
         });
+    }
+
+    /**
+     * !dt (downtime): cancels the requeue that's waiting, else skips the next one. Returns the party chat answer, or
+     * null when Auto Requeue is off.
+     */
+    public static String downtime(String asker) {
+        FeatureConfigs.AutoRequeue c = config();
+        if (c == null || !c.enabled) return null;
+        boolean waiting = requeueAt != 0;
+        requeueAt = 0;
+        if (!waiting) skipNext = true;
+        say((waiting ? "Requeue cancelled" : "The next run won't requeue") + " (!dt from " + asker + ").");
+        return waiting ? "Downtime: requeue cancelled." : "Downtime: won't requeue after this run.";
+    }
+
+    private static void rememberClasses() {
+        DungeonPlayerManager.DungeonPlayer[] players = DungeonPlayerManager.getPlayers();
+        if (players == null) return;
+        boolean colours = ++colourTicks % 20 == 0;
+        for (DungeonPlayerManager.DungeonPlayer p : players) {
+            if (p == null) continue;
+            // A ghost reads as Unknown, so keep the class it had.
+            if (p.dungeonClass() != DungeonClass.UNKNOWN) classes.put(p.name(), p.dungeonClass());
+            // Their rank colour, kept for after they've left the tab list.
+            if (colours) PlayerNameColour.of(p.name());
+        }
+    }
+
+    /** Who left, from a party leave, kick or disconnect line, or null ("You left the party", "The party was disbanded"). */
+    public static String leftName(String text) {
+        Matcher m = GONE_NAME.matcher(text);
+        if (!m.find() || m.group("name").equals("You") || m.group("name").equals("The")) return null;
+        return m.group("name");
+    }
+
+    /** The title: "Name Tank", the class in its colour (no class if they weren't seen in a dungeon). */
+    public static Component leaveTitleText(String name, DungeonClass dungeonClass) {
+        return leaveTitleText(name, dungeonClass, null);
+    }
+
+    /** The same with the name in its rank colour ({@link PlayerNameColour}), white when that isn't known. */
+    public static Component leaveTitleText(String name, DungeonClass dungeonClass, Integer nameColour) {
+        var title = nameColour == null ? Component.literal(name).withStyle(ChatFormatting.WHITE) : Component.literal(name).withColor(nameColour);
+        if (dungeonClass != null && dungeonClass != DungeonClass.UNKNOWN) {
+            title.append(Component.literal(" " + dungeonClass.displayName()).withColor(dungeonClass.color() & 0xFFFFFF));
+        }
+        return title;
+    }
+
+    /**
+     * A leave line with the class they were playing after it, in the class colour: "[VIP+] Name has left the party. (Tank)".
+     * Unchanged when the class isn't known (they were never seen in the dungeon tab).
+     */
+    public static Component withClass(Component message, DungeonClass dungeonClass) {
+        if (dungeonClass == null || dungeonClass == DungeonClass.UNKNOWN) return message;
+        return message.copy().append(Component.literal(" (" + dungeonClass.displayName() + ")").withColor(dungeonClass.color() & 0xFFFFFF));
+    }
+
+    /** For the game test: what the dungeon tab last showed this teammate as. */
+    public static void rememberClassForTest(String name, DungeonClass dungeonClass) {
+        classes.put(name, dungeonClass);
+    }
+
+    private static void leaveTitle(String text) {
+        String name = leftName(text);
+        if (name == null) return;
+        String lower = text.toLowerCase(java.util.Locale.ROOT);
+        String what = lower.contains("disconnect") ? "disconnected" : lower.contains("kicked") || lower.contains("removed") ? "was removed" : "left the party";
+        Sky2MAlerts.title(leaveTitleText(name, classes.get(name), PlayerNameColour.of(name)), Component.literal(what).withStyle(ChatFormatting.GRAY));
     }
 
     private static void say(String text) {

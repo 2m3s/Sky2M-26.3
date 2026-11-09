@@ -34,7 +34,7 @@ import java.util.Map;
  * <p>Drawn in the mod's own style, not the mockup's (killer560, 2026-10-07: "make sure that the filter section for
  * creating the map is in our mods style and not a direct copy"): the panel, header bar, title and "N of M rooms" are
  * Design a Map's ({@link SimMapEditorScreen}), with {@link ProfitPanels}' colours; a chip is a
- * {@link SettingsButtonWidget} box, and a chosen one has the amber border and a §6 label, the way the mod marks the
+ * {@link SettingsButtonWidget} box, and a chosen one has the purple border and a purple label, the way the mod marks the
  * chosen value everywhere else; Clear all and Done are plain {@link SettingsButtonWidget}s.
  *
  * <p>The chips flow: they wrap onto as many lines as the width needs, and on a narrow window the labels go on a line
@@ -292,16 +292,10 @@ public class SimRoomFilterScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        // Design a Map's frame (SimMapEditorScreen.extractRenderState): shade, panel, border, black header bar with an
-        // amber rule under it, the title in capitals in the accent colour, and the room count right-aligned in the bar.
-        g.fill(0, 0, this.width, this.height, 0xCC000000);
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, ProfitPanels.PANEL_BG);
-        g.outline(panelX, panelY, panelW, panelH, ProfitPanels.BORDER);
-        g.fill(panelX, panelY, panelX + panelW, panelY + BAR, 0xFF000000);
-        g.fill(panelX, panelY + BAR - 1, panelX + panelW, panelY + BAR, ProfitPanels.ACCENT);
-        g.text(this.font, "FILTERS", panelX + 10, panelY + 11, ProfitPanels.ACCENT, false);
+        // The sim's shared frame (ProfitPanels.frame), and the room count right-aligned in its title strip.
+        ProfitPanels.frame(g, this.font, this.width, this.height, panelX, panelY, panelW, panelH, BAR, "Filters");
         String count = shown + " of " + total + " rooms" + (filter.isDefault() ? "" : " (filtered)");
-        int maxW = panelW - 20 - this.font.width("FILTERS") - 10;
+        int maxW = panelW - 20 - ProfitPanels.titleWidth(this.font, "Filters") - 10;
         String shownCount = this.font.width(count) <= maxW ? count : shown + "/" + total;
         g.text(this.font, shownCount, panelX + panelW - 10 - this.font.width(shownCount), panelY + 11,
                 filter.isDefault() ? ProfitPanels.DIM : ProfitPanels.ACCENT, false);
@@ -341,8 +335,8 @@ public class SimRoomFilterScreen extends Screen {
 
     /**
      * One chip: a toggle in a row, drawn as a {@link SettingsButtonWidget} box. Its message is the bare label, so a
-     * test can find it by name; {@link #row()} says which row it is in. The colour is added only when drawing: §6 when
-     * chosen, §8 when the row is switched off, as the mod's tabs colour a chosen or disabled value.
+     * test can find it by name; {@link #row()} says which row it is in. The colour is added only when drawing: dark
+     * purple when chosen, grey when the row is switched off (the button is light, so its labels are dark).
      */
     public static final class Chip extends AbstractWidget {
         private final String label;
@@ -370,12 +364,14 @@ public class SimRoomFilterScreen extends Screen {
 
         @Override
         protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-            SettingsButtonWidget.drawBox(g, getX(), getY(), getWidth(), getHeight(), isHovered && active, selected);
+            SettingsButtonWidget.drawBox(g, getX(), getY(), getWidth(), getHeight(), isHovered && active, selected, active);
             var font = Minecraft.getInstance().font;
             String shown = font.width(label) <= getWidth() - 8 ? label : font.plainSubstrByWidth(label, getWidth() - 8);
-            String code = !active ? "§8" : selected ? "§6" : "";
-            g.centeredText(font, Component.literal(code + shown), getX() + getWidth() / 2,
-                    getY() + (getHeight() - 8) / 2, 0xFFFFFFFF);
+            // Light text on the dark button: purple when chosen, grey when the row is switched off.
+            int colour = !active ? SettingsButtonWidget.LABEL_OFF
+                    : selected ? SettingsButtonWidget.LABEL_CHOSEN : isHovered ? SettingsButtonWidget.LABEL_HOVER : SettingsButtonWidget.LABEL;
+            g.text(font, shown, getX() + (getWidth() - font.width(shown)) / 2, getY() + (getHeight() - 8) / 2,
+                    colour, false);
         }
 
         @Override

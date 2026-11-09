@@ -1,0 +1,49 @@
+{
+  "class": "HEALER",
+  "name": "Healer",
+  "notes": "The user's Healer setup (2026-11-01), green choices. Stars are Hypixel's totals: 8 on a dungeon item = 5 + 3 Master Stars.",
+  "wardrobe": [
+    {
+      "name": "Boss",
+      "armour": [
+        {"id": "GOLD_NECRON_HEAD", "totalStars": 8, "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6}},
+        {"id": "SKELETON_MASTER_CHESTPLATE", "totalStars": 8, "floorTier": 10, "quality": 50, "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6}},
+        {"id": "POWER_WITHER_LEGGINGS", "totalStars": 8, "gems": ["FLAWLESS JASPER", "FLAWLESS JASPER"], "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6}},
+        {"id": "SPEED_WITHER_BOOTS", "totalStars": 8, "gems": ["FLAWLESS JASPER", "FLAWLESS JASPER"], "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6}}
+      ],
+      "equipment": [
+        {"id": "BONE_NECKLACE", "fragged": true, "totalStars": 5, "reforge": "blended"},
+        {"id": "SHADOW_ASSASSIN_CLOAK", "fragged": true, "totalStars": 5, "reforge": "waxed"},
+        {"id": "ADAPTIVE_BELT", "fragged": true, "totalStars": 5, "reforge": "blended"},
+        {"id": "SOULWEAVER_GLOVES", "totalStars": 5, "reforge": "blended"}
+      ]
+    }
+  ],
+  "pets": [
+    {"id": "BLACK_CAT", "level": 100, "rarity": "LEGENDARY", "item": "UNALLOYED_SPEED"},
+    {"id": "GOLDEN_DRAGON", "level": 200, "rarity": "LEGENDARY", "item": "UNALLOYED_SPEED"},
+    {"id": "PHOENIX", "level": 100, "rarity": "SPECIAL"}
+  ],
+  "petRules": {"mode": "toggle", "clear": "GOLDEN_DRAGON", "boss": "BLACK_CAT"},
+  "hotbar": [
+    {"id": "TERMINATOR", "totalStars": 7, "reforge": "precise", "enchantments": {"ultimate_soul_eater": 5, "power": 6, "overload": 5, "toxophilite": 1}},
+    "ASPECT_OF_THE_VOID",
+    "INFINITE_SPIRIT_LEAP",
+    "HYPERION",
+    {"id": "LAST_BREATH", "totalStars": 5, "enchantments": {"ultimate_reiterate": 1, "power": 6, "flame": 1}},
+    "SUPERBOOM_TNT",
+    "BONZO_STAFF",
+    "PET_RULES_ROD",
+    "DUNGEON_ORB"
+  ],
+  "inventory": [
+    {"id": "SOUL_WHIP", "totalStars": 5, "enchantments": {"lethality": 6}},
+    "ICE_SPRAY_WAND",
+    "GYROKINETIC_WAND",
+    "DUNGEONBREAKER",
+    "SPIRIT_MASK",
+    "BONZO_MASK",
+    {"id": "MENDER_CROWN", "reforge": "empowered"},
+    "INFINITE_TWILIGHT_ARROW_POISON"
+  ]
+}

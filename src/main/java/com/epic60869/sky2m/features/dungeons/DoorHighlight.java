@@ -6,9 +6,12 @@ import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
+import com.epic60869.sky2m.features.dungeons.mapstyle.MapView;
 import com.epic60869.sky2m.sb.skyblock.dungeon.DungeonMap;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonMapUtils;
+import com.epic60869.sky2m.sim.livemap.DungeonLayout;
+import com.epic60869.sky2m.sim.livemap.MapViewSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
@@ -35,13 +38,16 @@ import java.util.regex.Pattern;
  * Hypixel's dungeon map draws them (when a room next to them is opened), like Odin's map scan. Drawn through walls.
  */
 public final class DoorHighlight {
-    private static final Pattern WITHER_KEY_OBTAINED = Pattern.compile("^(\\[[^]]*?])? ?(\\w{1,16}) has obtained Wither Key!?$");
+    /** A rank and an emblem can come before the name: "[MVP++] 🐟 2m3s has obtained Wither Key!". */
+    private static final String WHO = "^(?:\\[[^]]*?] ?)?(?:[^\\w\\s\\[]+ )?(\\w{1,16})";
+    private static final Pattern WITHER_KEY_OBTAINED = Pattern.compile(WHO + " has obtained Wither Key!?$");
     private static final Pattern WITHER_KEY_PICKED_UP = Pattern.compile("^A Wither Key was picked up!$");
-    private static final Pattern WITHER_DOOR_OPENED = Pattern.compile("^(\\[[^]]*?])? ?(\\w{1,16}) opened a WITHER door!$");
-    private static final Pattern BLOOD_KEY_OBTAINED = Pattern.compile("^(\\[[^]]*?])? ?(\\w{1,16}) has obtained Blood Key!$");
+    private static final Pattern WITHER_DOOR_OPENED = Pattern.compile(WHO + " opened a WITHER door!$");
+    private static final Pattern BLOOD_KEY_OBTAINED = Pattern.compile(WHO + " has obtained Blood Key!$");
     private static final Pattern BLOOD_KEY_PICKED_UP = Pattern.compile("^A Blood Key was picked up!$");
     private static final float[] LOCKED = {1f, 0.33f, 0.33f};
     private static final float[] OPENABLE = {0.33f, 1f, 0.33f};
+    private static final float[] FAIRY = {1f, 0.33f, 1f};
     private static final float[] WITHER_KEY = {0.1f, 0.1f, 0.1f};
     private static final float[] BLOOD_KEY = {1f, 0.2f, 0.2f};
 
@@ -49,6 +55,10 @@ public final class DoorHighlight {
     private record Door(BlockPos centre, boolean blood, boolean east) {}
 
     private static final List<Door> DOORS = new ArrayList<>();
+    /** The door into the Fairy room, when it isn't already a wither door in {@link #DOORS}. */
+    private static final List<BlockPos> FAIRY_DOORS = new ArrayList<>();
+    /** Someone has been in the Fairy room this run, so its door is done with. */
+    private static boolean fairyEntered;
     private static int witherKeys;
     private static boolean bloodKey;
     private static boolean bloodOpened;
@@ -96,6 +106,13 @@ public final class DoorHighlight {
                     collector.submitOutlinedBox(box, colour, 3f, true);
                 }
             }
+            if (config.fairyDoorHighlight) {
+                for (BlockPos c : FAIRY_DOORS) {
+                    AABB box = new AABB(c.getX() - 1, c.getY(), c.getZ() - 1, c.getX() + 2, c.getY() + 4, c.getZ() + 2);
+                    collector.submitFilledBox(box, FAIRY, 0.3f, false);
+                    collector.submitOutlinedBox(box, FAIRY, 3f, false);
+                }
+            }
             if (config.keyHighlight && keyEntity != null && keyEntity.isAlive()) {
                 AABB box = AABB.unitCubeFromLowerCorner(keyEntity.position().add(-0.5, 1, -0.5));
                 collector.submitOutlinedBox(box, keyIsBlood ? BLOOD_KEY : WITHER_KEY, 3f, true);
@@ -105,6 +122,8 @@ public final class DoorHighlight {
 
     private static void reset() {
         DOORS.clear();
+        FAIRY_DOORS.clear();
+        fairyEntered = false;
         witherKeys = 0;
         bloodKey = false;
         bloodOpened = false;
@@ -124,14 +143,19 @@ public final class DoorHighlight {
             DOORS.clear();
             MapItemSavedData map = mc.player == null ? null
                 : MapItem.getSavedData(DungeonMap.getMapIdComponent(mc.player.getInventory().getNonEquipmentItems().get(8)), mc.level);
+            // The Dungeon Sim may build its floor higher or lower than Hypixel's (0 on Hypixel).
+            int y = 69 + DungeonMapUtils.yShift();
             for (int i = 0; i < 6; i++) {
                 for (int j = 0; j < 6; j++) {
                     int roomX = -185 + 32 * i, roomZ = -185 + 32 * j;
-                    checkDoor(mc, map, new BlockPos(roomX + 16, 69, roomZ), true);
-                    checkDoor(mc, map, new BlockPos(roomX, 69, roomZ + 16), false);
+                    checkDoor(mc, map, new BlockPos(roomX + 16, y, roomZ), true);
+                    checkDoor(mc, map, new BlockPos(roomX, y, roomZ + 16), false);
                 }
             }
         }
+
+        FAIRY_DOORS.clear();
+        if (config.fairyDoorHighlight) findFairyDoors();
 
         // Keys are armor stands named "Wither Key" / "Blood Key".
         if (keyEntity != null && !keyEntity.isAlive()) keyEntity = null;
@@ -151,6 +175,69 @@ public final class DoorHighlight {
     }
 
 
+    /**
+     * The door before the Fairy room, using only what the dungeon map shows, until anyone's head has been in the room. It
+     * doesn't stop when the door opens, as the map only says which room is Fairy around then, so it would hardly ever show.
+     */
+    private static void findFairyDoors() {
+        MapView view = MapViewSource.current();
+        if (fairyEntered || !view.valid() || view.inBoss()) return;
+        for (MapView.Room room : view.rooms()) {
+            if (room.type() != MapView.RoomType.FAIRY) continue;
+            for (MapView.Head head : view.heads()) fairyEntered |= RoomClears.inRoom(view, room, head.x(), head.y());
+        }
+        if (fairyEntered) return;
+        for (MapView.Door door : doorsBeforeFairy(view.rooms(), view.doors())) {
+            BlockPos pos = DungeonLayout.doorBlock(door.gz() * DungeonLayout.GRID + door.gx());
+            if (DOORS.stream().noneMatch(d -> d.centre().equals(pos))) FAIRY_DOORS.add(pos);
+        }
+    }
+
+    /**
+     * The doors into a Fairy room from the Entrance's side, not any door leading on from it: walks the rooms out from the
+     * Entrance without going through Fairy. If the map doesn't link them up yet, every door touching Fairy. Public for the game test.
+     */
+    public static List<MapView.Door> doorsBeforeFairy(List<MapView.Room> rooms, List<MapView.Door> doors) {
+        List<MapView.Room> reached = new ArrayList<>();
+        for (MapView.Room room : rooms) if (room.type() == MapView.RoomType.ENTRANCE) reached.add(room);
+        for (boolean grew = !reached.isEmpty(); grew; ) {
+            grew = false;
+            for (MapView.Door door : doors) {
+                if (!touchesAny(door, reached)) continue;
+                for (MapView.Room room : rooms) {
+                    if (room.type() == MapView.RoomType.FAIRY || reached.contains(room) || !touchesRoom(door.gx(), door.gz(), room.tiles())) continue;
+                    reached.add(room);
+                    grew = true;
+                }
+            }
+        }
+        List<MapView.Door> before = new ArrayList<>();
+        List<MapView.Door> touching = new ArrayList<>();
+        for (MapView.Room room : rooms) {
+            if (room.type() != MapView.RoomType.FAIRY) continue;
+            for (MapView.Door door : doors) {
+                if (!touchesRoom(door.gx(), door.gz(), room.tiles())) continue;
+                touching.add(door);
+                if (touchesAny(door, reached)) before.add(door);
+            }
+        }
+        return before.isEmpty() ? touching : before;
+    }
+
+    private static boolean touchesAny(MapView.Door door, List<MapView.Room> rooms) {
+        for (MapView.Room room : rooms) if (touchesRoom(door.gx(), door.gz(), room.tiles())) return true;
+        return false;
+    }
+
+    /** Whether a door on the 11x11 grid (one odd coordinate) opens onto one of a room's {col, row} slots. Public for the game test. */
+    public static boolean touchesRoom(int gx, int gz, List<int[]> tiles) {
+        for (int[] tile : tiles) {
+            int tileGx = tile[0] * 2, tileGz = tile[1] * 2;
+            if (Math.abs(gx - tileGx) + Math.abs(gz - tileGz) == 1) return true;
+        }
+        return false;
+    }
+
     private static void checkDoor(Minecraft mc, MapItemSavedData map, BlockPos pos, boolean east) {
         BlockState state = mc.level.getBlockState(pos);
         boolean wither = state.is(Blocks.COAL_BLOCK);
@@ -161,6 +248,8 @@ public final class DoorHighlight {
 
     /** Whether Hypixel's dungeon map draws the door, which it does once a room next to it has been opened. */
     private static boolean onMap(MapItemSavedData map, Door door) {
+        // The Dungeon Sim has no map item and shows its whole floor on the map: every door it built is on it.
+        if (com.epic60869.sky2m.sim.roomsim.SimState.isActive()) return true;
         Vector2ic mapEntrance = DungeonManager.getMapEntrancePos();
         Vector2ic physicalEntrance = DungeonManager.getPhysicalEntrancePos();
         int size = DungeonManager.getMapRoomSize();

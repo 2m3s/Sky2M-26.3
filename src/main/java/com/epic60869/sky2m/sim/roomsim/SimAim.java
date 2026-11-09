@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 public final class SimAim {
 
     /** One captured aim. */
-    public record Aim(Vec3 eye, float yaw, float pitch) {
+    public record Aim(Vec3 eye, float yaw, float pitch, java.util.UUID shooter) {
     }
 
     private static Aim override;
@@ -30,7 +30,7 @@ public final class SimAim {
 
     /** The server player's aim right now. Call on the server thread. */
     static Aim of(ServerPlayer sp) {
-        return new Aim(sp.getEyePosition(), sp.getYRot(), sp.getXRot());
+        return new Aim(sp.getEyePosition(), sp.getYRot(), sp.getXRot(), sp.getUUID());
     }
 
     /** Runs {@code body} with {@code aim} in force. Client thread. */
@@ -42,6 +42,15 @@ public final class SimAim {
         } finally {
             override = before;
         }
+    }
+
+    /**
+     * Whose shot this is: the server player whose use packet fired it (a sim party guest's included), his own
+     * otherwise. The arrows, the blast and the damage are that player's.
+     */
+    public static java.util.UUID shooter(Player player) {
+        Aim a = override;
+        return a != null && a.shooter() != null ? a.shooter() : player.getUUID();
     }
 
     public static Vec3 eye(Player player) {

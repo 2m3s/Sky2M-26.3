@@ -43,12 +43,16 @@ public final class PackDisabler {
     private static final String HYPIXEL = "hypixel_skyblock";
     private static final Identifier PLAYER_HEAD = Identifier.withDefaultNamespace("player_head");
 
-    /** One item's old look: a head skin hash, a modern vanilla id, a 1.8 "id:damage", or a texture of our own. */
-    private record Look(String skin, String vanilla, String legacy, String own) {}
+    /**
+     * One item's old look: a head skin hash, a modern vanilla id, a 1.8 "id:damage", or a texture of our own; plus
+     * Hypixel's current model for it and whether it glints.
+     */
+    private record Look(String skin, String vanilla, String legacy, String own, String hypixel, boolean glint) {}
 
     private static volatile Map<String, Look> looks;
     private static final Map<String, Optional<Identifier>> MODELS = new ConcurrentHashMap<>();
     private static final Map<String, Optional<ResolvableProfile>> PROFILES = new ConcurrentHashMap<>();
+    private static final Map<String, ItemStack> ICONS = new ConcurrentHashMap<>();
     private static Boolean noamm;
 
     private PackDisabler() {}
@@ -71,7 +75,8 @@ public final class PackDisabler {
                     JsonObject items = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonObject("items");
                     for (Map.Entry<String, JsonElement> e : items.entrySet()) {
                         JsonObject o = e.getValue().getAsJsonObject();
-                        loaded.put(e.getKey(), new Look(str(o, "s"), str(o, "i"), str(o, "l"), str(o, "o")));
+                        loaded.put(e.getKey(), new Look(str(o, "s"), str(o, "i"), str(o, "l"), str(o, "o"), str(o, "m"),
+                            o.has("e") && o.get("e").getAsInt() != 0));
                     }
                 }
             } catch (Exception e) {
@@ -115,6 +120,55 @@ public final class PackDisabler {
         } catch (Exception e) {
             return current;
         }
+    }
+
+    /**
+     * An icon for a SkyBlock id from this table, for screens that build items from ids (profile viewer) when neither
+     * the NEU repo nor Hypixel's item list can draw it (newer items come out as a barrier or plain paper). Hypixel's
+     * model when its pack is loaded, else the old head, vanilla item or texture of ours; null if the table doesn't know
+     * the id. Works whether or not Pack Disabler is on; with it on, the Hypixel model is swapped as usual when drawn.
+     */
+    public static ItemStack icon(String id) {
+        if (id == null || id.isEmpty()) return null;
+        Look look = look(id);
+        if (look == null) return null;
+        Identifier hypixel = look.hypixel() == null ? null : Identifier.tryParse(look.hypixel());
+        boolean hypixelLoaded = hypixel != null && com.epic60869.sky2m.custom.RepoItems.hasItemModel(hypixel);
+        ItemStack cached = ICONS.get(id);
+        // Hypixel's models come and go with its pack: rebuild when that changed.
+        if (cached != null && hypixel != null && hypixel.equals(cached.get(DataComponents.ITEM_MODEL)) != hypixelLoaded) cached = null;
+        if (cached == null) {
+            cached = buildIcon(id, look, hypixelLoaded ? hypixel : null);
+            ICONS.put(id, cached);
+        }
+        return cached.isEmpty() ? null : cached.copy();
+    }
+
+    private static ItemStack buildIcon(String id, Look look, Identifier hypixel) {
+        ItemStack stack;
+        if (hypixel != null) {
+            stack = new ItemStack(Items.PAPER);
+            stack.set(DataComponents.ITEM_MODEL, hypixel);
+        } else if (look.skin() != null) {
+            stack = new ItemStack(Items.PLAYER_HEAD);
+            ResolvableProfile profile = lookProfile(id).orElse(null);
+            if (profile != null) stack.set(DataComponents.PROFILE, profile);
+        } else {
+            Item item = vanillaItem(look);
+            if (item != null) {
+                stack = new ItemStack(item);
+            } else if (look.own() != null) {
+                stack = new ItemStack(Items.PAPER);
+                stack.set(DataComponents.ITEM_MODEL, Identifier.fromNamespaceAndPath("sky2m", "packdisabler/" + look.own()));
+            } else {
+                return ItemStack.EMPTY;
+            }
+        }
+        if (look.glint()) stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        CompoundTag tag = new CompoundTag();
+        tag.putString("id", id);
+        stack.set(DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.of(tag));
+        return stack;
     }
 
     private static Optional<Identifier> lookModel(String id) {

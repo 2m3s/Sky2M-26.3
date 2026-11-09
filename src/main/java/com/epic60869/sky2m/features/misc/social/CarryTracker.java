@@ -221,7 +221,8 @@ public final class CarryTracker {
 
     private static void onChat(String text) {
         FeatureConfigs.CarryTracker c = config();
-        if (c == null || !c.countDungeons || runCounted || !Sky2MLocation.inDungeon() || !text.startsWith("Team Score:")) return;
+        // Dungeon Sim runs are practice: they never count a carry.
+        if (c == null || !c.countDungeons || runCounted || !Sky2MLocation.inDungeon() || com.epic60869.sky2m.sim.roomsim.SimState.isActive() || !text.startsWith("Team Score:")) return;
         runCounted = true;
         String floor = Sky2MLocation.dungeonFloor();
         floor = floor.equals("E0") || floor.equals("F0") ? "E" : floor;

@@ -64,8 +64,9 @@ public final class RngHud {
         return new ArrayList<>(activeDrops.values());
     }
 
-    /** "PET DROP! Slug (+123% ✯ Magic Find)"; the pet's rarity is the colour of its name. */
-    private static final Pattern SLUG_DROP = Pattern.compile("(?i)^(?:PET DROP|RARE DROP|VERY RARE DROP|CRAZY RARE DROP|PRAY TO RNGESUS)!? .*\\bSlug\\b");
+    /** "PET DROP! Slug (+123% ✯ Magic Find)"; the pet's rarity is the colour of its name. "Slug" must end the name, as Slug Boots aren't the pet. */
+    private static final Pattern SLUG_DROP = Pattern.compile("(?i)^(?:PET DROP|RARE DROP|VERY RARE DROP|CRAZY RARE DROP|PRAY TO RNGESUS)!? .*\\bSlug(?: Pet)?\\s*(?:[!(]|$)");
+    private static final Pattern SLUG_PET_NAME = Pattern.compile("(?i)^(?:Epic |Legendary )?Slug(?: Pet)?$");
     private static final long EPIC_SLUG_PRICE = 500_000L;
     private static final long LEGENDARY_SLUG_PRICE = 5_000_000L;
 
@@ -106,7 +107,7 @@ public final class RngHud {
      */
     public void onRareDrop(Component message, String rawItem, int amount, boolean rng) {
         String item = cleanName(rawItem);
-        if (item.isEmpty() || isFarmingDrop(item) || item.toLowerCase(Locale.ROOT).contains("slug")) return;
+        if (item.isEmpty() || isFarmingDrop(item) || SLUG_PET_NAME.matcher(item).matches()) return;
         int colour = itemColour(message, item);
         ItemPriceResolver.valueByNameAsync(item).thenAccept(ignored -> priceWithRetries(item, colour, amount, rng, 0));
     }

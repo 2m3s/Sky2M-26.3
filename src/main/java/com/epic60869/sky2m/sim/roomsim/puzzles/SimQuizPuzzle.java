@@ -159,7 +159,25 @@ public final class SimQuizPuzzle {
             // level.isClientSide(): this event also fires server-side; without this check a real click would
             // resolve twice - the same double-fire guard SimDoors uses for its own UseBlockCallback. Returning
             // a non-PASS result here also stops the vanilla chest screen from opening, which is the point.
-            if (!level.isClientSide() || !SimState.canAct(client) || player != client.player) {
+            if (!level.isClientSide()) {
+                // A party guest's click reaches only the host's server: answered there, on the host's quiz.
+                if (com.epic60869.sky2m.sim.roomsim.SimParty.guestOnServer(player)
+                        && player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                    Integer guestIndex = CELL_INDEX.get(hitResult.getBlockPos());
+                    if (guestIndex != null && built && !complete) {
+                        com.epic60869.sky2m.sim.roomsim.SimParty.forGuest(sp, () -> {
+                            if (built && !complete) {
+                                onChestClick(client, guestIndex);
+                            }
+                        });
+                        return level.getBlockState(hitResult.getBlockPos())
+                                .getBlock() instanceof net.minecraft.world.level.block.ButtonBlock
+                                ? InteractionResult.PASS : InteractionResult.SUCCESS;
+                    }
+                }
+                return InteractionResult.PASS;
+            }
+            if (!SimState.canAct(client) || player != client.player) {
                 return InteractionResult.PASS;
             }
             Integer index = CELL_INDEX.get(hitResult.getBlockPos());
@@ -669,7 +687,9 @@ public final class SimQuizPuzzle {
         // correct when it already knows the question's answers, so an option line that arrives first is read
         // against the previous question's answers or against nothing at all.
         for (String option : lines == null ? new String[0] : lines) {
-            raw(client, option);
+            // Oruo's options are indented like his question ("     ⓐ Answer"): Hypixel's own shape, which the Trivia
+            // solver's pattern needs. Every solver trims the line first.
+            raw(client, "     " + option);
         }
     }
 
@@ -692,6 +712,18 @@ public final class SimQuizPuzzle {
     /** A line with no mod prefix at all, so an anchored solver pattern matches it. It still goes through
      *  ChatObserver, which is what every solver in this mod subscribes to. */
     private static void raw(Minecraft client, String line) {
+        // From the integrated server, as Hypixel's own lines arrive: a line added on the client only never reached the
+        // mod's chat hook (so the dungeon Trivia/Three Weirdos solvers never saw it) nor a party guest's chat.
+        net.minecraft.client.server.IntegratedServer server = client.getSingleplayerServer();
+        if (server != null) {
+            Component message = Component.literal(line);
+            server.execute(() -> {
+                for (net.minecraft.server.level.ServerPlayer p : server.getPlayerList().getPlayers()) {
+                    p.sendSystemMessage(message);
+                }
+            });
+            return;
+        }
         if (client.player != null) {
             client.player.sendSystemMessage(Component.literal(line));
         }
@@ -945,6 +977,11 @@ public final class SimQuizPuzzle {
                 server.execute(() -> server.overworld().setBlockAndUpdate(pos, Blocks.EMERALD_BLOCK.defaultBlockState()));
             }
             ModChat.send("Sim", ModChat.good("Correct!"));
+            if (!weirdosRoom && client.player != null) {
+                // Oruo's own line for the last question, which the Trivia solvers end the quiz on.
+                raw(client, "[STATUE] Oruo the Omniscient: " + client.player.getGameProfile().name()
+                        + " answered the final question correctly!");
+            }
         } else {
             // Wrong chest: fail like the real puzzle, not a silent pass - reset so the next attempt is a new
             // question rather than the same one with the wrong option already given away.

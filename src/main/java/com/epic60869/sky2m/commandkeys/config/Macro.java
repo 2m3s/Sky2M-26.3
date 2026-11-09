@@ -21,6 +21,7 @@ package com.epic60869.sky2m.commandkeys.config;
 import com.google.gson.*;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.epic60869.sky2m.commandkeys.CommandKeys;
+import com.epic60869.sky2m.commandkeys.KeyConditions;
 import com.epic60869.sky2m.commandkeys.util.JsonUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -491,51 +492,65 @@ public class Macro {
             }
             case REPEAT -> scheduleAll(false);
             case EDIT -> {
-                // Edit the first message
-                if (!messages.isEmpty()) {
-                    CommandKeys.edit(messages.getFirst().string);
+                // Edit the first message (whose condition holds)
+                String first = firstApplicable();
+                if (first != null) {
+                    CommandKeys.edit(first);
                 }
                 singleActionComplete();
             }
             case TYPE -> {
-                // Type the first message
-                if (!messages.isEmpty()) {
-                    CommandKeys.type(messages.getFirst().string);
+                // Type the first message (whose condition holds)
+                String first = firstApplicable();
+                if (first != null) {
+                    CommandKeys.type(first);
                 }
                 singleActionComplete();
             }
             case CYCLE -> {
-                if (altKeybind.equals(keybind)) {
-                    // Alt keybind cycles backwards
-                    if (--cycleIndex < 0)
-                        cycleIndex = messages.size() - 1;
-                } else {
-                    // Main keybind cycles forwards
-                    if (++cycleIndex >= messages.size())
-                        cycleIndex = 0;
+                // Steps past messages whose condition doesn't hold; at most once around the list.
+                String text = null;
+                for (int i = 0; i < messages.size() && text == null; i++) {
+                    if (altKeybind.equals(keybind)) {
+                        // Alt keybind cycles backwards
+                        if (--cycleIndex < 0)
+                            cycleIndex = messages.size() - 1;
+                    } else {
+                        // Main keybind cycles forwards
+                        if (++cycleIndex >= messages.size())
+                            cycleIndex = 0;
+                    }
+                    text = KeyConditions.resolve(messages.get(cycleIndex).string);
                 }
-                // Split to allow multiple messages per press
-                for (String str : messages.get(cycleIndex).string.split(",,")) {
-                    // Blank messages are treated as spacers
-                    if (!str.isBlank()) {
-                        schedule(
-                                messages.get(cycleIndex).delayTicks,
-                                str,
-                                addToHistoryStatus,
-                                showHudMessageStatus
-                        );
+                if (text != null) {
+                    // Split to allow multiple messages per press
+                    for (String part : text.split(",,")) {
+                        String str = KeyConditions.resolve(part);
+                        // Blank messages are treated as spacers
+                        if (str != null && !str.isBlank()) {
+                            schedule(
+                                    messages.get(cycleIndex).delayTicks,
+                                    str,
+                                    addToHistoryStatus,
+                                    showHudMessageStatus
+                            );
+                        }
                     }
                 }
                 singleActionComplete();
             }
             case RANDOM -> {
-                // Pick a random message and send it
-                if (!messages.isEmpty()) {
-                    Message msg = messages.get(RANDOM.nextInt(messages.size()));
-                    if (!msg.string.isBlank()) {
+                // Pick a random message (of those whose condition holds) and send it
+                List<Message> usable = messages.stream()
+                        .filter((msg) -> KeyConditions.resolve(msg.string) != null)
+                        .toList();
+                if (!usable.isEmpty()) {
+                    Message msg = usable.get(RANDOM.nextInt(usable.size()));
+                    String text = KeyConditions.resolve(msg.string);
+                    if (!text.isBlank()) {
                         schedule(
                                 msg.delayTicks,
-                                msg.string,
+                                text,
                                 addToHistoryStatus,
                                 showHudMessageStatus
                         );
@@ -544,6 +559,19 @@ public class Macro {
                 singleActionComplete();
             }
         }
+    }
+
+    /**
+     * @return the text of the first message whose condition holds here, or {@code null} if none does.
+     */
+    private @Nullable String firstApplicable() {
+        for (Message msg : messages) {
+            String text = KeyConditions.resolve(msg.string);
+            if (text != null) {
+                return text;
+            }
+        }
+        return null;
     }
 
     // Message scheduling
@@ -569,9 +597,14 @@ public class Macro {
     private void scheduleAll(boolean standardDelay) {
         int totalDelay = standardDelay ? -spaceTicks : 0;
         for (Message msg : messages) {
+            // A message whose condition doesn't hold here is skipped, with its delay.
+            String text = KeyConditions.resolve(msg.string);
+            if (text == null) {
+                continue;
+            }
             totalDelay += standardDelay ? spaceTicks : msg.delayTicks;
-            if (!msg.string.isBlank()) {
-                schedule(totalDelay, msg.string, addToHistoryStatus, showHudMessageStatus);
+            if (!text.isBlank()) {
+                schedule(totalDelay, text, addToHistoryStatus, showHudMessageStatus);
             }
         }
     }

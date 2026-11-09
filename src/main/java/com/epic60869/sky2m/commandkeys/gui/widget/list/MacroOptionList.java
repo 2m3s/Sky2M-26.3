@@ -128,7 +128,7 @@ public class MacroOptionList extends MacroBindList {
                 dynEntryWidth,
                 entryHeight,
                 localized("option", "macro.messages"),
-                null,
+                Tooltip.create(localized("option", "macro.messages.tooltip")),
                 -1
         ));
 

@@ -108,7 +108,15 @@ public final class SimCreeperPuzzle {
         }
         registered = true;
         UseBlockCallback.EVENT.register((player, level, hand, hitResult) -> {
-            if (!level.isClientSide() || hitResult == null) {
+            if (hitResult == null) {
+                return InteractionResult.PASS;
+            }
+            if (!level.isClientSide()) {
+                // A party guest's right click reaches only the host's server: the same lantern, picked there.
+                if (com.epic60869.sky2m.sim.roomsim.SimParty.guestOnServer(player)
+                        && player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                    guestConnectAt(sp, hitResult.getBlockPos());
+                }
                 return InteractionResult.PASS;
             }
             Minecraft client = Minecraft.getInstance();
@@ -139,6 +147,25 @@ public final class SimCreeperPuzzle {
      *
      * @return whether this was one of this puzzle's lanterns
      */
+    public static boolean isLantern(BlockPos pos) {
+        return pos != null && lanternToPairIndex.containsKey(pos);
+    }
+
+    /**
+     * A party guest's click (right or left) on a lantern, from the host's server: answered on the host's client
+     * thread, where the pairs are kept, exactly as the host's own click is. Server thread.
+     *
+     * @return whether it was one of this puzzle's lanterns
+     */
+    public static boolean guestConnectAt(net.minecraft.server.level.ServerPlayer sp, BlockPos pos) {
+        if (!isLantern(pos)) {
+            return false;
+        }
+        BlockPos at = pos.immutable();
+        com.epic60869.sky2m.sim.roomsim.SimParty.forGuest(sp, () -> tryConnectAt(at));
+        return true;
+    }
+
     public static boolean tryConnectAt(BlockPos pos) {
         Minecraft client = Minecraft.getInstance();
         if (!SimState.canAct(client) || pos == null) {

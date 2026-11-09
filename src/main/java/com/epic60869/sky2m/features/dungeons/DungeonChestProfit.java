@@ -58,6 +58,8 @@ public final class DungeonChestProfit {
 
     /** The open reward chest's value (0 = nothing to show). */
     private static double currentValue;
+    /** Chest Luck's line for the open reward chest, or null. */
+    private static String currentLuck;
     /** Slot index -> background colour (ARGB), and floor labels, for the open Croesus menus. */
     private static Map<Integer, Integer> backgrounds = Map.of();
     private static Map<Integer, String> labels = Map.of();
@@ -67,8 +69,34 @@ public final class DungeonChestProfit {
     /** Labels at a slot's bottom right and green checks at its top left from Dungeons > Dungeon Extras (Croesus Overlay). */
     private static Map<Integer, String> extraLabels = Map.of();
     private static java.util.Set<Integer> extraChecks = java.util.Set.of();
+    /** Croesus runs a Dungeon Chest Key would pay off on (Worth A Key). */
+    private static java.util.Set<Integer> keyMarks = java.util.Set.of();
 
     private DungeonChestProfit() {}
+
+    public static void setKeyMarks(java.util.Set<Integer> marks) {
+        keyMarks = marks;
+    }
+
+    /** Reroll Protection, from the container click mixin: true stops the click. */
+    public static boolean onSlotClicked(AbstractContainerScreen<?> screen, Slot slot) {
+        FeatureConfigs.ChestProfit config = config();
+        if (config == null || config.rerollProtection <= 0 || slot == null || !slot.hasItem() || !isInLootArea()) return false;
+        if (!isChest(title(screen))) return false;
+        ItemStack stack = slot.getItem();
+        if (!"Reroll Chest".equals(ChatFormatting.stripFormatting(stack.getHoverName().getString()))) return false;
+        if (!lore(stack).contains("Click to reroll this chest!")) return false;
+        double value = rewardChestValue(screen);
+        if (!blockReroll(value, config.rerollProtection, Minecraft.getInstance().hasControlDown())) return false;
+        com.epic60869.sky2m.features.core.Sky2MAlerts.title(Component.literal("Reroll blocked").withStyle(ChatFormatting.RED),
+            Component.literal("This chest is worth " + separator(value) + ". Hold Ctrl to reroll.").withStyle(ChatFormatting.GRAY));
+        return true;
+    }
+
+    /** Whether to stop a reroll of a chest with this profit. Public for the game test. */
+    public static boolean blockReroll(double value, double threshold, boolean ctrl) {
+        return threshold > 0 && value >= threshold && !ctrl;
+    }
 
     /** Croesus Overlay: Kismet Feather counts on the Reroll Chest and checks on runs a Kismet Feather was used on. */
     public static void setExtras(Map<Integer, String> labels, java.util.Set<Integer> checks) {
@@ -93,6 +121,7 @@ public final class DungeonChestProfit {
     }
 
     public static void init() {
+        ChestAdvice.init();
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             clear();
             if (!(screen instanceof AbstractContainerScreen<?> container)) return;
@@ -123,12 +152,14 @@ public final class DungeonChestProfit {
 
     private static void clear() {
         currentValue = 0;
+        currentLuck = null;
         if (!backgrounds.isEmpty()) backgrounds = Map.of();
         if (!labels.isEmpty()) labels = Map.of();
         if (!chestValues.isEmpty()) chestValues = Map.of();
+        if (!keyMarks.isEmpty()) keyMarks = java.util.Set.of();
     }
 
-    private static boolean isInLootArea() {
+    static boolean isInLootArea() {
         return Compat.isOnSkyblock() && (Sky2MLocation.inDungeon() || LOOT_AREAS.contains(Sky2MLocation.area()));
     }
 
@@ -140,7 +171,9 @@ public final class DungeonChestProfit {
         FeatureConfigs.ChestProfit config = config();
         if (config == null) return;
         String title = title(screen);
-        currentValue = config.chestValue && isChest(title) ? rewardChestValue(screen) : 0;
+        double[] chest = config.chestValue && isChest(title) ? rewardChestParts(screen) : new double[]{0, 0};
+        currentValue = chest[0];
+        currentLuck = config.chestLuck && chest[1] > 0 ? ChestAdvice.luck(title, chest[1]) : null;
         if (!config.croesusSolver) {
             backgrounds = Map.of();
             labels = Map.of();
@@ -167,8 +200,13 @@ public final class DungeonChestProfit {
         return false;
     }
 
-    private static double rewardChestValue(AbstractContainerScreen<?> screen) {
-        double value = 0;
+    static double rewardChestValue(AbstractContainerScreen<?> screen) {
+        return rewardChestParts(screen)[0];
+    }
+
+    /** {what the chest is worth minus its cost, what its contents are worth}. */
+    private static double[] rewardChestParts(AbstractContainerScreen<?> screen) {
+        double value = 0, cost = 0;
         for (Slot slot : screen.getMenu().slots) {
             if (slot.container instanceof Inventory) continue;
             ItemStack stack = slot.getItem();
@@ -179,7 +217,7 @@ public final class DungeonChestProfit {
                 if (name.equals("Open Reward Chest")) {
                     for (String line : lore(stack)) {
                         if (line.endsWith(" Coins")) {
-                            value -= parseInt(line.replace(" Coins", "").replace(",", ""));
+                            cost += parseInt(line.replace(" Coins", "").replace(",", ""));
                             break;
                         }
                     }
@@ -188,7 +226,7 @@ public final class DungeonChestProfit {
             }
             value += lootValue(id) * lootQuantity(stack, name);
         }
-        return value;
+        return new double[]{value - cost, value};
     }
 
     /** NoFrills' getLootValue: the fish and discs at their NPC price, the rest lowest BIN, else bazaar instant sell. */
@@ -210,7 +248,24 @@ public final class DungeonChestProfit {
     static String lootId(ItemStack stack, String name) {
         if (name.startsWith("Wither Essence")) return "ESSENCE_WITHER";
         if (name.startsWith("Undead Essence")) return "ESSENCE_UNDEAD";
-        return Sky2MPriceTooltip.marketId(stack);
+        String id = Sky2MPriceTooltip.marketId(stack);
+        if (id.startsWith("ATTRIBUTE_SHARD") || id.startsWith("SHARD_") || (id.isEmpty() && isShard(name))) {
+            var shard = com.epic60869.sky2m.features.hunting.AttributeShards.of(stack);
+            if (shard == null) shard = com.epic60869.sky2m.features.hunting.AttributeShards.byName(shardName(name));
+            if (shard != null) return shard.bazaarName();
+            if (id.isEmpty()) return "SHARD_" + toId(shardName(name));
+        }
+        return id;
+    }
+
+    /** "Grove Shard", "Grove Shard x3", "3x Grove Shards". */
+    private static boolean isShard(String name) {
+        return shardName(name).length() < name.replaceAll(" x[0-9,]+$", "").replaceFirst("^[0-9,]+x ", "").length();
+    }
+
+    /** The shard's name without "Shard(s)" or an amount: "Grove" from "Grove Shard x3"; the name unchanged if it isn't one. */
+    private static String shardName(String name) {
+        return name.trim().replaceAll(" x[0-9,]+$", "").replaceFirst("^[0-9,]+x ", "").replaceAll(" Shards?$", "");
     }
 
     private static void renderChestValue(AbstractContainerScreen<?> screen, GuiGraphicsExtractor g) {
@@ -228,6 +283,11 @@ public final class DungeonChestProfit {
         int baseX = accessor.getX() + target.x + 8, baseY = accessor.getY() + target.y + 8;
         g.fill((int) Math.floor(baseX - 2 - width * 0.5), baseY - 6, (int) Math.ceil(baseX + 2 + width * 0.5), baseY + 6, colour(config.background, 0xCC202020));
         g.centeredText(font, Component.literal(text), baseX, baseY - 4, currentValue > 0 ? 0xFF55FF55 : 0xFFFF5555);
+        if (currentLuck != null) {
+            int luckWidth = font.width(currentLuck);
+            g.fill((int) Math.floor(baseX - 2 - luckWidth * 0.5), baseY + 6, (int) Math.ceil(baseX + 2 + luckWidth * 0.5), baseY + 18, colour(config.background, 0xCC202020));
+            g.centeredText(font, Component.literal(currentLuck), baseX, baseY + 8, currentLuck.startsWith("-") ? 0xFFFF5555 : 0xFF55FF55);
+        }
     }
 
     // ------------------------------------------------------------------------------------------------ croesus solver
@@ -330,6 +390,7 @@ public final class DungeonChestProfit {
         if (chests.size() >= 2) {
             Map.Entry<Integer, Double> second = chests.get(1);
             double keyPrice = Sky2MPriceTooltip.price("DUNGEON_CHEST_KEY", FeatureConfigs.ProfitPriceSource.SELL_ORDER);
+            com.epic60869.sky2m.features.dungeons.extras.CroesusOverlay.noteKeyValue(second.getValue(), keyPrice);
             if (keyPrice > 0 && second.getValue() - keyPrice > 0) colours.put(second.getKey(), colour(config.profitKeyColor, 0x8055FFFF));
             else if (second.getValue() > 0) colours.put(second.getKey(), colour(config.profitSecondaryColor, 0x80FFFF55));
         }
@@ -347,8 +408,9 @@ public final class DungeonChestProfit {
 
     /** Over the slot's item, like a stack count (Sky2MSlotBackgroundMixin). */
     public static void renderSlotLabel(GuiGraphicsExtractor graphics, Slot slot) {
-        if ((labels.isEmpty() && extraLabels.isEmpty() && extraChecks.isEmpty()) || slot.container instanceof Inventory) return;
+        if ((labels.isEmpty() && extraLabels.isEmpty() && extraChecks.isEmpty() && keyMarks.isEmpty()) || slot.container instanceof Inventory) return;
         var font = Minecraft.getInstance().font;
+        if (keyMarks.contains(slot.index)) graphics.text(font, "KEY", slot.x + 17 - font.width("KEY"), slot.y - 1, 0xFF55FF55, true);
         String label = labels.get(slot.index);
         if (label == null) label = extraLabels.get(slot.index);
         if (label != null) graphics.text(font, label, slot.x + 17 - font.width(label), slot.y + 9, 0xFFFFFFFF, true);
@@ -377,6 +439,10 @@ public final class DungeonChestProfit {
             return "ENCHANTMENT_" + enchantName + "_" + level;
         }
         if (name.endsWith(" Essence")) return "ESSENCE_" + toId(name.substring(0, name.lastIndexOf(' ')));
+        if (isShard(name)) {
+            var shard = com.epic60869.sky2m.features.hunting.AttributeShards.byName(shardName(name));
+            return shard != null ? shard.bazaarName() : "SHARD_" + toId(shardName(name));
+        }
         if (name.endsWith(" Dye")) return "DYE_" + toId(name.substring(0, name.lastIndexOf(' ')));
         if (name.startsWith("Master Skull - Tier ")) return toId(name.replace(" - ", " "));
         if (name.startsWith("[Lvl 1] ")) {

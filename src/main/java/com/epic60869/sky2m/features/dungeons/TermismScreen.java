@@ -98,7 +98,8 @@ public final class TermismScreen extends Screen {
     private int mistakes, nextNumber;
     private char letter;
     private DyeColor colour;
-    private int melodyRows = 4, melodyRow, melodyTarget, melodyMarker, melodyDir = 1;
+    /** Three lanes since the Minister update (0.27.2: "Reduced the amount of rows on the Melody Terminal from 4 → 3"). */
+    private int melodyRows = 3, melodyRow, melodyTarget, melodyMarker, melodyDir = 1;
     private long melodyMovedAt;
     private int melodySpeed = 1;
     private boolean highlights;
@@ -138,7 +139,8 @@ public final class TermismScreen extends Screen {
             }
             case NUMBERS -> {
                 title = t.title;
-                List<Integer> slots = area(rows, 1, 2, 1, 7);
+                // Ten numbers since the Minister update (0.27.2: "from 14 → 10"), two rows of five.
+                List<Integer> slots = area(rows, 1, 2, 2, 6);
                 List<Integer> order = new ArrayList<>();
                 for (int i = 1; i <= slots.size(); i++) order.add(i);
                 Collections.shuffle(order, random);

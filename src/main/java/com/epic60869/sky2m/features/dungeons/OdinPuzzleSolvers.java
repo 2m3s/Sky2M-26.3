@@ -98,11 +98,12 @@ public final class OdinPuzzleSolvers {
 
     private record Frame(BlockPos clay, Rotation rotation) {
         BlockPos real(int x, int y, int z) {
-            return rotation.toWorld(new BlockPos(x, y, z)).offset(clay.getX(), 0, clay.getZ());
+            // yShift: the Dungeon Sim may build a floor higher or lower than Hypixel's (0 on Hypixel).
+            return rotation.toWorld(new BlockPos(x, y, z)).offset(clay.getX(), com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonMapUtils.yShift(), clay.getZ());
         }
 
         BlockPos relative(BlockPos world) {
-            return rotation.toRoom(world.offset(-clay.getX(), 0, -clay.getZ()));
+            return rotation.toRoom(world.offset(-clay.getX(), -com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonMapUtils.yShift(), -clay.getZ()));
         }
     }
 

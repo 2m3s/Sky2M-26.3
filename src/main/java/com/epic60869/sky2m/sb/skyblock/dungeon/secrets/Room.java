@@ -448,12 +448,12 @@ public class Room implements Tickable, Renderable {
 
 		int matchingRoomsSize = possibleRooms.stream().map(Triple::getRight).mapToInt(Collection::size).sum();
 		if (matchingRoomsSize == 0) {
-			// If no rooms match, reset the fields and scan again after 50 ticks.
+			// If no rooms match, reset the fields and scan again after 10 ticks. Sky2M: secrets aren't seen meanwhile, so not 50.
 			matchState = MatchState.FAILED;
 			assert checkedBlocks != null;
 			DungeonManager.LOGGER.warn("[Skyblocker Dungeon Secrets] No dungeon room matched after checking {} block(s) including double checking {} block(s)", checkedBlocks.size(), doubleCheckBlocks);
 			RenderHelper.runOnRenderThread(() -> {
-				Scheduler.INSTANCE.schedule(() -> matchState = MatchState.MATCHING, 50);
+				Scheduler.INSTANCE.schedule(() -> matchState = MatchState.MATCHING, 10);
 				reset();
 			});
 			return true;
@@ -556,6 +556,27 @@ public class Room implements Tickable, Renderable {
 	}
 
 	/**
+	 * The sim names puzzle rooms as the game shows them ("Water Board"), the room data by their internal names
+	 * ("water-puzzle"). Only the sim's side is mapped: the data's "ice-path" is Ice Fill, the sim's "Ice Path" is the
+	 * silverfish room ("ice-silverfish-room").
+	 */
+	private static String simPuzzleKey(String key) {
+		return switch (key) {
+			case "waterboard" -> "waterpuzzle";
+			case "boulder" -> "boxesroom";
+			case "creeperbeams" -> "creeperroom";
+			case "teleportmaze" -> "teleportpadroom";
+			case "threeweirdos" -> "threechests";
+			case "quiz" -> "triviaroom";
+			case "higherblaze" -> "blazeroomhigh";
+			case "lowerblaze" -> "blazeroomlow";
+			case "icefill" -> "icepath";
+			case "icepath" -> "icesilverfishroom";
+			default -> key;
+		};
+	}
+
+	/**
 	 * Sky2M: matches this room by name for the Dungeon Sim, which knows what room it placed. Instead of narrowing the room
 	 * down by the blocks around the player, the sim's name picks the room data and the direction is the one whose blocks
 	 * agree most with the world. Waypoints load exactly as for a normal match.
@@ -574,7 +595,7 @@ public class Room implements Tickable, Renderable {
 		long now = System.currentTimeMillis();
 		if (now < simForceRetryAt) return false;
 		simForceRetryAt = now + 2000;
-		String wanted = simKey(simName);
+		String wanted = simPuzzleKey(simKey(simName));
 		String roomName = null;
 		for (String candidate : data.keySet()) {
 			if (simKey(candidate).equals(wanted)) {
@@ -708,12 +729,14 @@ public class Room implements Tickable, Renderable {
 						markSecretsFoundAndLogInfo(secretWaypoint, "[Skyblocker Dungeon Secrets] Detected already searched chest interaction, setting secret #{} as found", secretWaypoint.secretIndex);
 					});
 		}
-		if (secretCountOutdated && overlay) updateSecretCount(message);
+		if (overlay) updateSecretCount(message);
 	}
 
 	protected void updateSecretCount(String message) {
 		Matcher matcher = SECRETS.matcher(message);
-		if (!matcher.find()) return;
+		if (!matcher.find() || clearState == ClearState.GREEN_CHECKED) return;
+		// Sky2M: the action bar can still be showing the room you just left.
+		if (maxSecrets > 0 && Integer.parseInt(matcher.group(2)) != maxSecrets) return;
 		secretsFound = Integer.parseInt(matcher.group(1));
 		secretCountOutdated = false;
 		DungeonEvents.SECRET_COUNT_UPDATED.invoker().onSecretCountUpdate(this, false);

@@ -173,10 +173,8 @@ public final class ChestHistory {
         Chest chest = new Chest();
         chest.time = System.currentTimeMillis();
         chest.type = type;
-        String floor = Sky2MLocation.dungeonFloor();
-        boolean inRun = Sky2MLocation.inDungeon() && floor != null && !floor.isEmpty();
-        chest.floor = inRun ? floor : croesusFloor.isEmpty() ? "?" : croesusFloor;
-        chest.source = inRun ? "Run" : "Croesus";
+        chest.floor = currentFloor();
+        chest.source = inRun() ? "Run" : "Croesus";
         // The button's lore: "Cost", then "2,000,000 Coins" (or "FREE") and maybe "Dungeon Chest Key".
         boolean cost = false;
         for (String line : lore) {
@@ -217,6 +215,44 @@ public final class ChestHistory {
         pendingMenu = menu;
     }
 
+    private static boolean inRun() {
+        String floor = Sky2MLocation.dungeonFloor();
+        return Sky2MLocation.inDungeon() && floor != null && !floor.isEmpty();
+    }
+
+    /** The floor of the reward chest open now: the run you're in, else the last Croesus run opened, else "?". */
+    static String currentFloor() {
+        return inRun() ? Sky2MLocation.dungeonFloor() : croesusFloor.isEmpty() ? "?" : croesusFloor;
+    }
+
+    /** "Bedrock" from a reward chest's title ("Bedrock Chest", "Bedrock"), or null if it isn't one. */
+    static String chestType(String title) {
+        Matcher chest = CHEST.matcher(title);
+        return chest.matches() ? chest.group("type") : null;
+    }
+
+    /**
+     * The floor of a chest you opened in the last while that held this item (by either of its ids), or null. The chest still
+     * being confirmed counts, as its items reach you before it's recorded. For Item Origin.
+     */
+    public static String recentChestFloor(String marketId, String neuId, long now, long windowMs) {
+        if (pending != null && holds(pending, marketId, neuId)) return pending.floor;
+        List<Chest> all = chests();
+        for (Chest chest : all) {
+            if (now - chest.time > windowMs) break;
+            if (holds(chest, marketId, neuId)) return chest.floor;
+        }
+        return null;
+    }
+
+    private static boolean holds(Chest chest, String marketId, String neuId) {
+        for (Drop drop : chest.items) {
+            if (drop.id() == null || drop.id().isEmpty()) continue;
+            if (drop.id().equals(marketId) || drop.id().equals(neuId)) return true;
+        }
+        return false;
+    }
+
     /** Hypixel refusing the purchase or the reroll (not enough coins, no key or feather, already opened). */
     private static void onChat(String raw) {
         if (pending == null && pendingKismetType == null) return;
@@ -235,7 +271,7 @@ public final class ChestHistory {
         return price > 0 ? price : price("DUNGEON_CHEST_KEY");
     }
 
-    private static double price(String id) {
+    static double price(String id) {
         double price = ItemPriceResolver.value(id);
         return price > 0 ? price : 0;
     }

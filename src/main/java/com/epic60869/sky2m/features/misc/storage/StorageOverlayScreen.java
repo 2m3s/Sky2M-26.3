@@ -165,6 +165,7 @@ public class StorageOverlayScreen extends Screen {
         super.extractRenderState(context, mouseX, mouseY, delta);
         drawBackgrounds(context);
         drawPages(context, mouseX, mouseY, delta, null, null, 0, 0);
+        drawValuePanel(context, null);
         drawScrollBar(context);
         drawPlayerInventory(context, mouseX, mouseY, delta);
         drawControls(context, mouseX, mouseY, delta);
@@ -265,6 +266,7 @@ public class StorageOverlayScreen extends Screen {
                           StoragePageSlot excluding, List<Slot> slots, int slotOffsetX, int slotOffsetY) {
         createScissors(context);
         StorageData data = StorageData.data();
+        hoveredPage = null;
         boolean[] placedSlots = {false};
         layoutedForEach(data, (rect, page, inventory) -> {
             boolean active = page.equals(excluding);
@@ -480,8 +482,17 @@ public class StorageOverlayScreen extends Screen {
             context.horizontalLine(x, x + PAGE_WIDTH, top + h, colour);
         }
         context.text(font, Component.literal(name), x + 6, y + 3, slots == null ? 0xFFFFFFFF : 0xFFFFFF00, true);
-        sprite(context, SLOT_ROW_SPRITE, x + 2, y + 5 + font.lineHeight, PAGE_SLOTS_WIDTH, inv.rows() * SLOT_SIZE);
         CustomGui.Rect scrollPanel = getScrollPanelInner();
+        if (StorageValueHud.enabled()) {
+            // The page's value at the right of its title, when it fits beside the name.
+            double value = StorageValueHud.of(inv).total();
+            String text = value > 0 ? StorageValueHud.shortCoins(value) : "";
+            if (!text.isEmpty() && font.width(name) + font.width(text) + 16 <= PAGE_WIDTH) {
+                context.text(font, Component.literal(text), x + PAGE_WIDTH - 4 - font.width(text), y + 3, 0xFFFFAA00, true);
+            }
+            if (mouseX >= x && mouseX < x + PAGE_WIDTH && mouseY >= y && mouseY < y + pageHeight && scrollPanel.contains(mouseX, mouseY)) hoveredPage = page;
+        }
+        sprite(context, SLOT_ROW_SPRITE, x + 2, y + 5 + font.lineHeight, PAGE_SLOTS_WIDTH, inv.rows() * SLOT_SIZE);
         for (int index = 0; index < stacks.size(); index++) {
             int slotX = (index % 9) * SLOT_SIZE + x + 3;
             int slotY = (index / 9) * SLOT_SIZE + y + 5 + font.lineHeight + 1;
@@ -502,6 +513,28 @@ public class StorageOverlayScreen extends Screen {
             }
         }
         return pageHeight + 6;
+    }
+
+    /** The page under the mouse this frame, for the Storage Value Breakdown panel. */
+    private StoragePageSlot hoveredPage;
+
+    /**
+     * Storage Value Breakdown: left of the overlay, level with its bottom (the Estimated Item Value panel sits at the top):
+     * the hovered page, else the open one, else the whole storage.
+     */
+    public void drawValuePanel(GuiGraphicsExtractor context, StoragePageSlot active) {
+        if (!StorageValueHud.enabled()) return;
+        StorageData data = StorageData.data();
+        StoragePageSlot page = hoveredPage != null ? hoveredPage : active;
+        StorageData.StorageInventory inventory = page == null ? null : data.storageInventories.get(page);
+        StorageValueHud.Panel panel = inventory != null && inventory.inventory != null
+            ? StorageValueHud.pagePanel(data.displayName(page), StorageValueHud.of(inventory.inventory))
+            : StorageValueHud.storagePanel(data);
+        int w = StorageValueHud.width(font, panel), h = StorageValueHud.height(panel);
+        int x = measurements.x - w - 6;
+        if (x < 4) x = 4;
+        int y = Math.max(4, measurements.y + measurements.overviewHeight - h);
+        StorageValueHud.draw(context, panel, x, y);
     }
 
     /** Firmament's highlightSlots: search results get a coloured square behind them. */

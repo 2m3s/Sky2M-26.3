@@ -199,6 +199,16 @@ public final class SimWorld {
         }
     }
 
+    /** Whether this integrated server is running the sim world's save. */
+    private static boolean isSimWorld(net.minecraft.server.MinecraftServer server) {
+        if (server == null) {
+            return false;
+        }
+        java.nio.file.Path root = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
+                .toAbsolutePath().normalize();
+        return root.getFileName() != null && LEVEL_ID.equals(root.getFileName().toString());
+    }
+
     /** Whether the sim world has been created at least once. */
     public static boolean exists(Minecraft client) {
         try {
@@ -260,6 +270,25 @@ public final class SimWorld {
         }
         long phaseStart = System.currentTimeMillis();
 
+        // A singleplayer world is running but the sim is not on in it. Opening the sim world on top of it fails:
+        // vanilla's DirectoryLock writes session.lock before locking it, so a world still holding that lock gives
+        // "IOException: The process cannot access the file because another process has locked a portion of the
+        // file", vanilla shows a toast and returns without calling us back, and the loading screen stayed up
+        // (a friend's report, 2026-11-02: /s2 sim from the sim world opened through the Singleplayer list). The
+        // sim world itself is built into in place; any other world is closed first (this waits for its server to
+        // stop, which releases its lock).
+        var running = client.getSingleplayerServer();
+        if (running != null && !SimState.canAct(client)) {
+            if (isSimWorld(running) && client.player != null) {
+                LOGGER.info("[SimPhase] in the sim world without sim mode - entering it before building");
+                SimState.enter(mapCode);
+                freezeWorld(client);
+            } else {
+                LOGGER.info("[SimPhase] leaving another singleplayer world before opening the sim");
+                client.disconnectWithSavingScreen();
+            }
+        }
+
         // Already in the sim? Then there is nothing to open.
         //
         // Every generate went through a full world close-and-reopen, even when he was standing in the sim
@@ -310,6 +339,18 @@ public final class SimWorld {
                     buildFinished(client, null);
                     ModChat.send("Sim", ModChat.text("Could not open the sim world"));
                 });
+                // A world access failure (the save is locked) is only a toast: vanilla clears the screen and
+                // returns without the callback above, which left the loading screen up with nothing loading.
+                if (client.getSingleplayerServer() == null && client.level == null
+                        && (McCompat.screen(client) == null
+                        || McCompat.screen(client) instanceof net.minecraft.client.gui.screens.TitleScreen)) {
+                    pendingCode = null;
+                    pendingBuild = null;
+                    buildFinished(client, null);
+                    LOGGER.warn("[SimPhase] the sim world could not be opened (its save is in use)");
+                    ModChat.send("Sim", ModChat.text("Could not open the sim world - its save is in use. "),
+                            ModChat.dim("Close any other Minecraft using this folder, wait a moment and try again."));
+                }
                 return;
             }
             LevelSettings settings = new LevelSettings(
@@ -407,7 +448,13 @@ public final class SimWorld {
         // Reset run state so an armed or running run from a previous sim session cannot leak into this one.
         SimRun.reset();
         if (pendingCode == null) {
-            return;
+            // The sim world opened from the Singleplayer list is still the sim: without this it was a plain world
+            // and /s2 sim tried to open it again on top of itself (see open).
+            if (!isSimWorld(client.getSingleplayerServer())) {
+                return;
+            }
+            LOGGER.info("[SimPhase] sim world opened from the world list - entering sim mode");
+            pendingCode = "";
         }
         LOGGER.info("[SimPhase] world loaded, starting the build");
         String code = pendingCode;
@@ -445,6 +492,8 @@ public final class SimWorld {
         SimArchitect.reset();
         SimBreakerState.reset();
         SimSurvival.reset();
+        SimVitals.reset();
+        SimDeath.reset(client);
         // His speed back, every time - see SimSpeed.saved().
         SimSpeed.applySaved(client);
         // The saved hotbar goes back every time a dungeon opens - muscle memory for a route is partly muscle
@@ -527,6 +576,9 @@ public final class SimWorld {
         SimTabList.reset();
         SimBuilder.clearEntranceDoor();
         com.epic60869.sky2m.sim.roomsim.puzzles.SimPuzzles.resetAll();
+        SimBoss.reset(client);
+        SimWatcher.reset(client);
+        SimDeath.reset(client);
     }
     /**
      * Stops the sim world changing itself underneath him.

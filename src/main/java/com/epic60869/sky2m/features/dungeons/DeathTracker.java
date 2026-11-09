@@ -106,6 +106,13 @@ public final class DeathTracker {
         return s.isEmpty() ? "Died" : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
+    /** How many times each player has died this run, by lower-case name, for Teammate History. */
+    static Map<String, Integer> deathsThisRun() {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        for (Death death : deaths) counts.merge(death.name().toLowerCase(java.util.Locale.ROOT), 1, Integer::sum);
+        return counts;
+    }
+
     private static List<Component> lines() {
         List<Component> out = new ArrayList<>();
         if (deaths.isEmpty()) return out;

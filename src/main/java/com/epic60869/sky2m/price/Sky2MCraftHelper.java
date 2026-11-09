@@ -92,6 +92,27 @@ public final class Sky2MCraftHelper {
                 Component.literal("✔ 8/8 Necron's Handle").withStyle(ChatFormatting.GREEN),
                 Component.literal("✖ 120/350 Wither Catalyst").withStyle(ChatFormatting.RED)),
             8, 200);
+        // Click a missing ingredient (with a menu open, where the mouse is free) to /gfs what's still needed.
+        net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
+            net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> {
+                if (event.button() != com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) return true;
+                int line = hoveredLine(event.x(), event.y());
+                if (line < 0) return true;
+                String[] gfs = gfsLines.get(line);
+                var connection = Minecraft.getInstance().getConnection();
+                if (connection != null) connection.sendCommand("gfs " + gfs[0] + " " + gfs[1]);
+                return false;
+            });
+            net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> {
+                int line = hoveredLine(mouseX, mouseY);
+                if (line < 0) return;
+                String[] gfs = gfsLines.get(line);
+                graphics.setTooltipForNextFrame(Minecraft.getInstance().font, List.of(
+                    Component.literal(Sky2MRecipeCommand.displayName(gfs[0])).withStyle(ChatFormatting.WHITE),
+                    Component.literal("Click to get " + gfs[1] + " from your sacks").withStyle(ChatFormatting.YELLOW)),
+                    Optional.empty(), mouseX, mouseY);
+            });
+        });
         file = configDir.resolve("sky2m-crafthelper.json");
         try {
             if (Files.exists(file)) {
@@ -154,10 +175,39 @@ public final class Sky2MCraftHelper {
         if (selectedId != null) select(selectedId, amount, true);
     }
 
+    /** Recipe HUD line index -> {item id, amount still needed} for the missing ingredients, for Click To Get From Sacks. */
+    private static Map<Integer, String[]> gfsLines = Map.of();
+    private static List<Component> lastLines = List.of();
+
+    /** The Recipe HUD line under the mouse that can be fetched with /gfs, or -1. */
+    private static int hoveredLine(double mouseX, double mouseY) {
+        Sky2MConfig config = Sky2MConfig.current();
+        if (config == null || !config.misc.recipeHud || !config.misc.recipeHudGfs || selectedId == null || gfsLines.isEmpty()
+            || !Compat.isOnSkyblock()) return -1;
+        var p = com.epic60869.sky2m.features.core.Sky2MHuds.placement("craft_helper");
+        if (p.scale <= 0) return -1;
+        List<Component> lines = lastLines;
+        int w = com.epic60869.sky2m.features.core.Sky2MHuds.width(lines, p.scale);
+        int h = com.epic60869.sky2m.features.core.Sky2MHuds.height(lines, p.scale);
+        int x = com.epic60869.sky2m.features.core.Sky2MHuds.mapX(p.x, w), y = com.epic60869.sky2m.features.core.Sky2MHuds.mapY(p.y, h);
+        if (mouseX < x || mouseX >= x + w || mouseY < y || mouseY >= y + h) return -1;
+        double localY = (mouseY - y) / p.scale - com.epic60869.sky2m.features.core.Sky2MHuds.PADDING;
+        int line = (int) Math.floor(localY / com.epic60869.sky2m.features.core.Sky2MHuds.LINE_HEIGHT);
+        return gfsLines.containsKey(line) ? line : -1;
+    }
+
     /** HUD lines: title and the merged base ingredients, like SkyOcean's raw formatter. */
     private static List<Component> hudLines() {
+        List<Component> lines = buildHudLines();
+        lastLines = lines;
+        return lines;
+    }
+
+    private static List<Component> buildHudLines() {
         refresh();
         List<Component> lines = new ArrayList<>();
+        Map<Integer, String[]> gfs = new HashMap<>();
+        gfsLines = gfs;
         if (selectedId == null) return lines;
         lines.add(Component.literal(selectedAmount + "x ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(Sky2MRecipeCommand.displayName(selectedId)).withStyle(ChatFormatting.GOLD)));
@@ -187,6 +237,7 @@ public final class Sky2MCraftHelper {
             if (done && hideDone) continue;
             float progress = need <= 0 ? 1f : Math.min(1f, have / (float) need);
             int colour = ARGB.srgbLerp(progress, 0xFF5555, 0x55FF55);
+            if (!done) gfs.put(lines.size(), new String[]{entry.getKey(), String.valueOf(need - have)});
             lines.add(Component.literal(done ? "✔ " : "✖ ").withStyle(done ? ChatFormatting.GREEN : ChatFormatting.RED)
                 .append(Component.literal(String.format(Locale.US, "%,d/%,d ", Math.min(have, need), need)).withColor(colour))
                 .append(Component.literal(Sky2MRecipeCommand.displayName(entry.getKey())).withStyle(ChatFormatting.WHITE)));

@@ -53,6 +53,7 @@ public final class SimRun {
     public static void register() {
         ClientTickEvents.START_CLIENT_TICK.register(
                 FeatureGuard.start("SimRun.tick", SimRun::tick));
+        SimMort.register();
     }
 
     /** Registers the /start command. Kept apart from the tick registration, which already exists. */
@@ -78,9 +79,18 @@ public final class SimRun {
                                 // single room with a message.
                                 .requires(src -> SimState.canAct(Minecraft.getInstance()))
                                 .executes(ctx -> {
+                                    // The shortcut past Mort's ready-up: everyone in the party is ready.
+                                    Minecraft mc = Minecraft.getInstance();
+                                    if (SimParty.sendAction("start", "")) {
+                                        return 1;   // a party guest: the host's server starts it (SimMort)
+                                    }
+                                    var server = mc.getSingleplayerServer();
+                                    if (server != null && SimState.isGeneratedFloor() && !armed && !everStarted) {
+                                        server.execute(() -> SimMort.readyAll(server));
+                                    }
                                     // The door the builder recorded, so this finds the right one rather than
                                     // the nearest one - the nearest is whichever he happens to be standing by.
-                                    begin(Minecraft.getInstance(), SimBuilder.entranceDoor());
+                                    begin(mc, SimBuilder.entranceDoor());
                                     return 1;
                                 })));
     }
@@ -107,9 +117,21 @@ public final class SimRun {
         running = false;
         ticksLeft = COUNTDOWN_SECONDS * TICKS_PER_SECOND;
         lastSecondAnnounced = -1;
-        SimClass.applyMageOnly(client);
-        ModChat.send("Sim", ModChat.text("Run starting in "), ModChat.value(String.valueOf(COUNTDOWN_SECONDS)),
-                ModChat.text("..."));
+        SimClassKit.announce(client);
+        // The count itself ("Starting in 5 seconds." ...) is Hypixel's, printed by tick() to the whole party.
+    }
+
+    /**
+     * Stops a countdown that has not reached the gate yet: someone un-readied in Mort's menu. Nothing is printed
+     * beyond that player's "is no longer ready!", as on Hypixel.
+     */
+    public static void cancel() {
+        if (!armed || running || everStarted) {
+            return;
+        }
+        armed = false;
+        ticksLeft = 0;
+        lastSecondAnnounced = -1;
     }
 
     /** Stops a run and forgets the clock, for leaving the sim or restarting. */
@@ -120,7 +142,52 @@ public final class SimRun {
         ticksLeft = 0;
         lastSecondAnnounced = -1;
         entranceDoor = null;
+        finishedMs = 0L;
+        SimMort.resetReady();
     }
+
+    /**
+     * One of Hypixel's run lines, to every player in the sim world (a party guest's client reads them too), from the
+     * server: the mod's run-start detection reads system chat, so these have to arrive as the real ones do.
+     */
+    private static void broadcast(Minecraft client, net.minecraft.network.chat.Component line) {
+        var server = client.getSingleplayerServer();
+        if (server == null) {
+            return;
+        }
+        server.execute(() -> {
+            for (net.minecraft.server.level.ServerPlayer p : server.getPlayerList().getPlayers()) {
+                p.sendSystemMessage(line);
+            }
+        });
+    }
+
+    /** "[NPC] Mort: ...", coloured as Hypixel's NPC lines are. */
+    private static net.minecraft.network.chat.Component mort(String text) {
+        return net.minecraft.network.chat.Component.literal("[NPC] ")
+                .withStyle(net.minecraft.ChatFormatting.YELLOW)
+                .append(net.minecraft.network.chat.Component.literal("Mort")
+                        .withStyle(net.minecraft.ChatFormatting.AQUA))
+                .append(net.minecraft.network.chat.Component.literal(": " + text)
+                        .withStyle(net.minecraft.ChatFormatting.WHITE));
+    }
+
+    /**
+     * Stops the clock at the boss kill and keeps the time on show.
+     *
+     * <p>A Hypixel run ends when the boss dies, so this is where the sim's clock stops too. The final time is
+     * kept rather than dropped, so the sidebar and {@link #elapsedText} still read it afterwards.
+     */
+    public static void finish() {
+        if (running) {
+            finishedMs = System.currentTimeMillis() - startedAtMs;
+        }
+        armed = false;
+        running = false;
+    }
+
+    /** The finished run's time, 0 until {@link #finish} stops a running clock. */
+    private static long finishedMs;
 
     public static boolean isRunning() {
         return running;
@@ -143,7 +210,7 @@ public final class SimRun {
 
     /** Milliseconds since the door opened, or 0 when no run is under way. */
     public static long elapsedMs() {
-        return running ? System.currentTimeMillis() - startedAtMs : 0L;
+        return running ? System.currentTimeMillis() - startedAtMs : finishedMs;
     }
 
     private static void tick(Minecraft client) {
@@ -156,7 +223,10 @@ public final class SimRun {
             // Announced on the change, not every tick: a countdown that says "3" twenty times is noise.
             if (second != lastSecondAnnounced && second > 0) {
                 lastSecondAnnounced = second;
-                ModChat.send("Sim", ModChat.value(String.valueOf(second)));
+                // Hypixel's own count, word for word: "Starting in 1 second." is the line Run History, the splits,
+                // Death Recap and the class cooldowns start a run from.
+                broadcast(client, net.minecraft.network.chat.Component.literal("Starting in " + second
+                        + (second == 1 ? " second." : " seconds.")).withStyle(net.minecraft.ChatFormatting.GREEN));
             }
             return;
         }
@@ -167,7 +237,16 @@ public final class SimRun {
             // The gate, not just the one door that was registered. killer560 (2026-09-29): "Once the start
             // finishes it needs to remove the blocks for the gate. Those infested chizzledd blocks."
             SimDoors.openEntranceGate(client, entranceDoor);
-            ModChat.send("Sim", ModChat.text("GO"));
+            // Everyone through the gate at full health and mana, in whatever gear they started in.
+            var server = client.getSingleplayerServer();
+            if (server != null) {
+                server.execute(() -> SimParty.players(server).forEach(SimVitals::refill));
+            }
+            // Mort's lines as the gate opens: the Score Calculator starts its run from the first, Skyblocker's
+            // DungeonScore (DUNGEON_STARTED) from the second.
+            broadcast(client, mort("Here, I found this map when I first entered the dungeon."));
+            broadcast(client, mort("You should find it useful if you get lost."));
+            broadcast(client, mort("Good luck."));
         }
     }
 

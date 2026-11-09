@@ -51,10 +51,20 @@ public final class DungeonMapStyles {
      */
     public static boolean needsScan() {
         FeatureConfigs.DungeonMap map = config();
-        return map != null && map.enabled && selected() != DungeonMapStyle.SKYBLOCKER;
+        return map != null && map.enabled && (selected() != DungeonMapStyle.SKYBLOCKER || map.bloodRushPath || map.predictRooms);
     }
 
-    /** The Dungeon Sim always draws the map; a run draws it when Dungeons > Dungeon Map is on. */
+    /** Dungeons > Dungeon Map > Predict Unopened Rooms. */
+    public static boolean predictRooms() {
+        FeatureConfigs.DungeonMap map = config();
+        return map != null && map.predictRooms;
+    }
+
+    /**
+     * Whether this is the Dungeon Sim, which has no map item: every style, Skyblocker's too, then draws from the sim's
+     * published floor ({@link MapView}). Whether the map shows at all is the same rule as a run (Dungeons > Dungeon Map
+     * on, run started, not in the boss room), see {@code DungeonMap}.
+     */
     public static boolean inSim() {
         return SimState.isActive();
     }
@@ -77,6 +87,14 @@ public final class DungeonMapStyles {
         graphics.pose().scale(scale, scale);
         try {
             renderer.render(graphics, view, false);
+            // Classic draws the map item's own 128x128 pixels, the MapView's geometry; the other styles lay rooms out their own way.
+            FeatureConfigs.DungeonMap map = config();
+            if (map != null && map.predictRooms && selected() == DungeonMapStyle.SKYBLOCKER && !inSim()) {
+                SkyblockerMapStyle.drawGuesses(graphics, MapViewSource.current());
+            }
+            if (map != null && map.bloodRushPath && selected() == DungeonMapStyle.SKYBLOCKER) {
+                BloodRushPath.render(graphics, view.valid() ? view : MapViewSource.current());
+            }
         } finally {
             graphics.pose().popMatrix();
         }

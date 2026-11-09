@@ -32,6 +32,11 @@ public final class RoomClearAlert {
 
     /** The map now shows a checkmark on {@code room}; {@code previous} is what it showed before. */
     public static void onCheckmark(Room room, Room currentRoom, Room.ClearState previous, boolean green) {
+        // White before green means it wasn't already done when you got there, like a room your team had cleared of mobs.
+        if (green && (SEEN_UNCLEARED.contains(room) || previous == Room.ClearState.WHITE_CHECKED)) {
+            RoomClears.onGreen(room, currentRoom);
+            PuzzleBests.onGreen(room, currentRoom);
+        }
         Sky2MConfig config = Sky2MConfig.current();
         if (config == null || !config.dungeons.secrets.roomClearAlert) return;
         if (room != currentRoom || !SEEN_UNCLEARED.contains(room)) return;

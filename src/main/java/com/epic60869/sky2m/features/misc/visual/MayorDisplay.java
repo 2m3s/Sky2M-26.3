@@ -1,11 +1,13 @@
 package com.epic60869.sky2m.features.misc.visual;
 
 import com.epic60869.sky2m.config.Sky2MConfig;
+import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
+import com.epic60869.sky2m.features.sbc.SbcItems;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -13,11 +15,18 @@ import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -73,6 +82,13 @@ public final class MayorDisplay {
                 Component.literal("Leading: ").withStyle(ChatFormatting.GRAY).append(Component.literal("Aatrox 41%").withStyle(ChatFormatting.GREEN))),
             10, 60);
         Sky2MHuds.setting("mayor_display", () -> config() != null && config().hud);
+        ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
+            if (screen instanceof AbstractContainerScreen<?> container && isCalendar(container)
+                && (election == null || System.currentTimeMillis() - fetchedAt > REFRESH_MS)) fetch(null);
+        });
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (mc.gui.screen() instanceof AbstractContainerScreen<?> container && isCalendar(container)) placeCalendarMinister(container);
+        });
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("mayor").executes(c -> {
@@ -93,6 +109,121 @@ public final class MayorDisplay {
         return out;
     }
 
+    private static boolean isCalendar(AbstractContainerScreen<?> container) {
+        return container.getTitle().getString().startsWith("Calendar and Events");
+    }
+
+    /**
+     * Hypixel's Calendar menu only shows the mayor, so the minister goes in the slot to its right (if that's filler), as a
+     * real item on this client: the menu draws its slot, hover highlight and tooltip like any other. Clicking it clicks
+     * the filler Hypixel still has there. Put back every tick, since Hypixel refreshes the menu's items.
+     */
+    private static void placeCalendarMinister(AbstractContainerScreen<?> container) {
+        FeatureConfigs.MayorDisplay c = config();
+        Election e = election;
+        if (c == null || !c.calendarMinister || e == null || e.minister() == null) return;
+        List<Slot> slots = container.getMenu().slots;
+        int menuSize = slots.size() - 36;
+        for (int i = 0; i < menuSize - 1; i++) {
+            if (!Sky2MLocation.strip(slots.get(i).getItem().getHoverName().getString()).startsWith("Mayor ")) continue;
+            Slot right = slots.get(i + 1);
+            if (i % 9 == 8) return;
+            ItemStack minister = ministerItem(e);
+            ItemStack now = right.getItem();
+            if ((isFiller(now) || now.has(DataComponents.CUSTOM_NAME) && now.getHoverName().getString().startsWith("Minister "))
+                && !ItemStack.isSameItemSameComponents(now, minister)) {
+                right.set(minister);
+            }
+            return;
+        }
+    }
+
+    private static ItemStack ministerStack;
+    private static Election ministerFor;
+    private static ItemStack ministerHead;
+
+    /** The minister's head, named and with lore laid out like Hypixel's own "Mayor ..." item in the Calendar menu. */
+    private static ItemStack ministerItem(Election e) {
+        ItemStack head = headOf(e.minister().name());
+        if (ministerStack != null && ministerFor == e && ministerHead == head) return ministerStack;
+        ItemStack stack = head.isEmpty() ? new ItemStack(Items.PLAYER_HEAD) : head.copy();
+        stack.set(DataComponents.CUSTOM_NAME, Component.literal("Minister " + e.minister().name())
+            .withStyle(s -> s.withColor(ChatFormatting.YELLOW).withItalic(false)));
+        List<Component> lore = new ArrayList<>();
+        String with = e.mayor() == null ? "" : " and serves alongside Mayor " + e.mayor().name();
+        for (String line : wrap("§7The minister was the runner-up of the last election" + with + ".")) lore.add(loreLine(line));
+        lore.add(Component.empty());
+        lore.add(loreLine("§8§m" + " ".repeat(20)));
+        for (Perk p : e.minister().perks()) {
+            lore.add(Component.empty());
+            lore.add(loreLine("§e" + Sky2MLocation.strip(p.name())));
+            for (String line : wrap("§7" + p.description())) lore.add(loreLine(line));
+        }
+        lore.add(Component.empty());
+        for (String line : wrap("§8The minister's perk is available to all players until the closing of the next elections.")) lore.add(loreLine(line));
+        stack.set(DataComponents.LORE, new ItemLore(lore));
+        ministerStack = stack;
+        ministerFor = e;
+        ministerHead = head;
+        return stack;
+    }
+
+    private static Component loreLine(String legacy) {
+        return SbcItems.parseLegacy(legacy).withStyle(s -> s.withItalic(false));
+    }
+
+    /** Word-wraps a §-coloured line at about Hypixel's lore width, carrying the colour onto the next line. */
+    private static List<String> wrap(String text) {
+        List<String> out = new ArrayList<>();
+        StringBuilder line = new StringBuilder();
+        String colour = "";
+        int visible = 0;
+        for (String word : text.split(" ")) {
+            int len = Sky2MLocation.strip(word).length();
+            if (visible > 0 && visible + 1 + len > 30) {
+                out.add(line.toString());
+                line = new StringBuilder(colour);
+                visible = 0;
+            }
+            if (visible > 0) {
+                line.append(' ');
+                visible++;
+            }
+            line.append(word);
+            visible += len;
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("§[0-9a-fk-or]").matcher(line);
+            while (m.find()) colour = m.group();
+        }
+        if (visible > 0) out.add(line.toString());
+        return out;
+    }
+
+    private static final java.util.Map<String, ItemStack> HEADS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.regex.Pattern TEXTURE = java.util.regex.Pattern.compile("Value:\\\\?\"([A-Za-z0-9+/=]+)\\\\?\"");
+
+    /** The mayor's head from the NEU repo (their "PAUL_MAYOR_MONSTER" item), or EMPTY while it loads. */
+    private static ItemStack headOf(String name) {
+        String id = name.toUpperCase(Locale.ROOT).replaceAll("[^A-Z]", "") + "_MAYOR_MONSTER";
+        ItemStack head = HEADS.get(id);
+        if (head != null) return head;
+        HEADS.put(id, ItemStack.EMPTY);
+        RepoItems.runAsync(() -> {
+            try {
+                JsonObject item = JsonParser.parseString(RepoItems.neuRepoFile("items/" + id + ".json")).getAsJsonObject();
+                java.util.regex.Matcher m = TEXTURE.matcher(item.has("nbttag") ? item.get("nbttag").getAsString() : "");
+                if (m.find()) {
+                    String texture = m.group(1);
+                    Minecraft.getInstance().execute(() -> HEADS.put(id, Compat.createSkull(texture)));
+                }
+            } catch (Exception ignored) {}
+        });
+        return ItemStack.EMPTY;
+    }
+
+    private static boolean isFiller(ItemStack stack) {
+        return stack.isEmpty() || stack.getItem().toString().endsWith("stained_glass_pane") || stack.is(Items.GLASS_PANE);
+    }
+
     private static void fetch(Runnable then) {
         if (!FETCHING.compareAndSet(false, true)) return;
         HttpRequest request = HttpRequest.newBuilder(URI.create(URL)).timeout(Duration.ofSeconds(15)).header("User-Agent", "Sky2M").build();
@@ -104,6 +235,8 @@ public final class MayorDisplay {
                     election = parse(JsonParser.parseString(response.body()).getAsJsonObject());
                 } catch (Exception ignored) {}
             }
+            // No data yet (Paul's +10 on the score depends on it): try again in 30 seconds, not 10 minutes.
+            if (election == null) fetchedAt = System.currentTimeMillis() - REFRESH_MS + 30_000L;
             if (then != null) Minecraft.getInstance().execute(then);
         });
     }

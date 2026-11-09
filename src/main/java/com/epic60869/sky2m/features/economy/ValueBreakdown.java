@@ -206,10 +206,8 @@ public final class ValueBreakdown {
         if (x + w > screen.width - 4) x = Math.max(4, screen.width - w - 4);
         int y = Math.clamp(top, 4, Math.max(4, screen.height - h - 4));
 
+        // No background: the text has a shadow instead.
         g.nextStratum();
-        g.fill(x, y, x + w, y + h, 0xE0101216);
-        g.fill(x, y, x + w, y + 2, 0xFFFFAA00);
-        g.outline(x, y, w, h, 0xFF2C313A);
         g.item(stack, x + 6, y + 7);
         g.text(font, name, x + 26, y + 7, 0xFFFFFFFF, true);
         g.text(font, header, x + 26, y + 17, 0xFFFFFFFF, true);

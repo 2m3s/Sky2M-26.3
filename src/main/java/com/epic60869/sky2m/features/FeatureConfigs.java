@@ -1,6 +1,5 @@
 package com.epic60869.sky2m.features;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.epic60869.sky2m.sb.utils.waypoint.Waypoint;
 import com.epic60869.sky2m.features.fishing.FishingData;
 import com.google.gson.annotations.Expose;
@@ -18,6 +17,40 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorText;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigAccordionId;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorAccordion;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
+import com.epic60869.sky2m.custom.util.Compat;
+import com.epic60869.sky2m.features.combat.extra.CombatExtraConfig;
+import com.epic60869.sky2m.features.combat.kuudra.KuudraConfig;
+import com.epic60869.sky2m.features.dungeons.ArchitectDraftAlert;
+import com.epic60869.sky2m.features.dungeons.BossBarHealth;
+import com.epic60869.sky2m.features.dungeons.BreakerHud;
+import com.epic60869.sky2m.features.dungeons.PfRequirements;
+import com.epic60869.sky2m.features.dungeons.CataCalcScreen;
+import com.epic60869.sky2m.features.dungeons.ChestHistory;
+import com.epic60869.sky2m.features.dungeons.DungeonLividFinder;
+import com.epic60869.sky2m.features.dungeons.DungeonRecapExtras;
+import com.epic60869.sky2m.features.dungeons.PuzzleHud;
+import com.epic60869.sky2m.features.dungeons.SecretChime;
+import com.epic60869.sky2m.features.dungeons.extras.DungeonExtras;
+import com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyle;
+import com.epic60869.sky2m.features.fishing.FishingExtras;
+import com.epic60869.sky2m.features.fishing.FishingFeatures;
+import com.epic60869.sky2m.features.fishing.FishingHookTimer;
+import com.epic60869.sky2m.features.fishing.FishingMore;
+import com.epic60869.sky2m.features.fishing.FishingVisuals;
+import com.epic60869.sky2m.features.fishing.RareSc;
+import com.epic60869.sky2m.features.fishing.TrophyFishTracker;
+import com.epic60869.sky2m.features.foraging.ForagingExtras;
+import com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair;
+import com.epic60869.sky2m.features.misc.items.SackValueHistory;
+import com.epic60869.sky2m.features.misc.profit.ProfitTracker;
+import com.epic60869.sky2m.features.misc.profit.SessionTrackerScreen;
+import com.epic60869.sky2m.features.misc.social.Sky2MAchievements;
+import com.epic60869.sky2m.features.misc.system.ServerInfo;
+import com.epic60869.sky2m.features.profileviewer.ProfileApi;
+import com.epic60869.sky2m.features.skills.SkillType;
+import com.epic60869.sky2m.sim.Sky2MSim;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorInfoText;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind;
 
 /**
  * Config sections for Sky2M's skill features. They are referenced as categories or
@@ -66,27 +99,27 @@ public final class FeatureConfigs {
         @Expose
         @Accordion
         @ConfigOption(name = "Boss Damage Indicator", desc = "Health, DPS, time left, hits and heal messages for the boss you are fighting.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.BossIndicator bossIndicator = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.BossIndicator();
+        public CombatExtraConfig.BossIndicator bossIndicator = new CombatExtraConfig.BossIndicator();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Ghost Counter", desc = "Ghost kills and drop profit in the Mist of the Dwarven Mines.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.GhostCounter ghostCounter = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.GhostCounter();
+        public CombatExtraConfig.GhostCounter ghostCounter = new CombatExtraConfig.GhostCounter();
 
         @Expose
         @Accordion
         @ConfigOption(name = "End Dragons", desc = "Dragon profit tracker, weight and Superior Dragon notification.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Dragons dragons = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Dragons();
+        public CombatExtraConfig.Dragons dragons = new CombatExtraConfig.Dragons();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Ender Node Tracker", desc = "Ender Nodes mined and their loot in the End.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.EnderNodes enderNodes = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.EnderNodes();
+        public CombatExtraConfig.EnderNodes enderNodes = new CombatExtraConfig.EnderNodes();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Area Bosses", desc = "Highlight, spawn alert and timer for Boss Corleone, Arachne's Keepers and Zealot Bruisers.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.AreaBosses areaBosses = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.AreaBosses();
+        public CombatExtraConfig.AreaBosses areaBosses = new CombatExtraConfig.AreaBosses();
 
         @Expose
         @Accordion
@@ -119,12 +152,12 @@ public final class FeatureConfigs {
         @Expose
         @Accordion
         @ConfigOption(name = "Kuudra", desc = "Supply and pile waypoints, pre-spot alerts, phase splits, chest profit, Fresh Tools, Kuudra's health and the Perk Menu cleaner.")
-        public com.epic60869.sky2m.features.combat.kuudra.KuudraConfig kuudra = new com.epic60869.sky2m.features.combat.kuudra.KuudraConfig();
+        public KuudraConfig kuudra = new KuudraConfig();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Ashfang", desc = "Ashfang's blazes, Blazing Souls, Gravity Orbs, freeze cooldown and next reset.")
-        public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Ashfang ashfang = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.Ashfang();
+        public CombatExtraConfig.Ashfang ashfang = new CombatExtraConfig.Ashfang();
     }
 
     /** SkyHanni's BestiaryConfig (LGPL-2.1). The overlay is moved and resized in /s2 gui. */
@@ -158,15 +191,8 @@ public final class FeatureConfigs {
             SHORT("Short"), LONG("Long");
 
             private final String label;
-
-            NumberFormat(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            NumberFormat(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum DisplayType {
@@ -180,15 +206,8 @@ public final class FeatureConfigs {
             HIGHEST_NEXT("Most Next");
 
             private final String label;
-
-            DisplayType(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            DisplayType(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
     }
 
@@ -238,15 +257,8 @@ public final class FeatureConfigs {
             RIGHT("Right"), LEFT("Left"), ABOVE("Above"), BELOW("Below");
 
             private final String label;
-
-            ProgressPosition(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            ProgressPosition(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -431,7 +443,7 @@ public final class FeatureConfigs {
         public boolean repeatEachEvent = false;
 
         @ConfigOption(name = "Achievements", desc = "See your achievements. Also /s2 achievements (/s2 achievements backtrack checks your saved seasons, /s2 achievements lock CONFIRM resets them).")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "OPEN")
+        @ConfigEditorButton(buttonText = "OPEN")
         public Runnable open = com.epic60869.sky2m.features.combat.DianaAchievements::open;
     }
 
@@ -446,7 +458,7 @@ public final class FeatureConfigs {
     /** The Diana warp keys (SBO's): set them in Options > Controls > Key Binds, under Sky2M. */
     public static final class DianaWarp {
         @ConfigOption(name = "Diana Warp", desc = "You must configure the warp keys from vanilla Minecraft settings, under (ESC) -> Options -> Controls -> Key Binds... scroll till you find Sky2M and configure it from there.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorInfoText
+        @ConfigEditorInfoText
         public boolean info = false;
 
         @Expose @ConfigOption(name = "Warp: Castle", desc = "Let the warp keys use /warp castle.") @ConfigEditorBoolean public boolean castle = true;
@@ -678,7 +690,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Catacombs Calculator", desc = "/s2 catacalc: how many runs until a Catacombs level.")
         public CataCalculator cataCalculator = new CataCalculator();
 
-        @ConfigOption(name = "Floors 4-6", desc = "Spirit Bear, Livid and Terracotta features.")
+        @ConfigOption(name = "Floors 1-6", desc = "Bonzo, Spirit Bear, Livid and Terracotta features.")
         @ConfigEditorAccordion(id = 1301)
         public boolean floors46Group = false;
         @Expose
@@ -689,7 +701,7 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Livid Finder (F5/M5)", desc = "Once the wool above the arena shows which Livid is real, boxes and labels her, with a line from your crosshair (not while you're blind), and can hide the fake ones.")
+        @ConfigOption(name = "Livid Finder (F5/M5)", desc = "Once the wool above the arena shows which Livid is real, boxes and labels her, with a line from your crosshair (straight away, even while you're blind), and can hide the fake ones.")
         @ConfigAccordionId(id = 1301)
         public LividFinder lividFinder = new LividFinder();
 
@@ -700,10 +712,22 @@ public final class FeatureConfigs {
         public boolean lividTimer = true;
 
         @Expose
-        @ConfigOption(name = "Terracotta Timer (F6/M6)", desc = "In the Sadan fight, seconds until each terracotta respawns (15 on F6, 12 on M6), over its flower pot.")
+        @ConfigOption(name = "Bonzo Tick Timer (F1/M1)", desc = "A HUD with the server ticks until Bonzo can be damaged: from his opening line to his first phase, and from \"Oh I'm dead!\" to his second life. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1301)
+        public boolean bonzoTimer = true;
+
+        @Expose
+        @ConfigOption(name = "Terracotta Timer (F6/M6)", desc = "In the Sadan fight, seconds until each terracotta respawns (10, as the wiki has it), over its flower pot.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1301)
         public boolean terracottaTimer = true;
+
+        @Expose
+        @ConfigOption(name = "Sadan Interest Timer (F6/M6)", desc = "In the Sadan fight, a HUD with the time left on his Interest Meter, two minutes less a second for each Terracotta killed, until the Giants wake. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1301)
+        public boolean sadanInterest = true;
 
         @Expose
         @Accordion
@@ -714,6 +738,31 @@ public final class FeatureConfigs {
         @Accordion
         @ConfigOption(name = "Auto Requeue", desc = "Start the next run of the same floor by itself when a run ends.")
         public AutoRequeue autoRequeue = new AutoRequeue();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Team Secrets", desc = "How many secrets each teammate found in the run, in chat when it ends.")
+        public TeamSecrets teamSecrets = new TeamSecrets();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Puzzle HUD", desc = "The run's puzzles, remaining, done or failed, and who did each.")
+        public PuzzleHud.Config puzzleHud = new PuzzleHud.Config();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Architect's Draft Alert", desc = "When a puzzle fails, tell you and optionally the party to get an Architect's First Draft.")
+        public ArchitectDraftAlert.Config architectDraft = new ArchitectDraftAlert.Config();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Dungeon Breaker Charges", desc = "The charges left on your Dungeon Breaker, in a HUD.")
+        public BreakerHud.Config breakerHud = new BreakerHud.Config();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Boss Bar Health", desc = "The boss's health as a number on its boss bar.")
+        public BossBarHealth.Config bossBarHealth = new BossBarHealth.Config();
 
         @Expose
         @Accordion
@@ -774,11 +823,11 @@ public final class FeatureConfigs {
 
         @Expose
         @Category(name = "Dungeon Extras", desc = "Waypoints, clutter, Croesus and more.")
-        public com.epic60869.sky2m.features.dungeons.extras.DungeonExtras.Config dungeonExtras = new com.epic60869.sky2m.features.dungeons.extras.DungeonExtras.Config();
+        public DungeonExtras.Config dungeonExtras = new DungeonExtras.Config();
 
         @Expose
         @Category(name = "Run Recap", desc = "Death recap, cooldowns and run summary.")
-        public com.epic60869.sky2m.features.dungeons.DungeonRecapExtras.Config recapExtras = new com.epic60869.sky2m.features.dungeons.DungeonRecapExtras.Config();
+        public DungeonRecapExtras.Config recapExtras = new DungeonRecapExtras.Config();
     }
 
     /** Odin's Blessing Display: which blessings to list, and their colours. */
@@ -823,6 +872,18 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2001)
         public boolean valueTooltip = true;
+
+        @Expose
+        @ConfigOption(name = "Reroll Advisor", desc = "On the Reroll Chest's tooltip, this chest's profit against your own average for that floor and chest type, less a Kismet Feather. It's your Chest Spending History's average of the chests you opened, not real odds, and needs 5 chests saved.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2001)
+        public boolean rerollAdvisor = true;
+
+        @Expose
+        @ConfigOption(name = "Chest Luck", desc = "Under Dungeon Chest Value, what this chest is worth against your own average, like \"+24% vs your M6 Bedrock average\", from your Chest Spending History. Needs 3 chests saved.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2001)
+        public boolean chestLuck = true;
 
         @Expose
         @ConfigOption(name = "Floor Label", desc = "Show each run's floor (F7, M7) on it in Croesus's list.")
@@ -871,6 +932,12 @@ public final class FeatureConfigs {
         public float profitHighThreshold = 5_000_000;
 
         @Expose
+        @ConfigOption(name = "Reroll Protection", desc = "Stop you rerolling a reward chest whose profit is at least this. Hold Ctrl to reroll anyway. 0 turns it off.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 100_000_000, minStep = 250_000)
+        @ConfigAccordionId(id = 2002)
+        public float rerollProtection = 5_000_000;
+
+        @Expose
         @ConfigOption(name = "Unopened Color", desc = "Croesus runs with no chests opened yet.")
         @ConfigEditorColour
         @ConfigAccordionId(id = 2002)
@@ -907,7 +974,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Reset History", desc = "Delete the chest spending history of the current profile.")
         @ConfigEditorButton(buttonText = "Reset")
         @ConfigAccordionId(id = 2003)
-        public Runnable resetHistory = com.epic60869.sky2m.features.dungeons.ChestHistory::reset;
+        public Runnable resetHistory = ChestHistory::reset;
     }
 
     public static final class Floor7 {
@@ -1005,10 +1072,16 @@ public final class FeatureConfigs {
         public String gateColour = "0:255:255:85:255";
 
         @Expose
-        @ConfigOption(name = "Terminal Boxes", desc = "Box the hitbox of each inactive terminal in your P3 section, using the terminal's real hitbox.")
+        @ConfigOption(name = "Terminal Boxes", desc = "Box each inactive terminal in your P3 section.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 3012)
-        public boolean terminalBoxes = false;
+        public boolean terminalBoxes = true;
+
+        @Expose
+        @ConfigOption(name = "Terminal Waypoints", desc = "A beacon beam and an \"Inactive Terminal\" label on each inactive terminal in your P3 section, through walls.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 3012)
+        public boolean terminalWaypoints = true;
 
         @Expose
         @ConfigOption(name = "Terminal Box Colour", desc = "")
@@ -1163,15 +1236,8 @@ public final class FeatureConfigs {
         ANVIL("Anvil"), BELL("Bell"), PLING("Pling"), LEVEL_UP("Level Up"), WITHER("Wither Spawn"), DRAGON("Dragon Growl");
 
         private final String label;
-
-        BossSpawnSound(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        BossSpawnSound(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     /** Voidgloom Seraph helpers, ported from SkyHanni's Enderman slayer features. */
@@ -1346,42 +1412,42 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Attack", desc = "Breaks crops (left click by default).")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int attack = -1;
 
         @Expose
         @ConfigOption(name = "Use", desc = "Uses the tool (right click by default).")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int use = -1;
 
         @Expose
         @ConfigOption(name = "Forward", desc = "Walk forward.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int forward = -1;
 
         @Expose
         @ConfigOption(name = "Left", desc = "Strafe left.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int left = -1;
 
         @Expose
         @ConfigOption(name = "Back", desc = "Walk back.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int back = -1;
 
         @Expose
         @ConfigOption(name = "Right", desc = "Strafe right.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int right = -1;
 
         @Expose
         @ConfigOption(name = "Jump", desc = "Jump.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int jump = -1;
 
         @Expose
         @ConfigOption(name = "Sneak", desc = "Sneak.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int sneak = -1;
     }
 
@@ -1565,7 +1631,7 @@ public final class FeatureConfigs {
     public static final class PestFinder {
         @Expose
         @ConfigOption(name = "Teleport Hotkey", desc = "Press this key to warp to the nearest plot with pests on it.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int teleportHotkey = -1;
 
         @Expose
@@ -1694,7 +1760,7 @@ public final class FeatureConfigs {
 
         @Expose
         @Category(name = "Rare Sea Creatures", desc = "Rare sea creature alerts and health.")
-        public com.epic60869.sky2m.features.fishing.RareSc.Config rareSc = new com.epic60869.sky2m.features.fishing.RareSc.Config();
+        public RareSc.Config rareSc = new RareSc.Config();
 
         @Expose
         @Category(name = "Catch Messages", desc = "Shorter sea creature catch messages.")
@@ -1710,23 +1776,23 @@ public final class FeatureConfigs {
 
         @Expose
         @Category(name = "Hook & Bobber", desc = "Bobber timer and hook countdown.")
-        public com.epic60869.sky2m.features.fishing.FishingHookTimer.Config hookTimer = new com.epic60869.sky2m.features.fishing.FishingHookTimer.Config();
+        public FishingHookTimer.Config hookTimer = new FishingHookTimer.Config();
 
         @Expose
         @Category(name = "Fishing Extras", desc = "Cast, armor and hotspot helpers.")
-        public com.epic60869.sky2m.features.fishing.FishingExtras.Config extras = new com.epic60869.sky2m.features.fishing.FishingExtras.Config();
+        public FishingExtras.Config extras = new FishingExtras.Config();
 
         @Expose
         @Category(name = "Trackers & Timers", desc = "Totems, trackers and fishing timers.")
-        public com.epic60869.sky2m.features.fishing.FishingMore.Config more = new com.epic60869.sky2m.features.fishing.FishingMore.Config();
+        public FishingMore.Config more = new FishingMore.Config();
 
         @Expose
         @Category(name = "Visuals", desc = "Lava as water and bobber visuals.")
-        public com.epic60869.sky2m.features.fishing.FishingVisuals.Config visuals = new com.epic60869.sky2m.features.fishing.FishingVisuals.Config();
+        public FishingVisuals.Config visuals = new FishingVisuals.Config();
 
         @Expose
         @Category(name = "Trophy Fish", desc = "Trophy fish counts by tier.")
-        public com.epic60869.sky2m.features.fishing.TrophyFishTracker.Config trophyFish = new com.epic60869.sky2m.features.fishing.TrophyFishTracker.Config();
+        public TrophyFishTracker.Config trophyFish = new TrophyFishTracker.Config();
     }
 
     public static final class FishingSeaCreatures {
@@ -1884,7 +1950,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Send Test Message", desc = "Shows a sample catch message and a sample double hook with your settings.")
         @ConfigEditorButton(buttonText = "SEND")
-        public Runnable test = () -> com.epic60869.sky2m.features.fishing.FishingFeatures.sendTestCatchMessages();
+        public Runnable test = () -> FishingFeatures.sendTestCatchMessages();
     }
 
     public static final class FishingAlerts {
@@ -2375,7 +2441,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Text", desc = "Choose what skills you want to see in the display.")
         @ConfigEditorDraggableList
-        public List<com.epic60869.sky2m.features.skills.SkillType> skillEntryList = new ArrayList<>(List.of(com.epic60869.sky2m.features.skills.SkillType.COMBAT, com.epic60869.sky2m.features.skills.SkillType.FARMING, com.epic60869.sky2m.features.skills.SkillType.FISHING, com.epic60869.sky2m.features.skills.SkillType.MINING, com.epic60869.sky2m.features.skills.SkillType.FORAGING, com.epic60869.sky2m.features.skills.SkillType.ENCHANTING, com.epic60869.sky2m.features.skills.SkillType.ALCHEMY, com.epic60869.sky2m.features.skills.SkillType.CARPENTRY, com.epic60869.sky2m.features.skills.SkillType.TAMING));
+        public List<SkillType> skillEntryList = new ArrayList<>(List.of(SkillType.COMBAT, SkillType.FARMING, SkillType.FISHING, SkillType.MINING, SkillType.FORAGING, SkillType.ENCHANTING, SkillType.ALCHEMY, SkillType.CARPENTRY, SkillType.TAMING));
     }
 
     public static final class SkillEtaDisplay {
@@ -2446,7 +2512,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Foraging Extras", desc = "Foraging Tracker, Tree Progress, Clean Tree View, tutorial quest helper, Birries and Hideonleaf highlights, Mute Phantoms, coupon profit and the Honeyhive reminder.")
         @Accordion
-        public com.epic60869.sky2m.features.foraging.ForagingExtras.Config extras = new com.epic60869.sky2m.features.foraging.ForagingExtras.Config();
+        public ForagingExtras.Config extras = new ForagingExtras.Config();
     }
 
     public static final class Enchanting {
@@ -2610,28 +2676,28 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         public boolean loadoutEnabled = false;
 
-        @Expose @ConfigOption(name = "Wardrobe Slot 1 Key", desc = "Select slot 1 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_1) public int slot1Key = InputConstants.KEY_1;
-        @Expose @ConfigOption(name = "Wardrobe Slot 2 Key", desc = "Select slot 2 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_2) public int slot2Key = InputConstants.KEY_2;
-        @Expose @ConfigOption(name = "Wardrobe Slot 3 Key", desc = "Select slot 3 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_3) public int slot3Key = InputConstants.KEY_3;
-        @Expose @ConfigOption(name = "Wardrobe Slot 4 Key", desc = "Select slot 4 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_4) public int slot4Key = InputConstants.KEY_4;
-        @Expose @ConfigOption(name = "Wardrobe Slot 5 Key", desc = "Select slot 5 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_5) public int slot5Key = InputConstants.KEY_5;
-        @Expose @ConfigOption(name = "Wardrobe Slot 6 Key", desc = "Select slot 6 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_6) public int slot6Key = InputConstants.KEY_6;
-        @Expose @ConfigOption(name = "Wardrobe Slot 7 Key", desc = "Select slot 7 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_7) public int slot7Key = InputConstants.KEY_7;
-        @Expose @ConfigOption(name = "Wardrobe Slot 8 Key", desc = "Select slot 8 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_8) public int slot8Key = InputConstants.KEY_8;
-        @Expose @ConfigOption(name = "Wardrobe Slot 9 Key", desc = "Select slot 9 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_9) public int slot9Key = InputConstants.KEY_9;
+        @Expose @ConfigOption(name = "Wardrobe Slot 1 Key", desc = "Select slot 1 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1) public int slot1Key = com.mojang.blaze3d.platform.InputConstants.KEY_1;
+        @Expose @ConfigOption(name = "Wardrobe Slot 2 Key", desc = "Select slot 2 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2) public int slot2Key = com.mojang.blaze3d.platform.InputConstants.KEY_2;
+        @Expose @ConfigOption(name = "Wardrobe Slot 3 Key", desc = "Select slot 3 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3) public int slot3Key = com.mojang.blaze3d.platform.InputConstants.KEY_3;
+        @Expose @ConfigOption(name = "Wardrobe Slot 4 Key", desc = "Select slot 4 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4) public int slot4Key = com.mojang.blaze3d.platform.InputConstants.KEY_4;
+        @Expose @ConfigOption(name = "Wardrobe Slot 5 Key", desc = "Select slot 5 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_5) public int slot5Key = com.mojang.blaze3d.platform.InputConstants.KEY_5;
+        @Expose @ConfigOption(name = "Wardrobe Slot 6 Key", desc = "Select slot 6 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_6) public int slot6Key = com.mojang.blaze3d.platform.InputConstants.KEY_6;
+        @Expose @ConfigOption(name = "Wardrobe Slot 7 Key", desc = "Select slot 7 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_7) public int slot7Key = com.mojang.blaze3d.platform.InputConstants.KEY_7;
+        @Expose @ConfigOption(name = "Wardrobe Slot 8 Key", desc = "Select slot 8 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_8) public int slot8Key = com.mojang.blaze3d.platform.InputConstants.KEY_8;
+        @Expose @ConfigOption(name = "Wardrobe Slot 9 Key", desc = "Select slot 9 on the current Wardrobe page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_9) public int slot9Key = com.mojang.blaze3d.platform.InputConstants.KEY_9;
 
-        @Expose @ConfigOption(name = "Loadout Slot 1 Key", desc = "Select loadout 1 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_1) public int loadoutSlot1Key = InputConstants.KEY_1;
-        @Expose @ConfigOption(name = "Loadout Slot 2 Key", desc = "Select loadout 2 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_2) public int loadoutSlot2Key = InputConstants.KEY_2;
-        @Expose @ConfigOption(name = "Loadout Slot 3 Key", desc = "Select loadout 3 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_3) public int loadoutSlot3Key = InputConstants.KEY_3;
-        @Expose @ConfigOption(name = "Loadout Slot 4 Key", desc = "Select loadout 4 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_4) public int loadoutSlot4Key = InputConstants.KEY_4;
-        @Expose @ConfigOption(name = "Loadout Slot 5 Key", desc = "Select loadout 5 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_5) public int loadoutSlot5Key = InputConstants.KEY_5;
-        @Expose @ConfigOption(name = "Loadout Slot 6 Key", desc = "Select loadout 6 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_6) public int loadoutSlot6Key = InputConstants.KEY_6;
-        @Expose @ConfigOption(name = "Loadout Slot 7 Key", desc = "Select loadout 7 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_7) public int loadoutSlot7Key = InputConstants.KEY_7;
-        @Expose @ConfigOption(name = "Loadout Slot 8 Key", desc = "Select loadout 8 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_8) public int loadoutSlot8Key = InputConstants.KEY_8;
-        @Expose @ConfigOption(name = "Loadout Slot 9 Key", desc = "Select loadout 9 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_9) public int loadoutSlot9Key = InputConstants.KEY_9;
-        @Expose @ConfigOption(name = "Loadout Slot 10 Key", desc = "Select loadout 10 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_0) public int loadoutSlot10Key = InputConstants.KEY_0;
-        @Expose @ConfigOption(name = "Loadout Slot 11 Key", desc = "Select loadout 11 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_MINUS) public int loadoutSlot11Key = InputConstants.KEY_MINUS;
-        @Expose @ConfigOption(name = "Loadout Slot 12 Key", desc = "Select loadout 12 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_EQUALS) public int loadoutSlot12Key = InputConstants.KEY_EQUALS;
+        @Expose @ConfigOption(name = "Loadout Slot 1 Key", desc = "Select loadout 1 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1) public int loadoutSlot1Key = com.mojang.blaze3d.platform.InputConstants.KEY_1;
+        @Expose @ConfigOption(name = "Loadout Slot 2 Key", desc = "Select loadout 2 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2) public int loadoutSlot2Key = com.mojang.blaze3d.platform.InputConstants.KEY_2;
+        @Expose @ConfigOption(name = "Loadout Slot 3 Key", desc = "Select loadout 3 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3) public int loadoutSlot3Key = com.mojang.blaze3d.platform.InputConstants.KEY_3;
+        @Expose @ConfigOption(name = "Loadout Slot 4 Key", desc = "Select loadout 4 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4) public int loadoutSlot4Key = com.mojang.blaze3d.platform.InputConstants.KEY_4;
+        @Expose @ConfigOption(name = "Loadout Slot 5 Key", desc = "Select loadout 5 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_5) public int loadoutSlot5Key = com.mojang.blaze3d.platform.InputConstants.KEY_5;
+        @Expose @ConfigOption(name = "Loadout Slot 6 Key", desc = "Select loadout 6 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_6) public int loadoutSlot6Key = com.mojang.blaze3d.platform.InputConstants.KEY_6;
+        @Expose @ConfigOption(name = "Loadout Slot 7 Key", desc = "Select loadout 7 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_7) public int loadoutSlot7Key = com.mojang.blaze3d.platform.InputConstants.KEY_7;
+        @Expose @ConfigOption(name = "Loadout Slot 8 Key", desc = "Select loadout 8 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_8) public int loadoutSlot8Key = com.mojang.blaze3d.platform.InputConstants.KEY_8;
+        @Expose @ConfigOption(name = "Loadout Slot 9 Key", desc = "Select loadout 9 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_9) public int loadoutSlot9Key = com.mojang.blaze3d.platform.InputConstants.KEY_9;
+        @Expose @ConfigOption(name = "Loadout Slot 10 Key", desc = "Select loadout 10 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_0) public int loadoutSlot10Key = com.mojang.blaze3d.platform.InputConstants.KEY_0;
+        @Expose @ConfigOption(name = "Loadout Slot 11 Key", desc = "Select loadout 11 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_MINUS) public int loadoutSlot11Key = com.mojang.blaze3d.platform.InputConstants.KEY_MINUS;
+        @Expose @ConfigOption(name = "Loadout Slot 12 Key", desc = "Select loadout 12 on the current page.") @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_EQUALS) public int loadoutSlot12Key = com.mojang.blaze3d.platform.InputConstants.KEY_EQUALS;
     }
 
     public static final class CaseOpening {
@@ -2675,7 +2741,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Map Style", desc = "Which style of dungeon map to draw. Classic: Hypixel's map with room names and player heads. Detailed: small rooms with run info lines below. Minimal: a faint map with no border or info lines. The Dungeon Sim draws the same style.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyle style = com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyle.SKYBLOCKER;
+        public DungeonMapStyle style = DungeonMapStyle.SKYBLOCKER;
 
         @Expose
         @ConfigOption(name = "Fancy Map", desc = "Show player heads and room colours on the map.")
@@ -2686,6 +2752,16 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Room Labels", desc = "Show room names and secret counts on the map.")
         @ConfigEditorBoolean
         public boolean roomLabels = true;
+
+        @Expose
+        @ConfigOption(name = "Blood Rush Path", desc = "A red line on the map along the fewest doors from your room (or the Entrance) to Blood. Only uses the rooms and doors Hypixel's own map shows you, so nothing is revealed early: it appears once Blood (or its door) is on the map. Classic map style only.")
+        @ConfigEditorBoolean
+        public boolean bloodRushPath = false;
+
+        @Expose
+        @ConfigOption(name = "Predict Unopened Rooms", desc = "A faint tint on grey rooms that are probably a puzzle, trap or miniboss: purple for puzzle, orange for trap, yellow for miniboss, side by side when it could be more than one. It's only a guess from what Hypixel's own map shows (one door and no room to be any bigger), so a guessed room can turn out to be a normal one. Works in every map style.")
+        @ConfigEditorBoolean
+        public boolean predictRooms = true;
 
         @Expose
         @ConfigOption(name = "Background", desc = "Draw a blurred background behind the dungeon map.")
@@ -2737,6 +2813,7 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Teleport Maze", desc = "Visited pads in red, the right pad in green (orange while there are several), and a line to the best next pad.") @ConfigEditorBoolean @ConfigAccordionId(id = 1405) public boolean teleportMaze = false;
     }
 
+    /** SkyHanni's LividFinderConfig (LGPL-2.1). */
     public static final class LividFinder {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Help find the correct livid in F5 and in M5.")
@@ -2751,8 +2828,8 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Color Override", desc = "Forces the livid highlight to be a specific color.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.dungeons.DungeonLividFinder.LividColorHighlight colorOverride =
-            com.epic60869.sky2m.features.dungeons.DungeonLividFinder.LividColorHighlight.DEFAULT;
+        public DungeonLividFinder.LividColorHighlight colorOverride =
+            DungeonLividFinder.LividColorHighlight.DEFAULT;
     }
 
     public static final class Secrets {
@@ -2773,10 +2850,22 @@ public final class FeatureConfigs {
         public Waypoint.Type waypointType = Waypoint.Type.OUTLINE;
 
         @Expose
-        @ConfigOption(name = "Show Routes", desc = "Show a secret route for the current room: yours if you recorded one, otherwise a bundled one. Record with /s2 route start and /s2 route stop; share with /s2 export; import a route export with /s2 route import (clipboard) or /s2 route import <file>.")
+        @ConfigOption(name = "Show Routes", desc = "Show a secret route for the current room: yours if you recorded one, otherwise a bundled one. With several, the one that starts closest to you shows (/s2 route switch changes it). Record with /s2 route start and /s2 route stop; change one in game with /s2 route edit; share with /s2 route pack export or /s2 export; import a route export with /s2 route import (clipboard) or /s2 route import <file>.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1501)
         public boolean routes = true;
+
+        @Expose
+        @ConfigOption(name = "Adaptive Routes", desc = "Learns from how you clear rooms. Each clear on your own counts towards the route you followed, and a new secret order is saved as a learned route. The room then shows the route you're usually fastest on, allowing for how far away it starts. Learned routes have your secrets, levers and walked line, but not your pearls, warps or superbooms. Needs Room Personal Bests. /s2 route adaptive shows a room's numbers, /s2 route adaptive reset forgets them.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1501)
+        public boolean adaptiveRoutes = false;
+
+        @Expose
+        @ConfigOption(name = "Pearl Angle Lines", desc = "On a route's pearl steps, draw a line showing the angle the pearl was thrown at, from eye height where it was thrown. It only draws: you do the aiming and the throwing. Routes recorded before this have no angle, so no line.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1501)
+        public boolean pearlLines = true;
 
         @ConfigOption(name = "Secrets Display", desc = "The secrets found HUD.")
         @ConfigEditorAccordion(id = 1502)
@@ -2877,7 +2966,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Play Chime", desc = "Plays the chime with these settings.")
         @ConfigEditorButton(buttonText = "PLAY")
         @ConfigAccordionId(id = 1504)
-        public Runnable playChime = com.epic60869.sky2m.features.dungeons.SecretChime::play;
+        public Runnable playChime = SecretChime::play;
 
         @ConfigOption(name = "Doors & Keys", desc = "Door and key highlights, and announcing keys.")
         @ConfigEditorAccordion(id = 1505)
@@ -2888,6 +2977,12 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1505)
         public boolean doorHighlight = true;
+
+        @Expose
+        @ConfigOption(name = "Fairy Door Highlight", desc = "Highlight the door into the Fairy room in pink, until anyone has been in the room. Walls hide it. It only shows once your dungeon map has revealed the Fairy room.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1505)
+        public boolean fairyDoorHighlight = true;
 
         @Expose
         @ConfigOption(name = "Key Highlight", desc = "Outline dropped Wither and Blood keys, visible through walls.")
@@ -2916,21 +3011,50 @@ public final class FeatureConfigs {
         @ConfigEditorDropdown
         @ConfigAccordionId(id = 1506)
         public RoomClearMode roomClearMode = RoomClearMode.BOTH;
+
+        @Expose
+        @ConfigOption(name = "Room Secret Time", desc = "When the room you're in gets its green checkmark, say in chat (only you see it) how long it took to get all its secrets, from the first secret found while you're in the room, so running through on a blood rush doesn't count. A room with one secret is timed from walking in to that secret.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1506)
+        public boolean roomSecretTime = true;
+
+        @Expose
+        @ConfigOption(name = "Room Personal Bests", desc = "Keep your fastest time for each room, on the same clock as Room Secret Time: first secret to green checkmark, so running through on a blood rush doesn't count and the walk to the first secret isn't in it. A room with one secret is timed from walking in. A beaten best says so on the room's chat line, and hovering the time shows the time per secret. /s2 route best, /s2 route bests, /s2 route best reset. Not for rooms someone had started before you, or the Dungeon Sim.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1506)
+        public boolean roomBests = true;
+
+        @Expose
+        @ConfigOption(name = "Personal Bests Solo Only", desc = "Only count a time as a best when no teammate's head was in the room on the map while you got its secrets.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1506)
+        public boolean roomBestsSoloOnly = true;
+
+        @Expose
+        @ConfigOption(name = "Live Room Splits", desc = "A HUD in the room you're clearing: secrets found, and how far ahead or behind your room best you are at each one. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1506)
+        public boolean roomLiveSplits = true;
+
+        @Expose
+        @ConfigOption(name = "Room Ghost", desc = "In a room you have a best for, draw the path you walked in that best as a thin line. Walls hide it. The path covers the time the best counts, first secret to last, and is saved with the best, so it comes with the next best you set in each room.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1506)
+        public boolean roomGhost = true;
+
+        @Expose
+        @ConfigOption(name = "Missed Secrets Nudge", desc = "A short chat line when you leave a room you got a secret in that still has secrets left, like \"Left Raccoon with 2 secrets\". It can't tell when a teammate has taken the room over, so it's off by default.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1506)
+        public boolean missedSecretsNudge = false;
     }
 
     public enum RoomClearMode {
         BOTH("Both"), GREEN("Secrets"), WHITE("Cleared");
 
         private final String label;
-
-        RoomClearMode(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        RoomClearMode(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class DungeonMobs {
@@ -2961,6 +3085,12 @@ public final class FeatureConfigs {
         @ConfigEditorSlider(minValue = 1f, maxValue = 5f, minStep = 0.5f)
         @ConfigAccordionId(id = 1601)
         public float starredLineWidth = 2f;
+
+        @Expose
+        @ConfigOption(name = "Hide Non-Starred Nametags", desc = "While clearing, don't draw the nametags of dungeon mobs without a star (✯), so the starred ones stand out. The mobs themselves still show; minibosses, blood mobs and bosses keep their nametags.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1601)
+        public boolean hideNonStarredTags = true;
 
         @ConfigOption(name = "Teammates & Bats", desc = "Highlighting your teammates and bats.")
         @ConfigEditorAccordion(id = 1602)
@@ -3005,30 +3135,16 @@ public final class FeatureConfigs {
         ODIN("Overlay"), NOAMM("Centred Panel");
 
         private final String label;
-
-        TerminalStyle(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        TerminalStyle(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum NoammSlotStyle {
         RECT("Rect"), BORDERED("Bordered"), BUTTON("Button");
 
         private final String label;
-
-        NoammSlotStyle(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        NoammSlotStyle(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class Terminals {
@@ -3176,6 +3292,12 @@ public final class FeatureConfigs {
         @ConfigAccordionId(id = 1701)
         public boolean splitEta = true;
 
+        @Expose
+        @ConfigOption(name = "Show Pace vs PB", desc = "Show how far ahead or behind your best run on this floor you are, under the split HUD. Uses your split bests until a run is finished.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1701)
+        public boolean splitPace = true;
+
         @ConfigOption(name = "Tick Timers", desc = "Tick timers, the Storm PY timer and the max debuff alert.")
         @ConfigEditorAccordion(id = 1702)
         public boolean tickTimersGroup = false;
@@ -3271,15 +3393,8 @@ public final class FeatureConfigs {
         BELL("Bell"), NOTE_BELL("Note Bell"), DING("Ding"), ORB("XP Orb"), NONE("None");
 
         private final String label;
-
-        ReleaseSound(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        ReleaseSound(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class Score {
@@ -3299,6 +3414,18 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1801)
         public boolean detailed = false;
+
+        @Expose
+        @ConfigOption(name = "Secrets For S+", desc = "Also show secrets found against how many are enough for 300 score if the rest of the run is perfect. It counts your bonus score and deaths, so it can be below the floor's full secret requirement. Shows once the first secret is found.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1801)
+        public boolean secretsForSPlus = true;
+
+        @Expose
+        @ConfigOption(name = "What's Stopping 300", desc = "Also show what the score is short of 300 by, in score points, like \"To 300: -6 secrets, -2 crypts, -1 death\". Rooms and puzzles still to do count, so it starts long and shrinks. Crypts and mimic are bonus points still to get. Needs Score Display on.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1801)
+        public boolean lossExplainer = true;
 
         @Expose
         @ConfigOption(name = "Force Paul", desc = "Count Paul's +10 bonus score even when the EZPZ perk isn't detected.")
@@ -3372,7 +3499,7 @@ public final class FeatureConfigs {
         public boolean princeMessage = false;
 
         @Expose
-        @ConfigOption(name = "Bat Message", desc = "Say \"Bat dead!\" in party chat on the first bonus score bat of the run (\"A Bat has been slain. +1 Bonus Score\"), unless a teammate already said it.")
+        @ConfigOption(name = "Bat Message", desc = "Say \"Bat dead!\" in party chat for each bat you kill: on Hypixel's \"A Bat has been slain. +1 Bonus Score\", or when a bat dies near you just after you use a Wither blade.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1804)
         public boolean batMessage = false;
@@ -3406,30 +3533,16 @@ public final class FeatureConfigs {
         AUTO("Auto"), ARCHER("Archer"), BERSERK("Berserk"), HEALER("Healer"), MAGE("Mage"), TANK("Tank");
 
         private final String label;
-
-        ClassOverride(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        ClassOverride(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum LeapCorner {
         TOP_LEFT("Top Left"), TOP_RIGHT("Top Right"), BOTTOM_LEFT("Bot Left"), BOTTOM_RIGHT("Bot Right");
 
         private final String label;
-
-        LeapCorner(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        LeapCorner(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     /** Defaults follow Odin's leap menu: class colours and quadrants. */
@@ -3441,28 +3554,38 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Top Left Key", desc = "Leap to the teammate in the top left box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_1)
-        public int keyTopLeft = InputConstants.KEY_1;
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_1)
+        public int keyTopLeft = com.mojang.blaze3d.platform.InputConstants.KEY_1;
 
         @Expose
         @ConfigOption(name = "Top Right Key", desc = "Leap to the teammate in the top right box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_2)
-        public int keyTopRight = InputConstants.KEY_2;
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_2)
+        public int keyTopRight = com.mojang.blaze3d.platform.InputConstants.KEY_2;
 
         @Expose
         @ConfigOption(name = "Bottom Left Key", desc = "Leap to the teammate in the bottom left box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_3)
-        public int keyBottomLeft = InputConstants.KEY_3;
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_3)
+        public int keyBottomLeft = com.mojang.blaze3d.platform.InputConstants.KEY_3;
 
         @Expose
         @ConfigOption(name = "Bottom Right Key", desc = "Leap to the teammate in the bottom right box.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = InputConstants.KEY_4)
-        public int keyBottomRight = InputConstants.KEY_4;
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_4)
+        public int keyBottomRight = com.mojang.blaze3d.platform.InputConstants.KEY_4;
 
         @Expose
         @ConfigOption(name = "Colored Boxes", desc = "Fill each box with the class colour. Off: dark boxes with class-coloured names.")
         @ConfigEditorBoolean
         public boolean coloredBoxes = true;
+
+        @Expose
+        @ConfigOption(name = "Tint Dead Players", desc = "Dead teammates' boxes and faces turn dark red.")
+        @ConfigEditorBoolean
+        public boolean tintDead = true;
+
+        @Expose
+        @ConfigOption(name = "Show Last Door Opener", desc = "Say who opened the last Wither or Blood door, on their box and at the top of the menu, until the boss.")
+        @ConfigEditorBoolean
+        public boolean lastDoor = true;
 
         @Expose
         @ConfigOption(name = "Leap Announce", desc = "Send \"Leaped to <name>!\" to party chat after you leap.")
@@ -3622,15 +3745,8 @@ public final class FeatureConfigs {
         OUTLINE("Outline"), FILLED("Filled"), BOTH("Both");
 
         private final String label;
-
-        BoxStyle(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        BoxStyle(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class PlatformHighlight {
@@ -3676,30 +3792,16 @@ public final class FeatureConfigs {
         OFF("Off"), HEALER("Healer"), TANK("Tank");
 
         private final String label;
-
-        DragonSoloPriority(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        DragonSoloPriority(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum DragonWaypoints {
         OFF("Off"), SIMPLE("Simple"), ADVANCED("Advanced");
 
         private final String label;
-
-        DragonWaypoints(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        DragonWaypoints(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     /** NoFrills' Egg Hits Display. */
@@ -3833,15 +3935,8 @@ public final class FeatureConfigs {
             TEXT("Text"), GIF("GIF");
 
             private final String label;
-
-            Content(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Content(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -3941,15 +4036,8 @@ public final class FeatureConfigs {
             GUI("GUI Pixels"), PIXELS("Screen Pixels");
 
             private final String label;
-
-            SizeMode(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            SizeMode(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum Preset {
@@ -3957,15 +4045,8 @@ public final class FeatureConfigs {
             T_SHAPE("T-Shape"), X("X"), VALORANT("Valorant");
 
             private final String label;
-
-            Preset(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Preset(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -4176,7 +4257,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Open Crosshairs Folder", desc = "Open the folder to put crosshair pictures in.")
         @ConfigEditorButton(buttonText = "OPEN")
         @ConfigAccordionId(id = 3006)
-        public Runnable openFolder = com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair::openFolder;
+        public Runnable openFolder = CustomCrosshair::openFolder;
 
         @ConfigOption(name = "Import & Export", desc = "Presets, and sharing crosshairs as codes.")
         @ConfigEditorAccordion(id = 3007)
@@ -4185,12 +4266,12 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Import From Clipboard", desc = "Copy a crosshair code, then click this. Works with Valorant codes (0;P;c;5;...), CS2 share codes (CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx), Sky2M codes (KXH1-...), and the path or name of a PNG (it's copied into the crosshairs folder and used as an Image crosshair).")
         @ConfigEditorButton(buttonText = "IMPORT")
         @ConfigAccordionId(id = 3007)
-        public Runnable importCode = com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair::importFromClipboard;
+        public Runnable importCode = CustomCrosshair::importFromClipboard;
 
         @ConfigOption(name = "Export To Clipboard", desc = "Copy your crosshair as a code (KXH1-...) to share. Anyone with Sky2M can import it.")
         @ConfigEditorButton(buttonText = "EXPORT")
         @ConfigAccordionId(id = 3007)
-        public Runnable exportCode = com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair::exportToClipboard;
+        public Runnable exportCode = CustomCrosshair::exportToClipboard;
 
         @Expose
         @ConfigOption(name = "Preset", desc = "A ready-made crosshair to start from. Click Apply Preset to use it (your current look is replaced).")
@@ -4201,7 +4282,7 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Apply Preset", desc = "Replace your crosshair's look with the chosen preset.")
         @ConfigEditorButton(buttonText = "APPLY")
         @ConfigAccordionId(id = 3007)
-        public Runnable applyPreset = com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair::applyPreset;
+        public Runnable applyPreset = CustomCrosshair::applyPreset;
     }
 
     /** Inventory HUD, styled after Inventory HUD+. */
@@ -4210,45 +4291,24 @@ public final class FeatureConfigs {
             ALWAYS("Always"), HOLD_KEY("Hold Key"), TOGGLE_KEY("Toggle Key");
 
             private final String label;
-
-            Show(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Show(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum Style {
             DARK("Dark"), VANILLA("Vanilla");
 
             private final String label;
-
-            Style(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Style(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum Background {
             NONE("None"), PANEL("Panel"), SLOTS("Panel + Slots");
 
             private final String label;
-
-            Background(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Background(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -4263,7 +4323,7 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Key", desc = "The key for While Holding the Key and Toggled by the Key.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int key = -1;
 
         @Expose
@@ -4335,9 +4395,59 @@ public final class FeatureConfigs {
         public boolean cancelOnLeave = false;
 
         @Expose
+        @ConfigOption(name = "Leave Title", desc = "When a party member leaves, is kicked or disconnects, show their name and dungeon class (in the class colour) as a title, like \"Name Tank\".")
+        @ConfigEditorBoolean
+        public boolean leaveTitle = true;
+
+        @Expose
+        @ConfigOption(name = "Leave Class In Chat", desc = "In a dungeon, add the class someone was playing to Hypixel's party leave, kick and disconnect lines, in the class colour: \"[VIP+] Name has left the party. (Tank)\". Works with Auto Requeue off.")
+        @ConfigEditorBoolean
+        public boolean leaveClassInChat = true;
+
+        @Expose
         @ConfigOption(name = "Announce", desc = "Say in chat (only you see it) that it's going to requeue.")
         @ConfigEditorBoolean
         public boolean announce = true;
+    }
+
+    /** /s2 tracker, /s2 hour and /s2 rnglist (from the Sky2M Personal add-on). */
+    public static final class Trackers {
+        @Expose
+        @ConfigOption(name = "Drop Tracker", desc = "/s2 tracker: tabs for Dungeons (the loot of every dungeon chest you open from when this is on, with what the chests cost and your profit), Slayer, Fishing, Diana, Mining, Farming and Foraging (from Sky2M's trackers). Most expensive first, RNG drops only or everything, with a search bar. /s2 tracker reset clears the Dungeons tab (asks in chat). Dungeons needs Chest History on.")
+        @ConfigEditorBoolean
+        public boolean dropTracker = true;
+
+        @Expose
+        @ConfigOption(name = "Dungeon Profit per Hour", desc = "/s2 hour: your dungeon profit per hour on a floor at your run speed, from Chest History and Run History, with and without the RNG meter, and how long a boss collection target takes. /s2 hour 1:20 m1 says it in chat.")
+        @ConfigEditorBoolean
+        public boolean profitHour = true;
+
+        @Expose
+        @ConfigOption(name = "RNG Drop List", desc = "/s2 rnglist: every RNG drop (slayer, Catacombs, Master Mode and more), crossed off by itself when you get one, or ticked by hand. /s2 rnglist test checks it against every drop message.")
+        @ConfigEditorBoolean
+        public boolean rngList = true;
+
+        /** /s2 hour's screen: the floor (index) and boxes when it closed, -1 = empty. Not shown in the settings. */
+        @Expose
+        public double hourFloor = -1, hourRun = -1, hourTarget = -1;
+    }
+
+    /** Odin's and NoammAddons' secrets per teammate at the end of a run. */
+    public static final class TeamSecrets {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "When a dungeon run ends, say in chat (only you see it) how many secrets each teammate found, with their class in its colour. From their total secrets at the start and end of the run (live, the same source as Odin's Secrets Counter); anyone still on 0 is checked again 30 seconds later.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Rooms Done", desc = "Add roughly how many rooms each teammate cleared, like NoammAddons: whoever's on a room when the map shows its checkmark gets it, so \"3-5 rooms\" means 3 alone and 2 more with someone else in the room. Hover it for the rooms.")
+        @ConfigEditorBoolean
+        public boolean roomsDone = true;
+
+        @Expose
+        @ConfigOption(name = "Teammate History", desc = "Keep each player's average secrets, rooms and deaths across your runs, shown by Played Before and /s2 pfhistory <name>. Rooms is the same rough count as Rooms Done. Saved when Team Secrets has the run's numbers, so it needs Enabled on.")
+        @ConfigEditorBoolean
+        public boolean teammateHistory = true;
     }
 
     /** SkyHanni's Item Pickup Log. */
@@ -4346,30 +4456,16 @@ public final class FeatureConfigs {
             TOP("Top"), CENTER("Center"), BOTTOM("Bottom");
 
             private final String label;
-
-            Alignment(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Alignment(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum Part {
             AMOUNT("Amount"), ICON("Icon"), NAME("Item Name");
 
             private final String label;
-
-            Part(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Part(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -4498,43 +4594,28 @@ public final class FeatureConfigs {
         public boolean kickButton = true;
 
         @Expose
-        @ConfigOption(name = "Auto Kick", desc = "While you lead, kick players who don't meet the requirements below (0 turns a requirement off).")
+        @ConfigOption(name = "Auto Kick", desc = "While you lead, kick players who don't meet the requirements (set them with the button below or /s2 autokick).")
         @ConfigEditorBoolean
         public boolean autoKick = false;
 
+        @ConfigOption(name = "Requirements", desc = "The Default requirements and each floor's own (F1-F7, M1-M7): slowest S+ (like 1:25), Catacombs level, secrets and magical power. Also /s2 autokick [floor].")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable requirements = PfRequirements::openFromSettings;
+
+        // The requirements before /s2 autokick: read once to fill in its Default (PfRequirements.load). Not shown.
         @Expose
-        @ConfigOption(name = "Per-Floor Requirements", desc = "Use different requirements for each floor (F1-F7 and M1-M7), set with /s2 pfreq: the ones for the floor you're queued for or playing. Floors without their own fall back to the requirements below.")
-        @ConfigEditorBoolean
         public boolean perFloor = false;
-
         @Expose
-        @ConfigOption(name = "Floor", desc = "The floor whose S+ time is checked.")
-        @ConfigEditorSlider(minValue = 1, maxValue = 7, minStep = 1)
         public int floor = 7;
-
         @Expose
-        @ConfigOption(name = "Master Mode", desc = "Check the Master Mode floor's time instead of the normal one.")
-        @ConfigEditorBoolean
         public boolean masterMode = false;
-
         @Expose
-        @ConfigOption(name = "Slowest S+ (seconds)", desc = "Kick when their fastest S+ on that floor is slower than this, or they have none. 0 = don't check.")
-        @ConfigEditorSlider(minValue = 0, maxValue = 600, minStep = 5)
         public int maxPbSeconds = 0;
-
         @Expose
-        @ConfigOption(name = "Minimum Secrets (thousands)", desc = "0 = don't check.")
-        @ConfigEditorSlider(minValue = 0, maxValue = 200, minStep = 1)
         public int minSecretsK = 0;
-
         @Expose
-        @ConfigOption(name = "Minimum Catacombs Level", desc = "0 = don't check.")
-        @ConfigEditorSlider(minValue = 0, maxValue = 50, minStep = 1)
         public int minCata = 0;
-
         @Expose
-        @ConfigOption(name = "Minimum Magical Power", desc = "0 = don't check. Skipped when their inventory API is off, unless the option below is on.")
-        @ConfigEditorSlider(minValue = 0, maxValue = 2000, minStep = 10)
         public int minMagicalPower = 0;
 
         @Expose
@@ -4563,7 +4644,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Profile API", desc = "Where profiles are loaded from, for the Profile Viewer and Party Finder Stats: a public proxy of Hypixel's API, since Sky2M has no API key. Default: https://api.odtheking.com/hypixel/")
         @ConfigEditorText
-        public String apiUrl = com.epic60869.sky2m.features.profileviewer.ProfileApi.DEFAULT_URL;
+        public String apiUrl = ProfileApi.DEFAULT_URL;
 
         @Expose
         @ConfigOption(name = "Overflow Levels", desc = "Show levels past Hypixel's maximum: skills (the normal levels up to 60, then 7.6M XP for 61 and more for each after), Catacombs and classes past 50 (200M XP each), the garden level past its max (10,000 garden XP each) crop milestones past their max (each needing as many crops as the last) and pets past level 100 or 200 (each taking the XP of the last level). Off: everything stops at Hypixel's max. Skill Average always uses the capped levels.")
@@ -4587,6 +4668,11 @@ public final class FeatureConfigs {
     /** Skysoft's Farming Profit Tracker. */
     /** Profit Trackers, ported from Skysoft (LGPL-3.0): see features/misc/profit/ProfitTracker. */
     public static final class ProfitTrackers {
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Drop Tracker, Profit per Hour & RNG List", desc = "/s2 tracker: your RNG drops by category, most expensive first. /s2 hour: your dungeon profit per hour. /s2 rnglist: every RNG drop, crossed off as you get it.")
+        public Trackers trackers = new Trackers();
+
         @Expose
         @Accordion
         @ConfigOption(name = "Session Tracker", desc = "/s2 session: your Diana, Mining and Farming this game session, with a Total of all three, until you restart the game.")
@@ -4695,7 +4781,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open", desc = "Open the Session Tracker (/s2 session).")
         @ConfigEditorButton(buttonText = "OPEN")
-        public Runnable open = () -> com.epic60869.sky2m.features.misc.profit.SessionTrackerScreen.open(-1);
+        public Runnable open = () -> SessionTrackerScreen.open(-1);
     }
 
     public static final class ProfitTrackerSettings {
@@ -4716,7 +4802,7 @@ public final class FeatureConfigs {
 
         /** Which totals the HUD shows (cycled with its Display Mode line). */
         @Expose
-        public com.epic60869.sky2m.features.misc.profit.ProfitTracker.Period period = com.epic60869.sky2m.features.misc.profit.ProfitTracker.Period.SESSION;
+        public ProfitTracker.Period period = ProfitTracker.Period.SESSION;
 
         public ProfitTrackerSettings() {
             this(ProfitSummaryLine.standardDefaults());
@@ -4793,30 +4879,16 @@ public final class FeatureConfigs {
         INSTANT_SELL("Insta-Sell"), SELL_ORDER("Sell Order"), BUY_ORDER("Buy Order"), NPC_SELL("NPC Sell");
 
         private final String label;
-
-        ProfitPriceSource(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        ProfitPriceSource(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum ProfitQuantityPosition {
         LEFT("Left"), RIGHT("Right");
 
         private final String label;
-
-        ProfitQuantityPosition(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        ProfitQuantityPosition(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum ProfitSummaryLine {
@@ -4826,15 +4898,8 @@ public final class FeatureConfigs {
         PACE("Slayer Pace");
 
         private final String label;
-
-        ProfitSummaryLine(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        ProfitSummaryLine(String label) { this.label = label; }
+        @Override public String toString() { return label; }
 
         static List<ProfitSummaryLine> farmingDefaults() {
             return List.of(COINS, KERNEL_PROFIT, QUEST_COSTS, TOTAL_PROFIT, PROFIT_PER_HOUR, ACTIONS, UPTIME);
@@ -4871,22 +4936,22 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Time Format", desc = "12-hour or 24-hour time, with optional seconds.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.system.ServerInfo.TimeFormat timeFormat = com.epic60869.sky2m.features.misc.system.ServerInfo.TimeFormat.TWENTY_FOUR_HOUR;
+        public ServerInfo.TimeFormat timeFormat = ServerInfo.TimeFormat.TWENTY_FOUR_HOUR;
 
         @Expose
         @ConfigOption(name = "Style", desc = "Simple: one HUD with everything. Split: a separate HUD for each value, each moved on its own.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.system.ServerInfo.Style style = com.epic60869.sky2m.features.misc.system.ServerInfo.Style.SIMPLE;
+        public ServerInfo.Style style = ServerInfo.Style.SIMPLE;
 
         @Expose
         @ConfigOption(name = "Simple Layout", desc = "Arrange the Simple display vertically or horizontally.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.system.ServerInfo.Layout layout = com.epic60869.sky2m.features.misc.system.ServerInfo.Layout.VERTICAL;
+        public ServerInfo.Layout layout = ServerInfo.Layout.VERTICAL;
 
         @Expose
         @ConfigOption(name = "Labels", desc = "Show text labels, symbols, or values only.")
         @ConfigEditorDropdown
-        public com.epic60869.sky2m.features.misc.system.ServerInfo.LabelStyle labelStyle = com.epic60869.sky2m.features.misc.system.ServerInfo.LabelStyle.TEXT;
+        public ServerInfo.LabelStyle labelStyle = ServerInfo.LabelStyle.TEXT;
 
         @Expose
         @ConfigOption(name = "Show Icons", desc = "Draw a small pixel icon before each value: signal bars for ping, arrows for TPS, a clock for the time and a bolt for FPS. With Labels on Symbols, the icons replace the symbols.")
@@ -4909,7 +4974,7 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "!allinvite", desc = "Runs /party settings allinvite.") @ConfigEditorBoolean public boolean allInvite = true;
         @Expose @ConfigOption(name = "!pt / !transfer", desc = "Transfers the party to the player who asked, or the player named after it. The name can be just the start of it: !pt nix transfers to NixJussid.") @ConfigEditorBoolean public boolean transfer = true;
         @Expose @ConfigOption(name = "!promote / !demote", desc = "Promotes or demotes the player who asked, or the player named after it (!promote Name).") @ConfigEditorBoolean public boolean promote = false;
-        @Expose @ConfigOption(name = "!kick", desc = "Kicks the player named after it (!kick Name). The name can be just the start of it: !kick nix kicks NixJussid. Never kicks you.") @ConfigEditorBoolean public boolean kick = true;
+        @Expose @ConfigOption(name = "!kick / !k", desc = "Kicks the player named after it (!kick Name or !k Name), or with no name the player who sent it. The name can be just the start of it: !k nix kicks NixJussid. Never kicks you.") @ConfigEditorBoolean public boolean kick = true;
 
         @Expose @ConfigOption(name = "!f1 - !f7", desc = "Joins that Catacombs floor. Only while you're leader.") @ConfigEditorBoolean public boolean floors = true;
         @Expose @ConfigOption(name = "!m1 - !m7", desc = "Joins that Master Mode floor. Only while you're leader.") @ConfigEditorBoolean public boolean masterFloors = true;
@@ -4919,6 +4984,8 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "!tps", desc = "Says the server's TPS in party chat. Works whoever is leader.") @ConfigEditorBoolean public boolean tps = true;
         @Expose @ConfigOption(name = "!carrot", desc = "A magic 8-ball answer in party chat.") @ConfigEditorBoolean public boolean carrot = false;
         @Expose @ConfigOption(name = "!time", desc = "Says your time in party chat.") @ConfigEditorBoolean public boolean time = false;
+        @Expose @ConfigOption(name = "!dt", desc = "Downtime: stops Auto Requeue after this run (or the one waiting to happen) and says so in party chat. Anyone in the party can ask.") @ConfigEditorBoolean public boolean downtime = true;
+        @Expose @ConfigOption(name = "!missing", desc = "Says in party chat which dungeon classes nobody in the party plays. Players who left or were kicked don't count, so kicking your Healer makes !missing say Healer.") @ConfigEditorBoolean public boolean missing = true;
 
         @Expose
         @ConfigOption(name = "Diana Commands", desc = "Diana party commands, answered from this season's Diana trackers: !chim, !chimls, !inq, !king, !manti, !sphinx, !relic, !stick, !core, !wool, !food, !stinger, !feathers, !mobs, !burrows, !profit, !playtime, !mf, !stats <you>, !help and !since <chim|inq|relic|stick|king|manti|core|wool|food|...>.")
@@ -4944,7 +5011,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open Value Graph", desc = "Your sacks' value over time. Also /s2 sacks history.")
         @ConfigEditorButton(buttonText = "Open")
-        public Runnable openHistory = com.epic60869.sky2m.features.misc.items.SackValueHistory::open;
+        public Runnable openHistory = SackValueHistory::open;
     }
 
     public static final class SackDisplay {
@@ -5004,15 +5071,8 @@ public final class FeatureConfigs {
         CHEAPEST("Cheapest"), MARKET("Market Only");
 
         private final String label;
-
-        MpPriceSource(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        MpPriceSource(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum SackPriceSource {
@@ -5020,45 +5080,24 @@ public final class FeatureConfigs {
         INSTA_BUY("Bazaar Insta-Buy"), LOWEST_BIN("Lowest BIN");
 
         private final String label;
-
-        SackPriceSource(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        SackPriceSource(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum SackSort {
         VALUE("Value"), AMOUNT("Amount"), NAME("Name");
 
         private final String label;
-
-        SackSort(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        SackSort(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum SacksPriceMode {
         INSTANT_SELL("Instant Sell"), SELL_OFFER("Sell Offer"), RANGE("Range");
 
         private final String label;
-
-        SacksPriceMode(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        SacksPriceMode(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class ItemNotification {
@@ -5068,7 +5107,7 @@ public final class FeatureConfigs {
         public boolean enabled = false;
 
         @ConfigOption(name = "Items", desc = "Open the list of items to watch for: one per line, with item name suggestions as you type. Also /s2 itemnotify.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "EDIT")
+        @ConfigEditorButton(buttonText = "EDIT")
         public Runnable editItems = com.epic60869.sky2m.features.misc.items.ItemNotification::openEditor;
 
         /** The items, one per line (edited in the Items window). */
@@ -5112,45 +5151,24 @@ public final class FeatureConfigs {
             RIGHT("Right"), LEFT("Left");
 
             private final String label;
-
-            Side(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Side(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum ClickAction {
             RECIPE("Show Recipes"), USAGE("Show Usages"), WIKI("Open Wiki"), NOTHING("Nothing");
 
             private final String label;
-
-            ClickAction(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            ClickAction(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum HideWhen {
             SEARCH("No Search"), FILTER("No Filter"), NEVER("Never");
 
             private final String label;
-
-            HideWhen(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            HideWhen(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         /** How the list is ordered, like NEU's sort buttons. */
@@ -5158,15 +5176,8 @@ public final class FeatureConfigs {
             DEFAULT("Default"), PRICE("Price"), RARITY("Rarity"), TYPE("Type"), NAME("Name");
 
             private final String label;
-
-            Sort(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Sort(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @Expose
@@ -5266,32 +5277,32 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Hide Key", desc = "Hold Ctrl and press this to hide or show the list and favourites.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_O)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_O)
         public int hideKey = com.mojang.blaze3d.platform.InputConstants.KEY_O;
 
         @Expose
         @ConfigOption(name = "Recipe Key", desc = "Over an item (in the list, a recipe or any menu): show its recipes.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_R)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_R)
         public int recipeKey = com.mojang.blaze3d.platform.InputConstants.KEY_R;
 
         @Expose
         @ConfigOption(name = "Usage Key", desc = "Over an item: show the recipes that use it.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_U)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_U)
         public int usageKey = com.mojang.blaze3d.platform.InputConstants.KEY_U;
 
         @Expose
         @ConfigOption(name = "Back Key", desc = "In a recipe: go back to the one before.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_BACKSPACE)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_BACKSPACE)
         public int backKey = com.mojang.blaze3d.platform.InputConstants.KEY_BACKSPACE;
 
         @Expose
         @ConfigOption(name = "Favourite Key", desc = "Over an item or a recipe: add it to (or remove it from) your favourites.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_F)
+        @ConfigEditorKeybind(defaultKey = com.mojang.blaze3d.platform.InputConstants.KEY_F)
         public int favouriteKey = com.mojang.blaze3d.platform.InputConstants.KEY_F;
 
         @Expose
         @ConfigOption(name = "Search Key", desc = "Jump to the search bar while the list is open.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int searchKey = -1;
 
         /** Remembered between sessions. */
@@ -5370,7 +5381,7 @@ public final class FeatureConfigs {
 
         @Expose
         @ConfigOption(name = "Key", desc = "Starts (or restarts) the countdown.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = -1)
+        @ConfigEditorKeybind(defaultKey = -1)
         public int key = -1;
 
         @Expose
@@ -5587,6 +5598,11 @@ public final class FeatureConfigs {
         public boolean announceBests = true;
 
         @Expose
+        @ConfigOption(name = "Run Review", desc = "After each run, a chat summary of which splits lost or gained time against your best finished run on that floor, and which rooms were slower than your room best. Hover for the times.")
+        @ConfigEditorBoolean
+        public boolean runReview = true;
+
+        @Expose
         @ConfigOption(name = "Runs Kept", desc = "How many runs to keep; the oldest go first.")
         @ConfigEditorSlider(minValue = 50, maxValue = 2000, minStep = 50)
         public int maxRuns = 500;
@@ -5635,75 +5651,40 @@ public final class FeatureConfigs {
             REDSTONE("Redstone"), VOTING("Election"), ACTIVE_TABLIST("Tab List Event"), OTHER("Other Lines §7(anything unknown)");
 
             private final String label;
-
-            Event(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Event(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum Align {
             LEFT("Left"), CENTER("Centre"), RIGHT("Right");
 
             private final String label;
-
-            Align(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Align(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum HorizontalPosition {
             LEFT("Left"), CENTER("Centre"), RIGHT("Right"), FREE("Free");
 
             private final String label;
-
-            HorizontalPosition(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            HorizontalPosition(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum VerticalPosition {
             TOP("Top"), CENTER("Centre"), BOTTOM("Bottom"), FREE("Free");
 
             private final String label;
-
-            VerticalPosition(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            VerticalPosition(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum NumberFormat {
             LONG("1,234,567"), SHORT("1.23M");
 
             private final String label;
-
-            NumberFormat(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            NumberFormat(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         public enum NumberDisplay {
@@ -5711,19 +5692,12 @@ public final class FeatureConfigs {
             NUMBER_TEXT("§6123 §fPurse"), NUMBER_ONLY("§6123");
 
             private final String label;
-
-            NumberDisplay(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            NumberDisplay(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
 
         @ConfigOption(name = "Open Editor", desc = "Set it up in its own screen: drag the lines and events into order, change the title, background and options, and see it change as you go. Also /s2 scoreboard.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "Open")
+        @ConfigEditorButton(buttonText = "Open")
         public Runnable openEditor = com.epic60869.sky2m.features.misc.visual.CustomScoreboard::openEditor;
 
         @Expose
@@ -5944,7 +5918,7 @@ public final class FeatureConfigs {
         public int imageOpacity = 90;
 
         @ConfigOption(name = "Open Picture Folder", desc = "Opens config/sky2m/scoreboard, where pictures for the background go.")
-        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "Open")
+        @ConfigEditorButton(buttonText = "Open")
         public Runnable openFolder = com.epic60869.sky2m.features.misc.visual.CustomScoreboard::openFolder;
     }
 
@@ -6221,12 +6195,17 @@ public final class FeatureConfigs {
 
     /** Dungeon Sim (Killer560's): practise dungeon rooms and whole floors in a singleplayer world of your own. */
     public static final class DungeonSim {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Load the Dungeon Sim. Off: none of it loads (its rooms, commands, menus and everything that runs inside it), so it uses no memory or time. Takes effect after a game restart. The dungeon map, puzzle solvers and other dungeon features on Hypixel work either way.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
         @ConfigOption(name = "Open Dungeon Sim", desc = "Open the Dungeon Sim's menu: load any room or generate a whole floor (F1 to M7 sizes) in a singleplayer world, with secrets, puzzles, mobs, keys, the Mimic, a run timer and score. Also /s2 sim. It needs its own world, so leave the server first; from the title screen use the button below.")
         @ConfigEditorButton(buttonText = "OPEN")
-        public Runnable open = com.epic60869.sky2m.sim.Sky2MSim::openMenu;
+        public Runnable open = Sky2MSim::openMenu;
 
         @Expose
-        @ConfigOption(name = "Title Screen Button", desc = "A \"Dungeon Sim\" button on the title screen, in the top left, that opens the Sim's menu.")
+        @ConfigOption(name = "Title Screen Button", desc = "A \"Dungeon Sim\" button on the title screen, in the top left, that opens the Sim's menu. Hidden while the Dungeon Sim is off (Enabled above).")
         @ConfigEditorBoolean
         public boolean titleButton = false;
 
@@ -6252,6 +6231,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Count Across Runs", desc = "Also keep how many times each player has died in your runs, shown next to them in the HUD. /s2 deaths lists the most deaths.")
         @ConfigEditorBoolean
         public boolean lifetime = false;
+
+        @Expose
+        @ConfigOption(name = "Death Map", desc = "Keep how many times you've died in each room and each boss. /s2 deathmap lists the worst.")
+        @ConfigEditorBoolean
+        public boolean deathMap = true;
     }
 
     public static final class ClassCounters {
@@ -6359,9 +6343,10 @@ public final class FeatureConfigs {
     }
 
     public static final class CataCalculator {
-        @ConfigOption(name = "How To Use", desc = "/s2 catacalc [level] [floor or XP per run]: how many runs of that floor to reach the level (50 and your last floor by default). It reads your Catacombs XP from your profile, and uses the XP your last run of that floor gave you (from the run summary), else the floor's base XP with the bonus below. /s2 catacalc 50 m7, /s2 catacalc 45 f7, /s2 catacalc 50 350000.")
-        @ConfigEditorButton(buttonText = "50")
-        public Runnable run = () -> com.epic60869.sky2m.features.dungeons.CataCalculator.calculate(50, "");
+        @ConfigOption(name = "How To Use", desc = "/s2 catacalc opens the calculator: pick a floor and type a target level, XP per run and run time to see the runs and time to it, and to each level on the way. It reads your Catacombs XP from your profile, and uses the XP your last run of that floor gave you (from the run summary), else the floor's base XP with the bonus below. /s2 catacalc [level] [floor or XP per run] still answers in chat: /s2 catacalc 50 m7, /s2 catacalc 50 350000.")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable run = () -> Compat.queueOpenScreen(
+            new CataCalcScreen(net.minecraft.client.Minecraft.getInstance().gui.screen()));
 
         @Expose
         @ConfigOption(name = "XP Bonus", desc = "Your Catacombs XP bonus in percent (Catacombs Expert Ring, Hecatomb, mayors...), used when a floor's XP isn't known from your own runs yet.")
@@ -6402,6 +6387,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Bosses Left", desc = "Show how many bosses are left: the XP still needed over the XP one boss added last time (or the tier's slayer XP before that).")
         @ConfigEditorBoolean
         public boolean bossesLeft = false;
+
+        @Expose
+        @ConfigOption(name = "Cost Forecast", desc = "Instead of Bosses Left, show the bosses, coins and time to the drop: the coins are what you last paid for that slayer's quest (or the wiki's price for your last boss's tier), the time is from this session's bosses per hour. The coins are the quest fees only.")
+        @ConfigEditorBoolean
+        public boolean costForecast = true;
 
         @Expose
         @ConfigOption(name = "Warn Without a Drop", desc = "After a boss, say in chat when that slayer has no RNG Meter drop selected.")
@@ -6483,6 +6473,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Show Election", desc = "While an election is open, who's leading and each candidate's share of the votes, in the HUD.")
         @ConfigEditorBoolean
         public boolean election = false;
+
+        @Expose
+        @ConfigOption(name = "Minister In Calendar", desc = "In Hypixel's Calendar menu, show the minister next to the mayor. Hover it for their perk.")
+        @ConfigEditorBoolean
+        public boolean calendarMinister = true;
 
         @ConfigOption(name = "Show In Chat", desc = "Everything (mayor, minister, perks, the election and the candidates' perks) in chat. Also /s2 mayor.")
         @ConfigEditorButton(buttonText = "Show")
@@ -6685,15 +6680,8 @@ public final class FeatureConfigs {
         H24("13:45"), H24_SECONDS("13:45:12"), H12("1:45 PM"), H12_SECONDS("1:45:12 PM");
 
         private final String label;
-
-        TimestampFormat(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        TimestampFormat(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class ChatTabs {
@@ -6852,15 +6840,8 @@ public final class FeatureConfigs {
             ONE_COIN("1 coin"), ONE_PERCENT("1%"), FIVE_PERCENT("5%");
 
             private final String label;
-
-            Undercut(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
+            Undercut(String label) { this.label = label; }
+            @Override public String toString() { return label; }
         }
     }
 
@@ -6926,7 +6907,7 @@ public final class FeatureConfigs {
 
         @ConfigOption(name = "Open", desc = "Your achievements and stats, with a tab for each activity. Also /s2 achievements.")
         @ConfigEditorButton(buttonText = "Open")
-        public Runnable open = com.epic60869.sky2m.features.misc.social.Sky2MAchievements::open;
+        public Runnable open = Sky2MAchievements::open;
     }
     /** Odin's Waypoints settings (BSD-3-Clause). */
     public static final class AreaWaypoints {

@@ -200,7 +200,7 @@ public final class SbcChat {
         JsonObject reply = Sbc.obj(packet, "replyTo");
         if (reply.size() == 0 || !config.replies || !Flags.isEnabled("chat.replies")) return line;
         String replyName = Sbc.str(reply, "username");
-        String replyText = Sbc.str(reply, "message");
+        String replyText = com.epic60869.sky2m.features.misc.chat.ChatColourCodes.strip(Sbc.str(reply, "message"));
         if (replyText.length() > 80) replyText = replyText.substring(0, 80) + "...";
         MutableComponent header = Component.literal("  ↪ " + replyName + ": ").withStyle(ChatFormatting.DARK_GRAY)
             .append(Component.literal(replyText).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));

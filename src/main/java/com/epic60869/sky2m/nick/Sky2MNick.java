@@ -573,6 +573,18 @@ public final class Sky2MNick {
     }
 
     /**
+     * Chroma that follows the screen instead of the text: letters in this colour take the hue of where they're drawn,
+     * so every chroma line in a tooltip shares one smooth diagonal rainbow (like SkyBlockAddons/SkyHanni chroma text).
+     */
+    public static final int CHROMA_SCREEN_MARK = 0x0B0C00;
+
+    /** The screen-space Chroma colour right now at ({@code x}, {@code y}); softer than {@link #chroma} so it stays readable. */
+    public static int screenChroma(float x, float y) {
+        float phase = (System.currentTimeMillis() % 4000) / 4000f;
+        return Color.HSBtoRGB((x + y) / 200f - phase, 0.65f, 1.0f) & 0xFFFFFF;
+    }
+
+    /**
      * The nickname in its colour, gradient, rainbow or chroma, and font. Gradient fades each letter from
      * {@code customHex} to {@code gradientHex}; Chroma is a rainbow that moves (see {@link #CHROMA_MARK}).
      */

@@ -4,6 +4,8 @@ import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
+import com.epic60869.sky2m.features.tracker.DungeonDropTracker;
+import com.epic60869.sky2m.features.tracker.TrackerDrops;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -42,6 +44,9 @@ import java.util.Map;
 public final class SessionTracker {
     /** Every built-in profit preset, including trackers whose HUD is disabled. */
     static final ProfitTracker.Preset[] ACTIVITIES = ProfitTracker.Preset.values();
+    /** What dungeon chests are called alongside the presets, and their colour. */
+    static final String DUNGEONS = "Dungeons";
+    static final ChatFormatting DUNGEON_COLOUR = ChatFormatting.LIGHT_PURPLE;
 
     static final class Session {
         /** Epoch day this daily section belongs to (local timezone). */
@@ -65,7 +70,7 @@ public final class SessionTracker {
 
         boolean hasAny() {
             for (ProfitTracker.Preset preset : ACTIVITIES) if (has(preset)) return true;
-            return false;
+            return hasDungeons();
         }
 
         long firstActive(ProfitTracker.Preset preset) {
@@ -76,13 +81,40 @@ public final class SessionTracker {
         long firstActiveAny() {
             long first = Long.MAX_VALUE;
             for (ProfitTracker.Preset preset : ACTIVITIES) if (has(preset) && firstActive(preset) > 0) first = Math.min(first, firstActive(preset));
+            if (hasDungeons()) first = Math.min(first, firstChest());
             return first == Long.MAX_VALUE ? started : first;
         }
 
         long playtime() {
-            long total = 0;
+            long total = dungeonMs();
             for (ProfitTracker.Preset preset : ACTIVITIES) if (get(preset) != null) total += get(preset).activeMs;
             return total;
+        }
+
+        // Dungeons aren't a profit preset: their chests are read from /s2 tracker's save by this record's day, not stored here.
+
+        TrackerDrops.Day dungeons() {
+            return TrackerDrops.dungeonDay(day);
+        }
+
+        int dungeonChests() {
+            return TrackerDrops.chestsOn(day).size();
+        }
+
+        boolean hasDungeons() {
+            return dungeonChests() > 0;
+        }
+
+        /** When the day's first chest was opened, or 0. */
+        long firstChest() {
+            long first = Long.MAX_VALUE;
+            for (DungeonDropTracker.Cost c : TrackerDrops.chestsOn(day)) first = Math.min(first, c.time);
+            return first == Long.MAX_VALUE ? 0 : first;
+        }
+
+        /** Time in the runs that ended this day, from Run History. */
+        long dungeonMs() {
+            return TrackerDrops.runTimeOn(day);
         }
     }
 
@@ -202,6 +234,11 @@ public final class SessionTracker {
                 items.merge(e.getKey(), e.getValue(), Long::sum);
             }
         }
+        TrackerDrops.Day chests = s.dungeons();
+        for (DungeonDropTracker.Drop d : chests.drops()) {
+            drops += d.count;
+            if (!d.id.isEmpty()) items.merge(d.id, (long) d.count, Long::sum);
+        }
         long playtime = s.playtime();
         double profit = profit(s);
         MutableComponent text = Component.literal("[S2M] ").withStyle(ChatFormatting.LIGHT_PURPLE)
@@ -235,6 +272,11 @@ public final class SessionTracker {
             text.append(Component.literal("\n  " + name(preset) + " ").withStyle(colour(preset)))
                 .append(Component.literal(duration(s.get(preset).activeMs) + " · ").withStyle(ChatFormatting.GRAY))
                 .append(signed(profit(preset, s.get(preset), null)));
+        }
+        if (s.hasDungeons()) {
+            text.append(Component.literal("\n  " + DUNGEONS + " ").withStyle(DUNGEON_COLOUR))
+                .append(Component.literal(duration(s.dungeonMs()) + " · ").withStyle(ChatFormatting.GRAY))
+                .append(signed(chests.profit()));
         }
         HoverEvent hover = new HoverEvent.ShowText(Component.literal("Click to open /s2 session").withStyle(ChatFormatting.YELLOW));
         return text.withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand("/s2 session")).withHoverEvent(hover));
@@ -358,7 +400,7 @@ public final class SessionTracker {
     static double profit(Session session) {
         double total = 0;
         for (ProfitTracker.Preset preset : ACTIVITIES) total += profit(preset, session.get(preset), null);
-        return total;
+        return total + session.dungeons().profit();
     }
 
     // ------------------------------------------------------------------------------------------------ chat breakdown
@@ -381,6 +423,11 @@ public final class SessionTracker {
             text.append(Component.literal("\n  " + name(preset) + " ").withStyle(colour(preset)))
                 .append(Component.literal(time(s.firstActive(preset)) + " · " + duration(s.get(preset).activeMs) + " · ").withStyle(ChatFormatting.GRAY))
                 .append(signed(profit(preset, s.get(preset), null)));
+        }
+        if (s.hasDungeons()) {
+            text.append(Component.literal("\n  " + DUNGEONS + " ").withStyle(DUNGEON_COLOUR))
+                .append(Component.literal(time(s.firstChest()) + " · " + duration(s.dungeonMs()) + " · ").withStyle(ChatFormatting.GRAY))
+                .append(signed(s.dungeons().profit()));
         }
         text.append(Component.literal("\n  [Click to view the breakdown]").withStyle(ChatFormatting.YELLOW));
         Component message = text.withStyle(style -> style.withClickEvent(click).withHoverEvent(hover));

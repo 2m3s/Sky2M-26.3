@@ -31,7 +31,8 @@ import com.epic60869.sky2m.features.misc.system.ServerInfo;
  * leader is guessed from party messages, which can be wrong). The answers to !fps, !ping and !tps work (Odin's ChatCommands, https://github.com/odtheking/Odin, BSD-3-Clause)
  * whoever is leader. Leadership is tracked from Hypixel's party messages. SBO's party commands
  * (https://github.com/SkyblockOverhaul/SBO, Apache-2.0) add !demote, !carrot, !time and the Diana ones (!chim, !since,
- * !profit, ...; see {@link com.epic60869.sky2m.features.combat.DianaPartyCommands}).
+ * !profit, ...; see {@link com.epic60869.sky2m.features.combat.DianaPartyCommands}). !dt stops Auto Requeue and
+ * !missing lists the dungeon classes nobody in the party plays.
  */
 public final class PartyCommands {
     // (?:[^\w\s\[]+ )? skips a Hypixel emblem (☘, ☣, ...) before a name: "Party > [MVP++] ☘ Name: !warp".
@@ -82,6 +83,16 @@ public final class PartyCommands {
     private static final List<Consumer<String>> joinListeners = new CopyOnWriteArrayList<>();
     private static final List<Consumer<String>> kickListeners = new CopyOnWriteArrayList<>();
 
+    /** !missing: the names /p list has shown so far (you too), or null when nobody asked. */
+    private static Set<String> listed;
+    private static long missingAsked;
+    private static long lastListLine;
+    /** How long /p list gets to answer, and how long after its last line the list counts as complete. */
+    private static final long LIST_WAIT_MS = 800L;
+    private static final long LIST_SETTLE_MS = 150L;
+    /** How long the API gets for the classes Sky2M doesn't know; anyone slower counts as unknown. */
+    private static final long LOOKUP_MS = 1_200L;
+
     private PartyCommands() {}
 
     public static void init() {
@@ -92,8 +103,9 @@ public final class PartyCommands {
             noteKick(command);
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            Pending next = pending.peek();
             long now = System.currentTimeMillis();
+            if (listed != null && (lastListLine > 0 ? now - lastListLine >= LIST_SETTLE_MS : now - missingAsked >= LIST_WAIT_MS)) finishMissing();
+            Pending next = pending.peek();
             if (next == null || now < next.at() || now < lastSent + SEND_GAP_MS) return;
             pending.poll();
             if (mc.getConnection() != null) mc.getConnection().sendCommand(next.command());
@@ -155,6 +167,11 @@ public final class PartyCommands {
             }
             case "carrot", "c" -> config.carrot ? CARROT.get(ThreadLocalRandom.current().nextInt(CARROT.size())) : null;
             case "time" -> config.time ? LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) : null;
+            case "dt", "downtime" -> config.downtime ? com.epic60869.sky2m.features.dungeons.AutoRequeue.downtime(sender) : null;
+            case "missing" -> {
+                if (config.missing) askMissing();
+                yield null;
+            }
             default -> null;
         };
         if (reply != null) {
@@ -165,7 +182,7 @@ public final class PartyCommands {
         // Your own !warp, !allinvite and !f7 work too (like Odin); transferring or promoting yourself doesn't.
         boolean self = sender.equalsIgnoreCase(me());
         // One !kick in a hundred from someone else, while you lead, kicks them instead.
-        if (command.equals("kick") && config.kick && arg != null && !self && me().equalsIgnoreCase(leader)
+        if ((command.equals("kick") || command.equals("k")) && config.kick && arg != null && !self && me().equalsIgnoreCase(leader)
             && ThreadLocalRandom.current().nextInt(100) == 0) {
             partyChat("The !kick backfired! Bye " + sender + "!");
             run("party kick " + sender);
@@ -180,8 +197,8 @@ public final class PartyCommands {
             case "ptme" -> config.transfer && !self ? "party transfer " + sender : null;
             case "promote" -> config.promote && (arg != null || !self) ? playerCommand("party promote ", arg == null ? sender : arg) : null;
             case "demote" -> config.promote && (arg != null || !self) ? playerCommand("party demote ", arg == null ? sender : arg) : null;
-            // "!kick nix" kicks NixJussid; never you.
-            case "kick" -> config.kick && arg != null ? playerCommand("party kick ", arg) : null;
+            // "!kick nix" / "!k nix" kicks NixJussid; "!kick" / "!k" alone kicks whoever sent it. Never you.
+            case "kick", "k" -> config.kick ? kickCommand(arg, sender) : null;
             default -> instance(config, command);
         };
         if (toRun == null) return;
@@ -209,8 +226,11 @@ public final class PartyCommands {
             // "[MVP+] Nix ● [VIP] Steve ●" or "You'll be partying with: [MVP+] Nix, Steve"
             for (String part : m.group("names").split("●|, ")) {
                 Matcher n = LIST_NAME.matcher(part.trim());
-                if (n.find()) addMember(n.group("name"));
+                if (!n.find()) continue;
+                addMember(n.group("name"));
+                if (listed != null) listed.add(n.group("name"));
             }
+            if (listed != null) lastListLine = System.currentTimeMillis();
         }
     }
 
@@ -258,6 +278,15 @@ public final class PartyCommands {
      * with it ("nix" -> NixJussid). Null when it would kick you or several members match (said in party chat); the
      * name as typed when no member matches (Hypixel then says who it couldn't find).
      */
+    /**
+     * !kick / !k: the player named after it ({@link #playerCommand}), or with no name the one who sent it. Null when
+     * that would kick you (your own "!k" with no name).
+     */
+    public static String kickCommand(String arg, String sender) {
+        if (arg != null) return playerCommand("party kick ", arg);
+        return sender.equalsIgnoreCase(me()) ? null : "party kick " + sender;
+    }
+
     private static String playerCommand(String command, String typed) {
         boolean kick = command.equals("party kick ");
         if (typed.equalsIgnoreCase(me())) return kick ? null : command + me();
@@ -282,6 +311,68 @@ public final class PartyCommands {
         long now = System.currentTimeMillis();
         lastCommand = now;
         Minecraft.getInstance().execute(() -> pending.add(new Pending(waiting.command(), now + REPLY_DELAY_MS)));
+    }
+
+    /**
+     * !missing: sends /p list, so the answer goes by who's in the party now (a kicked player isn't listed, so their
+     * class counts as missing). The list is read by {@link #trackMembers} and answered from {@link #finishMissing}.
+     */
+    private static void askMissing() {
+        if (listed != null) return;
+        listed = new LinkedHashSet<>();
+        missingAsked = System.currentTimeMillis();
+        lastListLine = 0;
+        Minecraft.getInstance().execute(() -> {
+            var connection = Minecraft.getInstance().getConnection();
+            if (connection == null) {
+                listed = null;
+                return;
+            }
+            // A command, not chat: the answer needn't wait Hypixel's chat gap because of it.
+            long before = lastSent;
+            connection.sendCommand("party list");
+            lastSent = before;
+        });
+    }
+
+    /**
+     * Once /p list has answered: each member's class from their Party Finder join or the dungeon tab list (more up to
+     * date), else their selected class from the API, looked up together. Without a list, what Sky2M already knows.
+     */
+    private static void finishMissing() {
+        Set<String> names = listed;
+        listed = null;
+        if (names.isEmpty()) {
+            run("pc " + missingClasses());
+            return;
+        }
+        String mine = com.epic60869.sky2m.features.dungeons.DupeClass.myClass();
+        List<java.util.concurrent.CompletableFuture<String>> classes = new java.util.ArrayList<>();
+        for (String name : names) {
+            boolean self = name.equalsIgnoreCase(me());
+            String known = self ? (mine.isEmpty() ? null : mine) : com.epic60869.sky2m.features.dungeons.DupeClass.classOf(name);
+            classes.add(known != null ? java.util.concurrent.CompletableFuture.completedFuture(known)
+                : com.epic60869.sky2m.features.dungeons.DupeClass.selectedClass(name).exceptionally(e -> null)
+                    .completeOnTimeout(null, LOOKUP_MS, java.util.concurrent.TimeUnit.MILLISECONDS));
+        }
+        java.util.concurrent.CompletableFuture.allOf(classes.toArray(java.util.concurrent.CompletableFuture[]::new)).thenRun(() -> {
+            List<String> found = classes.stream().map(java.util.concurrent.CompletableFuture::join).toList();
+            long unknown = found.stream().filter(java.util.Objects::isNull).count();
+            List<String> missing = com.epic60869.sky2m.features.dungeons.DupeClass.missing("", found.stream().filter(java.util.Objects::nonNull).toList());
+            Minecraft.getInstance().execute(() -> run("pc " + answer(missing, unknown)));
+        });
+    }
+
+    /** !missing without /p list: the classes nobody plays, with how many teammates' classes aren't known yet. */
+    private static String missingClasses() {
+        List<String> missing = com.epic60869.sky2m.features.dungeons.DupeClass.missing();
+        long unknown = members.stream().filter(n -> !com.epic60869.sky2m.features.dungeons.DupeClass.knowsClass(n)).count();
+        return answer(missing, unknown);
+    }
+
+    private static String answer(List<String> missing, long unknown) {
+        String answer = missing.isEmpty() ? "No missing classes!" : "Missing: " + String.join(", ", missing);
+        return unknown > 0 ? answer + " (" + unknown + " player" + (unknown == 1 ? "'s" : "s'") + " class unknown)" : answer;
     }
 
     /** !f1-!f7, !m1-!m7 and !t1-!t5: Hypixel's /joininstance for that floor or tier (Odin's queue commands). */

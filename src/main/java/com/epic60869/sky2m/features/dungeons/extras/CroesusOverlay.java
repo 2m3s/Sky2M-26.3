@@ -57,7 +57,7 @@ public final class CroesusOverlay {
     private static final long MAX_AGE_MS = 3L * 24 * 60 * 60 * 1000;
 
     /** 0 unopened, 1 opened, 2 a key was used (nothing left to open). */
-    private static final int UNOPENED = 0, OPENED = 1, KEY_USED = 2;
+    public static final int UNOPENED = 0, OPENED = 1, KEY_USED = 2;
 
     private static final class Run {
         String floor;
@@ -69,6 +69,11 @@ public final class CroesusOverlay {
     private static List<Run> runs;
     private static String loadedProfile;
     private static int ticks;
+    /** "Unclaimed chests: 24" in the tab list's Info widget: Hypixel's own count. */
+    private static final Pattern TAB_UNCLAIMED = Pattern.compile("^Unclaimed chests: (\\d+)$");
+    /** Hypixel's count from the tab, -1 until seen (on this profile), plus the runs finished since it was read. */
+    private static int tabCount = -1;
+    private static String tabProfile = "";
 
     private CroesusOverlay() {}
 
@@ -101,6 +106,7 @@ public final class CroesusOverlay {
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 5 != 0) return;
+            if (ticks % 40 == 0 && config() != null && Compat.isOnSkyblock()) readTab(mc);
             DungeonExtras.Croesus c = config();
             if (c == null || !Compat.isOnSkyblock() || !(mc.gui.screen() instanceof AbstractContainerScreen<?> screen)) {
                 DungeonChestProfit.setExtras(Map.of(), Set.of());
@@ -166,6 +172,8 @@ public final class CroesusOverlay {
         while (list.size() > MAX_RUNS) list.removeLast();
         removeOld();
         save();
+        // A finished run is one more unclaimed chest than the tab last said, until the tab shows it.
+        if (tabCount >= 0) tabCount = Math.min(MAX_RUNS, tabCount + 1);
         DungeonExtras.Croesus c = config();
         if (c != null && c.limitWarning && lastActive() >= 55) {
             Sky2MAlerts.chat(Component.literal("You are close to the Croesus limit. Please open your chests!").withStyle(ChatFormatting.RED));
@@ -192,6 +200,51 @@ public final class CroesusOverlay {
 
     // ------------------------------------------------------------------------------------------------ reading Croesus
 
+    /** The run last clicked in Croesus's list, whose chests the menu now open shows, and the runs known to be worth a key. */
+    private static int lastClickedRun = -1;
+    private static final Map<Integer, Boolean> KEY_WORTH = new HashMap<>();
+    private static net.minecraft.world.level.Level keyLevel;
+
+    /** Whether a key on a chest with this profit pays off. Public for the game test. */
+    public static boolean worthKey(double chestValue, double keyPrice) {
+        return keyPrice > 0 && chestValue - keyPrice > 0;
+    }
+
+    /** What's known is only good until you change world: new runs move the list along. */
+    private static Map<Integer, Boolean> keyWorth() {
+        var level = Minecraft.getInstance().level;
+        if (level != keyLevel) {
+            keyLevel = level;
+            KEY_WORTH.clear();
+            lastClickedRun = -1;
+        }
+        return KEY_WORTH;
+    }
+
+    private static int page(String title) {
+        Matcher croesus = CROESUS.matcher(title);
+        return !croesus.matches() || croesus.group(1) == null ? 0 : Integer.parseInt(croesus.group(1)) - 1;
+    }
+
+    /** From the container click mixin: remembers which run is being opened. */
+    public static void onSlotClicked(AbstractContainerScreen<?> screen, Slot slot) {
+        if (slot == null || slot.container instanceof Inventory || !slot.hasItem()) return;
+        String title = ChatFormatting.stripFormatting(screen.getTitle().getString()).trim();
+        if (!CROESUS.matcher(title).matches()) return;
+        keyWorth();
+        lastClickedRun = runIndex(slot.index, page(title));
+    }
+
+    /** A run's chest menu is open: what its second best chest would make with a key ({@link DungeonChestProfit}). */
+    public static void noteKeyValue(double secondChestValue, double keyPrice) {
+        Map<Integer, Boolean> worth = keyWorth();
+        if (lastClickedRun >= 0) worth.put(lastClickedRun, worthKey(secondChestValue, keyPrice));
+    }
+
+    private static boolean markedForKey(int run, DungeonExtras.Croesus config) {
+        return config.worthKey && run >= 0 && Boolean.TRUE.equals(keyWorth().get(run));
+    }
+
     private static int runIndex(int slot, int page) {
         int index;
         if (slot >= 10 && slot <= 16) index = slot - 10;
@@ -207,6 +260,7 @@ public final class CroesusOverlay {
         if (slots.size() <= FRONT_ARROW_SLOT) return;
         Map<Integer, String> noLabels = Map.of();
         Set<Integer> checks = new HashSet<>();
+        Set<Integer> keyMarks = new HashSet<>();
         boolean empty = ChatFormatting.stripFormatting(slots.get(EMPTY_SLOT).getItem().getHoverName().getString()).equals("No treasures!");
         if (empty) {
             synchronized (CroesusOverlay.class) {
@@ -248,6 +302,7 @@ public final class CroesusOverlay {
                     changed = true;
                 }
                 if (kismet && config.kismetCheck) checks.add(slot.index);
+                if (state != KEY_USED && markedForKey(index, config)) keyMarks.add(slot.index);
             }
             boolean lastPage = !slots.get(FRONT_ARROW_SLOT).getItem().is(Items.ARROW);
             if (lastPage) {
@@ -260,6 +315,7 @@ public final class CroesusOverlay {
             if (changed) save();
         }
         DungeonChestProfit.setExtras(noLabels, checks);
+        DungeonChestProfit.setKeyMarks(keyMarks);
     }
 
     private static int state(ItemStack stack) {
@@ -272,6 +328,61 @@ public final class CroesusOverlay {
             if (text.equals("No chests opened yet!")) return UNOPENED;
         }
         return -1;
+    }
+
+    // ------------------------------------------------------------------------------------------------ Hide Claimed Runs
+
+    /** The screen the answers below are for, whether it's Croesus's list, and each run's answer (lore is only read once). */
+    private static java.lang.ref.WeakReference<Object> hideScreen = new java.lang.ref.WeakReference<>(null);
+    private static boolean hideScreenIsCroesus;
+    private static int hidePage;
+    private static final Map<ItemStack, Boolean> HIDE_ANSWERS = new java.util.IdentityHashMap<>();
+
+    /**
+     * Whether this slot holds a claimed run to hide (Sky2MCroesusSlotMixin, asked for every slot many times a frame on any
+     * menu, so the setting and the screen are checked first). Like Odin's Croesus Hide Claimed (BSD-3-Clause).
+     */
+    public static boolean hideSlot(Slot slot) {
+        DungeonExtras.Croesus c = config();
+        if (c == null || !c.hideClaimed) return false;
+        Minecraft mc = Minecraft.getInstance();
+        if (!mc.isSameThread() || !(mc.gui.screen() instanceof AbstractContainerScreen<?> screen)) return false;
+        if (hideScreen.get() != screen) {
+            hideScreen = new java.lang.ref.WeakReference<>(screen);
+            String title = ChatFormatting.stripFormatting(screen.getTitle().getString()).trim();
+            hideScreenIsCroesus = CROESUS.matcher(title).matches();
+            hidePage = page(title);
+            HIDE_ANSWERS.clear();
+        }
+        if (!hideScreenIsCroesus || slot.container instanceof Inventory || runIndex(slot.index, 0) < 0) return false;
+        ItemStack stack = slot.getItem();
+        if (stack.isEmpty() || markedForKey(runIndex(slot.index, hidePage), c)) return false;
+        Boolean answer = HIDE_ANSWERS.get(stack);
+        if (answer == null) {
+            if (HIDE_ANSWERS.size() > 256) HIDE_ANSWERS.clear();
+            answer = ChatFormatting.stripFormatting(stack.getHoverName().getString()).endsWith("The Catacombs")
+                && hideRun(state(stack), c.keepKeyRuns, keyStruckThrough(stack));
+            HIDE_ANSWERS.put(stack, answer);
+        }
+        return answer;
+    }
+
+    /** Whether a run in this state is hidden: {@link #OPENED} unless a key could still be used on it, and {@link #KEY_USED}. Public for the game test. */
+    public static boolean hideRun(int state, boolean keepKeyRuns, boolean keyStruckThrough) {
+        if (state == KEY_USED) return true;
+        return state == OPENED && (!keepKeyRuns || keyStruckThrough);
+    }
+
+    /** Hypixel strikes "Dungeon Chest Key" through in a run's lore once one has been used on it (as Odin reads it). */
+    private static boolean keyStruckThrough(ItemStack stack) {
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore == null) return false;
+        for (Component line : lore.lines()) {
+            for (Component part : line.getSiblings()) {
+                if (part.getStyle().isStrikethrough() && part.getString().equals("Dungeon Chest Key")) return true;
+            }
+        }
+        return false;
     }
 
     private static int floorNumber(ItemStack stack) {
@@ -320,11 +431,43 @@ public final class CroesusOverlay {
         return Sky2MLocation.inDungeon() || Sky2MLocation.area().equals("Dungeon Hub") || Sky2MLocation.location().contains("Forgotten Skull");
     }
 
+    /**
+     * Reads Hypixel's "Unclaimed chests: n" from the tab list when it's there. It's right even when the runs list isn't:
+     * chests opened at the end of a run, or with a Dungeon Chest Key, only reach that list when Croesus's menu is opened,
+     * so the overlay could still count a run Hypixel had already marked opened.
+     */
+    private static void readTab(Minecraft mc) {
+        var connection = mc.getConnection();
+        if (connection == null) return;
+        for (var info : connection.getListedOnlinePlayers()) {
+            Component display = info.getTabListDisplayName();
+            if (display == null) continue;
+            int n = unclaimedFromTab(ChatFormatting.stripFormatting(display.getString()));
+            if (n < 0) continue;
+            String profile = Sky2MStorageSearch.currentProfile();
+            tabCount = n;
+            tabProfile = profile == null ? "" : profile;
+            return;
+        }
+    }
+
+    /** The count in a tab line like "Unclaimed chests: 24", or -1. */
+    public static int unclaimedFromTab(String line) {
+        Matcher m = TAB_UNCLAIMED.matcher(line == null ? "" : line.trim());
+        return m.matches() ? Integer.parseInt(m.group(1)) : -1;
+    }
+
+    /** What the overlay shows: Hypixel's count from the tab (on this profile) when it's been seen, else the tracked runs. */
+    public static int shownCount(int tracked, int fromTab, boolean sameProfile) {
+        return fromTab >= 0 && sameProfile ? fromTab : tracked;
+    }
+
     private static List<Component> lines() {
         int n;
         synchronized (CroesusOverlay.class) {
             removeOld();
-            n = unopened();
+            String profile = Sky2MStorageSearch.currentProfile();
+            n = shownCount(unopened(), tabCount, tabProfile.equals(profile == null ? "" : profile));
         }
         ChatFormatting colour = n >= 45 ? ChatFormatting.DARK_RED : n >= 30 ? ChatFormatting.RED : n >= 15 ? ChatFormatting.YELLOW : ChatFormatting.GOLD;
         return List.of(Component.literal("Chests: ").withStyle(ChatFormatting.GRAY)

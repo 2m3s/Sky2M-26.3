@@ -3,8 +3,11 @@
   "package": "com.epic60869.sky2m.sim.roomsim.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "SimDurabilityMixin",
+    "SimFluidMixin",
     "SimFovMixin",
     "SimGameModeInvoker",
+    "SimHypixelPacketMixin",
     "SimPlayerInfoPacketAccessor"
   ],
   "injectors": {

@@ -21,7 +21,9 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,13 +35,23 @@ public final class LeapMenu {
     private static final int BOX_WIDTH = 200;
     private static final int BOX_HEIGHT = 75;
     private static final int GAP = 24;
+    /** The box of a dead teammate: dark red (NoammAddons' Tint Dead Players, CC0-1.0). */
+    private static final int DEAD_TINT = 0xD0401010;
     private static final Pattern LEAPED = Pattern.compile("^You have teleported to (\\w{1,16})!$");
 
     private record Teammate(String name, DungeonClass dungeonClass, boolean alive) {}
 
+    /** Which corner each teammate got this run, and their last class seen while alive. */
+    private static final Map<String, Integer> assignedCorner = new HashMap<>();
+    private static final Map<String, DungeonClass> lastClass = new HashMap<>();
+
     private LeapMenu() {}
 
     public static void init() {
+        com.epic60869.sky2m.sb.events.DungeonEvents.DUNGEON_LOADED.register(() -> {
+            assignedCorner.clear();
+            lastClass.clear();
+        });
         // Keybinds: press a box's key to leap to that teammate.
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof AbstractContainerScreen<?> container)) return;
@@ -88,20 +100,51 @@ public final class LeapMenu {
         List<Teammate> players = new ArrayList<>();
         for (DungeonPlayerManager.DungeonPlayer p : DungeonPlayerManager.getPlayers()) {
             if (p == null || p.name().equals(selfName)) continue;
-            players.add(new Teammate(p.name(), p.dungeonClass(), p.alive()));
+            // A dead player's class reads as UNKNOWN, so keep showing (and sorting by) the last one we saw.
+            if (p.dungeonClass() != DungeonClass.UNKNOWN) lastClass.put(p.name(), p.dungeonClass());
+            players.add(new Teammate(p.name(), lastClass.getOrDefault(p.name(), p.dungeonClass()), p.alive()));
         }
 
-        // Odin's sorting: each class takes its chosen corner, extras fill the free ones.
-        List<Teammate> secondRound = new ArrayList<>();
+        // Corners stick for the whole run, so deaths, revives and tab list reshuffles never move anyone.
+        List<Teammate> unplaced = new ArrayList<>();
         for (Teammate t : players) {
+            Integer corner = assignedCorner.get(t.name());
+            if (corner != null && result[corner] == null) result[corner] = t;
+            else unplaced.add(t);
+        }
+        // Odin's sorting for anyone new: each class takes its chosen corner, extras fill the free ones.
+        List<Teammate> secondRound = new ArrayList<>();
+        for (Teammate t : unplaced) {
             int corner = corner(config, t.dungeonClass()).ordinal();
-            if (result[corner] == null) result[corner] = t;
+            if (result[corner] == null && !takenByAbsent(corner, players)) place(result, corner, t);
             else secondRound.add(t);
         }
         for (int i = 0; i < 4 && !secondRound.isEmpty(); i++) {
-            if (result[i] == null) result[i] = secondRound.removeFirst();
+            if (result[i] == null && !takenByAbsent(i, players)) place(result, i, secondRound.removeFirst());
+        }
+        // Only if there's no room left, take over corners of players who've dropped off the tab list.
+        for (int i = 0; i < 4 && !secondRound.isEmpty(); i++) {
+            if (result[i] == null) place(result, i, secondRound.removeFirst());
         }
         return result;
+    }
+
+    private static void place(Teammate[] result, int corner, Teammate t) {
+        result[corner] = t;
+        // Before the run starts classes aren't known yet, so don't lock a corner in.
+        if (t.dungeonClass() == DungeonClass.UNKNOWN) return;
+        assignedCorner.values().remove(corner);
+        assignedCorner.put(t.name(), corner);
+    }
+
+    /** Whether a corner belongs to a teammate who's briefly missing from the tab list. */
+    private static boolean takenByAbsent(int corner, List<Teammate> players) {
+        for (var e : assignedCorner.entrySet()) {
+            if (e.getValue() != corner) continue;
+            for (Teammate t : players) if (t.name().equals(e.getKey())) return false;
+            return true;
+        }
+        return false;
     }
 
     private static FeatureConfigs.LeapCorner corner(FeatureConfigs.LeapMenu config, DungeonClass dungeonClass) {
@@ -148,6 +191,8 @@ public final class LeapMenu {
         graphics.fill(0, 0, width, height, 0x80000000);
 
         float scale = Math.min(1f, Math.min((halfW - GAP - 4) / (float) BOX_WIDTH, (halfH - GAP - 4) / (float) BOX_HEIGHT));
+        // Doors are done with once at the boss.
+        String lastDoor = config.lastDoor && !com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager.isInBoss() ? KeyAlerts.lastDoorOpener() : null;
         Teammate[] teammates = layout();
         for (int i = 0; i < 4; i++) {
             Teammate t = teammates[i];
@@ -163,22 +208,27 @@ public final class LeapMenu {
             int x = col == 0 ? -BOX_WIDTH : 0;
             int y = row == 0 ? -BOX_HEIGHT : 0;
 
-            int background = config.coloredBoxes ? ARGB.color(200, classColor) : 0xC0262626;
+            boolean tinted = config.tintDead && !t.alive();
+            int background = tinted ? DEAD_TINT : config.coloredBoxes ? ARGB.color(200, classColor) : 0xC0262626;
             graphics.fill(x, y, x + BOX_WIDTH, y + BOX_HEIGHT, background);
             graphics.outline(x, y, BOX_WIDTH, BOX_HEIGHT, hovered ? 0xFFFFFFFF : classColor);
 
             int face = (int) (BOX_HEIGHT * 0.76);
             PlayerInfo info = mc.getConnection() == null ? null : mc.getConnection().getPlayerInfo(t.name());
             if (info != null) PlayerFaceExtractor.extractRenderState(graphics, info.getSkin(), x + 9, y + 9, face);
+            if (tinted && info != null) graphics.fill(x + 9, y + 9, x + 9 + face, y + 9 + face, 0x80500000);
 
-            int textColor = config.coloredBoxes ? 0xFF1A1A1A : classColor;
+            int textColor = tinted ? classColor : config.coloredBoxes ? 0xFF1A1A1A : classColor;
             graphics.pose().pushMatrix();
             graphics.pose().translate(x + 15 + face, y + BOX_HEIGHT / 2.5f);
             graphics.pose().scale(1.5f, 1.5f);
-            graphics.text(mc.font, t.name(), 0, 0, textColor, !config.coloredBoxes);
+            graphics.text(mc.font, t.name(), 0, 0, textColor, tinted || !config.coloredBoxes);
             graphics.pose().popMatrix();
             graphics.text(mc.font, t.alive() ? t.dungeonClass().displayName() : "DEAD",
                 x + 15 + face, y + (int) (BOX_HEIGHT / 1.55), t.alive() ? 0xFFFFFFFF : 0xFFFF5555, true);
+            if (t.name().equals(lastDoor)) {
+                graphics.text(mc.font, "Opened the last door", x + 15 + face, y + (int) (BOX_HEIGHT / 1.55) + 11, 0xFFFFFF55, true);
+            }
             // The key that leaps here, in the corner of the box.
             String key = keyName(i);
             if (!key.isEmpty()) {
@@ -188,6 +238,7 @@ public final class LeapMenu {
             graphics.pose().popMatrix();
         }
         graphics.centeredText(mc.font, Component.literal("Spirit Leap").withStyle(ChatFormatting.GRAY), halfW, 6, 0xFFFFFFFF);
+        if (lastDoor != null) graphics.centeredText(mc.font, Component.literal("Last door: " + lastDoor).withStyle(ChatFormatting.YELLOW), halfW, 17, 0xFFFFFFFF);
     }
 
     /** Which box a key leaps to (0 top left, 1 top right, 2 bottom left, 3 bottom right), or -1. */

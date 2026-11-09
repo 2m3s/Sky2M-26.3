@@ -91,6 +91,21 @@ public final class Sky2MConfig extends Config {
         @Expose
         public boolean overlapNoticeShown = false;
 
+        @Expose
+        @ConfigOption(name = "HUD Layouts Per Area", desc = "Give dungeons, the garden and the mining islands their own HUD positions. /s2 gui edits the layout of the area you're in and says which one; everywhere else is the default layout. A HUD you haven't moved in an area stays where the default layout has it. Off, your default positions are used everywhere and the area layouts are kept for later.")
+        @ConfigEditorBoolean
+        public boolean hudLayoutsPerArea = false;
+
+        @Expose
+        @ConfigOption(name = "Voice Callouts", desc = "Speak Sky2M's on-screen title alerts aloud with your computer's text to speech. Uses the voice volume slider, not the game's Narrator setting, which stays as it is. Chat is never read out. At most one callout every 3 seconds; alerts in between stay silent.")
+        @ConfigEditorBoolean
+        public boolean voiceCallouts = false;
+
+        @Expose
+        @ConfigOption(name = "Voice Callout Words", desc = "Only speak title alerts containing one of these words, separated by commas, like: spawned, key, necron. Leave empty to speak every title alert.")
+        @ConfigEditorText
+        public String voiceCalloutWords = "";
+
         @ConfigOption(name = "Export Settings Code", desc = "Copy all your Sky2M settings to the clipboard as one code to share (/s2 config export). Versions and other personal values are left out.")
         @ConfigEditorButton(buttonText = "COPY")
         public Runnable exportSettingsCode = () -> Sky2MConfigCode.exportToClipboard();
@@ -228,6 +243,12 @@ public final class Sky2MConfig extends Config {
         public PriceTooltip priceTooltip = new PriceTooltip();
 
         @Expose
+        @ConfigOption(name = "Item Origin", desc = "On items with a SkyBlock UUID, when and where you got them, like \"Got 6 Nov, M6 chest\". It starts counting when you turn it on: what you already have says nothing, and items seen in your storage first say nothing either.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2301)
+        public boolean itemOrigin = false;
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Economy", desc = "Item value breakdown, Bazaar best sell method and daily sales, trade value, bits, reforge and anvil helpers.")
         @ConfigAccordionId(id = 2301)
@@ -258,7 +279,7 @@ public final class Sky2MConfig extends Config {
         public ItemRarity itemRarity = new ItemRarity();
 
         @Expose
-        @ConfigOption(name = "Enchanted Book Labels", desc = "Two letters in the top right of enchanted books naming their enchantment (Sh for Sharpness, UW for Ultimate Wise, in pink for Ultimate enchantments), so you can tell them apart without hovering. Books with several enchantments aren't labelled.")
+        @ConfigOption(name = "Enchanted Book Labels", desc = "A short label in the top right of enchanted books naming their enchantment (Sh for Sharpness, Chim for Chimera, in pink for Ultimate enchantments), so you can tell them apart without hovering. Books with several enchantments aren't labelled.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2301)
         public boolean enchantedBookLabels = true;
@@ -760,6 +781,11 @@ public final class Sky2MConfig extends Config {
         @Category(name = "Vampire", desc = "Riftstalker Bloodfiend helpers.")
         public com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.VampireSlayer vampire = new com.epic60869.sky2m.features.combat.extra.CombatExtraConfig.VampireSlayer();
 
+        @Expose
+        @ConfigOption(name = "Slayer Quest Warning", desc = "A title and a chat line when you hit slayer mobs in a slayer area (Zombies in the Graveyard, Endermen in the End...) with no slayer quest, or with a quest for a different slayer. At most every 30 seconds.")
+        @ConfigEditorBoolean
+        public boolean questWarning = true;
+
         @ConfigOption(name = "Boss Fight", desc = "Boss phase HUD, boss and miniboss highlights, egg hits and the miniboss alert.")
         @ConfigEditorAccordion(id = 501)
         public boolean bossFightGroup = false;
@@ -809,6 +835,12 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "PB Leaderboard HUD", desc = "A HUD with the Sky2M kill time leaderboard for your slayer boss, and a live timer against your PB and the #1 time. Move it in /s2 gui.")
         @ConfigAccordionId(id = 502)
         public PbLeaderboardHud pbLeaderboardHud = new PbLeaderboardHud();
+
+        @Expose
+        @ConfigOption(name = "Slayer XP HUD", desc = "A HUD with this session's bosses per hour and Slayer XP per hour (breaks don't count), the XP to your next slayer level from Hypixel's own line, and about how many bosses and how long that is. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 502)
+        public boolean xpHud = true;
 
         @ConfigOption(name = "Loot & Profit", desc = "Boss profit, RNG meter value and kills since your last rare drop.")
         @ConfigEditorAccordion(id = 503)
@@ -1044,6 +1076,12 @@ public final class Sky2MConfig extends Config {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2304)
         public boolean recipeHudHideCompleted = false;
+
+        @Expose
+        @ConfigOption(name = "Recipe HUD Click To Get From Sacks", desc = "With a menu open, click a missing ingredient in the Recipe HUD to take what you still need from your sacks (Hypixel's /gfs).")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2304)
+        public boolean recipeHudGfs = true;
 
         @Expose
         @Accordion
@@ -1691,7 +1729,7 @@ public final class Sky2MConfig extends Config {
 
     public static final class CopyChat {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Copy chat messages: with chat open, press the Copy Message Key over a message to copy it. Sky2M rank prefixes aren't copied.")
+        @ConfigOption(name = "Enabled", desc = "Copy chat messages: with chat open, press the Copy Message Key over a message to copy it. Hold Left Ctrl to copy its colours too, as &c codes that show in /s2c. Sky2M rank prefixes aren't copied.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -1779,6 +1817,16 @@ public final class Sky2MConfig extends Config {
         @ConfigOption(name = "Highlight Event", desc = "In the Dwarven Mines, highlight the current mining event's targets: the goblins and golems of a Goblin Raid, and the Raffle Tickets on the ground during a Raffle.")
         @ConfigEditorBoolean
         public boolean highlightEvent = false;
+
+        @Expose
+        @ConfigOption(name = "Commission Waypoints", desc = "In the Dwarven Mines, a beam and label on where each unfinished commission is done (Lava Springs, Royal Mines, Cliffside Veins, Rampart's Quarry, Upper Mines, Goblin Burrows, Glacite Walkers, Treasure Hoarders). Works without the HUD.")
+        @ConfigEditorBoolean
+        public boolean waypoints = false;
+
+        @Expose
+        @ConfigOption(name = "Emissary Waypoints", desc = "When a commission is DONE, a beam and label on the nearest Emissary to claim it at.")
+        @ConfigEditorBoolean
+        public boolean emissaryWaypoints = false;
 
         @Expose
         @ConfigOption(name = "Goblin Raid Colour", desc = "Outline colour for Goblin Raid goblins and golems.")

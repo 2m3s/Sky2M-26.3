@@ -112,7 +112,11 @@ public final class SimTerminator {
     /** Salvation's reach. */
     private static final double SALVATION_RANGE = 32.0;
 
-    /** Enough to kill anything in the sim outright; sim mobs have one health anyway. */
+    /**
+     * The VANILLA damage of an arrow or the beam: enough to kill anything without a health pool outright (a puzzle
+     * blaze). A pooled sim mob or boss ignores it and takes the hit's Hypixel damage from {@link SimDamage} instead -
+     * {@code (5 + 310) x (1 + Strength/100)} and the rest, from the stats profile.
+     */
     private static final float DAMAGE = 10_000f;
 
     /**
@@ -125,11 +129,14 @@ public final class SimTerminator {
      * <p>Concurrent because it is written from the SERVER thread (the damage hook) and cleared from the
      * CLIENT thread (the moment Salvation fires).
      */
-    private static final java.util.Set<java.util.UUID> MOBS_HIT =
-            java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private static final java.util.Map<UUID, java.util.Set<UUID>> MOBS_HIT =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
-    /** Written by the server thread's damage hook, read by the client thread's use(). */
-    private static volatile boolean salvationArmed;
+    /**
+     * Who has Salvation armed. Written by the server thread's damage hook, read by the client thread's use(). Per
+     * shooter, like the fire rate: in a sim party each player's own arrows arm his own Salvation.
+     */
+    private static final java.util.Set<UUID> SALVATION_ARMED = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /**
      * Client tick the last shot went out, for the fire rate.
@@ -138,7 +145,7 @@ public final class SimTerminator {
      * cooldown for the first quarter second of every session, which reads exactly like the weapon ignoring
      * the click.
      */
-    private static int lastShotTick = -1000;
+    private static final java.util.Map<UUID, Integer> LAST_SHOT_TICK = new java.util.concurrent.ConcurrentHashMap<>();
 
     /** Counts client ticks, so the cooldown does not depend on frame rate. */
     private static int tickCounter;
@@ -187,7 +194,7 @@ public final class SimTerminator {
                     && source.getDirectEntity() instanceof TerminatorArrow arrow
                     && entity != arrow.getOwner()) {
                 LAST_HIT_BY.put(entity.getUUID(), arrow.describe());
-                recordHit(entity);
+                recordHit(entity, arrow.getOwner());
             } else if (SimState.isActive() && source.getDirectEntity() instanceof Arrow stale
                     && stale.getClass() == Arrow.class && stale.pickup == AbstractArrow.Pickup.DISALLOWED) {
                 // A Terminator arrow saved with the world by a jar from before shouldBeSaved() below: it comes back
@@ -210,18 +217,31 @@ public final class SimTerminator {
         MOBS_HIT.clear();
         LAST_HIT_BY.clear();
         shotSeq = 0;
-        salvationArmed = false;
-        lastShotTick = -1000;
+        SALVATION_ARMED.clear();
+        LAST_SHOT_TICK.clear();
         tickCounter = 0;
         arrowsFired = 0;
     }
 
-    /** Whether enough time has passed since the last shot, and claims the slot if so. */
+    /** {@link #readyToFire(UUID)} for this client's own player. */
     public static boolean readyToFire() {
-        if (tickCounter - lastShotTick < SHOT_COOLDOWN_TICKS) {
+        Minecraft client = Minecraft.getInstance();
+        return client.player != null && readyToFire(client.player.getUUID());
+    }
+
+    /**
+     * Whether enough time has passed since {@code shooter}'s last shot, and claims the slot if so. Per player, so
+     * in a sim party one player's shots never eat another's fire rate. A player who has not fired yet always can.
+     */
+    public static boolean readyToFire(UUID shooter) {
+        if (shooter == null) {
             return false;
         }
-        lastShotTick = tickCounter;
+        Integer last = LAST_SHOT_TICK.get(shooter);
+        if (last != null && tickCounter - last < SHOT_COOLDOWN_TICKS) {
+            return false;
+        }
+        LAST_SHOT_TICK.put(shooter, tickCounter);
         return true;
     }
 
@@ -230,13 +250,17 @@ public final class SimTerminator {
         tickCounter++;
     }
 
+    /** Whether this client's own player has Salvation armed. */
     public static boolean isSalvationArmed() {
-        return salvationArmed;
+        Minecraft client = Minecraft.getInstance();
+        return client.player != null && SALVATION_ARMED.contains(client.player.getUUID());
     }
 
-    /** Distinct mobs hit since Salvation last fired. For tests, which cannot see the set itself. */
+    /** Distinct mobs this client's own player hit since his Salvation last fired. For tests. */
     public static int mobsHit() {
-        return MOBS_HIT.size();
+        Minecraft client = Minecraft.getInstance();
+        java.util.Set<UUID> hits = client.player == null ? null : MOBS_HIT.get(client.player.getUUID());
+        return hits == null ? 0 : hits.size();
     }
 
     /** Arrow entities put in the world since {@link #reset}. A shot that fired nothing cannot hide behind this. */
@@ -256,13 +280,14 @@ public final class SimTerminator {
      * @return whether anything was fired
      */
     public static boolean use(Minecraft client, boolean leftClick) {
-        if (!SimState.canAct(client)) {
+        if (!SimState.canAct(client) || client.player == null) {
             return false;
         }
-        if (salvationArmed && leftClick) {
-            salvation(client);
-            salvationArmed = false;
-            MOBS_HIT.clear();
+        // Whose click this is: a party guest's when the host's server fired it for him (SimAim), his own otherwise.
+        UUID who = SimAim.shooter(client.player);
+        if (leftClick && SALVATION_ARMED.remove(who)) {
+            salvation(client, who);
+            MOBS_HIT.remove(who);
             return true;
         }
         shoot(client);
@@ -284,7 +309,7 @@ public final class SimTerminator {
         // SimAim: the rotation the use packet carried when the server fired this shot, his own otherwise.
         final float yaw = SimAim.yaw(client.player);
         final float pitch = SimAim.pitch(client.player);
-        final UUID who = client.player.getUUID();
+        final UUID who = SimAim.shooter(client.player);
         final int shot = ++shotSeq;
         final Vec3 eyeAt = SimAim.eye(client.player);
         com.epic60869.sky2m.sim.util.ModLog.get("sky2m-roomsim").info(
@@ -299,6 +324,8 @@ public final class SimTerminator {
             if (sp == null || !(sp.level() instanceof ServerLevel level)) {
                 return;
             }
+            // Piercing on the held build (Hypixel: Piercing I = one extra target). Read once per shot, on the server.
+            int pierce = Math.max(0, SimItemBuild.held(sp).enchant("piercing"));
             for (int i = 0; i < ARROWS_PER_SHOT; i++) {
                 double offset = (i - (ARROWS_PER_SHOT - 1) / 2.0) * SPREAD_DEGREES;
                 Vec3 dir = fromAngles(yaw + (float) offset, pitch);
@@ -306,6 +333,7 @@ public final class SimTerminator {
                 arrow.shotYaw = yaw + (float) offset;
                 arrow.shot = shot;
                 arrow.lane = i - (ARROWS_PER_SHOT - 1) / 2;
+                arrow.pierceLeft = pierce;
                 arrow.shoot(dir.x, dir.y, dir.z, ARROW_VELOCITY, ARROW_INACCURACY);
                 if (level.addFreshEntity(arrow)) {
                     arrowsFired++;
@@ -322,15 +350,32 @@ public final class SimTerminator {
      * <p>Runs on the SERVER thread. Distinct mobs only, and the chat line is bounced back to the client
      * thread, which is where {@code ModChat} belongs.
      */
-    private static void recordHit(LivingEntity target) {
-        if (target == null || salvationArmed || !MOBS_HIT.add(target.getUUID())) {
+    private static void recordHit(LivingEntity target, Entity owner) {
+        if (target == null || owner == null) {
             return;
         }
-        if (MOBS_HIT.size() >= HITS_TO_ARM) {
-            salvationArmed = true;
-            Minecraft.getInstance().execute(() ->
-                    ModChat.send("Sim", ModChat.value("Salvation ready")));
+        UUID who = owner.getUUID();
+        java.util.Set<UUID> hits = MOBS_HIT.computeIfAbsent(who,
+                k -> java.util.concurrent.ConcurrentHashMap.newKeySet());
+        if (SALVATION_ARMED.contains(who) || !hits.add(target.getUUID())) {
+            return;
         }
+        if (hits.size() >= HITS_TO_ARM) {
+            SALVATION_ARMED.add(who);
+            say(owner, ModChat.value("Salvation ready"));
+        }
+    }
+
+    /**
+     * A Sim chat line for the player who fired: a party guest's goes to him from the host's server, the host's to
+     * his own chat. Any thread.
+     */
+    private static void say(Entity shooter, net.minecraft.network.chat.Component... parts) {
+        if (shooter instanceof ServerPlayer sp && !SimParty.isHost(sp)) {
+            sp.level().getServer().execute(() -> sp.sendSystemMessage(ModChat.line("Sim", parts)));
+            return;
+        }
+        Minecraft.getInstance().execute(() -> ModChat.send("Sim", parts));
     }
 
     /**
@@ -359,28 +404,28 @@ public final class SimTerminator {
      * <p>Still hitscan, and deliberately: Salvation IS a beam on Hypixel. It is the ordinary shot that had no
      * business being one.
      */
-    private static void salvation(Minecraft client) {
-        Vec3 eye = client.player.getEyePosition();
-        Vec3 dir = fromAngles(client.player.getYRot(), client.player.getXRot());
-        List<Entity> pierced = firstAlong(client, eye, dir, SALVATION_RANGE, SALVATION_PIERCE);
+    private static void salvation(Minecraft client, UUID who) {
+        // SimAim: a party guest's eye and aim when the host's server fired this for him, the host's own otherwise.
+        Vec3 eye = SimAim.eye(client.player);
+        Vec3 dir = fromAngles(SimAim.yaw(client.player), SimAim.pitch(client.player));
+        List<Entity> pierced = firstAlong(client, eye, dir, SALVATION_RANGE, SALVATION_PIERCE, who);
         if (pierced.isEmpty()) {
             com.epic60869.sky2m.sim.roomsim.puzzles.SimCreeperPuzzle.shotAlong(client, eye, dir, SALVATION_RANGE);
         }
-        applyDamage(client, pierced.stream().map(Entity::getUUID).toList());
-        // The visible half, in red.
+        applyDamage(client, pierced.stream().map(Entity::getUUID).toList(), who);
+        // The visible half, in red, and the line for whoever fired it.
         var server = client.getSingleplayerServer();
-        if (server != null && client.player != null) {
+        int hits = pierced.size();
+        if (server != null) {
             Vec3 end = eye.add(dir.scale(SALVATION_RANGE));
-            java.util.UUID who = client.player.getUUID();
             server.execute(() -> {
                 var sp = server.getPlayerList().getPlayer(who);
                 if (sp != null) {
                     salvationParticles((ServerLevel) sp.level(), eye, end);
+                    say(sp, ModChat.text("Salvation - "), ModChat.value(String.valueOf(hits)), ModChat.text(" hit"));
                 }
             });
         }
-        ModChat.send("Sim", ModChat.text("Salvation - "), ModChat.value(String.valueOf(pierced.size())),
-                ModChat.text(" hit"));
     }
 
     /**
@@ -390,7 +435,8 @@ public final class SimTerminator {
      * "penetrates up to five" means the five NEAREST, and a beam that skipped the mob in front to hit one
      * behind it would be wrong in the way that matters for lining a shot up.
      */
-    private static List<Entity> firstAlong(Minecraft client, Vec3 eye, Vec3 dir, double range, int limit) {
+    private static List<Entity> firstAlong(Minecraft client, Vec3 eye, Vec3 dir, double range, int limit,
+                                           UUID shooter) {
         Vec3 end = eye.add(dir.scale(range));
         BlockHitResult wall = client.level.clip(new ClipContext(
                 eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, client.player));
@@ -398,7 +444,8 @@ public final class SimTerminator {
 
         List<Entity> found = new ArrayList<>();
         for (Entity e : client.level.getEntities(client.player, new AABB(eye, stop).inflate(1.0),
-                e -> e instanceof LivingEntity && e.isAlive() && e != client.player)) {
+                e -> e instanceof LivingEntity && e.isAlive() && e != client.player
+                        && !e.getUUID().equals(shooter))) {
             if (e.getBoundingBox().inflate(0.3).clip(eye, stop).isPresent()) {
                 found.add(e);
             }
@@ -407,7 +454,7 @@ public final class SimTerminator {
         return found.size() > limit ? new ArrayList<>(found.subList(0, limit)) : found;
     }
 
-    private static void applyDamage(Minecraft client, List<UUID> ids) {
+    private static void applyDamage(Minecraft client, List<UUID> ids, UUID shooter) {
         if (ids.isEmpty()) {
             return;
         }
@@ -416,7 +463,6 @@ public final class SimTerminator {
             return;
         }
         List<UUID> copy = List.copyOf(ids);
-        UUID shooter = client.player == null ? null : client.player.getUUID();
         if (shooter == null) {
             return;
         }
@@ -430,11 +476,14 @@ public final class SimTerminator {
             // entity behind it as environmental and makes every 1 HP sim mob invulnerable to it, so the
             // terminator's shots landed and did nothing.
             var source = level.damageSources().playerAttack(sp);
-            for (UUID id : copy) {
-                if (level.getEntity(id) instanceof LivingEntity living && living.isAlive()) {
-                    living.hurtServer(level, source, DAMAGE);
+            // Salvation always crits, with the Terminator's own stats, whatever is in hand when it lands.
+            SimDamage.as(SimDamage.Type.ARROW, ITEM_ID, true, () -> {
+                for (UUID id : copy) {
+                    if (level.getEntity(id) instanceof LivingEntity living && living.isAlive()) {
+                        living.hurtServer(level, source, DAMAGE);
+                    }
                 }
-            }
+            });
         });
     }
 
@@ -484,6 +533,15 @@ public final class SimTerminator {
         private int shot;
         private int lane;
 
+        /**
+         * Mobs this arrow may still pass THROUGH (its Piercing level). A pooled mob refuses the vanilla hit, which would
+         * make a vanilla piercing arrow bounce off, so a pierced hit is dealt here and the arrow flies on; the
+         * enchantment model sees the second and later victims of the same arrow and gives them Piercing's 25%
+         * ({@code SimEnchants.piercingFactor}, keyed on the arrow).
+         */
+        private int pierceLeft;
+        private final java.util.Set<Integer> pierced = new java.util.HashSet<>();
+
         String describe() {
             return String.format("shot #%d %s arrow, %d ticks in flight, at %.2f,%.2f,%.2f", shot,
                     lane < 0 ? "yaw-5 side" : lane > 0 ? "yaw+5 side" : "centre", livedTicks, getX(), getY(), getZ());
@@ -526,6 +584,25 @@ public final class SimTerminator {
         @Override
         public boolean shouldBeSaved() {
             return false;
+        }
+
+        @Override
+        protected boolean canHitEntity(Entity entity) {
+            return !pierced.contains(entity.getId()) && super.canHitEntity(entity);
+        }
+
+        @Override
+        protected void onHitEntity(net.minecraft.world.phys.EntityHitResult result) {
+            Entity target = result.getEntity();
+            if (pierceLeft > 0 && target instanceof LivingEntity living && target != getOwner()
+                    && level() instanceof ServerLevel level) {
+                // Through it and on to the next mob in line.
+                pierceLeft--;
+                pierced.add(target.getId());
+                living.hurtServer(level, damageSources().arrow(this, getOwner()), DAMAGE);
+                return;
+            }
+            super.onHitEntity(result);
         }
 
         @Override

@@ -1,9 +1,12 @@
 package com.epic60869.sky2m.sb.skyblock.dungeon.secrets;
 
 import java.awt.Color;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -23,6 +26,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 import com.google.common.collect.HashBasedTable;
@@ -439,12 +443,52 @@ public class DungeonManager {
 		}
 	}
 
+	/** First bytes of a Sky2M-packed skeleton. Skyblocker's original files start with a zlib header (0x78) instead. */
+	private static final byte[] PACKED_SKELETON_MAGIC = {'S', '2', 'M', 'K'};
+
+	/**
+	 * Reads a room skeleton: the sorted int[] of the room's block checks. Sky2M ships them packed ({@code S2MK}, then
+	 * raw deflate of a varint count, the zigzag first value and the varint gaps between the sorted values), which is
+	 * about a ninth of Skyblocker's zlib + Java-serialised form. The original form is still read for any old file.
+	 */
 	private static int[] readRoom(Resource resource) throws RuntimeException {
-		try (ObjectInputStream in = new ObjectInputStream(new InflaterInputStream(resource.open()))) {
-			return (int[]) in.readObject();
+		try (BufferedInputStream raw = new BufferedInputStream(resource.open())) {
+			raw.mark(PACKED_SKELETON_MAGIC.length);
+			if (!Arrays.equals(raw.readNBytes(PACKED_SKELETON_MAGIC.length), PACKED_SKELETON_MAGIC)) {
+				raw.reset();
+				try (ObjectInputStream in = new ObjectInputStream(new InflaterInputStream(raw))) {
+					return (int[]) in.readObject();
+				}
+			}
+			Inflater inflater = new Inflater(true);
+			try (InputStream in = new BufferedInputStream(new InflaterInputStream(raw, inflater), 1 << 16)) {
+				int[] data = new int[Math.toIntExact(readVarint(in))];
+				long value = 0;
+				for (int i = 0; i < data.length; i++) {
+					long v = readVarint(in);
+					value = i == 0 ? (v >>> 1) ^ -(v & 1) : value + v;
+					data[i] = (int) value;
+				}
+				return data;
+			} finally {
+				inflater.end();
+			}
 		} catch (IOException | ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private static long readVarint(InputStream in) throws IOException {
+		long result = 0;
+		int shift = 0;
+		int b;
+		do {
+			b = in.read();
+			if (b < 0) throw new EOFException("Truncated room skeleton");
+			result |= (long) (b & 0x7F) << shift;
+			shift += 7;
+		} while ((b & 0x80) != 0);
+		return result;
 	}
 
 	private static RequiredArgumentBuilder<FabricClientCommandSource, Integer> markSecretsCommand(boolean found) {
@@ -672,6 +716,15 @@ public class DungeonManager {
 		boolean inDungeon = Utils.isInDungeons();
 		// Load the room data on the way in (Dungeon Hub) or, at the latest, in the dungeon itself.
 		if (!loadStarted && (inDungeon || com.epic60869.sky2m.features.core.Sky2MLocation.areaIs("Dungeon Hub"))) ensureRoomsLoading();
+		// Sky2M: a new Dungeon Sim floor is a new run in the same world, with no rejoin to reset the last one: without
+		// this the previous floor's boss (or its finished run) kept every room feature off for the rest of the session.
+		if (com.epic60869.sky2m.sim.roomsim.SimState.isActive()) {
+			int generation = com.epic60869.sky2m.sim.livemap.LiveMapFeature.resetGeneration();
+			if (generation != simFloorGeneration) {
+				simFloorGeneration = generation;
+				reset();
+			}
+		}
 		if (!inDungeon || isInBoss() || runEnded) {
 			return;
 		}
@@ -749,6 +802,8 @@ public class DungeonManager {
 	}
 
 	private static int simGeneration = -1;
+	/** The sim floor the boss/run-ended state belongs to; unlike {@link #simGeneration}, {@link #reset()} keeps it. */
+	private static int simFloorGeneration = Integer.MIN_VALUE;
 	private static boolean simLoaded;
 	private static String simDebugKey = "";
 
@@ -809,6 +864,50 @@ public class DungeonManager {
 		}
 		currentRoom.tick(CLIENT);
 		simDebug(placed.name(), room);
+		if (++simCheckmarkTicks >= 10) {
+			simCheckmarkTicks = 0;
+			updateSimCheckmarks();
+		}
+	}
+
+	private static int simCheckmarkTicks;
+
+	/**
+	 * Sky2M: {@link #updateAllRoomCheckmarks()} for the Dungeon Sim. Hypixel's checkmarks are read off the map item; the
+	 * sim says itself which rooms are cleared, all secrets found (green) or failed ({@code SimRoomState}), so every
+	 * known room gets the same clear state, secret marking and Room Clear Alert it gets on Hypixel.
+	 */
+	private static void updateSimCheckmarks() {
+		for (com.epic60869.sky2m.sim.roomsim.SimRoomIndex.Placed placed : com.epic60869.sky2m.sim.roomsim.SimRoomIndex.placed()) {
+			if (placed.cells().length == 0) continue;
+			int c = placed.cells()[0];
+			Room room = rooms.get(DungeonMapUtils.getPhysicalRoomPos(com.epic60869.sky2m.sim.livemap.LiveMapFeature.START_X + c % 11 * 16, com.epic60869.sky2m.sim.livemap.LiveMapFeature.START_Z + c / 11 * 16));
+			if (room == null || !room.isMatched() || room.clearState == Room.ClearState.GREEN_CHECKED) continue;
+			int state = com.epic60869.sky2m.sim.roomsim.SimRoomState.stateFor(placed.name());
+			switch (state) {
+				case 0 -> { // the green checkmark, DungeonMapScanner.STATE_GREEN
+					com.epic60869.sky2m.features.dungeons.RoomClearAlert.onCheckmark(room, currentRoom, room.clearState, true);
+					room.clearState = Room.ClearState.GREEN_CHECKED;
+					room.secretCountOutdated = false;
+					room.secretsFound = room.getMaxSecretCount();
+					room.markAllSecrets(true);
+					DungeonEvents.SECRET_COUNT_UPDATED.invoker().onSecretCountUpdate(room, true);
+				}
+				case 1 -> { // the white checkmark, STATE_CLEARED
+					if (room.clearState == Room.ClearState.WHITE_CHECKED) continue;
+					com.epic60869.sky2m.features.dungeons.RoomClearAlert.onCheckmark(room, currentRoom, room.clearState, false);
+					room.clearState = Room.ClearState.WHITE_CHECKED;
+					room.secretCountOutdated = true;
+				}
+				case 3 -> room.clearState = Room.ClearState.FAILED; // STATE_FAILED
+				default -> {
+					if (room.clearState != Room.ClearState.UNCLEARED) {
+						room.clearState = Room.ClearState.UNCLEARED;
+						com.epic60869.sky2m.features.dungeons.RoomClearAlert.onUncleared(room);
+					}
+				}
+			}
+		}
 	}
 
 	/** Entrance, blood and fairy come from the room database when it is loaded; puzzle, trap and miniboss from which shape of room data holds the name. */
@@ -955,6 +1054,9 @@ public class DungeonManager {
 		if (isCurrentRoomMatched()) {
 			//noinspection DataFlowIssue - checked above
 			currentRoom.onChatMessage(message, overlay);
+		} else if (overlay && currentRoom != null) {
+			// Sky2M: a secret found while the room is still matching should still count.
+			currentRoom.updateSecretCount(message);
 		}
 
 		// Process key found messages for door highlight

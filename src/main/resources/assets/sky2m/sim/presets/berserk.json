@@ -1,0 +1,53 @@
+{
+  "class": "BERSERK",
+  "name": "Berserk",
+  "notes": "The user's Berserk setup (2026-11-01), green choices. Stars are Hypixel's totals: 10 on a dungeon item = 5 + 5 Master Stars.",
+  "wardrobe": [
+    {
+      "name": "Boss",
+      "armour": [
+        {"id": "DIAMOND_NECRON_HEAD", "totalStars": 10, "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6, "strong_mana": 6}},
+        {"id": "SKELETON_MASTER_CHESTPLATE", "totalStars": 10, "floorTier": 10, "quality": 50, "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6, "strong_mana": 6}},
+        {"id": "POWER_WITHER_LEGGINGS", "totalStars": 10, "gems": ["PERFECT JASPER", "PERFECT JASPER"], "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6, "strong_mana": 6}},
+        {"id": "SPEED_WITHER_BOOTS", "totalStars": 10, "gems": ["PERFECT JASPER", "PERFECT JASPER"], "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6, "strong_mana": 6}}
+      ],
+      "equipment": [
+        {"id": "BONE_NECKLACE", "fragged": true, "totalStars": 8, "reforge": "blended", "enchantments": {"ultimate_the_one": 5}},
+        {"id": "SHADOW_ASSASSIN_CLOAK", "fragged": true, "totalStars": 8, "reforge": "waxed"},
+        {"id": "ADAPTIVE_BELT", "fragged": true, "totalStars": 8, "reforge": "bloodshot"},
+        {"id": "SOULWEAVER_GLOVES", "totalStars": 8, "reforge": "blended"}
+      ]
+    }
+  ],
+  "pets": [
+    {"id": "BLACK_CAT", "level": 100, "rarity": "LEGENDARY", "item": "UNALLOYED_SPEED"},
+    {"id": "GOLDEN_DRAGON", "level": 200, "rarity": "LEGENDARY", "item": "ANTIQUE_REMEDIES"},
+    {"id": "ENDER_DRAGON", "level": 100, "rarity": "LEGENDARY", "item": "GOLD_CLAWS"},
+    {"id": "SPIDER", "level": 100, "rarity": "MYTHIC"},
+    {"id": "PHOENIX", "level": 100, "rarity": "SPECIAL"}
+  ],
+  "petRules": {"mode": "toggle", "clear": "GOLDEN_DRAGON", "boss": "BLACK_CAT"},
+  "hotbar": [
+    {"id": "TERMINATOR", "totalStars": 10, "reforge": "spiritual", "enchantments": {"ultimate_reiterate": 5, "power": 7, "gravity": 6, "overload": 5, "snipe": 3, "toxophilite": 1}},
+    "ASPECT_OF_THE_VOID",
+    "INFINITE_SPIRIT_LEAP",
+    {"id": "LAST_BREATH", "totalStars": 5, "reforge": "spiritual", "enchantments": {"ultimate_reiterate": 1, "power": 6, "flame": 2}},
+    {"id": "RAGNAROCK_AXE", "totalStars": 10, "reforge": "withered", "powerScroll": "JASPER", "enchantments": {"ultimate_chimera": 5}},
+    "SUPERBOOM_TNT",
+    "BONZO_STAFF",
+    "PET_RULES_ROD",
+    "DUNGEON_ORB"
+  ],
+  "inventory": [
+    {"id": "TERMINATOR", "totalStars": 7, "reforge": "precise", "enchantments": {"ultimate_soul_eater": 5, "power": 6, "overload": 5, "toxophilite": 1}},
+    "HYPERION",
+    "WEIRDER_TUBA",
+    {"id": "SWORD_OF_BAD_HEALTH", "powerScroll": "JASPER"},
+    "SPRING_BOOTS",
+    "GYROKINETIC_WAND",
+    "DUNGEONBREAKER",
+    "SPIRIT_MASK",
+    "BONZO_MASK",
+    "BOUNCY_ARROW"
+  ]
+}

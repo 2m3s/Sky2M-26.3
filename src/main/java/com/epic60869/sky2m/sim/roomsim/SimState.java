@@ -43,6 +43,12 @@ public final class SimState {
         // also want getCurrentServer() == null, but on 26.2 another mod can give the singleplayer connection server data,
         // and then every sim command gated on this (/simitem, /map, /item...) said "Unknown command" inside the sim.
         boolean local = client.getSingleplayerServer() != null && client.isLocalServer();
+        // A party guest (SimParty): connected to a friend's sim world that sent the sim hello on THIS connection.
+        // Never true on Hypixel or any other server - nothing there sends the hello, and the connection it came on
+        // is checked, so a flag left over from a sim party cannot carry into the next server.
+        if (!local && isGuest(client)) {
+            return true;
+        }
         if (!local && !loggedRefusal) {
             loggedRefusal = true;
             org.slf4j.LoggerFactory.getLogger("sky2m-sim").warn("Sim: active but not acting - singleplayerServer={}, localServer={}, currentServer={}",
@@ -52,6 +58,42 @@ public final class SimState {
     }
 
     private static boolean loggedRefusal;
+
+    /** The connection a friend's sim world sent the sim hello on, or null when not a party guest. */
+    private static volatile Object guestConnection;
+
+    /**
+     * Whether this client is a guest in a friend's sim world: no integrated server of its own, and the connection
+     * it is on now is the one the host's sim hello arrived on.
+     */
+    public static boolean isGuest(Minecraft client) {
+        Object connection = guestConnection;
+        return active && connection != null && client != null && client.getSingleplayerServer() == null
+                && client.getConnection() == connection;
+    }
+
+    /** Whether {@code connection} is the one a sim party's hello arrived on. Any thread. */
+    public static boolean isGuestConnection(Object connection) {
+        return connection != null && connection == guestConnection;
+    }
+
+    /** Guest side: the host's sim hello (or a later state update) arrived on {@code connection}. Client thread. */
+    public static void enterAsGuest(Object connection, String code, String floor, boolean generated) {
+        if (connection == null) {
+            return;
+        }
+        boolean fresh = guestConnection != connection || !active;
+        guestConnection = connection;
+        if (fresh) {
+            enter(code);
+        } else {
+            replaceMapCode(code);
+        }
+        setFloorLabel(floor);
+        // The host's floor is the guest's whatever map he enters next; it is not waiting for a map of its own.
+        floorLabelPending = false;
+        setGeneratedFloor(generated);
+    }
 
     /**
      * May a sim world be opened right now?
@@ -67,6 +109,7 @@ public final class SimState {
     public static void enter(String code) {
         active = true;
         mapCode = code == null ? "" : code;
+        claimFloorLabel();
         // The dungeon gate is set HERE rather than on the world-load path, so it can never disagree with this
         // flag. Secret routes, auto routes, the map and every other clear feature gate on DungeonState, and a
         // sim where they all sit out is a sim he cannot practise in.
@@ -82,10 +125,18 @@ public final class SimState {
      * stood in Atlas and was told "No abilities in a trap room", stood in Museum and the sidebar said Atlas.
      */
     public static void replaceMapCode(String code) {
-        mapCode = code == null ? "" : code;
+        String next = code == null ? "" : code;
+        // The same map again (SimWorld.open enters sim mode in the sim world and then builds in place, which calls
+        // both) keeps the floor it was claimed with.
+        boolean same = active && next.equals(mapCode) && !next.isEmpty();
+        mapCode = next;
+        if (!same || floorLabelPending) {
+            claimFloorLabel();
+        }
     }
 
     public static void leave() {
+        guestConnection = null;
         generatedFloor = false;
         SimWitherDoors.clear();
         active = false;
@@ -93,9 +144,37 @@ public final class SimState {
         com.epic60869.sky2m.sim.secrets.DungeonState.setRoomSim(false);
     }
 
-    /** The map code this session was built from, for showing and for sharing. */
-    /** The floor the current map was generated as, for the sidebar. Defaults to F7, the one he practises. */
-    private static String floorLabel = "F7";
+    /** The floor a map with no floor of its own plays as: F7, the one he practises. */
+    public static final String DEFAULT_FLOOR = "F7";
+
+    /**
+     * The floor the current map was generated as: the sidebar, and every per-floor number in the sim (mob health
+     * and damage in {@link SimHealth}, the mob-hit fallback in {@link SimVitals}, the dungeon item boost).
+     */
+    private static String floorLabel = DEFAULT_FLOOR;
+
+    /**
+     * Whether {@link #setFloorLabel} has been called since the last map was entered: the floor picker (the floor
+     * generator, the map editor's Play, a /boss) sets the label BEFORE the world opens or the map is rebuilt, and the
+     * next {@link #enter} / {@link #replaceMapCode} claims it ({@link #claimFloorLabel}).
+     */
+    private static boolean floorLabelPending;
+
+    /**
+     * A new map takes the floor that was picked for it, or the default when nothing picked one.
+     *
+     * <p>The label used to be a plain static that only the floor generator, the map editor and /boss ever set, so a
+     * map with no floor of its own - a single room, a typed map code, a run rebuilt from the history - kept whatever
+     * the PREVIOUS map had been: one F7 floor generated earlier and every room after it hit with F7 numbers (an F7
+     * zombie's 8,640 against a 1,400 health profile) while he thought he was practising an F1 room. Now such a map is
+     * the default floor, and only the map the label was picked for gets it.
+     */
+    private static void claimFloorLabel() {
+        if (!floorLabelPending) {
+            floorLabel = DEFAULT_FLOOR;
+        }
+        floorLabelPending = false;
+    }
 
     /**
      * Whether what is loaded is a whole generated floor rather than a single room.
@@ -120,7 +199,8 @@ public final class SimState {
     }
 
     public static void setFloorLabel(String label) {
-        floorLabel = label == null || label.isBlank() ? "F7" : label;
+        floorLabel = label == null || label.isBlank() ? DEFAULT_FLOOR : label.trim().toUpperCase(java.util.Locale.ROOT);
+        floorLabelPending = true;
     }
 
     /**
@@ -181,6 +261,48 @@ public final class SimState {
         return decoded.nameTable()[id];
     }
 
+    /**
+     * The room at this block column as its index in the map's name table, or -1 off the map: the same tile rule as
+     * {@link #roomNameAt}, but a room's own number, so two rooms are never mixed up by name. Cached per map code,
+     * since it runs for every sim mob every tick ({@code SimMobs.keepInRooms}). Any thread.
+     */
+    public static int roomIdAt(int blockX, int blockZ) {
+        String code = mapCode();
+        MapCode.Decoded decoded = decodedCache(code);
+        if (decoded == null) {
+            return -1;
+        }
+        var origin = com.epic60869.sky2m.sim.livemap.DungeonLayout.cellCenter(0);
+        int step = com.epic60869.sky2m.sim.livemap.DungeonLayout.cellCenter(1).getX() - origin.getX();
+        if (step == 0) {
+            return -1;
+        }
+        int gx = 2 * Math.floorDiv(blockX - origin.getX() + step, 2 * step);
+        int gz = 2 * Math.floorDiv(blockZ - origin.getZ() + step, 2 * step);
+        int grid = com.epic60869.sky2m.sim.livemap.DungeonLayout.GRID;
+        if (gx < 0 || gz < 0 || gx >= grid || gz >= grid) {
+            return -1;
+        }
+        int id = decoded.cellRoom()[gz * grid + gx];
+        return id < 0 || id >= decoded.nameTable().length ? -1 : id;
+    }
+
+    private static volatile Object[] decodedCache = {null, null};
+
+    private static MapCode.Decoded decodedCache(String code) {
+        if (code == null || code.isBlank()) {
+            return null;
+        }
+        Object[] cached = decodedCache;
+        if (code.equals(cached[0])) {
+            return (MapCode.Decoded) cached[1];
+        }
+        MapCode.Decoded decoded = MapCode.decode(code);
+        decodedCache = new Object[]{code, decoded};
+        return decoded;
+    }
+
+    /** The map code this session was built from, for showing and for sharing. */
     public static String mapCode() {
         return mapCode;
     }

@@ -269,6 +269,8 @@ public final class SimBuilder {
                 // Queued to run after the whole map is placed, for the same reason as a single room: a secret
                 // written before the paste reaches that cell would simply be pasted over.
                 afterBuild.add(() -> SimSecrets.place(level, fr, fgx, fgz, rot));
+                // The room's own captured mobs, queued to appear when he gets close - see queueCapturedMobs.
+                afterBuild.add(() -> queueCapturedMobs(fr, fgx, fgz, rot));
                 // So Secret Waypoints knows this room is here - see SimRoomIndex.
                 SimRoomIndex.add(room, gx, gz, rot);
                 // And so the build can read the blocks back afterwards and check they are this room's - see
@@ -341,21 +343,36 @@ public final class SimBuilder {
                 if (decoded.cellDoor()[cell] == DungeonLayout.DOOR_ENTRANCE) {
                     // Shifted with the floor, or the lookup in SimDoors' block index misses: the gate's
                     // blocks were registered at the y the carve found, which moves with the map.
-                    entranceDoorPos = DungeonLayout.cellCenter(cell).above(SimAltitude.offset());
+                    // Once: cellCenter already adds the shift while the sim is on, and adding it again put the
+                    // gate 2 x offset off (y -156 on a floor at -40), which is why Mort found no floor by it.
+                    var centre = DungeonLayout.cellCenter(cell);
+                    entranceDoorPos = new net.minecraft.core.BlockPos(centre.getX(), SimAltitude.toWorld(70),
+                            centre.getZ());
                     break;
                 }
             }
             // Every doorway, queued to be cut AFTER the rooms are pasted - cutting first would simply be
             // pasted over, which is the same ordering mistake the secrets had.
+            // HYPIXEL'S WITHER DOORS: every plain door on the Entrance-to-Blood path is a wither door (the wiki: "The
+            // path to the Blood Room is guarded by a series of Wither Doors and ends at the Blood Door"). Until now
+            // the sim built none and only drew them on the map (SimWitherDoors); they are built now, and SimKeys hangs
+            // each one's key on a starred mob in front of it. The map is published with the same doors.
+            final int[] builtDoors = decoded.cellDoor().clone();
+            boolean[] onPath = SimWitherDoors.compute(decoded.cellRoom(), decoded.cellDoor(), decoded.nameTable());
+            for (int cell = 0; cell < builtDoors.length && cell < onPath.length; cell++) {
+                if (onPath[cell]) {
+                    builtDoors[cell] = DungeonLayout.DOOR_WITHER;
+                }
+            }
             final java.util.List<int[]> doorCells = new java.util.ArrayList<>();
-            for (int cell = 0; cell < decoded.cellDoor().length; cell++) {
-                if (decoded.cellDoor()[cell] == DungeonLayout.DOOR_NONE) {
+            for (int cell = 0; cell < builtDoors.length; cell++) {
+                if (builtDoors[cell] == DungeonLayout.DOOR_NONE) {
                     continue;
                 }
                 int gx = cell % DungeonLayout.GRID;
                 // A door cell is odd on exactly one axis; that axis is the one the rooms sit apart on.
                 boolean alongX = (gx % 2) == 1;
-                doorCells.add(new int[]{cell, alongX ? 1 : 0, decoded.cellDoor()[cell]});
+                doorCells.add(new int[]{cell, alongX ? 1 : 0, builtDoors[cell]});
             }
             // Doorways this floor does not use, bricked up.
             //
@@ -493,11 +510,20 @@ public final class SimBuilder {
                         : princes + " found, " + SimPrince.size() + " block(s), first at "
                                 + SimPrince.position());
                 SimMimic.chooseForMap(level);
+                // The keys for the wither and blood doors, onto starred mobs in front of them (every room's mobs
+                // are queued by now). Deterministic per map code.
+                SimKeys.assignForFloor(level, decoded.cellRoom(), builtDoors, decoded.nameTable(),
+                        SimState.mapCode());
                 SimBuildAudit.verify(level);
                 if (firstCell >= 0) {
                     snapPlayerTo(client, level, firstCell % DungeonLayout.GRID,
                             firstCell / DungeonLayout.GRID);
                 }
+                // A new sim starts with an empty inventory, not the last run's items.
+                SimClassKit.resetInventories(level);
+                // Mort, beside the entrance gate: his menu is the party's ready-up (SimMort).
+                SimMort.place(level, entranceDoorPos,
+                        entranceCell[0] >= 0 ? DungeonLayout.cellCenter(entranceCell[0]) : null);
                 // LAST WORD TO SimRoomIndex, which armFloor above may have corrected.
                 //
                 // bestAnchor scores a puzzle's own furniture at all four rotations and takes the winner; when
@@ -518,7 +544,7 @@ public final class SimBuilder {
                 // map, the interactive map and every pathfinder that reads the layout are blank in the sim -
                 // they all read a grid the world scan can only fill from Hypixel's own markers.
                 com.epic60869.sky2m.sim.livemap.LiveMapFeature.publishSimFloor(
-                        decoded.cellRoom(), decoded.cellDoor(), decoded.nameTable(), clayByRoom);
+                        decoded.cellRoom(), builtDoors, decoded.nameTable(), clayByRoom);
                 SimWorld.buildFinished(client, null);
                 ModChat.send("Sim", ModChat.text("Built "), ModChat.value(String.valueOf(roomCount)),
                         ModChat.text(" room(s)."));
@@ -959,7 +985,7 @@ public final class SimBuilder {
         // One read of the field: the build callbacks that land here run on the server thread, and the render thread
         // nulls client.player when the world goes away - a check and a second read could see two different values.
         var player = client.player;
-        snapPlayerTo(player == null ? null : player.getUUID(), level, gridX, gridZ, room);
+        snapPlayerTo(player == null ? null : player.getUUID(), level, gridX, gridZ, room, true);
     }
 
     /**
@@ -969,6 +995,12 @@ public final class SimBuilder {
      */
     static void snapPlayerTo(java.util.UUID uuid, ServerLevel level, int gridX, int gridZ,
                              RoomLibrary.Room room) {
+        snapPlayerTo(uuid, level, gridX, gridZ, room, false);
+    }
+
+    /** {@code party}: a build's landing, which brings every player out of the holding area, not only this one. */
+    private static void snapPlayerTo(java.util.UUID uuid, ServerLevel level, int gridX, int gridZ,
+                                     RoomLibrary.Room room, boolean party) {
         var origin = DungeonLayout.cellCenter(gridZ * DungeonLayout.GRID + gridX);
         Spawn spawn = spawnFor(room, gridX, gridZ);
         int x = origin.getX() + (spawn == null ? 0 : spawn.dx());
@@ -1075,12 +1107,20 @@ public final class SimBuilder {
         // The same spot death sends him back to - one definition of "the middle of the room", so the place he
         // starts and the place he returns to cannot drift apart.
         SimSurvival.setHome(new net.minecraft.core.BlockPos(fx, y, fz));
-        if (uuid == null) {
+        landingSpot = new net.minecraft.core.BlockPos(fx, y, fz);
+        landingYaw = faceYaw;
+        if (uuid == null && !party) {
             return;
         }
         level.getServer().execute(() -> {
-            ServerPlayer sp = level.getServer().getPlayerList().getPlayer(uuid);
-            if (sp != null) {
+            ServerPlayer host = uuid == null ? null : level.getServer().getPlayerList().getPlayer(uuid);
+            // The party guests come along, out of the holding area (holdPlayer) into the same room. A build's
+            // landing moves everyone on the server, so it no longer depends on finding the host by the client's
+            // player: read on the server thread, that could be null (the client between players) and the host was
+            // left in the holding area's void (2026-11-04, an M7 floor).
+            java.util.List<ServerPlayer> moving = party ? level.getServer().getPlayerList().getPlayers()
+                    : host == null ? java.util.List.of() : java.util.List.of(host);
+            for (ServerPlayer sp : moving) {
                 // A room that names a facing (the trap rooms and Teleport Maze face in from their doorway) is
                 // turned by the shortest way from where he was looking - the yaw stays a running value rather
                 // than being reset into 0..360. Every other room keeps his own yaw.
@@ -1090,6 +1130,10 @@ public final class SimBuilder {
                     yaw += delta;
                 }
                 sp.teleportTo(level, fx + 0.5, y, fz + 0.5, java.util.Set.of(), yaw, sp.getXRot(), false);
+            }
+            if (party) {
+                // The build is over: anyone still at the holding area from here on is stuck (rescueHeld).
+                holding = false;
             }
         });
     }
@@ -1258,6 +1302,36 @@ public final class SimBuilder {
     private static final net.minecraft.core.BlockPos HOLDING_AREA =
             new net.minecraft.core.BlockPos(8000, 200, 8000);
 
+    /** Where the last build put everyone (its landing), and the way it faced them; null before the first build. */
+    private static volatile net.minecraft.core.BlockPos landingSpot;
+    private static volatile Float landingYaw;
+    /** Set while a build has players in the holding area on purpose, so {@link #rescueHeld} leaves them there. */
+    private static volatile boolean holding;
+
+    /**
+     * The safety net for the holding area (2026-11-04: a generated M7 floor built but left the player in the void
+     * at the holding area). Once no build is holding anyone, a player still out there is put on the last build's
+     * landing. Server thread, every 20 ticks from {@link SimSurvival}'s tick or anything that calls it.
+     */
+    static void rescueHeld(ServerLevel level) {
+        net.minecraft.core.BlockPos spot = landingSpot;
+        if (holding || spot == null) {
+            return;
+        }
+        for (ServerPlayer sp : level.getServer().getPlayerList().getPlayers()) {
+            if (sp.level() != level || Math.abs(sp.getX() - HOLDING_AREA.getX()) > 64
+                    || Math.abs(sp.getZ() - HOLDING_AREA.getZ()) > 64) {
+                continue;
+            }
+            float yaw = landingYaw != null ? landingYaw : sp.getYRot();
+            sp.teleportTo(level, spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, java.util.Set.of(), yaw,
+                    sp.getXRot(), false);
+            sp.fallDistance = 0;
+            LOGGER.error("[SimPhase] {} was still in the holding area after the build - moved to the landing at {}",
+                    sp.getGameProfile().name(), spot);
+        }
+    }
+
     /**
      * Moves the player out to the holding area for the duration of a build.
      *
@@ -1271,15 +1345,16 @@ public final class SimBuilder {
         if (uuid == null) {
             return;
         }
+        holding = true;
         level.getServer().execute(() -> {
-            ServerPlayer sp = level.getServer().getPlayerList().getPlayer(uuid);
-            if (sp == null) {
-                return;
-            }
             level.setBlockAndUpdate(HOLDING_AREA.below(),
                     net.minecraft.world.level.block.Blocks.BARRIER.defaultBlockState());
-            sp.teleportTo(level, HOLDING_AREA.getX() + 0.5, HOLDING_AREA.getY(), HOLDING_AREA.getZ() + 0.5,
-                    java.util.Set.of(), sp.getYRot(), sp.getXRot(), false);
+            // Party guests too: one left standing in the old map keeps its chunks, and the build writes them
+            // without telling his client, so he was left in ghost blocks he could neither see nor walk on.
+            for (ServerPlayer sp : level.getServer().getPlayerList().getPlayers()) {
+                sp.teleportTo(level, HOLDING_AREA.getX() + 0.5, HOLDING_AREA.getY(), HOLDING_AREA.getZ() + 0.5,
+                        java.util.Set.of(), sp.getYRot(), sp.getXRot(), false);
+            }
         });
     }
 
@@ -1351,6 +1426,8 @@ public final class SimBuilder {
     private static void wipeWholeGrid(ServerLevel level) {
         clearFloorDrops(level);
         clearFloorMobs(level);
+        // Mort is no Mob, so the sweep above leaves him; a new floor gets its own (SimMort.place).
+        SimMort.clear(level);
         // Before the level is cleared, so a drop that vanishes with the old floor is not counted
         // as one he picked up.
         SimSecretItems.reset();
@@ -1430,23 +1507,123 @@ public final class SimBuilder {
         }
     }
 
+    /** At most this many captured mobs per room: a capture's worst trail is noise, not a bigger pack. */
+    private static final int MAX_CAPTURED_MOBS = 12;
+
     /**
-     * The captured starred mobs are deliberately NOT spawned.
+     * The room's captured mobs, back (they were skipped from 2026-09-29 until the mobs could fight).
      *
-     * <p>killer560 (2026-09-29): "do not worry about starred mobs spawning in only mimics princes and crypts.
-     * We can do starred mobs much later. Wipe any mobs that spawn right now they are wrong and need reworked
-     * anyways."
+     * <p>killer560 (2026-09-29): "We can do starred mobs much later. Wipe any mobs that spawn right now they are
+     * wrong and need reworked anyways." The three things that were wrong are each answered here or in
+     * {@link SimMobs}:
+     * <ul>
+     * <li>The positions were never rotated, so a turned room put its mobs through the walls. They now go through
+     * the paste's own transform - the same margin corner, {@link RoomPlacer#rotateLocal} and
+     * {@link SimAltitude#toWorld} as {@link RoomPlacer.PasteJob} and {@link #collectChests} - so a mob lands
+     * where its stand was in the room as it was built.</li>
+     * <li>They are name-stand positions, above the mob: {@code SimMobs.toFloor} drops each one onto the floor
+     * when it is placed.</li>
+     * <li>A one-health no-AI stand-in was not a real mob. Sim mobs now have Hypixel-sized health and fight
+     * ({@link SimHealth}).</li>
+     * </ul>
      *
-     * <p>{@code spawnMobsFor} used to put a mob at every position the recorder saw a star name at. Three
-     * things were wrong with that and only the first is cheap to fix: the positions were never rotated, so a
-     * turned room put its mobs through the walls; they are armour-stand positions rather than mob positions,
-     * so they are a tile-and-a-bit off vertically in places; and a one-health no-AI stand-in is not the mob a
-     * route is timed against. The capture is still recorded in the room files, so nothing is lost and this
-     * comes back when the mobs are done properly.
+     * <p>Each entry is {@code "x,y,z,TAG"} in capture coordinates. The recorder wrote the TAG: {@code STARRED} for a
+     * "✯" stand and the mob type (ZOMBIE, SKELETON, FEL, BAT) for the others. Bats are left alone - the room
+     * database's bat secrets are placed by {@link SimSecrets} - and the recorder logged a walking mob once per
+     * position it passed, so entries of one kind within a few blocks of one already kept are the same mob.
      *
-     * <p>What still spawns: the mimic (one per floor), a crypt's zombie when its wall is blown, and the bats
-     * that are genuine secrets. {@link #clearFloorMobs} removes anything else that is left over.
+     * <p><b>Starred or not.</b> A STARRED entry is starred, and alternates zombie and skeleton (the stand never
+     * said which). The recorder's plain types are mostly the room's real fighters too - on Hypixel nearly every
+     * mob in a room carries the star, and the plain ones are filler - so two of every three of those are starred
+     * and the third is not. APPROXIMATE: the capture cannot tell us which of them really were.
+     *
+     * <p>Server thread, after the paste (it runs from the build's completion work), so {@link SimAltitude}'s
+     * offset is the one the room was built at. Nothing is spawned here: {@link SimMobs#queueRoomMob} places them
+     * when he comes near.
      */
+    private static void queueCapturedMobs(RoomLibrary.Room room, int gridX, int gridZ, int rotation) {
+        if (room == null) {
+            return;
+        }
+        if (room.mobSpawns.isEmpty()) {
+            // Nothing recorded: the room gets generated mobs (and a miniboss room its miniboss) - see SimRoomMobs.
+            SimRoomMobs.generate(room, gridX, gridZ, rotation, true);
+            return;
+        }
+        var origin = DungeonLayout.cellCenter(gridZ * DungeonLayout.GRID + gridX);
+        int x0 = origin.getX() - RoomLibrary.TILE / 2 - room.margin;
+        int z0 = origin.getZ() - RoomLibrary.TILE / 2 - room.margin;
+        java.util.List<int[]> kept = new java.util.ArrayList<>();
+        int starredSeen = 0;
+        int plainSeen = 0;
+        for (String entry : room.mobSpawns) {
+            if (kept.size() >= MAX_CAPTURED_MOBS) {
+                break;
+            }
+            String[] part = entry.split(",");
+            if (part.length < 3) {
+                continue;
+            }
+            int x;
+            int y;
+            int z;
+            try {
+                x = Integer.parseInt(part[0].trim());
+                y = Integer.parseInt(part[1].trim());
+                z = Integer.parseInt(part[2].trim());
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            String tag = part.length > 3 ? part[3].trim().toUpperCase(Locale.ROOT) : "STARRED";
+            SimMobs.Kind kind;
+            switch (tag) {
+                case "STARRED", "ZOMBIE" -> kind = SimMobs.Kind.ZOMBIE;
+                case "SKELETON" -> kind = SimMobs.Kind.SKELETON;
+                case "FEL" -> kind = SimMobs.Kind.FEL;
+                default -> {
+                    continue;   // BAT (a secret, placed from the database) or something unknown
+                }
+            }
+            if (x < 0 || z < 0 || x >= room.sizeX || z >= room.sizeZ) {
+                continue;
+            }
+            int tagId = tag.hashCode();
+            boolean duplicate = false;
+            for (int[] k : kept) {
+                if (k[3] == tagId && Math.abs(k[0] - x) + Math.abs(k[2] - z) <= 3 && Math.abs(k[1] - y) <= 2) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (duplicate) {
+                continue;
+            }
+            kept.add(new int[]{x, y, z, tagId});
+            boolean starred;
+            if ("STARRED".equals(tag)) {
+                starred = true;
+                kind = starredSeen++ % 2 == 0 ? SimMobs.Kind.ZOMBIE : SimMobs.Kind.SKELETON;
+            } else {
+                starred = plainSeen++ % 3 != 2;
+            }
+            int[] local = RoomPlacer.rotateLocal(x, z, room.sizeX, room.sizeZ, rotation);
+            // A capture is the room's whole box: an L-shaped room's empty quarter is another room's tile on the
+            // floor, and a mob recorded there (the next room's, seen through the capture) belongs to that room.
+            String at = SimState.roomNameAt(x0 + local[0], z0 + local[1]);
+            if (at != null && !at.equalsIgnoreCase(room.name)) {
+                continue;
+            }
+            SimMobs.queueRoomMob(new net.minecraft.core.BlockPos(x0 + local[0], SimAltitude.toWorld(y),
+                    z0 + local[1]), kind, starred);
+        }
+        if (!kept.isEmpty()) {
+            LOGGER.info("Sim build: {} captured mob(s) queued for {}", kept.size(), room.name);
+        }
+        // Recorded entries that were all bats or duplicates leave the room empty: fill it like an unrecorded one.
+        // A miniboss room gets its miniboss either way.
+        SimRoomMobs.generate(room, gridX, gridZ, rotation, kept.isEmpty());
+    }
+
     /**
      * Builds ONE room in the middle of the grid, for drilling a single room.
      *
@@ -1528,6 +1705,7 @@ public final class SimBuilder {
             SimBuildQueue.whenDone(() -> {
                 // After the geometry, never before: a chest placed first would be overwritten by the paste.
                 int secrets = SimSecrets.place(level, room, centre, centre, 0);
+                queueCapturedMobs(room, centre, centre, 0);
                 // THE PUZZLES, which a single-room load has never armed.
                 //
                 // This is the one line, and it explains most of a day's reports at once. killer560

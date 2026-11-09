@@ -62,6 +62,16 @@ public final class Sky2MGlobalChat {
 
     public static boolean isInSky2MChannel() { return inSky2MChannel; }
 
+    /**
+     * Whether a typed command switches you out of Sky2M chat: any other /chat channel, or a bare /r (Hypixel opens the
+     * private conversation with whoever messaged you last, so your chat goes there, not to Sky2M chat). "/r hi" only
+     * replies and leaves you where you are. {@code command} is without the slash, any case.
+     */
+    public static boolean leavesSky2MChannel(String command) {
+        String lower = command == null ? "" : command.trim().toLowerCase(java.util.Locale.ROOT);
+        return lower.startsWith("chat ") || lower.equals("r");
+    }
+
     public static void enterSky2MChannel() {
         inSky2MChannel = true;
         mcMessage(Component.literal("You are now in the Sky2M channel")
@@ -732,7 +742,9 @@ public final class Sky2MGlobalChat {
                 } catch (Exception ignored) {
                     shownName = Sky2MNick.displayName(displayName);
                 }
-                Component messageComponent = com.epic60869.sky2m.features.misc.items.ItemEmojis.replace(Sky2MNopoFeatures.replaceChatEmojis(Component.literal(message)));
+                // "&c" colours (Copy Chat with Left Ctrl) are only read from messages sent from the mod.
+                Component typedMessage = "discord".equalsIgnoreCase(source) ? Component.literal(message) : com.epic60869.sky2m.features.misc.chat.ChatColourCodes.parse(message);
+                Component messageComponent = com.epic60869.sky2m.features.misc.items.ItemEmojis.replace(Sky2MNopoFeatures.replaceChatEmojis(typedMessage));
                 // [S2M] in dark green, like Hypixel's "Guild >"; messages from Discord add a blue [Discord] after it.
                 long messageId = packet.has("id") && !packet.get("id").isJsonNull() ? packet.get("id").getAsLong() : 0;
                 MutableComponent line = Component.empty()

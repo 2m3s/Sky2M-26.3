@@ -231,6 +231,11 @@ public final class SimIcePathPuzzle {
             }
             if (level.isClientSide()) {
                 onPunched(player.getYRot());
+            } else if (com.epic60869.sky2m.sim.roomsim.SimParty.guestOnServer(player)) {
+                // A party guest's punch: his client knows no fish and lets the attack through, so the host's
+                // server is where it lands. Shoved on the host's client thread, like the host's own punch.
+                float yaw = player.getYRot();
+                Minecraft.getInstance().execute(() -> onPunched(yaw));
             }
             return InteractionResult.FAIL;
         });

@@ -16,6 +16,12 @@ public final class PuzzleCoords {
     private PuzzleCoords() {
     }
 
+    /** Whether Dungeons > Puzzle Solvers has the mod's own solver for a puzzle on (the sim's solvers step aside then). */
+    public static boolean modSolverOn(java.util.function.Predicate<com.epic60869.sky2m.features.FeatureConfigs.Puzzles> toggle) {
+        com.epic60869.sky2m.config.Sky2MConfig config = com.epic60869.sky2m.config.Sky2MConfig.current();
+        return config != null && config.dungeons.puzzles != null && toggle.test(config.dungeons.puzzles);
+    }
+
     /**
      * A room-relative coordinate in the world.
      *

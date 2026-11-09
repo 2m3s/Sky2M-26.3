@@ -421,22 +421,21 @@ public final class PartyFinderStats {
 
     private static void autoKick(Stats s, FeatureConfigs.PartyFinderStats c) {
         List<String> reasons = new ArrayList<>();
-        // The floor's own requirements (/s2 pfreq) when there are some for where you're going, else the settings'.
-        String key = c.perFloor ? currentFloorKey() : null;
-        PfRequirements.Req req = key == null ? null : PfRequirements.forFloor(key);
-        boolean master = req != null ? key.startsWith("M") : c.masterMode;
-        int floorNumber = req != null ? key.charAt(1) - '0' : c.floor;
-        int maxPb = req != null ? req.maxPbSeconds : c.maxPbSeconds;
-        int minSecretsK = req != null ? req.minSecretsK : c.minSecretsK;
-        int minCata = req != null ? req.minCata : c.minCata;
-        int minMp = req != null ? req.minMagicalPower : c.minMagicalPower;
-        Floor floor = (master ? s.master() : s.normal())[Math.clamp(floorNumber, 0, 7)];
-        String label = (master ? "M" : "F") + floorNumber;
+        // The floor's own requirements (/s2 autokick) when there are some for where you're going, else the Default.
+        PfRequirements.Choice choice = PfRequirements.forKick(currentFloorKey());
+        PfRequirements.Req req = choice.req();
+        String label = choice.floor();
+        boolean master = label.startsWith("M");
+        int maxPb = req.maxPbSeconds;
+        long minSecrets = req.minSecrets;
+        int minCata = req.minCata;
+        int minMp = req.minMagicalPower;
+        Floor floor = (master ? s.master() : s.normal())[Math.clamp(label.charAt(1) - '0', 0, 7)];
         if (maxPb > 0) {
             if (floor.sPlusMs() <= 0) reasons.add("no S+ on " + label);
             else if (floor.sPlusMs() / 1000 > maxPb) reasons.add(label + " PB " + clock(floor.sPlusMs()) + " > " + clock(maxPb * 1000L));
         }
-        if (minSecretsK > 0 && s.secrets() < minSecretsK * 1000L) reasons.add("secrets " + big(s.secrets()) + " < " + minSecretsK + "k");
+        if (minSecrets > 0 && s.secrets() < minSecrets) reasons.add("secrets " + big(s.secrets()) + " < " + big(minSecrets));
         if (minCata > 0 && s.cata() < minCata) reasons.add("cata " + fmt(s.cata(), 1) + " < " + minCata);
         if (s.inventoryApi() || s.magicalPower() > 0) {
             if (minMp > 0 && s.magicalPower() < minMp) reasons.add("MP " + s.magicalPower() + " < " + minMp);

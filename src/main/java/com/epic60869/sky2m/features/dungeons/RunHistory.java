@@ -127,6 +127,7 @@ public final class RunHistory {
             current.startedAt = System.currentTimeMillis();
             current.floor = Sky2MLocation.dungeonFloor();
             RouteReplay.begin(current.floor, current.startedAt);
+            RoomBests.startRun();
             java.util.concurrent.CompletableFuture.runAsync(RunHistory::runs); // read the saved runs off the client thread
             goldorStart = 0;
             finishIn = -1;
@@ -253,6 +254,18 @@ public final class RunHistory {
     }
 
     // ------------------------------------------------------------------------------------------------ storage
+
+    /** How long the saved runs that ended from {@code from} up to (not including) {@code to} took, all together. */
+    public static long runTime(long from, long to) {
+        return runTime(runs(), from, to);
+    }
+
+    /** Public for the game test. */
+    public static long runTime(List<Run> runs, long from, long to) {
+        long total = 0;
+        for (Run run : runs) if (run.endedAt >= from && run.endedAt < to) total += Math.max(0, run.totalMs);
+        return total;
+    }
 
     static synchronized List<Run> runs() {
         if (runs == null) {

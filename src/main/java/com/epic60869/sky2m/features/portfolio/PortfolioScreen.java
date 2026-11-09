@@ -1,10 +1,12 @@
 package com.epic60869.sky2m.features.portfolio;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.util.Util;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -35,7 +37,7 @@ public final class PortfolioScreen extends Screen {
     private Portfolio.Entry selected;
     private Portfolio.Sale selectedSale;
     private int scroll;
-    private EditBox addBox, buyBox, extraBox;
+    private EditBox addBox;
     private String status = "";
     /** Sorted column (-1 = the order you added them in) and direction, per tab. */
     private int sortColumn = -1;
@@ -134,49 +136,6 @@ public final class PortfolioScreen extends Screen {
                 rebuild();
             }).bounds(left() + 286, ay, 90, 20).build());
 
-            if (selected != null && Portfolio.entries().contains(selected)) {
-                int by = top() + panelHeight() - 28;
-                int bx = left() + 8 + Math.min(220, font.width(selected.name) + 12);
-                buyBox = new EditBox(font, bx, by, 90, 20, Component.literal("Buy price each"));
-                buyBox.setHint(Component.literal("Buy price each").withStyle(ChatFormatting.DARK_GRAY));
-                if (selected.buyPrice > 0) buyBox.setValue(Portfolio.coins(selected.buyPrice));
-                addRenderableWidget(buyBox);
-                addRenderableWidget(Button.builder(Component.literal("Set buy"), b -> {
-                    double p = Portfolio.parse(buyBox.getValue());
-                    if (p < 0) status = "Type a price like 1.5m, 200k or 1,234,567.";
-                    else {
-                        selected.buyPrice = p;
-                        selected.buyPricePending = false;
-                        Portfolio.changed();
-                        status = "Buy price set.";
-                    }
-                }).bounds(bx + 94, by, 56, 20).build());
-                bx += 156;
-                extraBox = new EditBox(font, bx, by, 50, 20, Component.literal("Extra"));
-                extraBox.setHint(Component.literal("Extra").withStyle(ChatFormatting.DARK_GRAY));
-                if (selected.extra > 0) extraBox.setValue(String.valueOf(selected.extra));
-                addRenderableWidget(extraBox);
-                addRenderableWidget(Button.builder(Component.literal("Set extra"), b -> {
-                    double v = Portfolio.parse(extraBox.getValue().isBlank() ? "0" : extraBox.getValue());
-                    if (v < 0) status = "Type a whole number.";
-                    else {
-                        selected.extra = (int) v;
-                        Portfolio.changed();
-                        status = "Extra amount set (copies Sky2M can't see, e.g. applied skins).";
-                    }
-                }).bounds(bx + 54, by, 60, 20).build());
-                bx += 120;
-                addRenderableWidget(Button.builder(Component.literal("Log sale"), b -> {
-                    Portfolio.recordSale(selected, Math.max(1, Portfolio.count(selected).total()), Portfolio.value(selected), true);
-                    selected = null;
-                    rebuild();
-                }).bounds(bx, by, 60, 20).build());
-                addRenderableWidget(Button.builder(Component.literal("Remove"), b -> {
-                    Portfolio.remove(selected);
-                    selected = null;
-                    rebuild();
-                }).bounds(bx + 64, by, 56, 20).build());
-            }
         } else if (tab == Tab.SOLD && selectedSale != null && Portfolio.sold().contains(selectedSale)) {
             int by = top() + panelHeight() - 28;
             addRenderableWidget(Button.builder(Component.literal("Remove sale"), b -> {
@@ -302,8 +261,8 @@ public final class PortfolioScreen extends Screen {
         }
         return new String[]{
             e.name,
-            count.total() + " (" + count.inventory() + "/" + count.storage() + "/" + count.extra() + ")",
-            e.buyPrice > 0 ? Portfolio.coins(e.buyPrice) : (e.buyPricePending ? "..." : "-"),
+            count.manual() != null ? count.total() + " (set)" : count.total() + " (" + count.inventory() + "/" + count.storage() + "/" + count.extra() + ")",
+            e.buyPrice > 0 ? Portfolio.coins(e.buyPrice) + (e.lots != null ? " avg" : "") : (e.buyPricePending ? "..." : "-"),
             price > 0 ? Portfolio.coins(price) : "?",
             Portfolio.coins(count.total() * price),
             profit
@@ -501,7 +460,12 @@ public final class PortfolioScreen extends Screen {
             if (tab == Tab.SHEET) {
                 List<Portfolio.Entry> entries = sortedEntries();
                 Portfolio.Entry clicked = index >= 0 && index < entries.size() ? entries.get(index) : null;
-                selected = clicked == selected ? null : clicked;
+                // A row opens its own page (purchases, extra, qty, sale); it stays highlighted when you come back.
+                selected = clicked;
+                if (clicked != null) {
+                    net.minecraft.client.Minecraft.getInstance().gui.setScreen(new PortfolioItemScreen(this, clicked));
+                    return true;
+                }
             } else {
                 List<Portfolio.Sale> sold = sortedSales();
                 Portfolio.Sale clicked = index >= 0 && index < sold.size() ? sold.get(index) : null;

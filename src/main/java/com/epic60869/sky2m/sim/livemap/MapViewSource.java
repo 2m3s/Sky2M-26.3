@@ -1,7 +1,9 @@
 package com.epic60869.sky2m.sim.livemap;
 
 import com.epic60869.sky2m.features.dungeons.ScoreCalculator;
+import com.epic60869.sky2m.features.dungeons.mapstyle.DungeonMapStyles;
 import com.epic60869.sky2m.features.dungeons.mapstyle.MapView;
+import com.epic60869.sky2m.features.dungeons.mapstyle.RoomPrediction;
 import com.epic60869.sky2m.sim.dungeonclass.DungeonClass;
 import com.epic60869.sky2m.sim.roomdatabase.RoomEntry;
 import com.epic60869.sky2m.sim.roomsim.SimState;
@@ -153,8 +155,36 @@ public final class MapViewSource {
                 ScoreCalculator.crypts(), ScoreCalculator.deaths(), ScoreCalculator.mimicKilled(),
                 ScoreCalculator.princeKilled(), ScoreCalculator.secondsElapsed());
         String floor = DungeonState.getFloor();
+        List<MapView.Guess> guesses = !sim && !inBoss && DungeonMapStyles.predictRooms() && DungeonMapScanner.isCalibrated()
+                ? RoomPrediction.predict(DungeonMapScanner.floorNumber(), cols, rows, mapCells()) : List.of();
         return new MapView(valid, sim, inBoss, floor == null ? "" : floor, cols, rows, roomSize, gap, startX, startY,
-                List.copyOf(rooms), List.copyOf(doors), List.copyOf(heads), run);
+                List.copyOf(rooms), List.copyOf(doors), List.copyOf(heads), run, guesses);
+    }
+
+    /** The map item's cells for {@link RoomPrediction}: only {@link DungeonMapScanner}, never the world scan or the room database. */
+    private static RoomPrediction.Cell[] mapCells() {
+        RoomPrediction.Cell[] cells = new RoomPrediction.Cell[RoomPrediction.GRID * RoomPrediction.GRID];
+        for (int idx = 0; idx < cells.length; idx++) {
+            int state = DungeonMapScanner.stateAt(idx);
+            int kind = state == DungeonMapScanner.STATE_UNDISCOVERED ? DungeonMapScanner.KIND_NONE : DungeonMapScanner.kindAt(idx);
+            cells[idx] = switch (kind) {
+                case DungeonMapScanner.KIND_DOOR -> RoomPrediction.Cell.DOOR;
+                case DungeonMapScanner.KIND_SEPARATOR -> RoomPrediction.Cell.CONNECTOR;
+                case DungeonMapScanner.KIND_ROOM -> {
+                    int color = DungeonMapScanner.roomColorAt(idx);
+                    if (color == 18 || color == 30) yield RoomPrediction.Cell.FIXED;
+                    if (state == DungeonMapScanner.STATE_UNOPENED) yield RoomPrediction.Cell.UNOPENED;
+                    yield switch (color) {
+                        case 66 -> RoomPrediction.Cell.PUZZLE;
+                        case 62 -> RoomPrediction.Cell.TRAP;
+                        case 74 -> RoomPrediction.Cell.MINIBOSS;
+                        default -> RoomPrediction.Cell.OPENED;
+                    };
+                }
+                default -> RoomPrediction.Cell.NONE;
+            };
+        }
+        return cells;
     }
 
     private static MapView.RoomType roomType(String type) {

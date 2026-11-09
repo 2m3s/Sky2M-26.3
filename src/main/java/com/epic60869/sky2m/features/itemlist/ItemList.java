@@ -908,11 +908,14 @@ public final class ItemList {
         ItemListData.Entry e = ItemListData.entry(id);
         boolean creature = e != null && (e.category() == ItemListData.Category.MOB || e.category() == ItemListData.Category.NPC);
         List<ItemListData.Recipe> list = creature ? ItemListData.usages(id) : ItemListData.recipes(id);
-        if (list.isEmpty()) {
+        // Where to get it (RNG drop tables, sellers, droppers, collection unlocks), above the recipes; an item with
+        // sources but no recipe (a dungeon RNG drop) still opens.
+        List<String> sources = creature ? List.of() : ItemListSources.of(id);
+        if (list.isEmpty() && sources.isEmpty()) {
             message("No recipes found for ", name(id));
             return;
         }
-        open(parent, name(id), list);
+        Minecraft.getInstance().gui.setScreen(new ItemListRecipeScreen(parent, name(id), list, sources));
     }
 
     static void usages(String id, Screen parent) {

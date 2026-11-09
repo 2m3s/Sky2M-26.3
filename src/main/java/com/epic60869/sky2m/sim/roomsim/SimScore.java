@@ -20,10 +20,10 @@ import java.util.Locale;
  * blown, the mimic (prince) killed, bats killed, secrets found, rooms completed. Time is real because the run
  * clock is real. Skill's death penalty is real because deaths are real.
  *
- * <p>The parts it cannot are the ones that depend on Hypixel's own bookkeeping - puzzle fails it decides, and
- * the exact secret total it assigns a floor. Those are taken from the map that was generated rather than
- * guessed at, and where a number is not known it is reported as unknown rather than filled in. A score screen
- * that invents the half it cannot see is worse than one that says which half it can.
+ * <p>The formulas and per-floor tables (secret requirement, time limit) are the mod's own Score Calculator's,
+ * which reads the sim's tab list and sidebar while the sim is active, so both say the same number. Puzzle fails
+ * come from the sim's own puzzles ({@code SimPuzzles.reportFail}); the secret total is the room database's for the
+ * rooms that were built, not Hypixel's own count.
  */
 public final class SimScore {
 
@@ -54,16 +54,34 @@ public final class SimScore {
     private static int roomsCleared;
     private static int roomsTotal;
     private static int deaths;
+    /** The first death of the run was by a player with a Legendary Spirit pet: it costs one point instead of two. */
+    private static boolean spiritDeath;
+    private static boolean princeKilled;
+    private static int puzzleFails;
+    private static boolean had270;
+    private static boolean had300;
+    /** Rooms stood in this run, for the rooms that clear by being visited (the Fairy room, rooms with no mobs). */
+    private static final java.util.Set<String> VISITED = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /**
-     * The share of a floor's secrets needed for full marks.
-     *
-     * <p>Catacombs does not ask for every secret - the explore score divides by a REQUIREMENT that is a
-     * fraction of the total, which is why a 300 run does not mean a 100% secret run. Floor VII's is 100%;
-     * lower floors ask for less. Kept as a constant here because the sim only builds M7 today, and it is named
-     * so the day another floor matters it is one number to change rather than a formula to rediscover.
+     * The share of a floor's secrets needed for full marks, per floor - the same table the mod's own Score
+     * Calculator ({@code features.dungeons.ScoreCalculator}) uses, so the sim and the HUD agree. Master Mode and F7
+     * ask for every secret; lower Normal floors for less.
      */
-    private static final double SECRET_REQUIREMENT = 1.0;
+    private static final java.util.Map<String, Double> REQUIRED_SECRETS = java.util.Map.ofEntries(
+            java.util.Map.entry("E", 0.3), java.util.Map.entry("F1", 0.3), java.util.Map.entry("F2", 0.4),
+            java.util.Map.entry("F3", 0.5), java.util.Map.entry("F4", 0.6), java.util.Map.entry("F5", 0.7),
+            java.util.Map.entry("F6", 0.85), java.util.Map.entry("F7", 1.0), java.util.Map.entry("M1", 1.0),
+            java.util.Map.entry("M2", 1.0), java.util.Map.entry("M3", 1.0), java.util.Map.entry("M4", 1.0),
+            java.util.Map.entry("M5", 1.0), java.util.Map.entry("M6", 1.0), java.util.Map.entry("M7", 1.0));
+
+    /** Seconds before the speed score starts dropping, per floor - the Score Calculator's table again. */
+    private static final java.util.Map<String, Integer> TIME_LIMIT = java.util.Map.ofEntries(
+            java.util.Map.entry("E", 600), java.util.Map.entry("F1", 600), java.util.Map.entry("F2", 600),
+            java.util.Map.entry("F3", 600), java.util.Map.entry("F4", 720), java.util.Map.entry("F5", 600),
+            java.util.Map.entry("F6", 720), java.util.Map.entry("F7", 840), java.util.Map.entry("M1", 480),
+            java.util.Map.entry("M2", 480), java.util.Map.entry("M3", 480), java.util.Map.entry("M4", 480),
+            java.util.Map.entry("M5", 480), java.util.Map.entry("M6", 600), java.util.Map.entry("M7", 840));
 
     private SimScore() {
     }
@@ -76,6 +94,12 @@ public final class SimScore {
         secretsFound = 0;
         FOUND_BY_ROOM.clear();
         deaths = 0;
+        spiritDeath = false;
+        princeKilled = false;
+        puzzleFails = 0;
+        had270 = false;
+        had300 = false;
+        VISITED.clear();
         roomsCleared = 0;
         secretsTotal = mapSecretTotal;
         roomsTotal = mapRoomTotal;
@@ -150,7 +174,41 @@ public final class SimScore {
     }
 
     public static synchronized void died() {
+        died(false);
+    }
+
+    /**
+     * A death of the run. {@code spirit}: it was the first death, by a player with a Legendary Spirit pet, so it costs one skill
+     * point instead of two (Hypixel's rule; {@code SimClassKit.hasSpiritForScore}).
+     */
+    public static synchronized void died(boolean spirit) {
+        if (spirit && deaths == 0) {
+            spiritDeath = true;
+        }
         deaths++;
+    }
+
+    /** "A Prince falls. +1 Bonus Score": a crypt prince killed. */
+    public static synchronized void princeKilled() {
+        princeKilled = true;
+    }
+
+    public static boolean isPrinceKilled() {
+        return princeKilled;
+    }
+
+    /** A puzzle failed ({@code SimPuzzles.reportFail}). The skill penalty itself comes from the puzzle not being done. */
+    public static synchronized void puzzleFailed() {
+        puzzleFails++;
+    }
+
+    public static int puzzleFails() {
+        return puzzleFails;
+    }
+
+    /** Skill points the deaths cost: two each, one for a first death with a Spirit pet. */
+    public static int deathPenalty() {
+        return Math.max(0, deaths * 2 - (spiritDeath ? 1 : 0));
     }
 
     /** Explore: rooms completed and secrets found, as a percentage pair. */
@@ -190,38 +248,233 @@ public final class SimScore {
         return secretsTotal <= 0 ? 0.0 : 100.0 * secretsFound / secretsTotal;
     }
 
-    public static int exploreScore() {
+    // ------------------------------------------------------------------ Hypixel's score
+    //
+    // The same formulas, inputs and tables as the mod's own Score Calculator (features.dungeons.ScoreCalculator,
+    // after NoammAddons), which reads the sim's tab list and sidebar while the sim is active - so /simscore, the
+    // sidebar and the Score HUD say the same number.
+
+    /** "E", "F1".."M7": the floor the score tables are read for. */
+    private static String floorKey() {
+        String f = SimState.floorLabel();
+        return f == null || f.isEmpty() ? "F7" : f.toUpperCase(Locale.ROOT);
+    }
+
+    private static int floorNumber() {
+        String f = floorKey();
+        char last = f.charAt(f.length() - 1);
+        return Character.isDigit(last) ? last - '0' : 0;
+    }
+
+    /** The share of the floor's secrets that fills the secrets part of the score. */
+    public static double secretRequirement() {
+        return REQUIRED_SECRETS.getOrDefault(floorKey(), 1.0);
+    }
+
+    /** Secrets needed for the full 40: the requirement of the total, rounded up. */
+    public static int secretsNeeded() {
+        return secretsTotal <= 0 ? 0 : (int) Math.ceil(secretsTotal * secretRequirement());
+    }
+
+    public static int timeLimitSeconds() {
+        return TIME_LIMIT.getOrDefault(floorKey(), 600);
+    }
+
+    /** Rooms the score counts: cleared ones, plus the boss room Hypixel counts until you are in it. */
+    private static double roomRatio() {
         if (roomsTotal <= 0) {
             return 0;
         }
-        // The real formula (wiki, 2026-09-28): floor(60 x clearedRooms/totalRooms) + floor(40 x secretsFound /
-        // (secretRequirement x totalSecrets)), the secret half capped at 40. Floored SEPARATELY, because
-        // flooring the sum instead quietly hands back a point that Hypixel does not.
-        double roomPart = Math.min(1.0, (double) roomsCleared / roomsTotal);
-        int roomScore = (int) Math.floor(60 * roomPart);
-        int secretScore = 40;
-        if (secretsTotal > 0) {
-            double needed = SECRET_REQUIREMENT * secretsTotal;
-            secretScore = (int) Math.floor(40 * Math.min(1.0, secretsFound / needed));
+        int effective = roomsCleared + (SimBoss.isActive() ? 0 : 1);
+        return effective / (double) roomsTotal;
+    }
+
+    /** The tab list's "Secrets Found: x%", to its two decimals - the number the Score Calculator reads. */
+    private static double shownSecretPercent() {
+        return Math.round(secretsPercent() * 100.0) / 100.0;
+    }
+
+    /** Explore, secrets half: up to 40, for the floor's requirement of the secrets. */
+    public static int secretScore() {
+        return (int) Math.max(0, Math.min(40, Math.floor(shownSecretPercent() / secretRequirement() / 100.0 * 40.0)));
+    }
+
+    /** Explore, rooms half: up to 60. */
+    public static int roomScore() {
+        return (int) Math.max(0, Math.min(60, roomRatio() * 60.0));
+    }
+
+    /** Explore: rooms (60) and secrets (40). */
+    public static int exploreScore() {
+        return roomsTotal <= 0 ? 0 : secretScore() + roomScore();
+    }
+
+    /** Puzzles on the floor (the tab list's "Puzzles: (n)"). */
+    public static int puzzleCount() {
+        int n = 0;
+        for (SimRoomIndex.Placed placed : SimRoomIndex.placed()) {
+            if (SimRoomPuzzles.puzzleKey(placed.name()) != null) {
+                n++;
+            }
         }
-        return roomScore + Math.min(40, secretScore);
+        return n;
     }
 
-    /** Skill: 100 less the death penalty. Puzzle fails are not modelled - the sim does not fail puzzles yet. */
+    /** Puzzles solved (a tick on the tab list). */
+    public static int puzzlesDone() {
+        int n = 0;
+        for (SimRoomIndex.Placed placed : SimRoomIndex.placed()) {
+            String key = SimRoomPuzzles.puzzleKey(placed.name());
+            if (key != null && !SimRoomState.isFailed(placed.name())
+                    && com.epic60869.sky2m.sim.roomsim.puzzles.SimPuzzles.isComplete(key)) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    /**
+     * Skill: 20, plus up to 80 for the rooms cleared, less 10 per puzzle not solved (failed or not done) and the
+     * death penalty ({@link #deathPenalty}); between 20 and 100.
+     */
     public static int skillScore() {
-        return Math.max(0, 100 - deaths * 2);
+        int skillRooms = (int) Math.max(0, Math.min(80, Math.floor(roomRatio() * 80)));
+        int puzzlePenalty = Math.max(0, puzzleCount() - puzzlesDone()) * 10;
+        return Math.max(20, Math.min(100, 20 + skillRooms - puzzlePenalty - deathPenalty()));
     }
 
-    /** Bonus: one per crypt to a maximum of five, two for the mimic, ten for Paul. */
+    /** Speed: 100 inside the floor's time limit, then less the further over it the run is. */
+    public static int speedScore() {
+        int seconds = (int) (SimRun.elapsedMs() / 1000L);
+        int limit = timeLimitSeconds();
+        if (seconds <= limit) {
+            return 100;
+        }
+        return Math.max(0, (int) (100 - speedDeduction((seconds - limit) * 100f / limit)));
+    }
+
+    private static float speedDeduction(float percentage) {
+        float over = percentage;
+        float deduction = 0;
+        float[][] steps = {{20, 2}, {20, 3.5f}, {10, 4}, {10, 5}};
+        for (float[] step : steps) {
+            if (over <= 0) {
+                return deduction;
+            }
+            deduction += Math.min(over, step[0]) / step[1];
+            over -= step[0];
+        }
+        if (over > 0) {
+            deduction += over / 6f;
+        }
+        return deduction;
+    }
+
+    /** Bonus: one per crypt to five, two for the mimic on floors 6 and 7, one for the prince, ten for Paul. */
     public static int bonusScore() {
         int bonus = Math.min(cryptsBlown, MAX_CRYPT_BONUS);
-        if (mimicKilled) {
+        if (mimicKilled && floorNumber() > 5) {
             bonus += MIMIC_BONUS;
+        }
+        if (princeKilled) {
+            bonus += 1;
         }
         if (paulEzpz) {
             bonus += PAUL_EZPZ_BONUS;
         }
         return bonus;
+    }
+
+    /** The whole score: skill + explore + speed + bonus. */
+    public static int totalScore() {
+        return skillScore() + exploreScore() + speedScore() + bonusScore();
+    }
+
+    /** Hypixel's grade for a score. */
+    public static String grade(int score) {
+        if (score >= 300) {
+            return "S+";
+        }
+        if (score >= 270) {
+            return "S";
+        }
+        if (score >= 230) {
+            return "A";
+        }
+        if (score >= 160) {
+            return "B";
+        }
+        if (score >= 100) {
+            return "C";
+        }
+        return "D";
+    }
+
+    // ------------------------------------------------------------------ client tick: rooms and milestones
+
+    public static void register() {
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(
+                com.epic60869.sky2m.sim.util.FeatureGuard.end("SimScore.tick", SimScore::clientTick));
+    }
+
+    private static int tickCount;
+
+    private static void clientTick(net.minecraft.client.Minecraft client) {
+        if (!SimState.canAct(client) || ++tickCount % 10 != 0) {
+            return;
+        }
+        String here = SimState.currentRoomName();
+        if (here != null && !here.isBlank()) {
+            VISITED.add(here);
+        }
+        if (SimState.isGeneratedFloor()) {
+            clearMoblessRooms();
+        }
+        if (SimRun.isRunning() && SimState.isGeneratedFloor() && roomsTotal > 0) {
+            int score = totalScore();
+            if (score >= 270 && !had270) {
+                had270 = true;
+                milestone(270, score);
+            }
+            if (score >= 300 && !had300) {
+                had300 = true;
+                milestone(300, score);
+            }
+        }
+    }
+
+    private static void milestone(int at, int score) {
+        String grade = at >= 300 ? "S+" : "S";
+        ModChat.send("Sim", ModChat.text((at >= 300 ? "§c§l" : "§e§l") + grade + "§r§7 - "
+                        + at + " score reached in "), ModChat.value(SimRun.elapsedText()),
+                ModChat.dim(" (" + score + " now)"));
+    }
+
+    /**
+     * Rooms that clear without a starred mob, the way Hypixel clears them: the Entrance once the run starts, the
+     * Fairy room and a room with no starred mobs once you are in it, a puzzle once it is solved, Blood once the
+     * Watcher is done. The rooms with starred mobs clear in {@code SimMobs} when the last one dies.
+     */
+    private static void clearMoblessRooms() {
+        for (SimRoomIndex.Placed placed : SimRoomIndex.placed()) {
+            String name = placed.name();
+            if (name == null || SimRoomState.isCleared(name) || SimRoomState.isFailed(name)) {
+                continue;
+            }
+            String type = SimFloorGen.typeOf(name).toUpperCase(Locale.ROOT);
+            boolean clear = switch (type) {
+                case "ENTRANCE" -> SimRun.hasStarted();
+                case "BLOOD" -> SimWatcher.isCleared();
+                case "PUZZLE" -> {
+                    String key = SimRoomPuzzles.puzzleKey(name);
+                    yield key != null && com.epic60869.sky2m.sim.roomsim.puzzles.SimPuzzles.isComplete(key);
+                }
+                default -> VISITED.contains(name) && !SimMobs.roomHasStarred(name);
+            };
+            if (clear && SimRoomState.markCleared(name)) {
+                roomCleared();
+            }
+        }
     }
 
     /** Paul's EZPZ, which is worth ten and decides plenty of 300 runs on its own. */
@@ -256,28 +509,51 @@ public final class SimScore {
         if (cryptsBlown < MAX_CRYPT_BONUS) {
             sb.append(MAX_CRYPT_BONUS - cryptsBlown).append(" more crypt(s)");
         }
-        if (!mimicKilled) {
+        if (!mimicKilled && floorNumber() > 5) {
             sb.append(sb.isEmpty() ? "" : ", ").append("the mimic");
         }
-        if (secretsTotal > 0 && secretsFound < secretsTotal) {
-            sb.append(sb.isEmpty() ? "" : ", ").append(secretsTotal - secretsFound).append(" more secret(s)");
+        if (secretsTotal > 0 && secretsFound < secretsNeeded()) {
+            sb.append(sb.isEmpty() ? "" : ", ").append(secretsNeeded() - secretsFound).append(" more secret(s)");
+        }
+        int unsolved = puzzleCount() - puzzlesDone();
+        if (unsolved > 0) {
+            sb.append(sb.isEmpty() ? "" : ", ").append(unsolved).append(" puzzle(s)");
         }
         if (roomsTotal > 0 && roomsCleared < roomsTotal) {
             sb.append(sb.isEmpty() ? "" : ", ").append(roomsTotal - roomsCleared).append(" more room(s)");
         }
-        return sb.isEmpty() ? "nothing - this is a 300 run" : sb.toString();
+        return sb.isEmpty() ? "nothing - only deaths and time stand between you and 300" : sb.toString();
     }
 
     /** One line for chat or a HUD. */
     public static String summary() {
+        int total = totalScore();
         return String.format(Locale.US,
-                "skill %d  explore %d  bonus %d   crypts %d/%d  mimic %s  bats %d  secrets %d/%d",
-                skillScore(), exploreScore(), bonusScore(), cryptsBlown, MAX_CRYPT_BONUS,
-                mimicKilled ? "yes" : "no", batsKilled, secretsFound, secretsTotal);
+                "skill %d  explore %d  speed %d  bonus %d  = %d (%s)   crypts %d/%d  mimic %s  deaths %d  secrets %d/%d",
+                skillScore(), exploreScore(), speedScore(), bonusScore(), total, grade(total),
+                cryptsBlown, MAX_CRYPT_BONUS, mimicKilled ? "yes" : "no", deaths, secretsFound, secretsTotal);
     }
 
+    /** {@code /simscore}: the four parts, what went into each, and what is still missing. */
     public static void announce() {
-        ModChat.send("Sim", ModChat.text(summary()));
+        int total = totalScore();
+        ModChat.send("Sim", ModChat.text("Score "), ModChat.value(total + " (" + grade(total) + ")"),
+                ModChat.dim(" on " + floorKey()));
+        ModChat.send("Sim", ModChat.text("Skill "), ModChat.value(String.valueOf(skillScore())),
+                ModChat.dim("  deaths " + deaths + " (-" + deathPenalty() + ")  puzzles " + puzzlesDone() + "/"
+                        + puzzleCount() + (puzzleFails > 0 ? ", " + puzzleFails + " failed" : "")));
+        ModChat.send("Sim", ModChat.text("Explore "), ModChat.value(String.valueOf(exploreScore())),
+                ModChat.dim(String.format(Locale.US, "  rooms %d/%d (%d)  secrets %d/%d = %.1f%%, %d%% needed (%d)",
+                        roomsCleared, roomsTotal, roomScore(), secretsFound, secretsTotal, secretsPercent(),
+                        Math.round(secretRequirement() * 100), secretScore())));
+        int limit = timeLimitSeconds();
+        ModChat.send("Sim", ModChat.text("Speed "), ModChat.value(String.valueOf(speedScore())),
+                ModChat.dim(String.format(Locale.US, "  %s, limit %dm %02ds", SimRun.elapsedText(), limit / 60,
+                        limit % 60)));
+        ModChat.send("Sim", ModChat.text("Bonus "), ModChat.value(String.valueOf(bonusScore())),
+                ModChat.dim("  crypts " + Math.min(cryptsBlown, MAX_CRYPT_BONUS) + "/" + MAX_CRYPT_BONUS
+                        + (floorNumber() > 5 ? "  mimic " + (mimicKilled ? "yes" : "no") : "")
+                        + "  prince " + (princeKilled ? "yes" : "no") + (paulEzpz ? "  Paul +10" : "")));
         ModChat.send("Sim", ModChat.dim("missing: " + whatIsMissing()));
     }
 }

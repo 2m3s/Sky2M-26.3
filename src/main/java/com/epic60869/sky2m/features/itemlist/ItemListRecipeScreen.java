@@ -22,10 +22,17 @@ public final class ItemListRecipeScreen extends Screen {
     private final List<List<ItemListCard>> pages = new ArrayList<>();
     private int page;
     private int[] prevArrow, nextArrow;
+    /** "Where to get it" lines ({@link ItemListSources}), drawn above the cards on the first page; may be empty. */
+    private final List<String> sources;
 
     ItemListRecipeScreen(Screen parent, String title, List<ItemListData.Recipe> recipes) {
+        this(parent, title, recipes, List.of());
+    }
+
+    ItemListRecipeScreen(Screen parent, String title, List<ItemListData.Recipe> recipes, List<String> sources) {
         super(Component.literal(title));
         this.parent = parent;
+        this.sources = sources == null ? List.of() : sources;
         List<ItemListData.Recipe> sorted = new ArrayList<>(recipes);
         // Favourite recipes first.
         sorted.sort((a, b) -> Boolean.compare(ItemListFavourites.isRecipe(b), ItemListFavourites.isRecipe(a)));
@@ -44,7 +51,8 @@ public final class ItemListRecipeScreen extends Screen {
         pages.clear();
         int allowed = height * 4 / 5 - 20;
         List<ItemListCard> current = new ArrayList<>();
-        int used = 0;
+        // The first page also holds the sources box.
+        int used = sourcesHeight();
         for (ItemListCard card : cards) {
             if (!current.isEmpty() && used + card.height() > allowed) {
                 pages.add(current);
@@ -54,7 +62,7 @@ public final class ItemListRecipeScreen extends Screen {
             current.add(card);
             used += card.height() + GAP;
         }
-        if (!current.isEmpty()) pages.add(current);
+        if (!current.isEmpty() || pages.isEmpty()) pages.add(current);
         page = Math.clamp(page, 0, Math.max(0, pages.size() - 1));
     }
 
@@ -71,7 +79,7 @@ public final class ItemListRecipeScreen extends Screen {
         prevArrow = nextArrow = null;
         if (pages.isEmpty()) return;
         List<ItemListCard> shown = pages.get(page);
-        int total = shown.stream().mapToInt(c -> c.height() + GAP).sum() - GAP + (pages.size() > 1 ? 16 : 0);
+        int total = shown.stream().mapToInt(c -> c.height() + GAP).sum() - GAP + (pages.size() > 1 ? 16 : 0) + top();
         int x = (width - ItemListCard.WIDTH) / 2, y = (height - total) / 2;
         g.centeredText(font, title, width / 2, y - 12, ItemListCard.GOLD);
         if (pages.size() > 1) {
@@ -83,12 +91,39 @@ public final class ItemListRecipeScreen extends Screen {
             arrowButton(g, nextArrow, "▶", mouseX, mouseY);
             y += 16;
         }
+        if (top() > 0) {
+            drawSources(g, x, y);
+            y += top();
+        }
         for (ItemListCard card : shown) {
             card.draw(g, font, x, y, mouseX, mouseY);
             y += card.height() + GAP;
         }
     }
 
+    /** The sources box's height plus the gap under it, or 0 without sources. */
+    private int sourcesHeight() {
+        return sources.isEmpty() ? 0 : 16 + sources.size() * 10 + GAP;
+    }
+
+    /** The space the sources box takes on the page being shown: only the first. */
+    private int top() {
+        return page == 0 ? sourcesHeight() : 0;
+    }
+
+    /** "Where to get it": a card-style box with one line per source. */
+    private void drawSources(GuiGraphicsExtractor g, int x, int y) {
+        int h = sourcesHeight() - GAP;
+        g.fill(x, y, x + ItemListCard.WIDTH, y + h, ItemListCard.PANEL);
+        g.outline(x, y, ItemListCard.WIDTH, h, ItemListCard.EDGE);
+        g.text(font, "Where to get it", x + 5, y + 4, ItemListCard.TITLE, false);
+        int ly = y + 15;
+        for (String line : sources) {
+            String fit = font.plainSubstrByWidth(line, ItemListCard.WIDTH - 10);
+            g.text(font, Component.literal(fit), x + 5, ly, 0xFFFFFFFF, false);
+            ly += 10;
+        }
+    }
     private void arrowButton(GuiGraphicsExtractor g, int[] r, String label, int mouseX, int mouseY) {
         boolean over = mouseX >= r[0] && mouseX < r[0] + r[2] && mouseY >= r[1] && mouseY < r[1] + r[3];
         g.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], over ? ItemListCard.BUTTON_HOVER : ItemListCard.BUTTON);
@@ -104,8 +139,8 @@ public final class ItemListRecipeScreen extends Screen {
     private Object[] cardAt(double mouseX, double mouseY) {
         if (pages.isEmpty()) return null;
         List<ItemListCard> shown = pages.get(page);
-        int total = shown.stream().mapToInt(c -> c.height() + GAP).sum() - GAP + (pages.size() > 1 ? 16 : 0);
-        int x = (width - ItemListCard.WIDTH) / 2, y = (height - total) / 2 + (pages.size() > 1 ? 16 : 0);
+        int total = shown.stream().mapToInt(c -> c.height() + GAP).sum() - GAP + (pages.size() > 1 ? 16 : 0) + top();
+        int x = (width - ItemListCard.WIDTH) / 2, y = (height - total) / 2 + (pages.size() > 1 ? 16 : 0) + top();
         for (ItemListCard card : shown) {
             if (card.contains(x, y, mouseX, mouseY)) return new Object[]{card, x, y};
             y += card.height() + GAP;

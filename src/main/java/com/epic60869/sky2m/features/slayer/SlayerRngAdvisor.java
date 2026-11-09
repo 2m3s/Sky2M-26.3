@@ -97,8 +97,12 @@ public final class SlayerRngAdvisor {
             return;
         }
         for (SlayerRngMeterDisplay.MeterInfo m : list) {
-            Sky2MAlerts.chat(Component.literal(m.item() + ": ").withStyle(ChatFormatting.LIGHT_PURPLE)
-                .append(Component.literal(detail(m)).withStyle(ChatFormatting.YELLOW)));
+            var line = Component.literal(m.item() + ": ").withStyle(ChatFormatting.LIGHT_PURPLE)
+                .append(Component.literal(detail(m)).withStyle(ChatFormatting.YELLOW));
+            String forecast = SlayerRngMeterDisplay.forecastText(SlayerRngMeterDisplay.forecast(m.current(), m.required(), m.gainPerBoss(),
+                SlayerRngMeterDisplay.coinsPerBoss(m.slayer(), m.costPerBoss()), SlayerXpHud.bossesPerHour()));
+            if (!forecast.isEmpty()) line.append(Component.literal(" " + forecast).withStyle(ChatFormatting.GRAY));
+            Sky2MAlerts.chat(line);
         }
     }
 }

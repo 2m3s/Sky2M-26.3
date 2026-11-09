@@ -124,7 +124,10 @@ public final class SimTabList {
             VISITED.add(room);
         }
         List<String> lines = compose(client);
-        boolean header = headerTicks-- <= 0;
+        // A blessing just found goes into the footer at once, not up to two seconds later.
+        int blessings = SimBlessings.version();
+        boolean header = headerTicks-- <= 0 || blessings != lastBlessings;
+        lastBlessings = blessings;
         if (header) {
             headerTicks = HEADER_EVERY;
         }
@@ -150,29 +153,32 @@ public final class SimTabList {
         slot[a++] = "Party (1)";
         slot[a] = "[" + SKYBLOCK_LEVEL + "] " + self + " (" + CLASS_TEXT + ")";
 
-        // Column B: the dungeon and its puzzles.
+        // Column B: the team's numbers. Crypts sits in row 13 (slot 33), where Hypixel's tab has it and the
+        // score calculator (Skyblocker's DungeonScore) reads it by position.
         int b = ROWS;
-        slot[b++] = "Dungeon Stats";
-        slot[b++] = " Dungeon: Catacombs";
-        slot[b++] = " Completed Rooms: " + SimScore.roomsCleared();
-        slot[b++] = " Secrets Found: " + percent(SimScore.secretsPercent()) + "%";
-        slot[b++] = " Time: " + time(SimRun.elapsedMs());
-        b++;
+        slot[b++] = "Team Stats";
+        slot[b++] = " Team Deaths: " + SimScore.deaths();
+        slot[b] = " Secrets Found: " + SimScore.secretsFound();
+        slot[ROWS + 13] = " Crypts: " + SimScore.cryptsBlown();
+
+        // Column C: the dungeon and its puzzles, in Hypixel's rows: Completed Rooms at slot 43, Secrets Found % at 44,
+        // Puzzles at 47 and one row per puzzle under it.
+        int c = 2 * ROWS;
+        slot[c++] = "Dungeon Stats";
+        slot[c++] = " Dungeon: Catacombs";
+        c++; // Hypixel's "Opened Rooms" row; the sim doesn't count opened rooms
+        slot[c++] = " Completed Rooms: " + SimScore.roomsCleared();
+        slot[c++] = " Secrets Found: " + percent(SimScore.secretsPercent()) + "%";
+        slot[c++] = " Time: " + time(SimRun.elapsedMs());
+        c++;
         List<String> puzzles = puzzleRows(self);
-        slot[b++] = " Puzzles: (" + puzzles.size() + ")";
+        slot[c++] = " Puzzles: (" + puzzles.size() + ")";
         for (String row : puzzles) {
-            if (b >= 2 * ROWS) {
+            if (c >= 3 * ROWS) {
                 break;
             }
-            slot[b++] = row;
+            slot[c++] = row;
         }
-
-        // Column C: the team's numbers.
-        int c = 2 * ROWS;
-        slot[c++] = "Team Stats";
-        slot[c++] = " Team Deaths: " + SimScore.deaths();
-        slot[c++] = " Crypts: " + SimScore.cryptsBlown();
-        slot[c] = " Secrets Found: " + SimScore.secretsFound();
 
         // Column D: what this world is.
         int d = 3 * ROWS;
@@ -241,11 +247,12 @@ public final class SimTabList {
 
     // ------------------------------------------------------------------ server thread
 
-    private static void publish(MinecraftServer server, List<String> lines, boolean header) {
+    private static void publish(MinecraftServer server, List<String> composed, boolean header) {
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
         if (players.isEmpty()) {
             return;
         }
+        List<String> lines = withParty(server, composed);
         List<ClientboundPlayerInfoUpdatePacket.Entry> changed = new ArrayList<>();
         for (int i = 0; i < SLOTS; i++) {
             String line = lines.get(i);
@@ -289,10 +296,65 @@ public final class SimTabList {
         sent = lines.toArray(new String[0]);
     }
 
+    /**
+     * Column A as Hypixel lays it out for a party: "Party (n)", then one member every fourth row - "[level] name
+     * (Class L)", or "(DEAD)" for a ghost. Every client's DungeonPlayerManager, Leap Menu and map read it there.
+     * Alone it is the one row it always was. Server thread.
+     */
+    private static List<String> withParty(MinecraftServer server, List<String> composed) {
+        List<ServerPlayer> party = SimParty.players(server);
+        // Alone too: the row then says the class he picked (it used to always say Mage), which Self Class, the class
+        // cooldowns and every class-only option read.
+        if (party.isEmpty()) {
+            return composed;
+        }
+        String[] slot = composed.toArray(new String[0]);
+        for (int i = 0; i < ROWS; i++) {
+            slot[i] = "";
+        }
+        slot[0] = "Party (" + party.size() + ")";
+        for (int i = 0; i < party.size() && 1 + i * 4 < ROWS; i++) {
+            ServerPlayer p = party.get(i);
+            String cls = SimDeath.isGhost(p) ? "DEAD"
+                    : SimParty.dungeonClass(p).label + " " + roman(SimParty.classLevel(p));
+            slot[1 + i * 4] = "[" + SKYBLOCK_LEVEL + "] " + p.getGameProfile().name() + " (" + cls + ")";
+        }
+        return List.of(slot);
+    }
+
+    /** A class level the way Hypixel's tab list writes it (XLII). */
+    private static String roman(int n) {
+        int[] values = {50, 40, 10, 9, 5, 4, 1};
+        String[] numerals = {"L", "XL", "X", "IX", "V", "IV", "I"};
+        StringBuilder out = new StringBuilder();
+        int left = Math.max(1, Math.min(50, n));
+        for (int i = 0; i < values.length; i++) {
+            while (left >= values[i]) {
+                out.append(numerals[i]);
+                left -= values[i];
+            }
+        }
+        return out.toString();
+    }
+
+    /** The {@link SimBlessings} version the last header/footer packet carried. Client thread. */
+    private static int lastBlessings = -1;
+
+    /**
+     * The header, and the footer as Hypixel writes it in a dungeon: a "Dungeon Buffs" block with one
+     * "Blessing of Power XI" line per blessing the team holds (what Blessing Display reads), then the sim's note.
+     */
     private static ClientboundTabListPacket headerFooter() {
         Component head = Component.literal(SimSidebar.INFO_TITLE).withStyle(ChatFormatting.GOLD);
-        Component foot = Component.literal(SimSidebar.INFO_NOT_HYPIXEL).withStyle(ChatFormatting.GRAY);
-        return new ClientboundTabListPacket(head, foot);
+        StringBuilder foot = new StringBuilder();
+        for (String line : SimBlessings.footerLines()) {
+            foot.append(line).append("\n");
+        }
+        if (foot.length() > 0) {
+            foot.append("\n");
+        }
+        foot.append("§7").append(SimSidebar.INFO_NOT_HYPIXEL);
+        return new ClientboundTabListPacket(head, Component.literal(foot.toString()));
     }
 
     private static ClientboundPlayerInfoUpdatePacket.Entry entry(int slot, String text) {

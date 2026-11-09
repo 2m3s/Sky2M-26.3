@@ -21,7 +21,7 @@ An all-in-one Fabric mod for Hypixel SkyBlock on Minecraft 26.3. Formerly SkyBal
 
 ## Commands
 
-`/s2` · `gui` · `whatsnew` · `log` · `search` · `storage` · `notes` · `recipe <item> [amount]` · `calc <sum>` · `custom` · `keys` · `nick [name]` · `chat [message]` · `pf` · `friends` · `cata <player>` · `requeue cancel` · `translate <language> <message>` · `route start|stop|next|back|clear|list|cancel` · `export` · `debug`
+`/s2` · `gui` · `whatsnew` · `log` · `search` · `storage` · `notes` · `recipe <item> [amount]` · `calc <sum>` · `custom` · `keys` · `nick [name]` · `chat [message]` · `pf` · `friends` · `cata <player>` · `requeue cancel` · `translate <language> <message>` · `route start|stop|next|back|switch|delete|clear|list|cancel|edit|pack|best|bests` · `export` · `debug`
 
 `/s2c [message]` sends to Sky2M chat. `/s2m` works the same as `/s2`.
 

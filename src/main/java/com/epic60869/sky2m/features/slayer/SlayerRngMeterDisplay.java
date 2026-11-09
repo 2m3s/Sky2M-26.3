@@ -66,6 +66,8 @@ public final class SlayerRngMeterDisplay {
         long required = -1;
         long current = -1;
         long gainPerBoss = -1;
+        /** What the last quest for this slayer cost, from {@link SlayerQuestCost}. */
+        long costPerBoss = -1;
     }
 
     private static final Map<String, Meter> METERS = new LinkedHashMap<>();
@@ -79,12 +81,40 @@ public final class SlayerRngMeterDisplay {
     private SlayerRngMeterDisplay() {}
 
     /** One slayer's known meter, for {@link SlayerRngAdvisor}. {@code required} and {@code current} are -1 when not read yet. */
-    record MeterInfo(String slayer, String item, long current, long required, long gainPerBoss) {}
+    record MeterInfo(String slayer, String item, long current, long required, long gainPerBoss, long costPerBoss) {}
+
+    /** To the drop: bosses, coins in quest fees (-1 when unknown, 0 for motes) and seconds (-1 when unknown). */
+    public record Forecast(long bosses, long coins, double seconds) {}
+
+    /** Bosses, coins and time to fill a meter, from one boss's meter XP, its quest fee and your bosses per hour. Public for the game test. */
+    public static Forecast forecast(long current, long required, long xpPerBoss, long coinsPerBoss, double bossesPerHour) {
+        if (xpPerBoss <= 0 || required <= 0) return new Forecast(-1, -1, -1);
+        long missing = Math.max(0, required - Math.max(0, current));
+        long bosses = Math.max(1, (missing + xpPerBoss - 1) / xpPerBoss);
+        return new Forecast(bosses, coinsPerBoss >= 0 ? bosses * coinsPerBoss : -1, bossesPerHour > 0 ? bosses / bossesPerHour * 3600 : -1);
+    }
+
+    /** "~491 bosses, ~24.5M coins, ~8h 5m", leaving out what isn't known. Public for the game test. */
+    public static String forecastText(Forecast f) {
+        if (f.bosses() < 0) return "";
+        StringBuilder out = new StringBuilder(String.format(Locale.US, "~%,d bosses", f.bosses()));
+        if (f.coins() > 0) out.append(", ~").append(com.epic60869.sky2m.features.combat.CombatFeatures.formatCoins(f.coins())).append(" coins");
+        if (f.seconds() > 0) out.append(", ~").append(SlayerXpHud.duration(f.seconds()));
+        return out.toString();
+    }
+
+    /** One quest's coins: what you last paid, else the wiki's price for your last boss if it's this slayer; 0 for motes, -1 unknown. */
+    static long coinsPerBoss(String slayer, long seen) {
+        if (slayer.equals("Riftstalker Bloodfiend")) return 0;
+        if (seen > 0) return seen;
+        String last = SlayerTimes.lastBoss();
+        return last != null && last.startsWith(slayer) ? SlayerCosts.price(last, -1) : -1;
+    }
 
     /** The meters this class has read from the menus and chat (the same data its HUD uses). */
     static List<MeterInfo> meters() {
         List<MeterInfo> out = new ArrayList<>();
-        METERS.forEach((slayer, m) -> out.add(new MeterInfo(slayer, m.item, m.current, m.required, m.gainPerBoss)));
+        METERS.forEach((slayer, m) -> out.add(new MeterInfo(slayer, m.item, m.current, m.required, m.gainPerBoss, m.costPerBoss)));
         return out;
     }
 
@@ -101,12 +131,19 @@ public final class SlayerRngMeterDisplay {
     public static void init(Path configDir) {
         file = configDir.resolve("sky2m").resolve("slayer-rng-meter.json");
         load();
+        SlayerQuestCost.onCharge(charge -> {
+            Meter meter = charge.slayer() == null ? null : METERS.get(charge.slayer());
+            if (meter != null && charge.coins() > 0 && meter.costPerBoss != charge.coins()) {
+                meter.costPerBoss = charge.coins();
+                save();
+            }
+        });
         Sky2MHuds.register("slayer_rng_meter", "Slayer RNG Meter", () -> config() != null && config().enabled,
             () -> lines,
             List.of(Component.literal("Scythe Blade: ").withStyle(ChatFormatting.LIGHT_PURPLE)
                     .append(Component.literal("63.2%").withStyle(ChatFormatting.YELLOW))
                     .append(Component.literal(" (1,264,000 / 2,000,000)").withStyle(ChatFormatting.GRAY)),
-                Component.literal("~491 bosses left").withStyle(ChatFormatting.GRAY)), 8, 260);
+                Component.literal("~491 bosses, ~24.5M coins, ~8h 5m").withStyle(ChatFormatting.GRAY)), 8, 260);
         Sky2MHuds.setting("slayer_rng_meter", () -> config() != null && config().enabled);
         Sky2MChat.onChat(message -> {
             if (enabled()) onChat(message.text().trim());
@@ -303,9 +340,13 @@ public final class SlayerRngMeterDisplay {
             .append(Component.literal(String.format(Locale.US, "%.1f%%", share * 100)).withStyle(ChatFormatting.YELLOW))
             .append(Component.literal(String.format(Locale.US, " (%,d / %,d)", meter.current, meter.required)).withStyle(ChatFormatting.GRAY)));
         FeatureConfigs.SlayerRngMeterDisplay c = config();
-        if (c == null || c.bossesLeft) {
+        boolean showForecast = c != null && c.costForecast;
+        if (c == null || c.bossesLeft || showForecast) {
             long perBoss = meter.gainPerBoss > 0 ? meter.gainPerBoss : tierXp(slayer, tier);
-            if (perBoss > 0) {
+            if (perBoss > 0 && showForecast) {
+                out.add(Component.literal(forecastText(forecast(meter.current, meter.required, perBoss, coinsPerBoss(slayer, meter.costPerBoss), SlayerXpHud.bossesPerHour()))).withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(meter.gainPerBoss > 0 ? "" : " (tier XP)").withStyle(ChatFormatting.DARK_GRAY)));
+            } else if (perBoss > 0) {
                 long missing = Math.max(0, meter.required - meter.current);
                 long bosses = Math.max(1, (missing + perBoss - 1) / perBoss);
                 out.add(Component.literal("~" + String.format(Locale.US, "%,d", bosses) + " bosses left").withStyle(ChatFormatting.GRAY)

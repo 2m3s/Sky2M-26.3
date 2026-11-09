@@ -125,12 +125,14 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.misc.profit.ProfitTracker.init(configDir); lap("ProfitTracker.init");
         com.epic60869.sky2m.features.combat.DianaLobbyCompromised.init(); lap("DianaLobbyCompromised.init");
         com.epic60869.sky2m.features.slayer.SlayerFeatures.init(); lap("SlayerFeatures.init");
+        com.epic60869.sky2m.features.slayer.SlayerQuestWarning.init(); lap("SlayerQuestWarning.init");
         com.epic60869.sky2m.features.slayer.EndermanSlayer.init(); lap("EndermanSlayer.init");
         com.epic60869.sky2m.features.slayer.BlazeSlayer.init(); lap("BlazeSlayer.init");
         com.epic60869.sky2m.features.slayer.RngMeterValue.init(); lap("RngMeterValue.init");
         com.epic60869.sky2m.features.slayer.SlayerRngMeterDisplay.init(configDir); lap("SlayerRngMeterDisplay.init");
         com.epic60869.sky2m.features.slayer.SlayerTimes.init(configDir); lap("SlayerTimes.init");
         com.epic60869.sky2m.features.slayer.SlayerPbHud.init(); lap("SlayerPbHud.init");
+        com.epic60869.sky2m.features.slayer.SlayerXpHud.init(); lap("SlayerXpHud.init");
         com.epic60869.sky2m.features.slayer.SlayerMinibossAlert.init(); lap("SlayerMinibossAlert.init");
         com.epic60869.sky2m.features.slayer.SlayerBossSpawnAlert.init(); lap("SlayerBossSpawnAlert.init");
         com.epic60869.sky2m.features.slayer.SlayerBossProfit.init(configDir); lap("SlayerBossProfit.init");
@@ -200,6 +202,8 @@ public final class Sky2MMod implements ClientModInitializer {
         com.epic60869.sky2m.features.misc.crosshair.CustomCrosshair.init(); lap("CustomCrosshair.init");
         com.epic60869.sky2m.features.misc.items.InventoryHud.init(); lap("InventoryHud.init");
         com.epic60869.sky2m.features.misc.items.ItemPickupLog.init(); lap("ItemPickupLog.init");
+        com.epic60869.sky2m.features.misc.items.ItemOrigin.init(); lap("ItemOrigin.init");
+        com.epic60869.sky2m.features.misc.items.UpgradeAdvisor.init(); lap("UpgradeAdvisor.init");
         com.epic60869.sky2m.features.misc.chat.PetDropRarity.init(); lap("PetDropRarity.init");
         com.epic60869.sky2m.features.misc.chat.ChatTranslator.init(); lap("ChatTranslator.init");
         com.epic60869.sky2m.features.profileviewer.ProfileViewer.init(); lap("ProfileViewer.init");
@@ -228,9 +232,16 @@ public final class Sky2MMod implements ClientModInitializer {
         Sky2MPlayerNotes.init(); lap("Sky2MPlayerNotes.init");
         Sky2MAliases.init(); lap("Sky2MAliases.init");
         com.epic60869.sky2m.features.combat.RngCommand.init(); lap("RngCommand.init");
+        // /s2 hour, /s2 tracker and /s2 rnglist, moved here from the Sky2M Personal add-on.
+        com.epic60869.sky2m.features.tracker.DungeonProfitHour.init(); lap("DungeonProfitHour.init");
+        com.epic60869.sky2m.features.tracker.BestFloor.init(); lap("BestFloor.init");
+        com.epic60869.sky2m.features.misc.system.Sky2MTimer.init(); lap("Sky2MTimer.init");
+        com.epic60869.sky2m.features.tracker.DungeonDropTracker.init(); lap("DungeonDropTracker.init");
+        com.epic60869.sky2m.features.tracker.RngTracker.init(); lap("RngTracker.init");
         com.epic60869.sky2m.features.misc.system.KeybindSheetScreen.register(); lap("KeybindSheetScreen.register");
         com.epic60869.sky2m.features.misc.social.ScreenshotGallery.register(); lap("ScreenshotGallery.register");
         com.epic60869.sky2m.features.core.Sky2MPerfScreen.register(); lap("Sky2MPerfScreen.register");
+        com.epic60869.sky2m.features.core.Sky2MPerfSample.register(); lap("Sky2MPerfSample.register");
         com.epic60869.sky2m.features.core.Sky2MPerfWarnings.register(); lap("Sky2MPerfWarnings.register");
         com.epic60869.sky2m.features.core.Sky2MErrors.register(); lap("Sky2MErrors.register");
         com.epic60869.sky2m.features.core.Sky2MHudOverviewScreen.register(); lap("Sky2MHudOverviewScreen.register");
@@ -346,7 +357,8 @@ public final class Sky2MMod implements ClientModInitializer {
                 Minecraft.getInstance().execute(this::enterSky2MChat);
                 return false;
             }
-            if (lower.startsWith("chat ") && Sky2MGlobalChat.isInSky2MChannel()) {
+            // Another /chat channel, or a bare /r (into the private conversation), leaves it; the command still goes on.
+            if (Sky2MGlobalChat.leavesSky2MChannel(lower) && Sky2MGlobalChat.isInSky2MChannel()) {
                 Sky2MGlobalChat.leaveSky2MChannel();
             }
             return true;
@@ -411,6 +423,8 @@ public final class Sky2MMod implements ClientModInitializer {
             .then(ClientCommands.literal("notes").executes(context -> openNotes()))
             .then(ClientCommands.literal("search").executes(context -> openStorageSearch()))
             .then(Sky2MRecipeCommand.command())
+            .then(Sky2MRecipeCommand.priceGraphCommand())
+            .then(com.epic60869.sky2m.features.profileviewer.Sky2MWeightCommand.command())
             .then(ClientCommands.literal("calc")
                 .then(ClientCommands.argument("calculation", StringArgumentType.greedyString())
                     .executes(context -> calculate(StringArgumentType.getString(context, "calculation")))))

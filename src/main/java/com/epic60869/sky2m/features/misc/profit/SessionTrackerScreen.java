@@ -4,6 +4,8 @@ import com.epic60869.sky2m.gui.Sky2MGuiStyle;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
+import com.epic60869.sky2m.features.tracker.DungeonDropTracker;
+import com.epic60869.sky2m.features.tracker.TrackerDrops;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -29,8 +31,8 @@ public final class SessionTrackerScreen extends Screen {
     private static final int ROW = 14, DROP_ROW = 18, GOLD = 0xFFFFD35A, GREEN = 0xFF55FF55, RED = 0xFFFF5555;
     /** Secondary text, between the settings' grey and dark grey (as in /s2 collections). */
     private static final int GREY = 0xFF808080;
-    /** The tabs: every profit tracker (shown after Total), then Total. */
-    private static final int TOTAL = SessionTracker.ACTIVITIES.length;
+    /** The tabs: every profit tracker (shown after Total), then Dungeons (from /s2 tracker's chests), then Total. */
+    private static final int DUNGEON_TAB = SessionTracker.ACTIVITIES.length, TOTAL = DUNGEON_TAB + 1;
 
     /** -1 is this session, 0 the last game's, and so on. */
     private int index;
@@ -54,6 +56,10 @@ public final class SessionTrackerScreen extends Screen {
     private final boolean[] unknown = new boolean[TOTAL];
     private final List<List<Item>> items = new ArrayList<>();
     private final Map<Integer, Double> dayProfits = new java.util.HashMap<>();
+    /** The shown day's dungeon chests, read with the prices. */
+    private TrackerDrops.Day dungeons = new TrackerDrops.Day(SessionTracker.DUNGEONS, List.of(), 0, 0);
+    private int dungeonChests;
+    private long firstChest, dungeonMs;
 
     private record Item(String id, String name, long amount, double value) {}
 
@@ -81,11 +87,23 @@ public final class SessionTrackerScreen extends Screen {
         SessionTracker.Session s = session();
         int found = -1;
         for (int i = 0; i < TOTAL; i++) {
-            if (!s.has(SessionTracker.ACTIVITIES[i])) continue;
+            if (!(i == DUNGEON_TAB ? s.hasDungeons() : s.has(SessionTracker.ACTIVITIES[i]))) continue;
             if (found >= 0) return TOTAL;
             found = i;
         }
         return found < 0 ? TOTAL : found;
+    }
+
+    /** Whether this tab's activity was done on the shown day, from what the last reprice read. */
+    private boolean done(SessionTracker.Session s, int t) {
+        return t == DUNGEON_TAB ? dungeonChests > 0 : s.has(SessionTracker.ACTIVITIES[t]);
+    }
+
+    /** How long this tab's activity went on for on the shown day. */
+    private long timeOf(SessionTracker.Session s, int t) {
+        if (t == DUNGEON_TAB) return dungeonMs;
+        ProfitTracker.Stats stats = s.get(SessionTracker.ACTIVITIES[t]);
+        return stats == null ? 0 : stats.activeMs;
     }
 
     private void reprice(boolean force) {
@@ -99,7 +117,7 @@ public final class SessionTrackerScreen extends Screen {
         priceSource = source;
         items.clear();
         SessionTracker.Session s = session();
-        for (int i = 0; i < TOTAL; i++) {
+        for (int i = 0; i < DUNGEON_TAB; i++) {
             ProfitTracker.Preset preset = SessionTracker.ACTIVITIES[i];
             ProfitTracker.Stats stats = s.get(preset);
             boolean[] u = {false};
@@ -115,6 +133,17 @@ public final class SessionTrackerScreen extends Screen {
             list.sort(Comparator.comparingDouble(Item::value).reversed());
             items.add(list);
         }
+        // Dungeon chests keep the worth they had when claimed, as in /s2 tracker, so these aren't priced again.
+        dungeons = s.dungeons();
+        dungeonChests = s.dungeonChests();
+        firstChest = s.firstChest();
+        dungeonMs = s.dungeonMs();
+        profits[DUNGEON_TAB] = dungeons.profit();
+        List<Item> loot = new ArrayList<>();
+        for (DungeonDropTracker.Row row : DungeonDropTracker.rows(dungeons.drops(), null, "")) {
+            loot.add(new Item(row.id(), row.name(), row.count(), row.value() > 0 ? row.value() : -1));
+        }
+        items.add(loot);
     }
 
     private double shownProfit() {
@@ -125,13 +154,7 @@ public final class SessionTrackerScreen extends Screen {
     }
 
     private double dayProfit(int dayIndex, SessionTracker.Session session) {
-        return dayProfits.computeIfAbsent(dayIndex, ignored -> {
-            double total = 0;
-            for (ProfitTracker.Preset preset : SessionTracker.ACTIVITIES) {
-                total += SessionTracker.profit(preset, session.get(preset), null);
-            }
-            return total;
-        });
+        return dayProfits.computeIfAbsent(dayIndex, ignored -> SessionTracker.profit(session));
     }
 
     private void go(int newIndex) {
@@ -177,7 +200,8 @@ public final class SessionTrackerScreen extends Screen {
     }
 
     private static String tabLabel(int t) {
-        return t < TOTAL ? SessionTracker.name(SessionTracker.ACTIVITIES[t]) : "Total";
+        if (t == TOTAL) return "Total";
+        return t == DUNGEON_TAB ? SessionTracker.DUNGEONS : SessionTracker.name(SessionTracker.ACTIVITIES[t]);
     }
 
     /**
@@ -411,6 +435,7 @@ public final class SessionTrackerScreen extends Screen {
             Math.max(0, insetRight() - 2 - descX));
         g.text(font, desc, descX, descY, Sky2MGuiStyle.DESCRIPTION, true);
         String hint = !s.hasAny() ? "" : tab == TOTAL ? "Click an activity for its drops."
+            : tab == DUNGEON_TAB ? dungeonChests > 0 ? "Loot is worth what it was when claimed." : ""
             : s.has(SessionTracker.ACTIVITIES[tab]) && !items.get(tab).isEmpty() ? "Click a drop to change its amount or remove it." : "";
         // The hint goes on the right when there's room for it next to the description.
         if (!hint.isEmpty() && descX + font.width(desc) + 12 + font.width(hint) <= insetRight() - 2) {
@@ -423,6 +448,8 @@ public final class SessionTrackerScreen extends Screen {
                 : "Turn on the Session Tracker (Misc > Profit Trackers > Session Tracker).");
         } else if (tab == TOTAL) {
             total(g, mouseX, mouseY);
+        } else if (tab == DUNGEON_TAB) {
+            dungeonTab(g, mouseX, mouseY);
         } else {
             activity(g, SessionTracker.ACTIVITIES[tab], mouseX, mouseY);
         }
@@ -466,9 +493,9 @@ public final class SessionTrackerScreen extends Screen {
         int visible = Math.max(1, (insetBottom() - 2 - rowsTop) / ROW);
         scroll = Math.clamp(scroll, 0, Math.max(0, TOTAL - visible));
         for (int i = scroll; i < TOTAL && i < scroll + visible; i++) {
-            ProfitTracker.Preset preset = SessionTracker.ACTIVITIES[i];
+            ProfitTracker.Preset preset = i == DUNGEON_TAB ? null : SessionTracker.ACTIVITIES[i];
             int ry = rowsTop + (i - scroll) * ROW;
-            boolean has = s.has(preset);
+            boolean has = done(s, i);
             boolean over = false;
             if (has) {
                 int t = i;
@@ -482,14 +509,14 @@ public final class SessionTrackerScreen extends Screen {
             if (over) g.fill(rowLeft(), ry, rowRight(), ry + ROW, Sky2MGuiStyle.ROW_HOVER);
             else if (i % 2 == 1) g.fill(rowLeft(), ry, rowRight(), ry + ROW, Sky2MGuiStyle.ROW);
             int ty = ry + 3;
-            int colour = 0xFF000000 | net.minecraft.network.chat.TextColor.fromLegacyFormat(SessionTracker.colour(preset)).getValue();
-            String status = live() && SessionTracker.running(preset) ? " §a●" : "";
-            g.text(font, fit(SessionTracker.name(preset) + status, c, 0), c[0], ty, has ? colour : Sky2MGuiStyle.MUTED, false);
+            int colour = 0xFF000000 | net.minecraft.network.chat.TextColor.fromLegacyFormat(preset == null ? SessionTracker.DUNGEON_COLOUR : SessionTracker.colour(preset)).getValue();
+            String status = preset != null && live() && SessionTracker.running(preset) ? " §a●" : "";
+            g.text(font, fit(tabLabel(i) + status, c, 0), c[0], ty, has ? colour : Sky2MGuiStyle.MUTED, false);
             if (has) {
-                ProfitTracker.Stats stats = s.get(preset);
-                String started = SessionTracker.date(s.firstActive(preset)).replaceFirst(" \\d{4}$", "") + " " + SessionTracker.time(s.firstActive(preset));
+                long first = preset == null ? firstChest : s.firstActive(preset);
+                String started = SessionTracker.date(first).replaceFirst(" \\d{4}$", "") + " " + SessionTracker.time(first);
                 g.text(font, fit(started, c, 1), c[1], ty, Sky2MGuiStyle.TEXT_DIM, false);
-                g.text(font, fit(SessionTracker.duration(stats.activeMs), c, 2), c[2], ty, Sky2MGuiStyle.TEXT_DIM, false);
+                g.text(font, fit(SessionTracker.duration(timeOf(s, i)), c, 2), c[2], ty, Sky2MGuiStyle.TEXT_DIM, false);
                 g.text(font, fit(signed(profits[i]), c, 3), c[3], ty, profits[i] >= 0 ? GREEN : RED, false);
             } else {
                 g.text(font, "-", c[1], ty, Sky2MGuiStyle.MUTED, false);
@@ -565,6 +592,47 @@ public final class SessionTrackerScreen extends Screen {
         Sky2MGuiStyle.scrollbar(g, insetRight() - 10, y, insetBottom() - 4, scroll, visible, list.size());
     }
 
+    /** Dungeons: the day's chests from /s2 tracker, their worth and cost, and the loot. Loot can't be edited here, as it's /s2 tracker's. */
+    private void dungeonTab(GuiGraphicsExtractor g, int mouseX, int mouseY) {
+        if (dungeonChests == 0) {
+            message(g, DungeonDropTracker.on() ? "No dungeon chests opened this day."
+                : "Turn on Drop Tracker (Misc > Profit Trackers > Drop Tracker, Profit per Hour & RNG List) to count dungeon chests.");
+            return;
+        }
+        int x = insetLeft() + 6, half = (insetLeft() + insetRight()) / 2, y = insetTop() + 5;
+        int lw = half - 6 - x, rw = insetRight() - 6 - half;
+        int ly = y;
+        ly = stat(g, x, ly, lw, "Date", SessionTracker.date(firstChest));
+        ly = stat(g, x, ly, lw, "First chest", SessionTracker.time(firstChest));
+        ly = stat(g, x, ly, lw, "Chests", String.format(Locale.US, "%,d", dungeonChests));
+        int ry = y;
+        ry = stat(g, half, ry, rw, "Profit per hour", dungeonMs < 60_000 ? "-" : signed(dungeons.profit() * 3_600_000.0 / dungeonMs));
+        ry = stat(g, half, ry, rw, "Run time", dungeonMs > 0 ? SessionTracker.duration(dungeonMs) : "-");
+        ry = stat(g, half, ry, rw, "Loot / costs", "§6" + ProfitTrackerHud.coins(dungeons.worth()) + " §7/ §c" + ProfitTrackerHud.coins(dungeons.costs()));
+        y = Math.max(ly, ry) + 3;
+        g.fill(rowLeft(), y, insetRight() - 3, y + 1, Sky2MGuiStyle.LINE);
+        y += 4;
+
+        List<Item> list = items.get(DUNGEON_TAB);
+        int visible = Math.max(1, (insetBottom() - 2 - y) / DROP_ROW);
+        scroll = Math.clamp(scroll, 0, Math.max(0, list.size() - visible));
+        int amountX = x + (rowRight() - x) * 58 / 100;
+        for (int i = scroll; i < list.size() && i - scroll < visible; i++) {
+            Item item = list.get(i);
+            int iy = y + (i - scroll) * DROP_ROW;
+            if (i % 2 == 1) g.fill(rowLeft(), iy, rowRight(), iy + DROP_ROW, Sky2MGuiStyle.ROW);
+            if (!item.id().isEmpty()) g.item(RepoItems.itemStack(item.id()), x, iy + 1);
+            String value = item.value() < 0 ? "§8-" : "§6" + ProfitTrackerHud.coins(item.value());
+            int valueX = rowRight() - 4 - font.width(value);
+            String amount = "§7x" + String.format(Locale.US, "%,d", item.amount());
+            int amountAt = Math.min(amountX, valueX - 8 - font.width(amount));
+            g.text(font, font.plainSubstrByWidth(item.name(), Math.max(0, amountAt - x - 26)), x + 20, iy + 5, Sky2MGuiStyle.TEXT, false);
+            g.text(font, amount, amountAt, iy + 5, Sky2MGuiStyle.TEXT, false);
+            g.text(font, value, valueX, iy + 5, Sky2MGuiStyle.TEXT, false);
+        }
+        Sky2MGuiStyle.scrollbar(g, insetRight() - 10, y, insetBottom() - 4, scroll, visible, list.size());
+    }
+
     private long copiedAt;
 
     /**
@@ -579,16 +647,15 @@ public final class SessionTrackerScreen extends Screen {
         double total = 0;
         for (double p : profits) total += p;
         double shown = tab < TOTAL ? profits[tab] : total;
-        long time = tab < TOTAL && s.get(SessionTracker.ACTIVITIES[tab]) != null ? s.get(SessionTracker.ACTIVITIES[tab]).activeMs : playtime;
-        out.append(tab < TOTAL ? SessionTracker.name(SessionTracker.ACTIVITIES[tab]) + ": " : "Total: ").append(plain(shown));
+        long time = tab < TOTAL ? timeOf(s, tab) : playtime;
+        out.append(tabLabel(tab)).append(": ").append(plain(shown));
         if (time >= 60_000) out.append(" (").append(plain(shown * 3_600_000.0 / time)).append("/h, ").append(SessionTracker.duration(time)).append(')');
         out.append('\n');
         for (int i = 0; i < TOTAL; i++) {
             if (tab < TOTAL && i != tab) continue;
-            ProfitTracker.Preset preset = SessionTracker.ACTIVITIES[i];
-            if (!s.has(preset)) continue;
-            if (tab == TOTAL) out.append("• ").append(SessionTracker.name(preset)).append(": ").append(plain(profits[i]))
-                .append(" (").append(SessionTracker.duration(s.get(preset).activeMs)).append(")\n");
+            if (!done(s, i)) continue;
+            if (tab == TOTAL) out.append("• ").append(tabLabel(i)).append(": ").append(plain(profits[i]))
+                .append(" (").append(SessionTracker.duration(timeOf(s, i))).append(")\n");
             List<Item> list = items.size() > i ? items.get(i) : List.of();
             int shownItems = 0;
             for (Item item : list) {

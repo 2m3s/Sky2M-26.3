@@ -27,6 +27,8 @@ import java.util.List;
  */
 public final class StarredMobs {
     private static final String STAR = "✯";
+    private static final List<String> PLAIN_MOBS = List.of("Lurker", "Dreadlord", "Souleater", "Zombie", "Skeleton", "Skeletor",
+        "Sniper", "Super Archer", "Spider", "Fels", "Withermancer");
     private static List<LivingEntity> starred = List.of();
     private static List<LivingEntity> bats = List.of();
     private static List<LivingEntity> withers = List.of();
@@ -99,6 +101,29 @@ public final class StarredMobs {
         if (!(entity instanceof ArmorStand) && entity instanceof LivingEntity) return false;
         Component name = entity.getCustomName();
         return name != null && name.getString().contains(STAR);
+    }
+
+    /**
+     * Mobs > Hide Non-Starred Nametags: whether this nametag isn't drawn, while clearing (Sky2MHideFireballsMixin, asked for
+     * every entity every frame, so the setting goes first). The mob itself still shows.
+     */
+    public static boolean hideTag(Entity entity) {
+        FeatureConfigs.DungeonMobs config = config();
+        if (config == null || !config.hideNonStarredTags || !Sky2MLocation.inDungeon()) return false;
+        if (!(entity instanceof ArmorStand) && entity instanceof LivingEntity) return false;
+        Component name = entity.getCustomName();
+        return name != null && !com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager.isInBoss()
+            && isNonStarredTag(Sky2MLocation.strip(name.getString()));
+    }
+
+    /**
+     * A plain dungeon mob's nametag without the star, like "Zombie Commander 1.2M❤". Only mob names on this list, the same
+     * kinds of mob Skytils hides, so minibosses, blood mobs and Princes keep theirs. Public for the game test.
+     */
+    public static boolean isNonStarredTag(String name) {
+        if (name.contains(STAR) || !name.contains("❤")) return false;
+        for (String mob : PLAIN_MOBS) if (name.contains(mob)) return true;
+        return false;
     }
 
     private static float[] colour(String value, float[] fallback) {

@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Odin's Terracotta Timer (https://github.com/odtheking/Odin, BSD-3-Clause: features/impl/boss/TerracottaTimer.kt): in
- * the F6 and M6 boss, a flower pot appears where a terracotta died; it respawns 15 seconds later (12 on M6). The time
+ * the F6 and M6 boss, a flower pot appears where a terracotta died; it respawns 10 seconds later on both (the wiki). The time
  * left is shown over each pot.
  */
 public final class TerracottaTimer {
@@ -54,7 +54,8 @@ public final class TerracottaTimer {
     private static void onBlockUpdate(BlockPos pos, BlockState old, BlockState updated) {
         if (!(updated.getBlock() instanceof FlowerPotBlock) || !inBoss()) return;
         if (spawning.stream().anyMatch(t -> t.pos.equals(pos))) return;
-        spawning.add(new Terracotta(pos.immutable(), Sky2MLocation.dungeonFloor().startsWith("M") ? 12f : 15f));
+        spawning.add(new Terracotta(pos.immutable(), 10f));
+        SadanInterest.onTerracottaDied();
     }
 
     private static void render(PrimitiveCollector collector) {

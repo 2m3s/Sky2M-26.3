@@ -85,7 +85,7 @@ public final class GlobalSearchIndex {
         COMMAND_INFO.put("discord", "Link to the Sky2M Discord");
         COMMAND_INFO.put("debug", "Debug information");
         COMMAND_INFO.put("whatsnew", "What's new in this version");
-        COMMAND_INFO.put("perf", "HUD and renderer timings");
+        COMMAND_INFO.put("perf", "HUD and renderer timings; /s2 perf start measures ticks too");
         COMMAND_INFO.put("keyconflicts", "Keys used by more than one feature");
         COMMAND_INFO.put("errors", "This session's errors");
         COMMAND_INFO.put("health", "Version, startup time, S2C connection, related mods and errors");

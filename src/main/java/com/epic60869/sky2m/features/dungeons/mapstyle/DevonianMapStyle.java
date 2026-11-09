@@ -76,6 +76,7 @@ public final class DevonianMapStyle implements MapStyleRenderer {
 
         drawDoors(g, view, geo, byCell);
         drawRooms(g, view, geo, byCell);
+        drawGuesses(g, view, geo, byCell);
         if (cfg == null || cfg.roomLabels) drawText(g, view, geo);
         else drawChecks(g, view, geo);
         if (!view.inBoss()) drawPlayers(g, view, geo, cfg == null || cfg.fancy);
@@ -212,7 +213,25 @@ public final class DevonianMapStyle implements MapStyleRenderer {
         }
     }
 
-    private static boolean touchesExploredDoor(int[] tile, Map<Integer, MapView.Door> doors, Map<Integer, MapView.Room> byCell) {
+    /** Predict Unopened Rooms, only on the grey tiles this style draws. Plain grey has no "?" here, so the guess adds one. */
+    private static void drawGuesses(GuiGraphicsExtractor g, MapView view, Geo geo, Map<Integer, MapView.Room> byCell) {
+        if (view.guesses().isEmpty()) return;
+        Font font = Minecraft.getInstance().font;
+        double roomOffset = (1.0 - ROOM_WIDTH) * 0.5;
+        Map<Integer, MapView.Door> doorCells = new HashMap<>();
+        for (MapView.Door d : view.doors()) doorCells.put(d.gz() * 11 + d.gx(), d);
+        for (MapView.Guess guess : view.guesses()) {
+            if (!byCell.containsKey(guess.row() * 2 * 11 + guess.col() * 2)) continue;
+            if (!touchesExploredDoor(new int[]{guess.col(), guess.row()}, doorCells, byCell)) continue;
+            int x = geo.px(guess.col() + roomOffset);
+            int y = geo.py(guess.row() + roomOffset);
+            int s = geo.len(ROOM_WIDTH) + 1;
+            RoomPrediction.draw(g, guess, x, y, s, DevonianMapStyle::baseColor);
+            g.text(font, "?", x + (s - font.width("?")) / 2, y + (s - font.lineHeight) / 2 + 1, 0xFFFFFFFF, true);
+        }
+    }
+
+    private static boolean touchesExploredDoor(int[] tile,Map<Integer, MapView.Door> doors, Map<Integer, MapView.Room> byCell) {
         int cx = tile[0] * 2;
         int cz = tile[1] * 2;
         for (int[] side : new int[][]{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}) {

@@ -21,9 +21,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Interactive Map - port of QUOI's {@code InteractiveMap} module (plus NoammAddons/Odin map UX): keybinds, the HUD peek,
- * clicking the HUD map from chat, per-room "cleared by" tracking and the player marker list the
- * {@link InteractiveMapScreen} draws. Teleport pathing ({@code livemap.autoclear}) and Auto Blood Rush are cheat-gated.
+ * What is left of the sim's Interactive Map (a port of QUOI's {@code InteractiveMap} module): per-room "cleared by"
+ * tracking and the player marker list the Dungeon Map's styles draw heads from ({@link MapViewSource}). Its screen,
+ * keybinds and HUD peek went with the sim's own map: the sim shows the mod's main Dungeon Map.
  */
 public final class InteractiveMapFeature {
 
@@ -41,10 +41,6 @@ public final class InteractiveMapFeature {
      *  to walk, path or clear rooms (its auto-clear) is automation and isn't ported. */
     static void register() {
         ClientTickEvents.END_CLIENT_TICK.register(InteractiveMapFeature::trackClears);
-    }
-
-    static boolean isPeeking() {
-        return false;
     }
 
     // ------------------------------------------------------------------------------------------- cleared by

@@ -518,6 +518,15 @@ public final class ProfitTracker {
         };
     }
 
+    /** A copy of what a tracker has counted today, for /s2 tracker's Today tab. */
+    public record DayNumbers(Map<String, Long> items, double coins, long costs) {}
+
+    public static DayNumbers todayNumbers(Preset preset) {
+        if (SAVED.get(preset) == null) return new DayNumbers(Map.of(), 0, 0);
+        Stats stats = today(preset);
+        return new DayNumbers(new LinkedHashMap<>(stats.items), stats.coins, stats.costs);
+    }
+
     static void reset(Preset preset, Period period) {
         switch (period) {
             case SESSION -> SESSION.put(preset, new Stats());

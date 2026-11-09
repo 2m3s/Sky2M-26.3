@@ -394,6 +394,11 @@ public final class SimDoors {
         }
     }
 
+    /** Whether {@code pos} is one of the floor's wither or blood door blocks. Any thread. */
+    static boolean isDoorBlock(BlockPos pos) {
+        return BLOCK_INDEX.containsKey(pos);
+    }
+
     /**
      * Hooks right-click-with-a-wither-key on a registered door block, and the server-tick countdown that
      * turns a door's BARRIER blocks back to air once {@link #OPEN_DELAY_TICKS} has passed.
@@ -414,30 +419,75 @@ public final class SimDoors {
                 // barrier phase that is already running.
                 return InteractionResult.PASS;
             }
-            // THE BLOOD DOOR OPENS WITHOUT A KEY. killer560 (2026-10-04) had the sim's Wither Key drop removed
-            // ("we have nothing that should be dropping it right now"), and that drop was the only key the sim
-            // ever made - so a blood door that still wanted one could never be opened. A plain right-click opens
-            // it and consumes nothing; a key in hand is left alone. The off hand is ignored so one click is
-            // one open, not two.
+            // THE BLOOD DOOR NEEDS THE BLOOD KEY, as on Hypixel, now that a generated floor's starred mobs carry it
+            // (SimKeys.assignForFloor). It opened on a plain click from 2026-10-04, when the sim made no keys at all;
+            // a floor with no key planned for it (a single room, no path to Blood) and /simkeys free still open it
+            // that way. The off hand is ignored so one click is one open, not two.
             if (door.type() == DungeonLayout.DOOR_BLOOD) {
                 if (hand != InteractionHand.MAIN_HAND) {
                     return InteractionResult.PASS;
                 }
+                if (SimKeys.bloodDoorNeedsKey() && !SimKeys.bloodKey()) {
+                    noKey(client.getSingleplayerServer(), client.player.getUUID());
+                    return InteractionResult.SUCCESS;
+                }
                 SimKeys.useBloodKey();
                 openDoor(client, door, null);
+                announceBloodDoor(client.getSingleplayerServer());
                 return InteractionResult.SUCCESS;
             }
             ItemStack held = player.getItemInHand(hand);
             if (!WITHER_KEY_ID.equals(SimItemIds.skyblockId(held))) {
                 // Hypixel's keys are the team's, not items (SimKeys): a picked-up key opens it with any hand.
-                if (hand != InteractionHand.MAIN_HAND || !SimKeys.useWitherKey()) {
+                if (hand != InteractionHand.MAIN_HAND) {
                     return InteractionResult.PASS;
+                }
+                if (!SimKeys.useWitherKey()) {
+                    noKey(client.getSingleplayerServer(), client.player.getUUID());
+                    return InteractionResult.SUCCESS;
                 }
                 openDoor(client, door, null);
                 announceWitherDoor(client);
                 return InteractionResult.SUCCESS;
             }
             openDoor(client, door, hand);
+            return InteractionResult.SUCCESS;
+        });
+
+        // A SIM PARTY GUEST's click. The hook above is the host's own client; a guest's client has no door index
+        // (the host built the map), so his click is answered here, on the host's server, the same way.
+        UseBlockCallback.EVENT.register((player, level, hand, hitResult) -> {
+            if (level.isClientSide() || !(player instanceof ServerPlayer sp) || SimParty.isHost(sp)
+                    || !SimAbilities.simServer(sp) || hand != InteractionHand.MAIN_HAND) {
+                return InteractionResult.PASS;
+            }
+            Door door = BLOCK_INDEX.get(hitResult.getBlockPos());
+            if (door == null || PENDING.containsKey(door)) {
+                return InteractionResult.PASS;
+            }
+            if (door.type() == DungeonLayout.DOOR_BLOOD) {
+                if (SimKeys.bloodDoorNeedsKey() && !SimKeys.bloodKey()) {
+                    noKey(sp.level().getServer(), sp.getUUID());
+                    return InteractionResult.SUCCESS;
+                }
+                SimKeys.useBloodKey();
+                openDoorFor(sp, door, null);
+                announceBloodDoor(sp.level().getServer());
+                return InteractionResult.SUCCESS;
+            }
+            if (WITHER_KEY_ID.equals(SimItemIds.skyblockId(sp.getItemInHand(hand)))) {
+                openDoorFor(sp, door, hand);
+                return InteractionResult.SUCCESS;
+            }
+            if (!SimKeys.useWitherKey()) {
+                noKey(sp.level().getServer(), sp.getUUID());
+                return InteractionResult.SUCCESS;
+            }
+            openDoorFor(sp, door, null);
+            Component opened = Component.literal(sp.getGameProfile().name() + " opened a WITHER door!");
+            for (ServerPlayer p : sp.level().getServer().getPlayerList().getPlayers()) {
+                p.sendSystemMessage(opened);
+            }
             return InteractionResult.SUCCESS;
         });
 
@@ -498,6 +548,20 @@ public final class SimDoors {
         PENDING.put(door, OPEN_DELAY_TICKS);
         ModChat.send("Sim", ModChat.text(door.type() == DungeonLayout.DOOR_BLOOD
                 ? "Blood door opening..." : "Wither door opening..."));
+    }
+
+    /** {@link #openDoor} for a party guest's click, already on the server thread. */
+    private static void openDoorFor(ServerPlayer sp, Door door, InteractionHand hand) {
+        if (hand != null) {
+            sp.getItemInHand(hand).shrink(1);
+        }
+        ServerLevel level = sp.level().getServer().overworld();
+        for (BlockPos p : door.blocks()) {
+            level.setBlockAndUpdate(p, Blocks.BARRIER.defaultBlockState());
+        }
+        PENDING.put(door, OPEN_DELAY_TICKS);
+        sp.sendSystemMessage(ModChat.line("Sim", ModChat.text(door.type() == DungeonLayout.DOOR_BLOOD
+                ? "Blood door opening..." : "Wither door opening...")));
     }
 
     /**
@@ -609,9 +673,8 @@ public final class SimDoors {
     /**
      * Drops a wither key item entity at {@code pos}, on the server.
      *
-     * <p>Nothing calls this any more: the last-starred-death drop was removed on 2026-10-04 (killer560: "we
-     * have nothing that should be dropping it right now"). Kept for when wither doors are built and keys drop
-     * per room again - see docs/SIM.md.
+     * <p>Nothing calls this: a generated floor's keys are Hypixel's team keys now, dropped as named stands by
+     * the starred mob that carries them ({@link SimKeys}). Kept for a held-key practice item.
      */
     public static void dropKeyAt(Minecraft client, Vec3 pos) {
         if (!SimState.canAct(client) || pos == null) {
@@ -657,7 +720,8 @@ public final class SimDoors {
      * Turns every plain door of the named room into a shut WITHER door - coal blocks in the world (the same carve a
      * built wither door gets, registered so a right-click with a Wither Key opens it) and a wither door on the map - so
      * the room can only be reached by opening one. Client thread; the carve runs on the integrated server. For practising
-     * (and testing) a clear that has to open wither doors; generated floors still build none (no key drops).
+     * (and testing) a clear that has to open wither doors; generated floors build their own on the path to Blood,
+     * with the keys on starred mobs ({@link SimKeys#assignForFloor}).
      *
      * @return how many doors it turned, or -1 when the sim cannot act or the room is not on the map
      */
@@ -706,6 +770,19 @@ public final class SimDoors {
     }
 
     /** Hypixel's "<name> opened a WITHER door!" line, from the server. */
+    /** Hypixel's "The BLOOD DOOR has been opened!" (Key Alerts, Door Highlight and the run trackers read it). */
+    private static void announceBloodDoor(net.minecraft.server.MinecraftServer server) {
+        if (server == null) {
+            return;
+        }
+        Component line = Component.literal("The BLOOD DOOR has been opened!").withStyle(net.minecraft.ChatFormatting.RED);
+        server.execute(() -> {
+            for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
+                sp.sendSystemMessage(line);
+            }
+        });
+    }
+
     private static void announceWitherDoor(Minecraft client) {
         var server = client.getSingleplayerServer();
         if (server == null || client.player == null) {
@@ -719,8 +796,24 @@ public final class SimDoors {
         });
     }
 
+    /** Hypixel's answer to a door clicked without its key, to that player. */
+    private static void noKey(net.minecraft.server.MinecraftServer server, UUID who) {
+        if (server == null || who == null) {
+            return;
+        }
+        server.execute(() -> {
+            ServerPlayer sp = server.getPlayerList().getPlayer(who);
+            if (sp != null) {
+                sp.sendSystemMessage(Component.literal("You do not have the key for this door!")
+                        .withStyle(net.minecraft.ChatFormatting.RED));
+            }
+        });
+    }
+
     public static void clear() {
         SimKeys.clear();
+        // The team's blessings belong to the run on this floor, like its keys.
+        SimBlessings.clear();
         DOORS.clear();
         BLOCK_INDEX.clear();
         CARVED.clear();

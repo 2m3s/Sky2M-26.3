@@ -20,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -30,6 +31,8 @@ import java.util.regex.Pattern;
  * "Members:"; parties with your class get a red slot and a tooltip line. When someone joins your group ("Party Finder
  * > Name joined the dungeon group! (Mage Level 30)") you're warned if that class is already yours or a teammate's.
  * Your class comes from the setting, else the class you play in dungeons, pick in the Catacombs menus or join with.
+ * Teammates' classes (from those joins and the dungeon tab list) also answer !missing; anyone who leaves or is kicked
+ * is forgotten, so their class shows as missing.
  */
 public final class DupeClass {
     private static final Pattern MEMBER = Pattern.compile("^ ?(\\w{1,16}): (Healer|Mage|Berserk|Archer|Tank) \\(\\d+\\)$");
@@ -40,6 +43,9 @@ public final class DupeClass {
     private static String lastClass = "";
     /** Classes of the players who joined your group through the Party Finder, by lower-case name. */
     private static final Map<String, String> group = new LinkedHashMap<>();
+    /** Lower-case names that left or were kicked, so the dungeon tab list (which still lists them) doesn't add them back. */
+    private static final java.util.Set<String> gone = new java.util.HashSet<>();
+    private static final List<String> CLASSES = List.of("Healer", "Mage", "Berserk", "Archer", "Tank");
     private static int ticks;
 
     private DupeClass() {}
@@ -51,6 +57,11 @@ public final class DupeClass {
 
     public static void init() {
         Sky2MChat.onChat(message -> onChat(message.text().trim()));
+        // Leaving the server is leaving its party as far as Sky2M can tell.
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            group.clear();
+            gone.clear();
+        });
         ItemTooltipCallback.EVENT.register((stack, context, flag, lines) -> {
             String dupe = partyDupe(stack);
             if (dupe != null) lines.add(1, Component.literal("Already has a " + dupe + "!").withStyle(ChatFormatting.RED));
@@ -60,6 +71,7 @@ public final class DupeClass {
             if (Sky2MLocation.inDungeon()) {
                 DungeonClass self = SelfClass.get();
                 if (self != null && self != DungeonClass.UNKNOWN) lastClass = title(self.name());
+                learnTeammates(mc);
             }
             if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen && screen.getTitle().getString().contains("Catacombs")) readSelected(screen);
         });
@@ -90,18 +102,105 @@ public final class DupeClass {
         }
     }
 
-    private static void onChat(String text) {
+    /** A chat line without colours. Public for the game test. */
+    public static void onChat(String text) {
         Matcher m = JOINED.matcher(text);
         if (m.matches()) {
             onJoin(m.group(1), m.group(2));
             return;
         }
         if (text.equals("You left the party.") || text.startsWith("The party was disbanded") || text.startsWith("You have been kicked from the party")
-            || text.contains("has disbanded the party")) {
-            group.clear();
+            || text.contains("has disbanded the party") || text.equals("You are not currently in a party.")) {
+            forgetParty();
             return;
         }
-        if ((m = LEFT.matcher(text)).matches()) group.remove(m.group(1).toLowerCase(Locale.ROOT));
+        if ((m = JOINED_OTHER.matcher(text)).matches()) {
+            // A new party: nobody from the old one counts, except whoever is in this one too.
+            forgetParty();
+            gone.remove(m.group(1).toLowerCase(Locale.ROOT));
+            return;
+        }
+        if ((m = PARTYING_WITH.matcher(text)).matches()) {
+            for (String part : m.group(1).split(",")) {
+                Matcher n = NAME.matcher(part.trim());
+                if (n.matches()) gone.remove(n.group(1).toLowerCase(Locale.ROOT));
+            }
+            return;
+        }
+        if ((m = LEFT.matcher(text)).matches() || (m = KICKED_OFFLINE.matcher(text)).matches() || (m = TRANSFERRED_LEFT.matcher(text)).matches()) {
+            String name = m.group(1).toLowerCase(Locale.ROOT);
+            group.remove(name);
+            gone.add(name);
+        } else if ((m = REJOINED.matcher(text)).matches()) gone.remove(m.group(1).toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * You're no longer in that party: forget everyone's class. Everyone still in the dungeon tab list counts as gone,
+     * or the tab list would teach their classes again while you're still in the dungeon.
+     */
+    private static void forgetParty() {
+        group.clear();
+        gone.clear();
+        Minecraft mc = Minecraft.getInstance();
+        String me = mc.player == null ? "" : mc.player.getGameProfile().name();
+        for (var p : com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonPlayerManager.getPlayers()) {
+            if (p != null && !p.name().equalsIgnoreCase(me)) gone.add(p.name().toLowerCase(Locale.ROOT));
+        }
+    }
+
+    private static final Pattern REJOINED = Pattern.compile("^(?:\\[[^]]{1,7}] ?)?(\\w{1,16}) joined the party\\.$");
+    private static final Pattern KICKED_OFFLINE = Pattern.compile("^Kicked (?:\\[[^]]+] )?(\\w{1,16}) because they were offline\\.?$");
+    private static final Pattern TRANSFERRED_LEFT = Pattern.compile("^The party was transferred to .+ because (?:\\[[^]]+] )?(\\w{1,16}) left\\.?$");
+    private static final Pattern JOINED_OTHER = Pattern.compile("^You have joined (?:\\[[^]]+] )?(\\w{1,16})'s? party!.*$");
+    private static final Pattern PARTYING_WITH = Pattern.compile("^You'll be partying with: (.+)$");
+    private static final Pattern NAME = Pattern.compile("^(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(\\w{1,16})$");
+
+    /** Teammates' classes from the dungeon tab list, for !missing in parties that didn't come from the Party Finder. */
+    private static void learnTeammates(Minecraft mc) {
+        var players = com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonPlayerManager.getPlayers();
+        String me = mc.player == null ? "" : mc.player.getGameProfile().name();
+        for (var p : players) {
+            if (p == null || p.dungeonClass() == DungeonClass.UNKNOWN || p.name().equalsIgnoreCase(me)) continue;
+            String name = p.name().toLowerCase(Locale.ROOT);
+            if (!gone.contains(name)) group.put(name, title(p.dungeonClass().name()));
+        }
+    }
+
+    /** The dungeon classes nobody in your party plays, in Hypixel's order. Players who left or were kicked don't count. */
+    public static List<String> missing() {
+        return missing(myClass(), group.values());
+    }
+
+    public static List<String> missing(String mine, java.util.Collection<String> teammates) {
+        List<String> out = new java.util.ArrayList<>(CLASSES);
+        out.remove(mine);
+        out.removeAll(teammates);
+        return out;
+    }
+
+    /** Whether Sky2M knows this teammate's class. */
+    public static boolean knowsClass(String name) {
+        return group.containsKey(name.toLowerCase(Locale.ROOT));
+    }
+
+    /** The class Sky2M last saw this teammate join or play with, as "Archer", or null. */
+    public static String classOf(String name) {
+        return group.get(name.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * A player's selected dungeon class from their selected SkyBlock profile ("selected_dungeon_class"), as "Archer",
+     * or null when it isn't set. The API can be a minute or so behind a class just picked.
+     */
+    public static java.util.concurrent.CompletableFuture<String> selectedClass(String name) {
+        return com.epic60869.sky2m.features.profileviewer.ProfileApi.playerFast(name).thenApply(player -> {
+            if (player.profiles().isEmpty()) return null;
+            com.google.gson.JsonObject member = player.profiles().getFirst().member();
+            if (member == null || !(member.get("dungeons") instanceof com.google.gson.JsonObject dungeons)
+                || !(dungeons.get("selected_dungeon_class") instanceof com.google.gson.JsonPrimitive cls)) return null;
+            String found = title(cls.getAsString().toUpperCase(Locale.ROOT));
+            return CLASSES.contains(found) ? found : null;
+        });
     }
 
     private static void onJoin(String name, String cls) {
@@ -111,6 +210,7 @@ public final class DupeClass {
             lastClass = cls;
             return;
         }
+        gone.remove(name.toLowerCase(Locale.ROOT));
         FeatureConfigs.DupeClass c = config();
         String clash = null;
         if (cls.equals(myClass())) clash = "you";

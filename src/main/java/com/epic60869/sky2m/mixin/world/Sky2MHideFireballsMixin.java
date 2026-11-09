@@ -26,6 +26,8 @@ public abstract class Sky2MHideFireballsMixin {
         if (com.epic60869.sky2m.features.dungeons.DungeonLividFinder.hide(entity)) cir.setReturnValue(false);
         // Dungeons > Dungeon Extras > Hide Dungeon Clutter and Clean End.
         if (com.epic60869.sky2m.features.dungeons.extras.DungeonExtras.hide(entity)) cir.setReturnValue(false);
+        // Dungeons > Mobs > Hide Non-Starred Nametags.
+        if (com.epic60869.sky2m.features.dungeons.StarredMobs.hideTag(entity)) cir.setReturnValue(false);
         // Hunting > Safari > Critter Capsules.
         if (com.epic60869.sky2m.features.hunting.SafariFeatures.hide(entity)) cir.setReturnValue(false);
     }

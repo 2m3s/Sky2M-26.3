@@ -119,18 +119,26 @@ public final class SlotLocking {
         }
         Sky2MConfig.SlotLocking c = config();
         if (c == null) return 0;
-        String name = Compat.realName(stack).getString();
+        Component name = protectName(stack);
         if (c.protectedItems.remove(key)) {
             say(Component.literal("Removed drop protection from ").withStyle(ChatFormatting.YELLOW)
-                .append(Component.literal(name).withStyle(ChatFormatting.WHITE)));
+                .append(name));
         } else {
             c.protectedItems.add(key);
             say(Component.literal("★ Protected ").withStyle(ChatFormatting.GOLD)
-                .append(Component.literal(name).withStyle(ChatFormatting.WHITE))
+                .append(name)
                 .append(Component.literal(" from dropping.").withStyle(ChatFormatting.GREEN)));
         }
         Sky2MConfig.saveCurrent(Sky2MConfig.current());
         return 1;
+    }
+
+    /**
+     * The item's name as it shows on the item, in its rarity colour (and its stars' colours), for the protect lines. The
+     * white underneath only shows through where the name itself has no colour.
+     */
+    public static Component protectName(ItemStack stack) {
+        return Component.empty().withStyle(ChatFormatting.WHITE).append(Compat.realName(stack).copy());
     }
 
     /** Titles used by Hypixel NPC shop/sell menus. Don't block ordinary storage or the player's own inventory. */

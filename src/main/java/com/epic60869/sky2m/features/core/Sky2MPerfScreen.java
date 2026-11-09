@@ -101,7 +101,7 @@ public final class Sky2MPerfScreen extends Screen {
                 g.text(font, time(s.worstNanos() / 1e6), c[5], ry, 0xFFB8C0CC, false);
             }
         }
-        g.text(font, "Updates every 5 seconds. Red is 5%+ of a frame, orange 1%+. Click a HUD to find its settings. Tick-time features aren't measured.",
+        g.text(font, "Updates every 5 seconds. Red is 5%+ of a frame, orange 1%+. Click a HUD to find its settings. /s2 perf start times ticks too.",
             left() + 8, tableBottom() + 6, GREY, false);
         super.extractRenderState(g, mouseX, mouseY, delta);
     }

@@ -63,6 +63,7 @@
   "option.sky2m_commandkeys.macro.mcActivatorKey.tooltip.error": "Value must be an integer in the range of MC keybinds.",
   "option.sky2m_commandkeys.macro.mcActivatorKey.tooltip.overlap": "Macro at index %d of this profile is linked to the same MC key.",
   "option.sky2m_commandkeys.macro.messages": "Commands/Messages",
+  "option.sky2m_commandkeys.macro.messages.tooltip": "Start a line with a condition to send it only there:\n[dungeon] /gfs spirit_leap\n[garden,hub] /warp x\n[tank] /pc ready\nAny listed word can match.\nWords: dungeon, f1-f7, m1-m7, entrance, mining, hub, dhub, garden, island, crimson, end, park, spiders, rift, dwarven, hollows, mineshaft, galatea, kuudra, jerry, tank, mage, healer, archer, berserk.\nThe key press skips a line that doesn't match. A line with no condition always sends.",
   "option.sky2m_commandkeys.macro.mode": "Send Mode",
   "option.sky2m_commandkeys.macro.name": "Macro Name",
   "option.sky2m_commandkeys.macro.name.hint": "Name",

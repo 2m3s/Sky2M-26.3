@@ -50,6 +50,47 @@ public final class SlayerTimes {
     private static String boss;
     /** Set after a kill until your boss's nametag is gone, so the lingering tag doesn't start a new timer. */
     private static boolean killed;
+    /** When the sidebar first said "Slay the boss!" for this boss: its real spawn, if its nametag is only seen later. */
+    private static long slayLineAt;
+    /**
+     * Whether the fight's start is known: the boss was seen alive (a health line above 0) or its spawn came from the
+     * sidebar's slay line. Without either, it was only seen as it died and its time means nothing.
+     */
+    private static boolean startKnown;
+    /** A slay line older than this is from an earlier boss, not this one. */
+    private static final long SLAY_LINE_MAX_MS = 5 * 60_000;
+
+    /**
+     * The fastest kill the Sky2M leaderboard believes per boss key (the server's table, mod-server slayer-pbs.js): a
+     * faster "kill" is a timing miss (the boss was only seen as it died), so it isn't kept as a personal best, which
+     * would otherwise block every real time from ever being sent. Anything not listed: 1 s.
+     */
+    private static final Map<String, Long> MIN_KILL_MS = Map.ofEntries(
+        Map.entry("Tarantula Broodfather III", 2_000L), Map.entry("Tarantula Broodfather IV", 2_000L),
+        Map.entry("Tarantula Broodfather V", 5_000L), Map.entry("Voidgloom Seraph III", 2_000L),
+        Map.entry("Voidgloom Seraph IV", 10_000L), Map.entry("Inferno Demonlord II", 2_000L),
+        Map.entry("Inferno Demonlord III", 4_000L), Map.entry("Inferno Demonlord IV", 6_000L),
+        Map.entry("Riftstalker Bloodfiend I", 10_000L), Map.entry("Riftstalker Bloodfiend II", 10_000L),
+        Map.entry("Riftstalker Bloodfiend III", 15_000L), Map.entry("Riftstalker Bloodfiend IV", 15_000L),
+        Map.entry("Riftstalker Bloodfiend V", 15_000L));
+
+    /**
+     * Whether a kill's time is thrown away: only one under the boss's minimum whose start isn't known (seen only as it
+     * died). A boss seen alive, or timed from the sidebar's slay line, keeps its time however short: a one-shot Tier IV
+     * Sven really does die in under a second (2026-11-04, 0.46 s). Public for the game test.
+     */
+    public static boolean rejected(long time, String boss, boolean startKnown) {
+        return !startKnown && time < minKillMs(boss);
+    }
+
+    public static long minKillMs(String boss) {
+        return Math.max(1_000L, MIN_KILL_MS.getOrDefault(boss, 1_000L));
+    }
+
+    /** The sidebar shows "Slay the boss!" ({@link SlayerBossSpawnAlert}, every tick it's there). */
+    static void onSlayLine(long now) {
+        if (slayLineAt == 0 && spawnedAt == 0) slayLineAt = now;
+    }
 
     private SlayerTimes() {}
 
@@ -57,6 +98,7 @@ public final class SlayerTimes {
         file = configDir.resolve("sky2m").resolve("slayer-personal-bests.json");
         lastBossFile = configDir.resolve("sky2m").resolve("slayer-last-boss.txt");
         load();
+        SlayerSessionTimes.init();
         Sky2MChat.onChat(message -> onChat(message.text().trim()));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> reset());
     }
@@ -90,7 +132,9 @@ public final class SlayerTimes {
         if (killed) return;
         boolean spawned = spawnedAt == 0;
         if (spawned) {
-            spawnedAt = now;
+            // The sidebar says the boss spawned before you saw its nametag (it spawned out of view): time from then.
+            spawnedAt = slayLineAt > 0 && now - slayLineAt < SLAY_LINE_MAX_MS ? slayLineAt : now;
+            startKnown = spawnedAt == slayLineAt;
             SlayerBossProfit.onSpawn();
         }
         if (healthLine.isEmpty() || ZERO_HEALTH.matcher(healthLine).find()) {
@@ -98,6 +142,7 @@ public final class SlayerTimes {
         } else {
             // Alive: back in range, or Tier 5 Tarantula's second phase after the first one went.
             zeroAt = 0;
+            startKnown = true;
         }
         Matcher m = BOSS.matcher(healthLine);
         if (m.find()) {
@@ -174,7 +219,9 @@ public final class SlayerTimes {
     private static void reset() {
         questStartedAt = 0;
         spawnedAt = 0;
+        slayLineAt = 0;
         zeroAt = 0;
+        startKnown = false;
         boss = null;
     }
 
@@ -191,13 +238,25 @@ public final class SlayerTimes {
         if (spawnedAt == 0 || boss == null) return;
         long time = (zeroAt > 0 ? zeroAt : System.currentTimeMillis()) - spawnedAt;
         String name = boss;
+        boolean known = startKnown;
+        startKnown = false;
         SlayerBossProfit.onKill(name);
         spawnedAt = 0;
         zeroAt = 0;
+        slayLineAt = 0;
         boss = null;
         killed = true;
+        if (!rejected(time, name, known)) SlayerSessionTimes.add(name, time, System.currentTimeMillis());
         Sky2MConfig.PersonalBest config = config();
         if (config == null) return;
+        if (rejected(time, name, known)) {
+            // Seen only as it died: not a real time, so it can't become a PB that no real kill could beat.
+            if (config.timeToKill || config.personalBests) {
+                Sky2MAlerts.chat(Component.literal(name + " kill timed at " + format(time) + ", too fast to be real (the boss was "
+                    + "only seen as it died), so it wasn't counted.").withStyle(ChatFormatting.GRAY));
+            }
+            return;
+        }
 
         Map<String, Long> bests = BESTS.computeIfAbsent(player(), p -> new ConcurrentHashMap<>());
         Long previous = bests.get(name);
@@ -294,6 +353,24 @@ public final class SlayerTimes {
             System.err.println("[Sky2M] Could not read slayer-personal-bests.json: " + e.getMessage());
         }
         resetTarantulaOnce();
+        dropImpossible();
+    }
+
+    /** Saved PBs under this are timing misses whatever the boss: no kill is that fast. */
+    static final long IMPOSSIBLE_MS = 100;
+
+    /**
+     * PBs saved before the fastest-kill check that no kill could make: a 0.03s Sven made every real Sven time "not a
+     * PB", so none was ever sent to the leaderboard. They're dropped so real kills count again. Only times under
+     * {@link #IMPOSSIBLE_MS}: a real one-shot can be under the boss's minimum ({@link #rejected}), and dropping
+     * everything under it wiped a real 0.46s Sven PB at every start.
+     */
+    private static void dropImpossible() {
+        boolean removed = false;
+        for (Map<String, Long> bests : BESTS.values()) {
+            removed |= bests.entrySet().removeIf(e -> e.getValue() < IMPOSSIBLE_MS);
+        }
+        if (removed) save();
     }
 
     /**

@@ -274,7 +274,12 @@ public class CommandKeys {
             // new ChatScreen("").handleChatInput(message, addToHistory)
             // could be slightly better for compat but costs performance.
             if (message.startsWith("/")) {
-                mc.player.connection.sendCommand(message.substring(1));
+                String command = StackFill.command(message);
+                if (command == null) {
+                    mc.gui.hud.setOverlayMessage(Component.literal("You already have a full stack").withStyle(ChatFormatting.GRAY), false);
+                    return;
+                }
+                mc.player.connection.sendCommand(command.substring(1));
             } else {
                 mc.player.connection.sendChat(message);
             }

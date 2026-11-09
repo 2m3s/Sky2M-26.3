@@ -3,8 +3,57 @@ package com.epic60869.sky2m.features.dungeons;
 import java.util.Set;
 
 /** Head textures of the Watcher and of blood mobs, from Odin's BloodCamp (https://github.com/odtheking/Odin, BSD-3-Clause; mob skull data by DocilElm). */
-final class BloodCampSkulls {
+public final class BloodCampSkulls {
     private BloodCampSkulls() {}
+
+    /** One of the Watcher's head textures, for the Dungeon Sim's Watcher so this file recognises it. */
+    public static String watcherTexture() {
+        return WATCHER.stream().sorted().findFirst().orElse("");
+    }
+
+    /** The blood mobs' head textures, sorted, for the Dungeon Sim's skulls so this file recognises them. */
+    public static java.util.List<String> mobTextures() {
+        return MOBS.stream().sorted().toList();
+    }
+
+    private static final java.util.regex.Pattern TEXTURE = java.util.regex.Pattern.compile("texture/([0-9a-fA-F]+)");
+    private static Set<String> watcherSkins, mobSkins;
+
+    /**
+     * Whether a head's texture value is the Watcher's. Compared by skin, not by the whole value: the value also holds
+     * a timestamp and profile, so the same skin signed again (as on other floors) has a different value.
+     */
+    static boolean isWatcher(String value) {
+        if (watcherSkins == null) watcherSkins = skins(WATCHER);
+        return WATCHER.contains(value) || watcherSkins.contains(skin(value));
+    }
+
+    /** Whether a head's texture value is a blood mob's, compared by skin like {@link #isWatcher}. */
+    static boolean isMob(String value) {
+        if (mobSkins == null) mobSkins = skins(MOBS);
+        return MOBS.contains(value) || mobSkins.contains(skin(value));
+    }
+
+    /** The skin's texture hash from a base64 texture value, or "" when it has none. */
+    static String skin(String value) {
+        if (value == null || value.isEmpty()) return "";
+        try {
+            String json = new String(java.util.Base64.getMimeDecoder().decode(value), java.nio.charset.StandardCharsets.UTF_8);
+            java.util.regex.Matcher m = TEXTURE.matcher(json);
+            return m.find() ? m.group(1).toLowerCase(java.util.Locale.ROOT) : "";
+        } catch (IllegalArgumentException e) {
+            return "";
+        }
+    }
+
+    private static Set<String> skins(Set<String> values) {
+        Set<String> out = new java.util.HashSet<>();
+        for (String v : values) {
+            String s = skin(v);
+            if (!s.isEmpty()) out.add(s);
+        }
+        return out;
+    }
 
     static final Set<String> WATCHER = Set.of(
         "ewogICJ0aW1lc3RhbXAiIDogMTY5NzMwOTQxNzI1NiwKICAicHJvZmlsZUlkIiA6ICJjYjYxY2U5ODc4ZWI0NDljODA5MzliNWYxNTkwMzE1MiIsCiAgInByb2ZpbGVOYW1lIiA6ICJWb2lkZWRUcmFzaDUxODUiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTY2MmI2ZmI0YjhiNTg2ZGM0Y2RmODAzYjA0NDRkOWI0MWQyNDVjZGY2NjhkYWIzOGZhNmMwNjRhZmU4ZTQ2MSIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9",

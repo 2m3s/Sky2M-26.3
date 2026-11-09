@@ -126,8 +126,20 @@ public final class ProfileItems {
                 break;
             }
         }
+        boolean unknown = stack.is(Items.BARRIER);
+        // Newer items both lists miss (Dead Plant) or only know as plain paper (Umber Key): Pack Disabler's item table.
+        if (unknown || (stack.is(Items.PAPER) && !stack.has(DataComponents.ITEM_MODEL))) {
+            ItemStack table = com.epic60869.sky2m.features.misc.items.PackDisabler.icon(id);
+            if (table != null) {
+                // Keep the name, lore and id the list gave it.
+                copy(stack, table, DataComponents.CUSTOM_NAME);
+                copy(stack, table, DataComponents.LORE);
+                copy(stack, table, DataComponents.CUSTOM_DATA);
+                stack = table;
+            }
+        }
         // Unknown to both lists: at least name it after its id ("MANTIS_SHRIMP_SHARD" -> "Mantis Shrimp Shard").
-        if ((stack.is(Items.BARRIER) || runeBase != null) && !stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME)) {
+        if ((unknown || runeBase != null) && !stack.has(DataComponents.CUSTOM_NAME)) {
             StringBuilder name = new StringBuilder();
             for (String word : id.split("[_:;-]")) {
                 if (word.isEmpty() || word.chars().allMatch(Character::isDigit)) continue;
@@ -137,6 +149,11 @@ public final class ProfileItems {
             stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal(name.toString()));
         }
         return stack;
+    }
+
+    private static <T> void copy(ItemStack from, ItemStack to, net.minecraft.core.component.DataComponentType<T> type) {
+        T value = from.get(type);
+        if (value != null) to.set(type, value);
     }
 
     /** The item list's stack for a SkyBlock id, or null if it doesn't know the id. */

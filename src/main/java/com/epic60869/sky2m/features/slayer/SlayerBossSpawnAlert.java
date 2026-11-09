@@ -75,6 +75,7 @@ public final class SlayerBossSpawnAlert {
         long now = System.currentTimeMillis();
         if (slayLineShown()) {
             slayLineGoneSince = 0;
+            SlayerTimes.onSlayLine(now);
             if (!alerted && enabled()) alert(questBossName());
         } else if (alerted) {
             if (slayLineGoneSince == 0) slayLineGoneSince = now;

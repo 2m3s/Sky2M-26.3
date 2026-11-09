@@ -67,6 +67,7 @@ public abstract class ClientPacketListenerMixin {
 		if (packet.getEventId() == EntityEvent.DEATH) {
 			try {
 				DungeonScore.handleEntityDeath(entity);
+				com.epic60869.sky2m.features.dungeons.WitherBladeBats.onBatGone(entity);
 				com.epic60869.sky2m.features.combat.ZealotCounter.onEntityDeath(entity);
 				com.epic60869.sky2m.features.misc.visual.CustomSounds.onEntityDeath(entity);
 				com.epic60869.sky2m.features.misc.social.CarryTracker.onEntityDeath(entity);

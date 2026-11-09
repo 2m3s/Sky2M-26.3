@@ -69,7 +69,7 @@ public final class SimSpeed {
         return savedSpeed;
     }
 
-    private static synchronized void remember(int hypixelSpeed) {
+    static synchronized void remember(int hypixelSpeed) {
         savedSpeed = hypixelSpeed;
         try {
             java.nio.file.Files.createDirectories(FILE.getParent());
@@ -114,9 +114,26 @@ public final class SimSpeed {
                 ModChat.dim("  (/speed <number>, 100 is a normal walk)"));
     }
 
-    private static void set(Minecraft client, int hypixelSpeed) {
+    /** Sets one player's walk speed (Hypixel's number, 100 is a normal walk). Server thread. */
+    static void applyOnServer(ServerPlayer sp, int hypixelSpeed) {
+        if (sp == null) {
+            return;
+        }
+        int clamped = Math.max(0, Math.min(1000, hypixelSpeed));
+        var attr = sp.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (attr != null) {
+            attr.setBaseValue(clamped / 1000.0);
+        }
+    }
+
+    static void set(Minecraft client, int hypixelSpeed) {
         if (!SimState.canAct(client)) {
             ModChat.send("Sim", ModChat.text("/speed only works inside the dungeon sim."));
+            return;
+        }
+        if (SimParty.sendAction("speed", String.valueOf(hypixelSpeed))) {
+            remember(hypixelSpeed);
+            ModChat.send("Sim", ModChat.text("Speed set to "), ModChat.value(String.valueOf(hypixelSpeed)));
             return;
         }
         var server = client.getSingleplayerServer();
@@ -124,17 +141,7 @@ public final class SimSpeed {
             return;
         }
         var uuid = client.player.getUUID();
-        double value = hypixelSpeed / 1000.0;
-        server.execute(() -> {
-            ServerPlayer sp = server.getPlayerList().getPlayer(uuid);
-            if (sp == null) {
-                return;
-            }
-            var attr = sp.getAttribute(Attributes.MOVEMENT_SPEED);
-            if (attr != null) {
-                attr.setBaseValue(value);
-            }
-        });
+        server.execute(() -> applyOnServer(server.getPlayerList().getPlayer(uuid), hypixelSpeed));
         remember(hypixelSpeed);
         ModChat.send("Sim", ModChat.text("Speed set to "), ModChat.value(String.valueOf(hypixelSpeed)));
     }

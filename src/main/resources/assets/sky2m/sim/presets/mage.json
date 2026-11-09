@@ -1,0 +1,64 @@
+{
+  "class": "MAGE",
+  "name": "Mage",
+  "notes": "The user's Mage setup (2026-11-01), green choices. Wardrobe slot 1 is the LCM set, slot 2 the RCM set.",
+  "wardrobe": [
+    {
+      "name": "LCM",
+      "armour": [
+        {"id": "WISE_WITHER_HELMET", "totalStars": 10, "reforge": "ancient", "gems": ["PERFECT SAPPHIRE", "PERFECT ONYX"], "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6, "strong_mana": 5, "art_of_peace": 1}},
+        {"id": "WISE_WITHER_CHESTPLATE", "totalStars": 10, "reforge": "ancient", "gems": ["PERFECT SAPPHIRE", "PERFECT ONYX"], "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6, "strong_mana": 5, "art_of_peace": 1}},
+        {"id": "WISE_WITHER_LEGGINGS", "totalStars": 10, "reforge": "ancient", "gems": ["PERFECT SAPPHIRE", "PERFECT ONYX"], "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6, "strong_mana": 5, "art_of_peace": 1}},
+        {"id": "WISE_WITHER_BOOTS", "totalStars": 10, "reforge": "ancient", "gems": ["PERFECT SAPPHIRE", "PERFECT ONYX"], "enchantments": {"ultimate_legion": 5, "growth": 6, "protection": 6, "strong_mana": 5, "art_of_peace": 1}}
+      ],
+      "equipment": [
+        {"id": "BALLOON_SNAKE", "totalStars": 7, "reforge": "blended", "enchantments": {"ultimate_the_one": 5, "prosperity": 5}},
+        {"id": "SHADOW_ASSASSIN_CLOAK", "totalStars": 7, "reforge": "brilliant", "enchantments": {"prosperity": 5}},
+        {"id": "ADAPTIVE_BELT", "totalStars": 7, "reforge": "bloodshot", "enchantments": {"prosperity": 5}},
+        {"id": "SOULWEAVER_GLOVES", "totalStars": 7, "reforge": "brilliant", "enchantments": {"prosperity": 5}}
+      ]
+    },
+    {
+      "name": "RCM",
+      "armour": [
+        {"id": "WITHER_GOGGLES", "totalStars": 10, "reforge": "necrotic", "enchantments": {"growth": 6, "protection": 6, "mana_vampire": 7, "art_of_peace": 1}},
+        {"id": "WISE_WITHER_CHESTPLATE", "totalStars": 9, "reforge": "loving", "gems": ["PERFECT SAPPHIRE", "PERFECT SAPPHIRE"], "enchantments": {"growth": 6, "protection": 6, "mana_vampire": 7, "art_of_peace": 1}},
+        {"id": "WISE_WITHER_LEGGINGS", "totalStars": 9, "reforge": "necrotic", "gems": ["PERFECT SAPPHIRE", "PERFECT SAPPHIRE"], "enchantments": {"growth": 6, "protection": 6, "mana_vampire": 7, "art_of_peace": 1}},
+        {"id": "WISE_WITHER_BOOTS", "totalStars": 9, "reforge": "necrotic", "gems": ["PERFECT SAPPHIRE", "PERFECT SAPPHIRE"], "enchantments": {"growth": 6, "protection": 6, "mana_vampire": 7, "art_of_peace": 1}}
+      ],
+      "equipment": [
+        {"id": "BONE_NECKLACE", "totalStars": 5, "reforge": "brilliant", "enchantments": {"prosperity": 5}},
+        {"id": "SHADOW_ASSASSIN_CLOAK", "totalStars": 5, "reforge": "brilliant", "enchantments": {"prosperity": 5}},
+        {"id": "IMPLOSION_BELT", "reforge": "brilliant"},
+        {"id": "SOULWEAVER_GLOVES", "totalStars": 5, "reforge": "brilliant", "enchantments": {"prosperity": 5}}
+      ]
+    }
+  ],
+  "pets": [
+    {"id": "BLACK_CAT", "level": 100, "rarity": "LEGENDARY", "item": "UNALLOYED_SPEED"},
+    {"id": "GOLDEN_DRAGON", "level": 200, "rarity": "LEGENDARY", "item": "HEPHAESTUS_REMEDIES"},
+    {"id": "PHOENIX", "level": 100, "rarity": "SPECIAL"}
+  ],
+  "petRules": {"mode": "toggle", "clear": "GOLDEN_DRAGON", "boss": "BLACK_CAT"},
+  "hotbar": [
+    {"id": "HYPERION", "totalStars": 10, "reforge": "withered", "gems": ["PERFECT SAPPHIRE", "PERFECT ONYX"], "enchantments": {"ultimate_chimera": 5, "prosecute": 6, "triple_strike": 5, "venomous": 7, "titan_killer": 7, "sharpness": 7, "smite": 7, "thunderlord": 7, "critical": 7, "lethality": 6, "fire_aspect": 3, "gravity": 6, "ender_slayer": 7}},
+    "ASPECT_OF_THE_VOID",
+    "INFINITE_SPIRIT_LEAP",
+    {"id": "HYPERION", "totalStars": 8, "reforge": "heroic", "gems": ["PERFECT SAPPHIRE"], "enchantments": {"smite": 7, "prosecute": 6, "giant_killer": 7, "ultimate_swarm": 1}},
+    {"id": "RAGNAROCK_AXE", "totalStars": 10, "reforge": "withered", "powerScroll": "JASPER", "enchantments": {"ultimate_chimera": 5, "lethality": 6}},
+    "SUPERBOOM_TNT",
+    "BONZO_STAFF",
+    "PET_RULES_ROD",
+    "DUNGEON_ORB"
+  ],
+  "inventory": [
+    {"id": "LAST_BREATH", "totalStars": 5, "enchantments": {"ultimate_reiterate": 1, "power": 6, "flame": 1}},
+    "ALERT_FLARE",
+    "ICE_SPRAY_WAND",
+    "GYROKINETIC_WAND",
+    "DUNGEONBREAKER",
+    "SPIRIT_MASK",
+    "BONZO_MASK",
+    "INFINITE_TWILIGHT_ARROW_POISON"
+  ]
+}

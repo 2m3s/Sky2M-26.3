@@ -23,14 +23,12 @@ import com.epic60869.sky2m.sb.annotations.Init;
 import com.epic60869.sky2m.sb.config.SkyblockerConfigManager;
 import com.epic60869.sky2m.sb.config.configs.DungeonsConfig;
 import com.epic60869.sky2m.sb.events.DungeonEvents;
-import com.epic60869.sky2m.sb.events.SkyblockEvents;
 import com.epic60869.sky2m.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.epic60869.sky2m.sb.skyblock.tabhud.util.PlayerListManager;
 import com.epic60869.sky2m.sb.utils.Constants;
 import com.epic60869.sky2m.sb.utils.ItemUtils;
 import com.epic60869.sky2m.sb.utils.ProfileUtils;
 import com.epic60869.sky2m.sb.utils.Utils;
-import com.epic60869.sky2m.sb.utils.mayor.MayorUtils;
 import com.epic60869.sky2m.sb.utils.scheduler.MessageScheduler;
 import com.epic60869.sky2m.sb.utils.scheduler.Scheduler;
 
@@ -63,10 +61,10 @@ public class DungeonScore {
 	private static final Pattern MIMIC_FLOORS_PATTERN = Pattern.compile("[FM][67]");
 	//Score messages sent in party chat
 	private static final String MIMIC_MESSAGE = "Mimic dead!";
+	private static final double MIMIC_REMOVED_RANGE = 20;
+	private static final Pattern DEAD_MIMIC_TAG = Pattern.compile("\\bMimic\\b.*(?<![\\d,.])0(?:/\\S+)?❤");
 	private static final String PRINCE_MESSAGE = "Prince dead!";
 	private static final String BAT_MESSAGE = "Bat dead!";
-
-	private static boolean isMayorPaul = false;
 
 	private static FloorRequirement floorRequirement = FloorRequirement.NONE;
 	private static String currentFloor = "";
@@ -92,6 +90,8 @@ public class DungeonScore {
 		ClientPlayConnectionEvents.JOIN.register((_, _, _) -> reset());
 		DungeonEvents.DUNGEON_STARTED.register(DungeonScore::onDungeonStart);
 		DungeonEvents.DUNGEON_ENDED.register(DungeonScore::reset);
+		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents.ENTITY_UNLOAD.register(DungeonScore::handleEntityRemoved);
+		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(DungeonScore::checkMimicNametag);
 		com.epic60869.sky2m.features.core.Sky2MChat.onGameMessage((message, overlay) -> {
 			if (overlay || !Utils.isInDungeons()) return;
 			String str = message.getString();
@@ -103,7 +103,6 @@ public class DungeonScore {
 				checkMessageForBat(str);
 			}
 		});
-		SkyblockEvents.MAYOR_CHANGE.register(() -> isMayorPaul = MayorUtils.getActivePerks().contains("EZPZ"));
 	}
 
 	public static void tick() {
@@ -231,12 +230,12 @@ public class DungeonScore {
 	}
 
 	private static int calculateBonusScore() {
-		int paulScore = isMayorPaul ? 10 : 0;
+		int paulScore = com.epic60869.sky2m.features.dungeons.ScoreCalculator.isPaul() ? 10 : 0;
 		int cryptsScore = Math.clamp(getCrypts(), 0, 5);
 		int mimicScore = mimicKilled ? 2 : 0;
 		if (getSecretsPercentage() >= 100 && floorHasMimics) mimicScore = 2; //If mimic kill is not announced but all secrets are found, mimic must've been killed
 		int princeScore = princeKilled ? 1 : 0;
-		int batScore = batKilled ? 1 : 0;
+		int batScore = com.epic60869.sky2m.features.dungeons.ScoreCalculator.bats();
 		return paulScore + cryptsScore + mimicScore + princeScore + batScore;
 	}
 
@@ -254,8 +253,42 @@ public class DungeonScore {
 	public static void handleEntityDeath(Entity entity) {
 		if (mimicKilled) return;
 		if (!isEntityMimic(entity)) return;
+		announceMimic();
+	}
+
+	private static void announceMimic() {
 		if (MIMIC_MESSAGE_CONFIG.get().sendMimicMessage) MessageScheduler.INSTANCE.sendMessageAfterCooldown("/pc " + MIMIC_MESSAGE, true);
 		mimicKilled = true;
+	}
+
+	/**
+	 * Sky2M: a Terminator can kill the Mimic so fast the zombie is never seen dying (clip of 2026-11-06), but its nametag
+	 * still shows "Mimic 0❤" for a moment, so look for that every tick while the Mimic is alive.
+	 */
+	private static void checkMimicNametag(Minecraft client) {
+		if (!dungeonStarted || !floorHasMimics || mimicKilled || client.player == null || client.level == null) return;
+		for (net.minecraft.world.entity.decoration.ArmorStand stand : client.level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, client.player.getBoundingBox().inflate(MIMIC_REMOVED_RANGE))) {
+			if (stand.hasCustomName() && isDeadMimicTag(stand.getCustomName().getString())) {
+				announceMimic();
+				return;
+			}
+		}
+	}
+
+	/** Whether a nametag is a Mimic on no health, such as "[Lv547] Mimic 0❤". Public for the game test. */
+	public static boolean isDeadMimicTag(String name) {
+		return DEAD_MIMIC_TAG.matcher(com.epic60869.sky2m.features.core.Sky2MLocation.strip(name)).find();
+	}
+
+	/**
+	 * Sky2M: a Mimic killed the moment it spawns (a bow shot as the chest opens) can die before the client tracks it,
+	 * so no death event arrives and it's only removed. Nothing else removes a Mimic while you're this close to it.
+	 */
+	private static void handleEntityRemoved(Entity entity, net.minecraft.client.multiplayer.ClientLevel level) {
+		Minecraft client = Minecraft.getInstance();
+		if (!dungeonStarted || mimicKilled || !entity.isRemoved() || client.level != level || client.player == null) return;
+		if (client.player.distanceToSqr(entity) > MIMIC_REMOVED_RANGE * MIMIC_REMOVED_RANGE) return;
+		handleEntityDeath(entity);
 	}
 
 	public static void onMimicKill() {
@@ -272,8 +305,7 @@ public class DungeonScore {
 	}
 
 	public static void onBatKill(boolean fromHypixel) {
-		if (batKilled) return;
-
+		// Every Bat is +1, so each of your kills is announced.
 		// Ensure that we don't send a bat kill message if a teammate does
 		if (fromHypixel) {
 			if (BAT_MESSAGE_CONFIG.get().sendBatMessage) {
@@ -341,6 +373,7 @@ public class DungeonScore {
 	//This is needed for calculating the score before going in the boss room & completing the blood room, so we have the result sooner
 	//It might cause score to fluctuate when completing the blood room or entering the boss room as there's a slight delay between the room being completed (boolean set to true) and the scoreboard updating
 	private static int getExtraCompletedRooms() {
+		if (DungeonManager.isInBoss()) return 0;
 		if (!bloodRoomCompleted) return isCurrentFloorEntrance ? 1 : 2;
 		if (!DungeonManager.isInBoss() && !isCurrentFloorEntrance) return 1;
 		return 0;
@@ -417,7 +450,9 @@ public class DungeonScore {
 			if (s.equals("You")) return Minecraft.getInstance().getUser().getName(); //This will be wrong if the dead player is called 'You' but that's unlikely
 			else return s;
 		});
-		ProfileUtils.fetchProfileMember(whoDied).thenAccept(player -> firstDeathHasSpiritPet = hasSpiritPet(player, whoDied));
+		// Sky2M's own profile lookup (Skyblocker's ProfileUtils is a stub here that always failed, so the first death
+		// always cost 2 even with a Legendary Spirit pet).
+		com.epic60869.sky2m.features.dungeons.SpiritPetCheck.lookup(whoDied).thenAccept(has -> firstDeathHasSpiritPet = has);
 	}
 
 	private static void checkMessageForWatcher(String message) {

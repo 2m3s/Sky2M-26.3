@@ -75,9 +75,11 @@ public final class TeamMelody {
                 }
             }
         }
-        // Your own Melody is done when you complete the terminal you have open.
+        // Your own Melody is done when you complete the terminal you have open: Hypixel's "Name activated a terminal!"
+        // ("completed" kept as a fallback).
         Minecraft mc = Minecraft.getInstance();
-        if (open && mc.player != null && text.startsWith(mc.player.getGameProfile().name() + " completed a terminal!")) {
+        if (open && mc.player != null && (text.startsWith(mc.player.getGameProfile().name() + " activated a terminal!")
+                || text.startsWith(mc.player.getGameProfile().name() + " completed a terminal!"))) {
             PartyDungeonState.offerMelody(mc.player.getGameProfile().name(), lastRow < 0 ? 4 : lastRow, Math.max(3, lastRow), true, Source.SELF);
         }
     }

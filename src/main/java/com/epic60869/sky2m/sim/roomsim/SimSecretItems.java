@@ -157,11 +157,7 @@ public final class SimSecretItems {
             }
             try {
                 ServerLevel level = server.overworld();
-                // Not players().get(0): a placed miniboss is a ServerPlayer and so is in this list too
-                // (ServerLevel$EntityCallbacks.onTrackingStart adds every one), and a secret must appear near
-                // the real player, not near an NPC.
                 var player = level.players().stream()
-                        .filter(p -> !SimMiniboss.isPlaced(p))
                         .findFirst()
                         .orElse(null);
                 if (player != null) {
@@ -231,6 +227,12 @@ public final class SimSecretItems {
             if (entity == null || entity.isRemoved()) {
                 LIVE.remove(id);
                 SimScore.secretFound(entry.getValue());
+                // An item secret can be a dungeon blessing too (SimBlessings), credited to whoever stood nearest.
+                BlockPos at = entry.getValue();
+                var finder = level.getNearestPlayer(at.getX() + 0.5, at.getY() + 0.5, at.getZ() + 0.5, 16, false);
+                if (finder != null) {
+                    SimBlessings.itemSecret(level.getServer(), finder.getGameProfile().name(), at);
+                }
                 purgeOwed = true;
             } else {
                 pin(entity, entry.getValue());

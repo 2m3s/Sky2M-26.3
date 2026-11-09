@@ -121,7 +121,8 @@ public final class BestFriends {
             }
         }
         // A finished dungeon run counts for everyone partied when you leave it.
-        boolean inDungeon = Sky2MLocation.inDungeon();
+        // A Dungeon Sim floor is practice, not a run together.
+        boolean inDungeon = Sky2MLocation.inDungeon() && !com.epic60869.sky2m.sim.roomsim.SimState.isActive();
         if (inDungeon && !Sky2MLocation.dungeonFloor().isEmpty()) dungeonFloor = Sky2MLocation.dungeonFloor();
         if (wasInDungeon && !inDungeon && dungeonFloor != null) {
             for (String uuid : RUNNING.keySet()) record(uuid).runs.merge(dungeonFloor, 1, Integer::sum);
