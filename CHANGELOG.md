@@ -194,6 +194,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Fix the profile viewer showing newer items as a barrier (Dead Plant in Sacks) or blank paper (Umber Key in Inventory): items the item lists can't draw now use Pack Disabler's item table, with Hypixel's model when its pack is loaded.
 - Fix HUDs drawn in a menu (Storage Value, Profit Tracker, Composter, Anita shop and others) missing from /s2 gui's On screen list: any HUD on your screen when you press the Edit HUDs key, or open /s2 gui, is there to move.
 - Fix Bazaar Order Colours not colouring enchanted book orders (like Legion I), and orders seen before the bazaar prices loaded staying uncoloured until the menu was reopened.
 - Team Secrets no longer sends "Team secrets (updated)" or "Team secrets last run (updated)", during the next run, after you've left the dungeon or anywhere else: each run gets one list when it ends. The later lookups still happen and quietly correct Teammate History and the next run's count.
