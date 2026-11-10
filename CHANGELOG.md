@@ -199,6 +199,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Fix the location (the sidebar's ⏣ line) sometimes being empty when Hypixel sends more than one SKYBLOCK scoreboard, which hid location-based HUDs like Carnival Goals. `/s2 debug` now lists the scoreboard objectives.
 - Fix Carnival Goals never updating from the Carnival Goals menu: goals are now found by their wording anywhere in an item's description, whatever its icon, and an unrecognised menu is written to the game log.
 - Fix the profile viewer showing newer items as a barrier (Dead Plant in Sacks) or blank paper (Umber Key in Inventory): items the item lists can't draw now use Pack Disabler's item table, with Hypixel's model when its pack is loaded.
 - Fix HUDs drawn in a menu (Storage Value, Profit Tracker, Composter, Anita shop and others) missing from /s2 gui's On screen list: any HUD on your screen when you press the Edit HUDs key, or open /s2 gui, is there to move.

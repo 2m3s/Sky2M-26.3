@@ -150,6 +150,17 @@ public final class Sky2MLocation {
             Matcher m = FLOOR.matcher(NOT_ASCII.matcher(line).replaceAll(""));
             if (m.find() && !line.contains("Queue")) newFloor = m.group("floor");
         }
+        // The sidebar's teams hold the same lines (prefix + suffix), so they still give the location if the objective
+        // read above doesn't have it.
+        if (newLocation.isEmpty() && onSkyblock) {
+            for (String line : teams) {
+                int symbol = Math.max(line.indexOf('⏣'), line.indexOf('ф'));
+                if (symbol >= 0) {
+                    newLocation = line.substring(symbol + 1).trim();
+                    break;
+                }
+            }
+        }
         location = newLocation;
 
         String newArea = "";
@@ -167,12 +178,43 @@ public final class Sky2MLocation {
     }
 
     /** The server's SkyBlock sidebar objective (titled SKYBLOCK), wherever it is displayed. */
+    /**
+     * SkyBlock's sidebar objective. The one in the sidebar slot wins when it's SkyBlock's: Hypixel can send more than
+     * one objective titled SKYBLOCK, and the first one found (in no particular order) may not be the sidebar, which
+     * left the location empty. Without it in the slot (a scoreboard mod moved it), the SkyBlock one with the most lines.
+     */
     private static Objective findSkyblockObjective(Scoreboard board) {
+        Objective shown = board.getDisplayObjective(DisplaySlot.SIDEBAR);
+        if (shown != null && isSkyblockTitle(shown)) return shown;
+        Objective best = null;
+        int bestSize = -1;
         for (Objective candidate : board.getObjectives()) {
-            String title = strip(candidate.getDisplayName().getString());
-            if (title.contains("SKYBLOCK") || title.contains("SKIBLOCK")) return candidate;
+            if (!isSkyblockTitle(candidate)) continue;
+            int size = board.listPlayerScores(candidate).size();
+            if (size > bestSize) {
+                best = candidate;
+                bestSize = size;
+            }
         }
-        return null;
+        return best;
+    }
+
+    private static boolean isSkyblockTitle(Objective objective) {
+        String title = strip(objective.getDisplayName().getString());
+        return title.contains("SKYBLOCK") || title.contains("SKIBLOCK");
+    }
+
+    /** For /s2 debug: every objective's title, line count and whether it's in the sidebar slot. */
+    public static List<String> objectivesForDebug() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return List.of();
+        Scoreboard board = mc.level.getScoreboard();
+        Objective shown = board.getDisplayObjective(DisplaySlot.SIDEBAR);
+        List<String> out = new ArrayList<>();
+        for (Objective o : board.getObjectives()) {
+            out.add(strip(o.getDisplayName().getString()) + " (" + board.listPlayerScores(o).size() + " lines" + (o == shown ? ", sidebar" : "") + ")");
+        }
+        return out;
     }
 
     /** The objective with the most lines, when none is titled SKYBLOCK. */

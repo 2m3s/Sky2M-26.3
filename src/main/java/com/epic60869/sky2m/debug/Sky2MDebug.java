@@ -40,6 +40,7 @@ public final class Sky2MDebug {
         line("Location", Sky2MLocation.location());
         line("Dungeon floor", Sky2MLocation.dungeonFloor());
         line("Sidebar title", Sky2MLocation.scoreboardTitle());
+        line("Scoreboard objectives", String.join(", ", Sky2MLocation.objectivesForDebug()));
         String catacombs = "";
         for (String sidebarLine : Sky2MLocation.scoreboard()) {
             if (sidebarLine.contains("Catacombs") || sidebarLine.contains("⏣")) {
