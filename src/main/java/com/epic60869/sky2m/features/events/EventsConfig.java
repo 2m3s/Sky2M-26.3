@@ -195,6 +195,21 @@ public final class EventsConfig {
         @ConfigOption(name = "Highest Value Only", desc = "Only highlight (and time) the zombies of the best type on the field.")
         @ConfigEditorBoolean
         public boolean highestOnly = false;
+
+        @Expose
+        @ConfigOption(name = "Lamp Timer", desc = "When a Redstone Lamp lights up, a HUD shows how long until it goes out (6 seconds). Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean lampTimer = true;
+
+        @Expose
+        @ConfigOption(name = "Highlight Lamp", desc = "Highlights the lit Redstone Lamp in red.")
+        @ConfigEditorBoolean
+        public boolean lampHighlight = true;
+
+        @Expose
+        @ConfigOption(name = "Line to Lamp", desc = "Draws a line from your crosshair to the lit Redstone Lamp.")
+        @ConfigEditorBoolean
+        public boolean lampLine = false;
     }
 
     public static final class Spook {

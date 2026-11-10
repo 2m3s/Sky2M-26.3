@@ -7,6 +7,7 @@ import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
 import com.epic60869.sky2m.features.misc.visual.MayorDisplay;
 import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;
+import com.epic60869.sky2m.sb.events.WorldEvents;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -14,12 +15,16 @@ import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
@@ -39,10 +44,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Carnival helpers: the daily ticket reminder, the goals display, Quick Start and the Zombie Shootout hitboxes and
- * timers. Ported from SkyHanni's CarnivalReminder, CarnivalGoal, CarnivalQuickStart and CarnivalZombieShootout
- * (https://github.com/hannibal002/SkyHanni, features/event/carnival/, LGPL-2.1). The Zombie Shootout lamp timer is
- * not ported; Fruit Digging is in {@link CarnivalFruitDigging}.
+ * Carnival helpers: the daily ticket reminder, the goals display, Quick Start and the Zombie Shootout hitboxes, timers
+ * and lamp timer. Ported from SkyHanni's CarnivalReminder, CarnivalGoal, CarnivalQuickStart and CarnivalZombieShootout
+ * (https://github.com/hannibal002/SkyHanni, features/event/carnival/, LGPL-2.1). Fruit Digging is in
+ * {@link CarnivalFruitDigging}.
  */
 public final class CarnivalFeatures {
     private static final String GOALS_HUD = "events_carnival_goals";
@@ -131,6 +136,11 @@ public final class CarnivalFeatures {
     private static volatile ZombieType maxType = ZombieType.LEATHER;
     private static final Map<Integer, Long> FIRST_SEEN = new HashMap<>();
 
+    private static final String LAMP_HUD = "events_carnival_lamp";
+    private static final long LAMP_LIFETIME_MS = 6000L;
+    private static volatile BlockPos lampPos;
+    private static volatile long lampLitAt;
+
     /** The game NPCs, by the name above them and the id Hypixel's /selectnpcoption uses. */
     private static final Map<String, String> GAME_NPCS = Map.of(
         "Carnival Cowboy", "carnival_cowboy",
@@ -169,6 +179,16 @@ public final class CarnivalFeatures {
             Component.literal(" Shoot 60 Zombies").withStyle(ChatFormatting.GRAY)), 10, 160);
         Sky2MHuds.setSettingsSearch(GOALS_HUD, "Show Goals");
         Sky2MHuds.setting(GOALS_HUD, () -> config() != null && config().goals);
+
+        WorldEvents.BLOCK_STATE_UPDATE.register(CarnivalFeatures::onBlockUpdate);
+        Sky2MHuds.register(LAMP_HUD, "Zombie Shootout Lamp", () -> {
+            EventsConfig.Carnival c = config();
+            return c != null && c.zombieShootout.enabled && c.zombieShootout.lampTimer && shootoutStarted && lampPos != null;
+        }, CarnivalFeatures::lampLines, List.of(
+            Component.literal("Lamp goes out in ").withStyle(ChatFormatting.GOLD)
+                .append(Component.literal("4.2s").withStyle(ChatFormatting.GREEN))), 10, 260);
+        Sky2MHuds.setSettingsSearch(LAMP_HUD, "Lamp Timer");
+        Sky2MHuds.setting(LAMP_HUD, () -> config() != null && config().zombieShootout.enabled && config().zombieShootout.lampTimer);
 
         UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> quickStart(entity) ? InteractionResult.FAIL : InteractionResult.PASS);
         AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) -> quickStart(entity) ? InteractionResult.FAIL : InteractionResult.PASS);
@@ -217,6 +237,35 @@ public final class CarnivalFeatures {
         optionsShownAt = System.currentTimeMillis();
     }
 
+    // ------------------------------------------------------------------------------------------------ lamp
+
+    /** A Redstone Lamp lighting up during Zombie Shootout is worth shooting for 6 seconds; it going out ends that. */
+    public static void onBlockUpdate(BlockPos pos, BlockState old, BlockState updated) {
+        if (!shootoutStarted || old == null || !old.is(Blocks.REDSTONE_LAMP) || !updated.is(Blocks.REDSTONE_LAMP)) return;
+        boolean wasLit = old.getValue(BlockStateProperties.LIT), lit = updated.getValue(BlockStateProperties.LIT);
+        if (!wasLit && lit) {
+            lampPos = pos.immutable();
+            lampLitAt = System.currentTimeMillis();
+        } else if (wasLit && !lit && pos.equals(lampPos)) {
+            lampPos = null;
+        }
+    }
+
+    public static List<Component> lampLines() {
+        if (lampPos == null) return List.of();
+        long left = LAMP_LIFETIME_MS - (System.currentTimeMillis() - lampLitAt);
+        if (left <= 0) return List.of();
+        ChatFormatting colour = left > 4000 ? ChatFormatting.GREEN : left > 2000 ? ChatFormatting.YELLOW : ChatFormatting.RED;
+        return List.of(Component.literal("Lamp goes out in ").withStyle(ChatFormatting.GOLD)
+            .append(Component.literal(String.format(java.util.Locale.US, "%.1fs", left / 1000.0)).withStyle(colour)));
+    }
+
+    /** For the game test: pretend a Zombie Shootout game started. */
+    public static void testStartShootout() {
+        shootoutStarted = true;
+        shootoutStartedAt = System.currentTimeMillis();
+    }
+
     private static boolean atCarnival() {
         return Sky2MLocation.location().contains("Carnival");
     }
@@ -253,10 +302,12 @@ public final class CarnivalFeatures {
             if (text.equals("[NPC] Carnival Cowboy: Good luck, pal!")) {
                 shootoutStarted = true;
                 shootoutStartedAt = System.currentTimeMillis();
+                lampPos = null;
             } else if (text.equals("Zombie Shootout") && shootoutStarted) {
                 shootoutStarted = false;
                 zombies = List.of();
                 FIRST_SEEN.clear();
+                lampPos = null;
             }
         }
     }
@@ -406,6 +457,11 @@ public final class CarnivalFeatures {
         if (c == null || !c.zombieShootout.enabled || !shootoutStarted) return;
         EventsConfig.ZombieShootout z = c.zombieShootout;
         long now = System.currentTimeMillis();
+        BlockPos lamp = lampPos;
+        if (lamp != null && now - lampLitAt < LAMP_LIFETIME_MS) {
+            if (z.lampHighlight) collector.submitFilledBox(lamp, new float[]{1f, 0f, 0f}, 0.5f, true);
+            if (z.lampLine) collector.submitLineFromCursor(Vec3.atCenterOf(lamp), new float[]{1f, 0f, 0f}, 1f, 3f);
+        }
         for (ShootoutZombie s : zombies) {
             if (z.highestOnly && s.type != maxType) continue;
             if (s.entity.isRemoved()) continue;
