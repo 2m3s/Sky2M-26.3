@@ -53,6 +53,7 @@ public final class EventsFeatures {
         }
         HoppityFeatures.init();
         ChocolateFactoryFeatures.init();
+        CarnivalData.init();
         CarnivalFeatures.init();
         CarnivalFruitDigging.init();
         SpookFeatures.init();

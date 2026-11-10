@@ -41,19 +41,10 @@ import java.util.regex.Pattern;
  * LGPL-2.1); the solver is in {@link FruitDiggingSolver}.
  */
 public final class CarnivalFruitDigging {
-    static final int MAX_DIGS = 15;
     private static final int SIZE = FruitDiggingSolver.SIZE;
-    private static final int START_X = -112;
-    private static final int START_Z = 19;
-    private static final int GRID_Y = 72;
-    private static final AABB BOARD = new AABB(START_X - 1, GRID_Y - 2, START_Z - 1, START_X + SIZE + 1, GRID_Y + 4, START_Z + SIZE + 1);
     private static final String REMAINING_HUD = "events_carnival_fruit_remaining";
     private static final String SOLVER_HUD = "events_carnival_fruit_solver";
 
-    private static final Pattern TREASURE = Pattern.compile("^TREASURE! There is an? (.+) nearby\\.$");
-    private static final Pattern NO_FRUIT = Pattern.compile("^(?:TREASURE|ANCHOR)! There are no fruits nearby!$");
-    private static final Pattern MINES = Pattern.compile("^MINES! There (?:is|are) (\\d+) bombs? hidden nearby\\.$");
-    private static final Pattern REVEAL = Pattern.compile("^([A-Za-z ]+)(?: \\(\\+\\d+\\))?$");
     private static final Pattern TEXTURE_URL = Pattern.compile("texture/([0-9a-f]+)");
 
     public enum Fruit {
@@ -84,19 +75,44 @@ public final class CarnivalFruitDigging {
             this.edible = edible;
         }
 
+        private CarnivalData.FruitInfo info() {
+            return CarnivalData.get().fruits().get(this);
+        }
+
+        /** Name, points, how many are hidden and head texture: from Carnival.json, or the built-in value. */
+        String label() {
+            CarnivalData.FruitInfo i = info();
+            return i == null ? label : i.label();
+        }
+
+        int points() {
+            CarnivalData.FruitInfo i = info();
+            return i == null ? points : i.points();
+        }
+
+        int count() {
+            CarnivalData.FruitInfo i = info();
+            return i == null ? count : i.count();
+        }
+
+        String texture() {
+            CarnivalData.FruitInfo i = info();
+            return i == null ? texture : i.texture();
+        }
+
         /** Part of the 49 things hidden under the sand. */
         boolean inBag() {
             return edible || this == BOMB || this == RUM;
         }
 
         static Fruit byName(String name) {
-            for (Fruit f : values()) if (f.label.equalsIgnoreCase(name)) return f;
+            for (Fruit f : values()) if (f.label().equalsIgnoreCase(name)) return f;
             return null;
         }
 
         static Fruit byTexture(String hash) {
             if (hash == null || hash.isEmpty()) return null;
-            for (Fruit f : values()) if (!f.texture.isEmpty() && f.texture.equals(hash)) return f;
+            for (Fruit f : values()) if (!f.texture().isEmpty() && f.texture().equals(hash)) return f;
             return null;
         }
     }
@@ -171,6 +187,17 @@ public final class CarnivalFruitDigging {
 
     // ------------------------------------------------------------------------------------------------ state
 
+    /** How many digs a game has (Carnival.json). */
+    static int maxDigs() {
+        return CarnivalData.get().maxDigs();
+    }
+
+    /** The board with a margin, for finding its armour stands and dropped fruit. */
+    private static AABB board() {
+        CarnivalData.Snapshot d = CarnivalData.get();
+        return new AABB(d.boardX() - 1, d.boardY() - 2, d.boardZ() - 1, d.boardX() + SIZE + 1, d.boardY() + 4, d.boardZ() + SIZE + 1);
+    }
+
     private static Cell[][] newGrid() {
         Cell[][] g = new Cell[SIZE][SIZE];
         for (int r = 0; r < SIZE; r++) for (int c = 0; c < SIZE; c++) g[r][c] = new Cell();
@@ -179,7 +206,7 @@ public final class CarnivalFruitDigging {
 
     private static void resetRemaining() {
         REMAINING.clear();
-        for (Fruit f : Fruit.values()) if (f.count > 0) REMAINING.put(f, f.count);
+        for (Fruit f : Fruit.values()) if (f.count() > 0) REMAINING.put(f, f.count());
     }
 
     /** Clears the board; {@code start} begins tracking a new game. */
@@ -195,8 +222,9 @@ public final class CarnivalFruitDigging {
     }
 
     private static Cell cellAt(double x, double z) {
-        int col = (int) Math.floor(x) - START_X;
-        int row = (int) Math.floor(z) - START_Z;
+        CarnivalData.Snapshot d = CarnivalData.get();
+        int col = (int) Math.floor(x) - d.boardX();
+        int row = (int) Math.floor(z) - d.boardZ();
         if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) return null;
         return grid[row][col];
     }
@@ -222,8 +250,8 @@ public final class CarnivalFruitDigging {
     private static int pointValue(Fruit fruit) {
         Fruit last = lastDugFruit();
         double multiplier = last == Fruit.POMEGRANATE ? 1.5 : last == Fruit.DURIAN ? 0.5 : 1.0;
-        int dug = fruit.count - REMAINING.getOrDefault(fruit, 0);
-        int base = fruit == Fruit.APPLE ? fruit.points + 100 * dug : fruit == Fruit.CHERRY ? fruit.points + 300 * dug : fruit.points;
+        int dug = fruit.count() - REMAINING.getOrDefault(fruit, 0);
+        int base = fruit == Fruit.APPLE ? fruit.points() + 100 * dug : fruit == Fruit.CHERRY ? fruit.points() + 300 * dug : fruit.points();
         return (int) (multiplier * base);
     }
 
@@ -232,17 +260,18 @@ public final class CarnivalFruitDigging {
     static void onChat(String text) {
         EventsConfig.FruitDigging c = config();
         if (c == null || !c.enabled) return;
-        if (text.equals("[NPC] Carnival Pirateman: Good luck, matey!")) {
+        CarnivalData.Snapshot data = CarnivalData.get();
+        if (text.equals(data.fruitStart())) {
             reset(true);
             return;
         }
         if (!playing) return;
-        if (text.equals("Fruit Digging")) {
+        if (text.equals(data.fruitEnd())) {
             reset(false);
             return;
         }
         Cell last = lastDug();
-        Matcher m = MINES.matcher(text);
+        Matcher m = data.fruitMines().matcher(text);
         if (m.matches()) {
             if (last != null) {
                 last.mines = Integer.parseInt(m.group(1));
@@ -250,7 +279,7 @@ public final class CarnivalFruitDigging {
             }
             return;
         }
-        m = TREASURE.matcher(text);
+        m = data.fruitTreasure().matcher(text);
         if (m.matches()) {
             Fruit fruit = Fruit.byName(m.group(1));
             if (last != null && fruit != null) {
@@ -259,7 +288,7 @@ public final class CarnivalFruitDigging {
             }
             return;
         }
-        if (NO_FRUIT.matcher(text).matches() && last != null) {
+        if (data.fruitNoFruit().matcher(text).matches() && last != null) {
             last.treasure = Fruit.NO_FRUIT;
             last.anchored = Fruit.NO_FRUIT;
             dirty = true;
@@ -268,8 +297,9 @@ public final class CarnivalFruitDigging {
 
     /** A server block change: sand turning to sandstone is a dig, to sandstone stairs a fruit a bomb destroyed. */
     public static void onBlockUpdate(BlockPos pos, BlockState old, BlockState updated) {
-        if (!playing || old == null || !old.is(Blocks.SAND) || pos.getY() != GRID_Y) return;
-        int col = pos.getX() - START_X, row = pos.getZ() - START_Z;
+        CarnivalData.Snapshot d = CarnivalData.get();
+        if (!playing || old == null || !old.is(Blocks.SAND) || pos.getY() != d.boardY()) return;
+        int col = pos.getX() - d.boardX(), row = pos.getZ() - d.boardZ();
         if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) return;
         Cell cell = grid[row][col];
         cell.diggable = false;
@@ -298,10 +328,12 @@ public final class CarnivalFruitDigging {
 
     /** Fruit names above dug cells (armour stands) and fruit dropped by the Anchor shovel (heads on the ground). */
     private static void scanEntities(ClientLevel level) {
-        for (ArmorStand stand : level.getEntitiesOfClass(ArmorStand.class, BOARD)) {
+        AABB board = board();
+        Pattern reveal = CarnivalData.get().fruitReveal();
+        for (ArmorStand stand : level.getEntitiesOfClass(ArmorStand.class, board)) {
             if (!stand.hasCustomName() || stand.getCustomName() == null) continue;
             String name = Sky2MLocation.strip(stand.getCustomName().getString()).trim();
-            Matcher m = REVEAL.matcher(name);
+            Matcher m = reveal.matcher(name);
             if (!m.matches()) continue;
             Fruit fruit = Fruit.byName(m.group(1).trim());
             Cell cell = cellAt(stand.getX(), stand.getZ());
@@ -315,7 +347,7 @@ public final class CarnivalFruitDigging {
                 dirty = true;
             }
         }
-        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, BOARD)) {
+        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, board)) {
             if (SEEN_ITEMS.contains(item.getId())) continue;
             Fruit fruit = Fruit.byTexture(textureHash(Compat.getHeadTexture(item.getItem())));
             if (fruit == null) continue;
@@ -361,7 +393,7 @@ public final class CarnivalFruitDigging {
         }
         Fruit last = lastDugFruit();
         double multiplier = last == Fruit.POMEGRANATE ? 1.5 : last == Fruit.DURIAN ? 0.5 : 1.0;
-        recommendation = digsUsed >= MAX_DIGS ? null : FruitDiggingSolver.recommend(input, digsUsed, multiplier, last == Fruit.COCONUT, RANDOM);
+        recommendation = digsUsed >= maxDigs() ? null : FruitDiggingSolver.recommend(input, digsUsed, multiplier, last == Fruit.COCONUT, RANDOM);
     }
 
     // ------------------------------------------------------------------------------------------------ display
@@ -373,14 +405,14 @@ public final class CarnivalFruitDigging {
     public static List<Component> remainingLines() {
         List<Fruit> left = new ArrayList<>();
         for (Map.Entry<Fruit, Integer> e : REMAINING.entrySet()) if (e.getValue() > 0) left.add(e.getKey());
-        left.sort(Comparator.comparingInt(CarnivalFruitDigging::pointValue).reversed().thenComparing(f -> f.label));
+        left.sort(Comparator.comparingInt(CarnivalFruitDigging::pointValue).reversed().thenComparing(Fruit::label));
         List<Component> lines = new ArrayList<>();
         if (left.isEmpty()) return lines;
         lines.add(Component.literal("Fruit Digging").withStyle(ChatFormatting.GOLD));
         for (Fruit f : left) {
             ChatFormatting colour = f == Fruit.BOMB ? ChatFormatting.RED : f == Fruit.RUM ? ChatFormatting.DARK_PURPLE : ChatFormatting.GRAY;
             String points = f.edible ? " (" + pointValue(f) + ")" : "";
-            lines.add(Component.literal(f.label + points + ": " + REMAINING.get(f)).withStyle(colour));
+            lines.add(Component.literal(f.label() + points + ": " + REMAINING.get(f)).withStyle(colour));
         }
         return lines;
     }
@@ -390,7 +422,7 @@ public final class CarnivalFruitDigging {
         List<Component> lines = new ArrayList<>();
         if (rec == null) return lines;
         lines.add(Component.literal("Fruit Digging Solver").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
-        lines.add(Component.literal("Digs: " + digsUsed + "/" + MAX_DIGS).withStyle(ChatFormatting.GRAY));
+        lines.add(Component.literal("Digs: " + digsUsed + "/" + maxDigs()).withStyle(ChatFormatting.GRAY));
         lines.add(Component.literal("Dig: " + label(rec.row(), rec.col()) + " with " + rec.shovel()).withStyle(ChatFormatting.GREEN));
         lines.add(Component.literal(String.format(Locale.US, "Bomb chance: %.0f%%", rec.pBomb() * 100)).withStyle(ChatFormatting.RED));
         return lines;
@@ -409,33 +441,34 @@ public final class CarnivalFruitDigging {
     private static void render(PrimitiveCollector collector) {
         EventsConfig.FruitDigging c = config();
         if (c == null || !active()) return;
+        CarnivalData.Snapshot d = CarnivalData.get();
         for (int row = 0; row < SIZE; row++) {
             for (int col = 0; col < SIZE; col++) {
                 Cell cell = grid[row][col];
-                BlockPos pos = new BlockPos(START_X + col, GRID_Y, START_Z + row);
+                BlockPos pos = new BlockPos(d.boardX() + col, d.boardY(), d.boardZ() + row);
                 if (!cell.diggable) collector.submitFilledBox(new AABB(pos).expandTowards(0, 0.1, 0), new float[]{0.5f, 0.5f, 0.5f}, 0.45f, false);
                 List<Component> label = new ArrayList<>();
                 if (c.foundFruit && !cell.diggable && cell.found() != Fruit.UNKNOWN) {
-                    label.add(Component.literal(cell.found().label).withStyle(ChatFormatting.GREEN));
+                    label.add(Component.literal(cell.found().label()).withStyle(ChatFormatting.GREEN));
                 }
                 if (c.fruitGuesses && cell.diggable && cell.uncovered == Fruit.UNKNOWN && cell.solved != Fruit.UNKNOWN) {
-                    label.add(Component.literal(cell.solved.label + " (" + pointValue(cell.solved) + ")").withStyle(ChatFormatting.YELLOW));
+                    label.add(Component.literal(cell.solved.label() + " (" + pointValue(cell.solved) + ")").withStyle(ChatFormatting.YELLOW));
                 }
                 if (c.hints) {
-                    if (cell.treasure != Fruit.UNKNOWN) label.add(Component.literal("≤ " + cell.treasure.label).withStyle(ChatFormatting.AQUA));
-                    if (cell.anchored != Fruit.UNKNOWN && cell.anchored != cell.treasure) label.add(Component.literal("≥ " + cell.anchored.label).withStyle(ChatFormatting.AQUA));
+                    if (cell.treasure != Fruit.UNKNOWN) label.add(Component.literal("≤ " + cell.treasure.label()).withStyle(ChatFormatting.AQUA));
+                    if (cell.anchored != Fruit.UNKNOWN && cell.anchored != cell.treasure) label.add(Component.literal("≥ " + cell.anchored.label()).withStyle(ChatFormatting.AQUA));
                     if (cell.mines != null) label.add(Component.literal(cell.mines + (cell.mines == 1 ? " bomb" : " bombs")).withStyle(ChatFormatting.RED));
                 }
-                Vec3 at = new Vec3(pos.getX() + 0.5, GRID_Y + 1.15, pos.getZ() + 0.5);
+                Vec3 at = new Vec3(pos.getX() + 0.5, d.boardY() + 1.15, pos.getZ() + 0.5);
                 for (int i = 0; i < label.size(); i++) collector.submitText(label.get(i), at, 0.6f, (label.size() - 1 - i) * 10f, true);
             }
         }
         FruitDiggingSolver.Recommendation rec = recommendation;
         if (c.bestDig && rec != null && grid[rec.row()][rec.col()].diggable) {
-            BlockPos pos = new BlockPos(START_X + rec.col(), GRID_Y, START_Z + rec.row());
+            BlockPos pos = new BlockPos(d.boardX() + rec.col(), d.boardY(), d.boardZ() + rec.row());
             collector.submitFilledBox(new AABB(pos).inflate(0.01), new float[]{0.2f, 1f, 0.2f}, 0.35f, true);
             collector.submitText(Component.literal(String.format(Locale.US, "Dig here (%s) %.0f%% bomb", rec.shovel(), rec.pBomb() * 100))
-                .withStyle(ChatFormatting.GREEN), new Vec3(pos.getX() + 0.5, GRID_Y + 1.6, pos.getZ() + 0.5), 1f, true);
+                .withStyle(ChatFormatting.GREEN), new Vec3(pos.getX() + 0.5, d.boardY() + 1.6, pos.getZ() + 0.5), 1f, true);
         }
     }
 }

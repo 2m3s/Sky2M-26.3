@@ -58,7 +58,7 @@ final class FruitDiggingSolver {
 
     /** What a dowsing clue ranks a fruit as: Apple is the lowest, the rest by points. */
     static int dowsingRank(Fruit fruit) {
-        return fruit == Fruit.APPLE ? 0 : fruit.points;
+        return fruit == Fruit.APPLE ? 0 : fruit.points();
     }
 
     private static final class Advisor {
@@ -110,7 +110,7 @@ final class FruitDiggingSolver {
 
         List<Fruit> remainingBag() {
             Map<Fruit, Integer> counts = new EnumMap<>(Fruit.class);
-            for (Fruit f : Fruit.values()) if (f.inBag()) counts.put(f, f.count);
+            for (Fruit f : Fruit.values()) if (f.inBag()) counts.put(f, f.count());
             for (Fruit f : known) if (f != null) counts.merge(f, -1, Integer::sum);
             List<Fruit> bag = new ArrayList<>();
             counts.forEach((f, n) -> {
@@ -151,7 +151,7 @@ final class FruitDiggingSolver {
                 case APPLE -> 100.0 * (applesCollected + 1);
                 case CHERRY -> 200.0 + 300.0 * (cherriesCollected + 1);
                 case BOMB, RUM, UNKNOWN, NO_FRUIT -> 0.0;
-                default -> f.points;
+                default -> f.points();
             };
         }
 
@@ -206,7 +206,7 @@ final class FruitDiggingSolver {
             double value = 0;
             for (Fruit f : Fruit.values()) {
                 if (!f.edible) continue;
-                int n = f.count;
+                int n = f.count();
                 for (Fruit k : known) if (k == f) n--;
                 count += n;
                 value += pointValue(f) * n;
@@ -271,7 +271,7 @@ final class FruitDiggingSolver {
                 }
             }
             // A Durian halved the next dig: spend it on the cheapest safe cell and keep the good ones for full value.
-            if (nextMultiplier < 1.0 && CarnivalFruitDigging.MAX_DIGS - digsUsed > 1) {
+            if (nextMultiplier < 1.0 && CarnivalFruitDigging.maxDigs() - digsUsed > 1) {
                 int absorber = -1;
                 double lowest = Double.POSITIVE_INFINITY;
                 for (int c : candidates) {

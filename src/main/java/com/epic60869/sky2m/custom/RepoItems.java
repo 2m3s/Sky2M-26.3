@@ -39,6 +39,7 @@ public final class RepoItems {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final String NEU_REPO = "https://raw.githubusercontent.com/NotEnoughUpdates/NotEnoughUpdates-REPO/master/";
 	private static final String SKYHANNI_REPO = "https://raw.githubusercontent.com/hannibal002/SkyHanni-REPO/main/";
+	private static final String SKY2M_REPO = "https://raw.githubusercontent.com/2m3s/Sky2M-REPO/live/";
 	private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
 	private static final Map<String, RepoItem> ITEMS = new LinkedHashMap<>();
@@ -94,6 +95,11 @@ public final class RepoItems {
 
 	public static String neuRepoFile(String path) throws IOException, InterruptedException {
 		return fetch(NEU_REPO + path);
+	}
+
+	/** A file from Sky2M's own repo (https://github.com/2m3s/Sky2M-REPO, e.g. "constants/Carnival.json"). Blocking. */
+	public static String sky2mRepoFile(String path) throws IOException, InterruptedException {
+		return fetch(SKY2M_REPO + path);
 	}
 
 	/** A file from SkyHanni's repo (e.g. "constants/Garden.json"). Blocking. */

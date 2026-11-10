@@ -1,0 +1,62 @@
+{
+  "formatVersion": 1,
+  "goals": {
+    "menuTitle": "Carnival",
+    "completeLine": "(?i)(✔ ?)?COMPLETED?!?( ✔)?",
+    "games": [
+      {"id": "FRUIT_DIGGING", "label": "Fruit Digging", "colour": "GOLD"},
+      {"id": "CATCH_A_FISH", "label": "Catch a Fish", "colour": "DARK_AQUA"},
+      {"id": "ZOMBIE_SHOOTOUT", "label": "Zombie Shootout", "colour": "RED"}
+    ],
+    "list": [
+      {"id": "FRUIT_PLAY", "game": "FRUIT_DIGGING", "sentence": "Play 3 games of Fruit Digging.", "display": "Play 3 games"},
+      {"id": "FRUIT_SCORE", "game": "FRUIT_DIGGING", "sentence": "Reach 3,000 score in a single game of Fruit Digging.", "display": "Reach 3,000 score"},
+      {"id": "DIG_APPLE", "game": "FRUIT_DIGGING", "sentence": "Dig up 3 Apples in a single game of Fruit Digging.", "display": "Dig up 3 Apples"},
+      {"id": "UNIQUE_FRUIT", "game": "FRUIT_DIGGING", "sentence": "Dig up 5 unique Fruits in a single game of Fruit Digging.", "display": "Dig up 5 unique Fruits"},
+      {"id": "DRAGONFRUIT", "game": "FRUIT_DIGGING", "sentence": "Dig up a Dragonfruit.", "display": "Dig up a Dragonfruit"},
+      {"id": "FISH_PLAY", "game": "CATCH_A_FISH", "sentence": "Play 3 games of Catch a Fish.", "display": "Play 3 games"},
+      {"id": "FISH_SCORE", "game": "CATCH_A_FISH", "sentence": "Reach 3,000 score in a single game of Catch a Fish.", "display": "Reach 3,000 score"},
+      {"id": "CATCH_FISH", "game": "CATCH_A_FISH", "sentence": "Catch 30 Fish in a single game of Catch a Fish.", "display": "Catch 30 Fish"},
+      {"id": "CATCH_YELLOW", "game": "CATCH_A_FISH", "sentence": "Catch 5 Yellow Fish in a single game of Catch a Fish.", "display": "Catch 5 Yellow Fish"},
+      {"id": "CATCH_STREAK", "game": "CATCH_A_FISH", "sentence": "Reach a 5 Catch Streak in a single game of Catch a Fish.", "display": "Reach a 5 Catch Streak"},
+      {"id": "SHOOT_PLAY", "game": "ZOMBIE_SHOOTOUT", "sentence": "Play 3 games of Zombie Shootout.", "display": "Play 3 games"},
+      {"id": "SHOOT_SCORE", "game": "ZOMBIE_SHOOTOUT", "sentence": "Reach 3,000 score in a single game of Zombie Shootout.", "display": "Reach 3,000 score"},
+      {"id": "SHOOT_ZOMBIES", "game": "ZOMBIE_SHOOTOUT", "sentence": "Shoot 60 Zombies in a single game of Zombie Shootout.", "display": "Shoot 60 Zombies"},
+      {"id": "SHOOT_DIAMOND", "game": "ZOMBIE_SHOOTOUT", "sentence": "Shoot 5 Diamond Zombies in a single game of Zombie Shootout.", "display": "Shoot 5 Diamond Zombies"},
+      {"id": "SHOOT_LAMPS", "game": "ZOMBIE_SHOOTOUT", "sentence": "Shoot 5 Redstone Lamps in a single game of Zombie Shootout.", "display": "Shoot 5 Redstone Lamps"}
+    ]
+  },
+  "chat": {
+    "shootoutStart": "[NPC] Carnival Cowboy: Good luck, pal!",
+    "shootoutEnd": "Zombie Shootout",
+    "fruitStart": "[NPC] Carnival Pirateman: Good luck, matey!",
+    "fruitEnd": "Fruit Digging",
+    "npcOptions": "Select an option:",
+    "fruitTreasure": "^TREASURE! There is an? (.+) nearby\\.$",
+    "fruitNoFruit": "^(?:TREASURE|ANCHOR)! There are no fruits nearby!$",
+    "fruitMines": "^MINES! There (?:is|are) (\\d+) bombs? hidden nearby\\.$",
+    "fruitReveal": "^([A-Za-z ]+)(?: \\(\\+\\d+\\))?$"
+  },
+  "npcs": {
+    "Carnival Cowboy": "carnival_cowboy",
+    "Carnival Fisherman": "carnival_fisherman",
+    "Carnival Pirateman": "carnival_pirateman"
+  },
+  "quickStartOption": "r_2_1",
+  "fruitDigging": {
+    "maxDigs": 15,
+    "board": {"x": -112, "y": 72, "z": 19},
+    "fruits": {
+      "BOMB": {"label": "Bomb", "points": 0, "count": 10, "texture": "a76a2811d1e176a07b6d0a657b910f134896ce30850f6e80c7c83732d85381ea"},
+      "RUM": {"label": "Rum", "points": 0, "count": 5, "texture": "407b275d28b927b1bf7f6dd9f45fbdad2af8571c54c8f027d1bff6956fbf3c16"},
+      "MANGO": {"label": "Mango", "points": 300, "count": 10, "texture": "f363a62126a35537f8189343a22660de75e810c6ac004a7d3da65f1c040a839"},
+      "APPLE": {"label": "Apple", "points": 100, "count": 8, "texture": "17ea278d6225c447c5943d652798d0bbbd1418434ce8c54c54fdac79994ddd6c"},
+      "WATERMELON": {"label": "Watermelon", "points": 100, "count": 4, "texture": "efe4ef83baf105e8dee6cf03dfe7407f1911b3b9952c891ae34139560f2931d6"},
+      "POMEGRANATE": {"label": "Pomegranate", "points": 200, "count": 4, "texture": "40824d18079042d5769f264f44394b95b9b99ce689688cc10c9eec3f882ccc08"},
+      "COCONUT": {"label": "Coconut", "points": 200, "count": 3, "texture": "10ceb1455b471d016a9f06d25f6e468df9fcf223e2c1e4795b16e84fcca264ee"},
+      "CHERRY": {"label": "Cherry", "points": 200, "count": 2, "texture": "c92b099a62cd2fbf8ada09dec145c75d7fda4dc57b968bea3a8fa11e37aa48b2"},
+      "DURIAN": {"label": "Durian", "points": 800, "count": 2, "texture": "ac268d36c2c6047ffeec00124096376b56dbb4d756a55329363a1b27fcd659cd"},
+      "DRAGON_FRUIT": {"label": "Dragonfruit", "points": 1200, "count": 1, "texture": "3cc761bcb0579763d9b8ab6b7b96fa77eb6d9605a804d838fec39e7b25f95591"}
+    }
+  }
+}

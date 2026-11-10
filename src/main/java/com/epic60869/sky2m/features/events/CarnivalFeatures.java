@@ -57,50 +57,6 @@ public final class CarnivalFeatures {
     private static final String YEAR_KEY = "carnivalYear";
     private static final String GOALS_KEY = "carnivalGoals";
 
-    private enum Game {
-        FRUIT_DIGGING("Fruit Digging", ChatFormatting.GOLD, Items.SAND),
-        CATCH_A_FISH("Catch a Fish", ChatFormatting.DARK_AQUA, Items.COD),
-        ZOMBIE_SHOOTOUT("Zombie Shootout", ChatFormatting.RED, Items.ARROW);
-
-        final String label;
-        final ChatFormatting colour;
-        final Item icon;
-
-        Game(String label, ChatFormatting colour, Item icon) {
-            this.label = label;
-            this.colour = colour;
-            this.icon = icon;
-        }
-    }
-
-    private enum Goal {
-        FRUIT_PLAY(Game.FRUIT_DIGGING, "Play 3 games of Fruit Digging.", "Play 3 games"),
-        FRUIT_SCORE(Game.FRUIT_DIGGING, "Reach 3,000 score in a single game of Fruit Digging.", "Reach 3,000 score"),
-        DIG_APPLE(Game.FRUIT_DIGGING, "Dig up 3 Apples in a single game of Fruit Digging.", "Dig up 3 Apples"),
-        UNIQUE_FRUIT(Game.FRUIT_DIGGING, "Dig up 5 unique Fruits in a single game of Fruit Digging.", "Dig up 5 unique Fruits"),
-        DRAGONFRUIT(Game.FRUIT_DIGGING, "Dig up a Dragonfruit.", "Dig up a Dragonfruit"),
-        FISH_PLAY(Game.CATCH_A_FISH, "Play 3 games of Catch a Fish.", "Play 3 games"),
-        FISH_SCORE(Game.CATCH_A_FISH, "Reach 3,000 score in a single game of Catch a Fish.", "Reach 3,000 score"),
-        CATCH_FISH(Game.CATCH_A_FISH, "Catch 30 Fish in a single game of Catch a Fish.", "Catch 30 Fish"),
-        CATCH_YELLOW(Game.CATCH_A_FISH, "Catch 5 Yellow Fish in a single game of Catch a Fish.", "Catch 5 Yellow Fish"),
-        CATCH_STREAK(Game.CATCH_A_FISH, "Reach a 5 Catch Streak in a single game of Catch a Fish.", "Reach a 5 Catch Streak"),
-        SHOOT_PLAY(Game.ZOMBIE_SHOOTOUT, "Play 3 games of Zombie Shootout.", "Play 3 games"),
-        SHOOT_SCORE(Game.ZOMBIE_SHOOTOUT, "Reach 3,000 score in a single game of Zombie Shootout.", "Reach 3,000 score"),
-        SHOOT_ZOMBIES(Game.ZOMBIE_SHOOTOUT, "Shoot 60 Zombies in a single game of Zombie Shootout.", "Shoot 60 Zombies"),
-        SHOOT_DIAMOND(Game.ZOMBIE_SHOOTOUT, "Shoot 5 Diamond Zombies in a single game of Zombie Shootout.", "Shoot 5 Diamond Zombies"),
-        SHOOT_LAMPS(Game.ZOMBIE_SHOOTOUT, "Shoot 5 Redstone Lamps in a single game of Zombie Shootout.", "Shoot 5 Redstone Lamps");
-
-        final Game game;
-        final String sentence;
-        final String display;
-
-        Goal(Game game, String sentence, String display) {
-            this.game = game;
-            this.sentence = sentence;
-            this.display = display;
-        }
-    }
-
     private enum ZombieType {
         LEATHER(30, Items.LEATHER_HELMET, new float[]{0.65f, 0.16f, 0.16f}, 8000),
         IRON(50, Items.IRON_HELMET, new float[]{0.75f, 0.75f, 0.75f}, 7000),
@@ -122,7 +78,8 @@ public final class CarnivalFeatures {
 
     private record ShootoutZombie(Zombie entity, ZombieType type) {}
 
-    private static Set<Goal> reached;
+    /** Ids of the goals reached this Carnival (the ids in Carnival.json). */
+    private static Set<String> reached;
     private static boolean claimedToday;
     private static boolean claimedLoaded;
     private static long onSkyblockSince;
@@ -141,11 +98,6 @@ public final class CarnivalFeatures {
     private static volatile BlockPos lampPos;
     private static volatile long lampLitAt;
 
-    /** The game NPCs, by the name above them and the id Hypixel's /selectnpcoption uses. */
-    private static final Map<String, String> GAME_NPCS = Map.of(
-        "Carnival Cowboy", "carnival_cowboy",
-        "Carnival Fisherman", "carnival_fisherman",
-        "Carnival Pirateman", "carnival_pirateman");
     private static final long QUICK_START_WINDOW_MS = 5000L;
     private static long optionsShownAt;
     private static long lastQuickStart;
@@ -163,7 +115,7 @@ public final class CarnivalFeatures {
         Sky2MWorldRender.register(CarnivalFeatures::render);
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> container
-                && Sky2MLocation.strip(container.getTitle().getString()).contains("Carnival")) {
+                && Sky2MLocation.strip(container.getTitle().getString()).contains(CarnivalData.get().menuTitle())) {
                 net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> {
                     if (++menuFrames % 10 == 1) readGoalsMenu(container);
                 });
@@ -196,7 +148,7 @@ public final class CarnivalFeatures {
 
     // ------------------------------------------------------------------------------------------------ quick start
 
-    /** Clicking a game NPC again while its options are in chat picks "Sure thing, partner!" (option r_2_1). */
+    /** Clicking a game NPC again while its options are in chat picks "Sure thing, partner!" (Carnival.json's quickStartOption). */
     private static boolean quickStart(Entity entity) {
         EventsConfig.Carnival c = config();
         long now = System.currentTimeMillis();
@@ -208,7 +160,7 @@ public final class CarnivalFeatures {
         if (connection == null) return false;
         lastQuickStart = now;
         optionsShownAt = 0;
-        connection.sendCommand("selectnpcoption " + npc + " r_2_1");
+        connection.sendCommand("selectnpcoption " + npc + " " + CarnivalData.get().quickStartOption());
         return true;
     }
 
@@ -228,8 +180,7 @@ public final class CarnivalFeatures {
         Component name = entity.getCustomName();
         if (name == null) name = entity.getName();
         String text = Sky2MLocation.strip(name.getString()).trim();
-        for (Map.Entry<String, String> e : GAME_NPCS.entrySet()) if (text.equals(e.getKey())) return e.getValue();
-        return null;
+        return CarnivalData.get().npcs().get(text);
     }
 
     /** For the game test: "Select an option:" was just shown. */
@@ -288,22 +239,23 @@ public final class CarnivalFeatures {
             EventsFeatures.put(DAY_KEY, LocalDate.now(ZoneOffset.UTC).toString());
             EventsFeatures.save();
         }
+        CarnivalData.Snapshot data = CarnivalData.get();
         if (c.goals) {
             String sentence = text.startsWith("- ") ? text.substring(2).trim() : text;
-            for (Goal goal : Goal.values()) {
-                if (goal.sentence.equals(sentence)) {
+            for (CarnivalData.Goal goal : data.goals()) {
+                if (goal.sentence().equals(sentence)) {
                     setReached(goal, true);
                     break;
                 }
             }
         }
-        if (c.quickStart && text.startsWith("Select an option:") && atCarnival()) optionsShownAt = System.currentTimeMillis();
+        if (c.quickStart && text.startsWith(data.npcOptions()) && atCarnival()) optionsShownAt = System.currentTimeMillis();
         if (c.zombieShootout.enabled) {
-            if (text.equals("[NPC] Carnival Cowboy: Good luck, pal!")) {
+            if (text.equals(data.shootoutStart())) {
                 shootoutStarted = true;
                 shootoutStartedAt = System.currentTimeMillis();
                 lampPos = null;
-            } else if (text.equals("Zombie Shootout") && shootoutStarted) {
+            } else if (text.equals(data.shootoutEnd()) && shootoutStarted) {
                 shootoutStarted = false;
                 zombies = List.of();
                 FIRST_SEEN.clear();
@@ -339,15 +291,13 @@ public final class CarnivalFeatures {
 
     // ------------------------------------------------------------------------------------------------ goals
 
-    private static Set<Goal> reached() {
+    private static Set<String> reached() {
         int year = (int) ((System.currentTimeMillis() - Sky2MSkyblockTime.SKYBLOCK_EPOCH.toEpochMilli()) / Sky2MSkyblockTime.YEAR_MILLIS) + 1;
         if (reached == null || EventsFeatures.number(YEAR_KEY, -1) != year) {
             reached = new HashSet<>();
             if (EventsFeatures.number(YEAR_KEY, -1) == year) {
                 for (JsonElement e : EventsFeatures.array(GOALS_KEY)) {
-                    try {
-                        reached.add(Goal.valueOf(e.getAsString()));
-                    } catch (IllegalArgumentException ignored) {}
+                    reached.add(e.getAsString());
                 }
             } else {
                 EventsFeatures.put(YEAR_KEY, year);
@@ -358,11 +308,11 @@ public final class CarnivalFeatures {
         return reached;
     }
 
-    private static void setReached(Goal goal, boolean value) {
-        Set<Goal> set = reached();
-        if (value ? !set.add(goal) : !set.remove(goal)) return;
+    private static void setReached(CarnivalData.Goal goal, boolean value) {
+        Set<String> set = reached();
+        if (value ? !set.add(goal.id()) : !set.remove(goal.id())) return;
         JsonArray array = new JsonArray();
-        for (Goal g : set) array.add(g.name());
+        for (String id : set) array.add(id);
         EventsFeatures.remove(GOALS_KEY);
         EventsFeatures.array(GOALS_KEY).addAll(array);
         EventsFeatures.save();
@@ -386,7 +336,7 @@ public final class CarnivalFeatures {
             if (lore == null || lore.lines().isEmpty()) continue;
             List<String> lines = new ArrayList<>();
             for (Component line : lore.lines()) lines.add(Sky2MLocation.strip(line.getString()).trim());
-            Goal goal = goalIn(lines);
+            CarnivalData.Goal goal = goalIn(lines);
             if (goal == null) {
                 if (unknown.size() < 6) unknown.add(Sky2MLocation.strip(stack.getHoverName().getString()) + " " + lines);
                 continue;
@@ -402,35 +352,41 @@ public final class CarnivalFeatures {
 
     private static boolean loggedUnknownMenu;
 
-    static Goal goalIn(List<String> lines) {
+    static CarnivalData.Goal goalIn(List<String> lines) {
         String joined = String.join(" ", lines).replaceAll("\\s+", " ").replaceAll("(^| )- ", "$1");
-        for (Goal goal : Goal.values()) if (joined.contains(goal.sentence)) return goal;
-        for (Goal goal : Goal.values()) if (joined.contains(goal.sentence.substring(0, goal.sentence.length() - 1))) return goal;
+        List<CarnivalData.Goal> goals = CarnivalData.get().goals();
+        for (CarnivalData.Goal goal : goals) if (joined.contains(goal.sentence())) return goal;
+        for (CarnivalData.Goal goal : goals) {
+            String sentence = goal.sentence();
+            if (sentence.endsWith(".") && joined.contains(sentence.substring(0, sentence.length() - 1))) return goal;
+        }
         return null;
     }
 
     static boolean completeIn(List<String> lines) {
-        for (String line : lines) if (line.matches("(?i)(✔ ?)?COMPLETED?!?( ✔)?")) return true;
+        java.util.regex.Pattern complete = CarnivalData.get().completeLine();
+        for (String line : lines) if (complete.matcher(line).matches()) return true;
         return false;
     }
 
     /** For the game test: the goals that would show (not reached). */
     public static List<String> openGoals() {
         List<String> open = new ArrayList<>();
-        for (Goal goal : Goal.values()) if (!reached().contains(goal)) open.add(goal.name());
+        for (CarnivalData.Goal goal : CarnivalData.get().goals()) if (!reached().contains(goal.id())) open.add(goal.id());
         return open;
     }
 
     private static List<Component> goalLines() {
-        Set<Goal> done = reached();
+        Set<String> done = reached();
+        CarnivalData.Snapshot data = CarnivalData.get();
         List<Component> lines = new ArrayList<>();
-        for (Game game : Game.values()) {
+        for (CarnivalData.Game game : data.games()) {
             List<Component> open = new ArrayList<>();
-            for (Goal goal : Goal.values()) {
-                if (goal.game == game && !done.contains(goal)) open.add(Component.literal(" " + goal.display).withStyle(ChatFormatting.GRAY));
+            for (CarnivalData.Goal goal : data.goals()) {
+                if (goal.game().id().equals(game.id()) && !done.contains(goal.id())) open.add(Component.literal(" " + goal.display()).withStyle(ChatFormatting.GRAY));
             }
             if (open.isEmpty()) continue;
-            lines.add(Component.literal(game.label).withStyle(game.colour));
+            lines.add(Component.literal(game.label()).withStyle(game.colour()));
             lines.addAll(open);
         }
         return lines;

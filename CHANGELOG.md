@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.5
 
 ### Added
+- Sky2M-REPO (https://github.com/2m3s/Sky2M-REPO): Hypixel wording and values the mod relies on can now be fixed without a new version. The mod downloads them (checked every 12 hours) and falls back to the copy in the jar. Carnival goals, game start and end lines, Fruit Digging hints and fruit values, and Quick Start's NPCs come from it first.
 - Fruit Digging helper (Events > Carnival > Fruit Digging, off by default): during a game it shows each dig's hint above its cell (bombs nearby, Treasure and Anchor fruit), the fruit found, a HUD of the fruit, bombs and rum still hidden, and the best cell to dig next with which shovel mode and its bomb chance. Move the HUDs in `/s2 gui`.
 - Carnival Quick Start (Events > Carnival, off by default): click a game NPC again while its options are in chat to start the game straight away.
 - Zombie Shootout lamp timer (Events > Carnival > Zombie Shootout, on with Zombie Shootout): a HUD with how long a lit Redstone Lamp stays lit, the lamp highlighted in red, and an optional line to it.
