@@ -128,6 +128,11 @@ public final class EventsConfig {
         public boolean goals = false;
 
         @Expose
+        @ConfigOption(name = "Quick Start", desc = "At the Carnival, click a game NPC (Cowboy, Fisherman or Pirateman) again while its options are in chat to start the game straight away, without clicking \"Sure thing, partner!\".")
+        @ConfigEditorBoolean
+        public boolean quickStart = false;
+
+        @Expose
         @ConfigOption(name = "Zombie Shootout", desc = "")
         @Accordion
         public ZombieShootout zombieShootout = new ZombieShootout();

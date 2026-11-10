@@ -10,11 +10,16 @@ import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
+import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
@@ -34,10 +39,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Carnival helpers: the daily ticket reminder, the goals display and the Zombie Shootout hitboxes and timers. Ported
- * from SkyHanni's CarnivalReminder, CarnivalGoal and CarnivalZombieShootout (https://github.com/hannibal002/SkyHanni,
- * features/event/carnival/, LGPL-2.1). The Zombie Shootout lamp timer is not ported; Fruit Digging is in
- * {@link CarnivalFruitDigging}.
+ * Carnival helpers: the daily ticket reminder, the goals display, Quick Start and the Zombie Shootout hitboxes and
+ * timers. Ported from SkyHanni's CarnivalReminder, CarnivalGoal, CarnivalQuickStart and CarnivalZombieShootout
+ * (https://github.com/hannibal002/SkyHanni, features/event/carnival/, LGPL-2.1). The Zombie Shootout lamp timer is
+ * not ported; Fruit Digging is in {@link CarnivalFruitDigging}.
  */
 public final class CarnivalFeatures {
     private static final String GOALS_HUD = "events_carnival_goals";
@@ -126,6 +131,15 @@ public final class CarnivalFeatures {
     private static volatile ZombieType maxType = ZombieType.LEATHER;
     private static final Map<Integer, Long> FIRST_SEEN = new HashMap<>();
 
+    /** The game NPCs, by the name above them and the id Hypixel's /selectnpcoption uses. */
+    private static final Map<String, String> GAME_NPCS = Map.of(
+        "Carnival Cowboy", "carnival_cowboy",
+        "Carnival Fisherman", "carnival_fisherman",
+        "Carnival Pirateman", "carnival_pirateman");
+    private static final long QUICK_START_WINDOW_MS = 5000L;
+    private static long optionsShownAt;
+    private static long lastQuickStart;
+
     private CarnivalFeatures() {}
 
     private static EventsConfig.Carnival config() {
@@ -155,6 +169,52 @@ public final class CarnivalFeatures {
             Component.literal(" Shoot 60 Zombies").withStyle(ChatFormatting.GRAY)), 10, 160);
         Sky2MHuds.setSettingsSearch(GOALS_HUD, "Show Goals");
         Sky2MHuds.setting(GOALS_HUD, () -> config() != null && config().goals);
+
+        UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> quickStart(entity) ? InteractionResult.FAIL : InteractionResult.PASS);
+        AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) -> quickStart(entity) ? InteractionResult.FAIL : InteractionResult.PASS);
+    }
+
+    // ------------------------------------------------------------------------------------------------ quick start
+
+    /** Clicking a game NPC again while its options are in chat picks "Sure thing, partner!" (option r_2_1). */
+    private static boolean quickStart(Entity entity) {
+        EventsConfig.Carnival c = config();
+        long now = System.currentTimeMillis();
+        if (c == null || !c.quickStart || !Sky2MLocation.onSkyblock() || !atCarnival()) return false;
+        if (now - optionsShownAt > QUICK_START_WINDOW_MS || now - lastQuickStart < 1000L) return false;
+        String npc = gameNpcAt(entity);
+        if (npc == null) return false;
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection == null) return false;
+        lastQuickStart = now;
+        optionsShownAt = 0;
+        connection.sendCommand("selectnpcoption " + npc + " r_2_1");
+        return true;
+    }
+
+    /** The /selectnpcoption id of the game NPC this entity is (its name tag floats just above it), or null. */
+    static String gameNpcAt(Entity entity) {
+        if (entity == null || entity.level() == null) return null;
+        String own = npcId(entity);
+        if (own != null) return own;
+        for (ArmorStand stand : entity.level().getEntitiesOfClass(ArmorStand.class, entity.getBoundingBox().inflate(0.6, 2.5, 0.6))) {
+            String id = npcId(stand);
+            if (id != null) return id;
+        }
+        return null;
+    }
+
+    private static String npcId(Entity entity) {
+        Component name = entity.getCustomName();
+        if (name == null) name = entity.getName();
+        String text = Sky2MLocation.strip(name.getString()).trim();
+        for (Map.Entry<String, String> e : GAME_NPCS.entrySet()) if (text.equals(e.getKey())) return e.getValue();
+        return null;
+    }
+
+    /** For the game test: "Select an option:" was just shown. */
+    public static void testOptionsShown() {
+        optionsShownAt = System.currentTimeMillis();
     }
 
     private static boolean atCarnival() {
@@ -188,6 +248,7 @@ public final class CarnivalFeatures {
                 }
             }
         }
+        if (c.quickStart && text.startsWith("Select an option:") && atCarnival()) optionsShownAt = System.currentTimeMillis();
         if (c.zombieShootout.enabled) {
             if (text.equals("[NPC] Carnival Cowboy: Good luck, pal!")) {
                 shootoutStarted = true;
