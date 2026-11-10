@@ -43,7 +43,7 @@ public final class Sky2MDebug {
         line("Scoreboard objectives", String.join(", ", Sky2MLocation.objectivesForDebug()));
         String catacombs = "";
         for (String sidebarLine : Sky2MLocation.scoreboard()) {
-            if (sidebarLine.contains("Catacombs") || sidebarLine.contains("⏣")) {
+            if (sidebarLine.contains("Catacombs") || Sky2MLocation.locationIn(sidebarLine) != null) {
                 catacombs = sidebarLine;
                 break;
             }

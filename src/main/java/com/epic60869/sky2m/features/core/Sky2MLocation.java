@@ -32,6 +32,12 @@ public final class Sky2MLocation {
     private static final RepoPattern PADDING_EMOJI = RepoPattern.of("core.Sky2MLocation.PADDING_EMOJI", "[\\x{10000}-\\x{10FFFF}]");
     private static final RepoPattern NOT_ASCII = RepoPattern.of("core.Sky2MLocation.NOT_ASCII", "[^\\x20-\\x7E]");
     /**
+     * The sidebar's location line: a symbol, a space, then the area. Hypixel used "⏣" (and "ф" in the Rift); in 2026
+     * it also uses its resource pack's icons, the private-use characters U+E067 and U+E020 (the same set the custom
+     * scoreboard's AREA pattern accepts). Sky2M-REPO can add new symbols.
+     */
+    private static final RepoPattern LOCATION_LINE = RepoPattern.of("core.Sky2MLocation.LOCATION_LINE", "[⏣ф\\x{E067}\\x{E020}] (?<location>.+)");
+    /**
      * "[MVP+] Name entered The Catacombs, Floor VII!" (MM before The Catacombs in Master Mode), between two lines of
      * dashes, when the party is sent into a run (Odin's DungeonQueue reads the same message).
      */
@@ -143,8 +149,8 @@ public final class Sky2MLocation {
             if (m.find() && !line.contains("Queue")) newFloor = m.group("floor");
         }
         for (String line : lines) {
-            int symbol = Math.max(line.indexOf('⏣'), line.indexOf('ф'));
-            if (symbol >= 0) newLocation = line.substring(symbol + 1).trim();
+            String found = locationIn(line);
+            if (found != null) newLocation = found;
             // Hypixel's padding emoji can land inside "(F7)" (it sits between the team prefix and suffix, and some are
             // in the basic plane, like ⚽), so only printable ASCII is kept for the floor, as Skyblocker's \D* allows.
             Matcher m = FLOOR.matcher(NOT_ASCII.matcher(line).replaceAll(""));
@@ -154,9 +160,9 @@ public final class Sky2MLocation {
         // read above doesn't have it.
         if (newLocation.isEmpty() && onSkyblock) {
             for (String line : teams) {
-                int symbol = Math.max(line.indexOf('⏣'), line.indexOf('ф'));
-                if (symbol >= 0) {
-                    newLocation = line.substring(symbol + 1).trim();
+                String found = locationIn(line);
+                if (found != null) {
+                    newLocation = found;
                     break;
                 }
             }
@@ -197,6 +203,12 @@ public final class Sky2MLocation {
             }
         }
         return best;
+    }
+
+    /** The area named by a sidebar location line ("⏣ Carnival" gives "Carnival"), or null if it isn't one. */
+    public static String locationIn(String line) {
+        Matcher m = LOCATION_LINE.matcher(line);
+        return m.find() ? m.group("location").trim() : null;
     }
 
     private static boolean isSkyblockTitle(Objective objective) {
