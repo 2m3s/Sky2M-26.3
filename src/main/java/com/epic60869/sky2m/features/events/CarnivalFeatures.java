@@ -163,7 +163,7 @@ public final class CarnivalFeatures {
         Sky2MWorldRender.register(CarnivalFeatures::render);
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> container
-                && Sky2MLocation.strip(container.getTitle().getString()).trim().equals("Carnival Goals")) {
+                && Sky2MLocation.strip(container.getTitle().getString()).contains("Carnival")) {
                 net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> {
                     if (++menuFrames % 10 == 1) readGoalsMenu(container);
                 });
@@ -368,29 +368,57 @@ public final class CarnivalFeatures {
         EventsFeatures.save();
     }
 
+    /**
+     * Reads the goals from a Carnival menu. A goal is found by its sentence anywhere in an item's lore (lines joined, so a
+     * sentence wrapped over two lines still matches), whatever the item's icon or header lines are; the sentence names
+     * its game, so the three "Play 3 games" goals stay apart. A goal is reached when a lore line says COMPLETE.
+     */
     private static void readGoalsMenu(net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
         EventsConfig.Carnival c = config();
         if (c == null || !c.goals) return;
         List<Slot> slots = screen.getMenu().slots;
+        int found = 0;
+        List<String> unknown = new ArrayList<>();
         for (int i = 0; i < slots.size() - 36; i++) {
             ItemStack stack = slots.get(i).getItem();
             if (stack.isEmpty()) continue;
-            Game game = null;
-            for (Game g : Game.values()) if (stack.is(g.icon)) game = g;
-            if (game == null) continue;
             ItemLore lore = stack.get(DataComponents.LORE);
             if (lore == null || lore.lines().isEmpty()) continue;
-            String first = Sky2MLocation.strip(lore.lines().get(0).getString()).trim();
-            if (first.startsWith("- ")) first = first.substring(2).trim();
-            String last = Sky2MLocation.strip(lore.lines().get(lore.lines().size() - 1).getString()).trim();
-            if (first.length() < 8) continue;
-            for (Goal goal : Goal.values()) {
-                if (goal.game == game && goal.sentence.startsWith(first)) {
-                    setReached(goal, last.equals("COMPLETE"));
-                    break;
-                }
+            List<String> lines = new ArrayList<>();
+            for (Component line : lore.lines()) lines.add(Sky2MLocation.strip(line.getString()).trim());
+            Goal goal = goalIn(lines);
+            if (goal == null) {
+                if (unknown.size() < 6) unknown.add(Sky2MLocation.strip(stack.getHoverName().getString()) + " " + lines);
+                continue;
             }
+            found++;
+            setReached(goal, completeIn(lines));
         }
+        if (found == 0 && !loggedUnknownMenu && Sky2MLocation.strip(screen.getTitle().getString()).contains("Goals") && !unknown.isEmpty()) {
+            loggedUnknownMenu = true;
+            com.mojang.logging.LogUtils.getLogger().info("[Sky2M] Carnival goals not recognised in '{}': {}", screen.getTitle().getString(), unknown);
+        }
+    }
+
+    private static boolean loggedUnknownMenu;
+
+    static Goal goalIn(List<String> lines) {
+        String joined = String.join(" ", lines).replaceAll("\\s+", " ").replaceAll("(^| )- ", "$1");
+        for (Goal goal : Goal.values()) if (joined.contains(goal.sentence)) return goal;
+        for (Goal goal : Goal.values()) if (joined.contains(goal.sentence.substring(0, goal.sentence.length() - 1))) return goal;
+        return null;
+    }
+
+    static boolean completeIn(List<String> lines) {
+        for (String line : lines) if (line.matches("(?i)(✔ ?)?COMPLETED?!?( ✔)?")) return true;
+        return false;
+    }
+
+    /** For the game test: the goals that would show (not reached). */
+    public static List<String> openGoals() {
+        List<String> open = new ArrayList<>();
+        for (Goal goal : Goal.values()) if (!reached().contains(goal)) open.add(goal.name());
+        return open;
     }
 
     private static List<Component> goalLines() {
