@@ -54,6 +54,7 @@ public final class EventsFeatures {
         HoppityFeatures.init();
         ChocolateFactoryFeatures.init();
         CarnivalFeatures.init();
+        CarnivalFruitDigging.init();
         SpookFeatures.init();
         WinterFeatures.init();
         JerryFeatures.init();

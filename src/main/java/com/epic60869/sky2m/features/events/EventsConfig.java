@@ -30,7 +30,7 @@ public final class EventsConfig {
     public ChocolateFactory chocolateFactory = new ChocolateFactory();
 
     @Expose
-    @Category(name = "Carnival", desc = "Tickets, goals and Zombie Shootout.")
+    @Category(name = "Carnival", desc = "Tickets, goals, Zombie Shootout and Fruit Digging.")
     public Carnival carnival = new Carnival();
 
     @Expose
@@ -131,6 +131,43 @@ public final class EventsConfig {
         @ConfigOption(name = "Zombie Shootout", desc = "")
         @Accordion
         public ZombieShootout zombieShootout = new ZombieShootout();
+
+        @Expose
+        @ConfigOption(name = "Fruit Digging", desc = "")
+        @Accordion
+        public FruitDigging fruitDigging = new FruitDigging();
+    }
+
+    public static final class FruitDigging {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Turns the Fruit Digging helpers on (they only work during a game).")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Best Dig", desc = "Highlights the best cell to dig next and which shovel mode to use (Anchor or Mines), with the chance it's a bomb, worked out from every hint so far. A HUD shows it too; move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean bestDig = true;
+
+        @Expose
+        @ConfigOption(name = "Remaining Fruit", desc = "A HUD with the fruit, bombs and rum still hidden and what each fruit is worth on your next dig. Move it in /s2 gui.")
+        @ConfigEditorBoolean
+        public boolean remainingFruit = true;
+
+        @Expose
+        @ConfigOption(name = "Dig Hints", desc = "Shows each dig's hint above its cell: how many bombs are nearby (Mines), the best fruit nearby (Treasure) and the worst fruit nearby (Anchor).")
+        @ConfigEditorBoolean
+        public boolean hints = true;
+
+        @Expose
+        @ConfigOption(name = "Found Fruit", desc = "Shows the fruit you dug up (or a bomb destroyed) above its cell, and greys out cells you can't dig any more.")
+        @ConfigEditorBoolean
+        public boolean foundFruit = true;
+
+        @Expose
+        @ConfigOption(name = "Known Fruit", desc = "Shows fruit the Anchor shovel revealed on cells you haven't dug yet, with what they're worth.")
+        @ConfigEditorBoolean
+        public boolean fruitGuesses = true;
     }
 
     public static final class ZombieShootout {

@@ -166,6 +166,7 @@ public final class ModImportSources {
             .m("event.jerry.lineJerries", "events.winter.lineJerries")
             .m("event.spook.primalFearTimer", "events.spook.primalFearTimer")
             .same("event.carnival.zombieShootout.", "events.carnival.zombieShootout.", "enabled", "highestOnly")
+            .same("event.carnival.fruitDigging.", "events.carnival.fruitDigging.", "enabled")
             .m("event.feast.fetchAutomatically", "events.harvestFeast.fetchAutomatically")
             .same("skillProgress.", "skills.", "skillProgressBarConfig.useTexturedBar", "skillProgressBarConfig.useChroma",
                 "overflowConfig.enableInDisplay", "overflowConfig.enableInAllDisplay", "overflowConfig.enableInEtaDisplay",

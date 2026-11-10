@@ -36,7 +36,8 @@ import java.util.Set;
 /**
  * Carnival helpers: the daily ticket reminder, the goals display and the Zombie Shootout hitboxes and timers. Ported
  * from SkyHanni's CarnivalReminder, CarnivalGoal and CarnivalZombieShootout (https://github.com/hannibal002/SkyHanni,
- * features/event/carnival/, LGPL-2.1). The Fruit Digging solver and the Zombie Shootout lantern timer are not ported.
+ * features/event/carnival/, LGPL-2.1). The Zombie Shootout lamp timer is not ported; Fruit Digging is in
+ * {@link CarnivalFruitDigging}.
  */
 public final class CarnivalFeatures {
     private static final String GOALS_HUD = "events_carnival_goals";
