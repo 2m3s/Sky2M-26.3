@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -71,7 +73,7 @@ public final class DeathMap {
         }
     }
 
-    private static final Pattern DEATH = Pattern.compile("^ ?☠ (You|\\w{1,16}) (.+?)(?: and became a ghost)?\\.$");
+    private static final RepoPattern DEATH = RepoPattern.of("dungeons.DeathMap.DEATH", "^ ?☠ (You|\\w{1,16}) (.+?)(?: and became a ghost)?\\.$");
     private static final int LISTED = 10;
     private static Store store = new Store();
     private static Path file;

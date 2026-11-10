@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.events;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.EntityGlow;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -40,9 +42,9 @@ public final class JerryFeatures {
     private static final int MAX_GIFTS = 600;
     private static final int SCAN_INTERVAL_TICKS = 10;
     private static final double SCAN_RANGE = 48;
-    private static final Pattern JERRY = Pattern.compile("(Green|Blue|Purple|Golden) Jerry");
-    private static final Pattern GIFTED = Pattern.compile("^\\+1 Unique Gift given! To .+!$");
-    private static final Pattern GIFTED_AMOUNT = Pattern.compile("Unique Players Gifted: ([\\d,]+)");
+    private static final RepoPattern JERRY = RepoPattern.of("events.JerryFeatures.JERRY", "(Green|Blue|Purple|Golden) Jerry");
+    private static final RepoPattern GIFTED = RepoPattern.of("events.JerryFeatures.GIFTED", "^\\+1 Unique Gift given! To .+!$");
+    private static final RepoPattern GIFTED_AMOUNT = RepoPattern.of("events.JerryFeatures.GIFTED_AMOUNT", "Unique Players Gifted: ([\\d,]+)");
 
     private static final Map<Integer, Integer> jerries = new HashMap<>();
     private static List<LivingEntity> jerryEntities = List.of();

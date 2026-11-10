@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.tracker;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.combat.CombatFeatures;
@@ -57,10 +59,10 @@ public final class DungeonProfitHour {
     static final String TURN_ON = " in /s2 (Misc > Profit Trackers > Drop Tracker, Profit per Hour & RNG List) first.";
     /** The RNG meter items read from Hypixel's menus. */
     private static Path file = DIR.resolve("sky2m").resolve("dungeon-meters.json");
-    private static final Pattern FLOOR = Pattern.compile("(?i)^(?:([fm])([1-7])|e|entrance|f0)$");
-    private static final Pattern TITLE_FLOOR = Pattern.compile("(?i)\\(([FM])([1-7])\\)|\\b(Master(?: Mode)?\\s+)?(?:The\\s+)?(?:Catacombs\\s+)?Floor\\s+([IVX]+|[1-7])\\b|\\b([FM])([1-7])\\b");
-    private static final Pattern PROGRESS = Pattern.compile("([\\d,.]+[kKmM]?)\\s*/\\s*([\\d,.]+[kKmM]?)\\s*$");
-    private static final Pattern SELECTED_DROP = Pattern.compile("(?i)^Selected(?: Drop)?:\\s*(.+)$");
+    private static final RepoPattern FLOOR = RepoPattern.of("tracker.DungeonProfitHour.FLOOR", "(?i)^(?:([fm])([1-7])|e|entrance|f0)$");
+    private static final RepoPattern TITLE_FLOOR = RepoPattern.of("tracker.DungeonProfitHour.TITLE_FLOOR", "(?i)\\(([FM])([1-7])\\)|\\b(Master(?: Mode)?\\s+)?(?:The\\s+)?(?:Catacombs\\s+)?Floor\\s+([IVX]+|[1-7])\\b|\\b([FM])([1-7])\\b");
+    private static final RepoPattern PROGRESS = RepoPattern.of("tracker.DungeonProfitHour.PROGRESS", "([\\d,.]+[kKmM]?)\\s*/\\s*([\\d,.]+[kKmM]?)\\s*$");
+    private static final RepoPattern SELECTED_DROP = RepoPattern.of("tracker.DungeonProfitHour.SELECTED_DROP", "(?i)^Selected(?: Drop)?:\\s*(.+)$");
     /** Gaps longer than this between two runs were a break, not the time between runs. */
     private static final long MAX_GAP_MS = 5 * 60_000;
 

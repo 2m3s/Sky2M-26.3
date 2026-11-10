@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.combat.extra;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -31,12 +35,12 @@ import java.util.regex.Pattern;
  * {@code sky2m/endernodes.json}.
  */
 public final class EnderNodeTracker {
-    private static final Pattern NODE = Pattern.compile("ENDER NODE! You found (?:(?<amount>\\d+)x )?(?<name>.+?)!?$");
-    private static final Pattern PET = Pattern.compile("^(?:RARE|PET) DROP! Enderman \\(");
+    private static final RepoPattern NODE = RepoPattern.of("combat.extra.EnderNodeTracker.NODE", "ENDER NODE! You found (?:(?<amount>\\d+)x )?(?<name>.+?)!?$");
+    private static final RepoPattern PET = RepoPattern.of("combat.extra.EnderNodeTracker.PET", "^(?:RARE|PET) DROP! Enderman \\(");
     /** Misc and armour drops of SkyHanni's EnderNode, by display name. */
-    private static final List<String> MISC = List.of("Enchanted End Stone", "Enchanted Obsidian", "Enchanted Ender Pearl", "Grand Experience Bottle",
-        "Titanic Experience Bottle", "End Stone Shulker", "End Stone Geode", "Magical Rune I", "Mite Gel", "Shrimp the Fish");
-    private static final List<String> ARMOUR = List.of("Ender Helmet", "Ender Chestplate", "Ender Leggings", "Ender Boots", "Ender Necklace", "Ender Gauntlet");
+    private static final List<String> MISC = RepoTable.list("combat.extra.EnderNodeTracker.MISC", List.of("Enchanted End Stone", "Enchanted Obsidian", "Enchanted Ender Pearl", "Grand Experience Bottle",
+        "Titanic Experience Bottle", "End Stone Shulker", "End Stone Geode", "Magical Rune I", "Mite Gel", "Shrimp the Fish"));
+    private static final List<String> ARMOUR = RepoTable.list("combat.extra.EnderNodeTracker.ARMOUR", List.of("Ender Helmet", "Ender Chestplate", "Ender Leggings", "Ender Boots", "Ender Necklace", "Ender Gauntlet"));
     private static final double[] PET_PRICES = {100, 500, 2_000, 10_000, 1_000_000};
     private static final String[] PET_RARITY = {"Common", "Uncommon", "Rare", "Epic", "Legendary"};
 

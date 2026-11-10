@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -27,8 +29,8 @@ import java.util.List;
  */
 public final class StarredMobs {
     private static final String STAR = "✯";
-    private static final List<String> PLAIN_MOBS = List.of("Lurker", "Dreadlord", "Souleater", "Zombie", "Skeleton", "Skeletor",
-        "Sniper", "Super Archer", "Spider", "Fels", "Withermancer");
+    private static final List<String> PLAIN_MOBS = RepoTable.list("dungeons.StarredMobs.PLAIN_MOBS", List.of("Lurker", "Dreadlord", "Souleater", "Zombie", "Skeleton", "Skeletor",
+        "Sniper", "Super Archer", "Spider", "Fels", "Withermancer"));
     private static List<LivingEntity> starred = List.of();
     private static List<LivingEntity> bats = List.of();
     private static List<LivingEntity> withers = List.of();

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
@@ -22,8 +24,8 @@ import java.util.regex.Pattern;
  * or for a minute. Rare mob shares are left to {@link DianaRareMobs}, which gives them their own waypoint.
  */
 public final class PartyCoordWaypoints {
-    private static final Pattern PARTY_LINE = Pattern.compile("^Party > (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>[A-Za-z0-9_]{1,16})[^:]*: (?<body>.+)$");
-    private static final Pattern COORDS = Pattern.compile("x: ?(?<x>-?\\d+(?:\\.\\d+)?),? y: ?(?<y>-?\\d+(?:\\.\\d+)?),? z: ?(?<z>-?\\d+(?:\\.\\d+)?)(?: ?\\| ?(?<note>.+))?", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern PARTY_LINE = RepoPattern.of("combat.PartyCoordWaypoints.PARTY_LINE", "^Party > (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>[A-Za-z0-9_]{1,16})[^:]*: (?<body>.+)$");
+    private static final RepoPattern COORDS = RepoPattern.of("combat.PartyCoordWaypoints.COORDS", "x: ?(?<x>-?\\d+(?:\\.\\d+)?),? y: ?(?<y>-?\\d+(?:\\.\\d+)?),? z: ?(?<z>-?\\d+(?:\\.\\d+)?)(?: ?\\| ?(?<note>.+))?", Pattern.CASE_INSENSITIVE);
     private static final long LIFETIME_MS = 60_000L;
     private static final double REACHED = 5.0;
     private static final float[] COLOUR = {1f, 0.67f, 0f};

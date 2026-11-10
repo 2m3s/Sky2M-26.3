@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -26,7 +28,7 @@ public final class AuctionHighlight {
     private static final int SOLD = 0x8055FF55;
     private static final int EXPIRED = 0x80FF5555;
     private static final int UNDERBID = 0x80FFAA00;
-    private static final Pattern BUY_IT_NOW = Pattern.compile("^Buy it now: ([\\d,]+) coins");
+    private static final RepoPattern BUY_IT_NOW = RepoPattern.of("misc.items.AuctionHighlight.BUY_IT_NOW", "^Buy it now: ([\\d,]+) coins");
 
     /** Each item's colour (0 for none), so its lore isn't read every frame. */
     private static final Map<ItemStack, Integer> CACHE = new WeakHashMap<>();

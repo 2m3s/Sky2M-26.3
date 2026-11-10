@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -27,7 +29,7 @@ import java.util.regex.Pattern;
  * menu's auctioned item (remembered from the first menu for the confirm one).
  */
 public final class AuctionGuard {
-    private static final Pattern PRICE = Pattern.compile("(?:Item [Pp]rice|BIN [Pp]rice|Price|Cost|Starting bid|Buy it now): ?([\\d,]+(?:\\.\\d+)?) coins");
+    private static final RepoPattern PRICE = RepoPattern.of("misc.items.AuctionGuard.PRICE", "(?:Item [Pp]rice|BIN [Pp]rice|Price|Cost|Starting bid|Buy it now): ?([\\d,]+(?:\\.\\d+)?) coins");
     private static final long CONFIRM_MS = 3_000;
 
     private static ItemStack lastItem = ItemStack.EMPTY;

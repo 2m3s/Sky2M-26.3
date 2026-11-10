@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.price;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -26,8 +28,8 @@ import com.epic60869.sky2m.config.Sky2MConfig;
  */
 public final class Sky2MPriceTooltip {
     /** "Stored: 1,234/2,240" on items in the Sacks menu. */
-    private static final Pattern SACK_STORED = Pattern.compile("^Stored: ([\\d,]+)/");
-    private static final Pattern PET_LEVEL = Pattern.compile("\\[Lvl (\\d+)]");
+    private static final RepoPattern SACK_STORED = RepoPattern.of("price.Sky2MPriceTooltip.SACK_STORED", "^Stored: ([\\d,]+)/");
+    private static final RepoPattern PET_LEVEL = RepoPattern.of("price.Sky2MPriceTooltip.PET_LEVEL", "\\[Lvl (\\d+)]");
 
     /** NPC sell prices, built from {@link PriceService}'s item list (the same data Skyblocker's NPC price tooltip uses). */
     private static volatile Map<String, Double> npcPrices = Map.of();
@@ -89,10 +91,10 @@ public final class Sky2MPriceTooltip {
         }
     }
 
-    private static final Pattern LISTING_PRICE = Pattern.compile("^(?:Buy it now|Starting bid|Top bid|Item price): ([\\d,]+) coins");
-    private static final Pattern PET_TIER = Pattern.compile("^(COMMON|UNCOMMON|RARE|EPIC|LEGENDARY|MYTHIC)\\b");
+    private static final RepoPattern LISTING_PRICE = RepoPattern.of("price.Sky2MPriceTooltip.LISTING_PRICE", "^(?:Buy it now|Starting bid|Top bid|Item price): ([\\d,]+) coins");
+    private static final RepoPattern PET_TIER = RepoPattern.of("price.Sky2MPriceTooltip.PET_TIER", "^(COMMON|UNCOMMON|RARE|EPIC|LEGENDARY|MYTHIC)\\b");
     private static final java.util.List<String> TIERS = java.util.List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC");
-    private static final Pattern BAZAAR_ORDER_PREFIX = Pattern.compile("^(?:BUY|SELL) ");
+    private static final RepoPattern BAZAAR_ORDER_PREFIX = RepoPattern.of("price.Sky2MPriceTooltip.BAZAAR_ORDER_PREFIX", "^(?:BUY|SELL) ");
     private static volatile Map<String, String> namesToIds;
     private static volatile Object namesFor;
 

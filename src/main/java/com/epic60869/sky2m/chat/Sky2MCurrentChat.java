@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -22,11 +24,9 @@ import com.epic60869.sky2m.config.Sky2MConfig;
  */
 public final class Sky2MCurrentChat {
     // Patterns from SkyHanni's CurrentChatDisplay, on the unformatted message.
-    private static final Pattern CHANGED = Pattern.compile("^You are now in the (?<chat>.+) channel$");
-    private static final Pattern MOVED_TO_ALL = Pattern.compile(
-        "^(?:You are not in a party and were moved to the ALL channel\\.|The conversation you were in expired and you have been moved back to the ALL channel\\.)$");
-    private static final Pattern PRIVATE = Pattern.compile(
-        "^Opened a chat conversation with (?:\\[.+?] )?(?<player>\\S+) for the next 5 minutes\\. Use /chat a to leave$");
+    private static final RepoPattern CHANGED = RepoPattern.of("chat.Sky2MCurrentChat.CHANGED", "^You are now in the (?<chat>.+) channel$");
+    private static final RepoPattern MOVED_TO_ALL = RepoPattern.of("chat.Sky2MCurrentChat.MOVED_TO_ALL", "^(?:You are not in a party and were moved to the ALL channel\\.|The conversation you were in expired and you have been moved back to the ALL channel\\.)$");
+    private static final RepoPattern PRIVATE = RepoPattern.of("chat.Sky2MCurrentChat.PRIVATE", "^Opened a chat conversation with (?:\\[.+?] )?(?<player>\\S+) for the next 5 minutes\\. Use /chat a to leave$");
     private static final long PRIVATE_DURATION_MS = 5 * 60 * 1000;
 
     private static String channel = "ALL";

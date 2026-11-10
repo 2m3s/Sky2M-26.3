@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.events;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -45,7 +47,7 @@ public final class CarnivalFruitDigging {
     private static final String REMAINING_HUD = "events_carnival_fruit_remaining";
     private static final String SOLVER_HUD = "events_carnival_fruit_solver";
 
-    private static final Pattern TEXTURE_URL = Pattern.compile("texture/([0-9a-f]+)");
+    private static final RepoPattern TEXTURE_URL = RepoPattern.of("events.CarnivalFruitDigging.TEXTURE_URL", "texture/([0-9a-f]+)");
 
     public enum Fruit {
         UNKNOWN("Unknown", 0, 0, "", false),

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.combat.CombatFeatures;
@@ -34,9 +36,9 @@ import java.util.regex.Pattern;
  * with the XP Bonus setting. Levels past 50 take another 200M each, like the profile viewer.
  */
 public final class CataCalculator {
-    private static final Pattern RUN_XP = Pattern.compile("^\\+([\\d,]+(?:\\.\\d+)?) Catacombs Experience");
-    private static final Pattern FLOOR = Pattern.compile("(?i)^(?:e|[fm][1-7])$");
-    private static final Pattern NUMBER = Pattern.compile("(?i)^([\\d.,]+)([kmb]?)$");
+    private static final RepoPattern RUN_XP = RepoPattern.of("dungeons.CataCalculator.RUN_XP", "^\\+([\\d,]+(?:\\.\\d+)?) Catacombs Experience");
+    private static final RepoPattern FLOOR = RepoPattern.of("dungeons.CataCalculator.FLOOR", "(?i)^(?:e|[fm][1-7])$");
+    private static final RepoPattern NUMBER = RepoPattern.of("dungeons.CataCalculator.NUMBER", "(?i)^([\\d.,]+)([kmb]?)$");
     /** Catacombs XP for an S+ run of each floor, before bonuses. */
     private static final Map<String, Double> BASE_XP = Map.ofEntries(
         Map.entry("E", 50.0), Map.entry("F1", 80.0), Map.entry("F2", 160.0), Map.entry("F3", 400.0), Map.entry("F4", 1420.0),

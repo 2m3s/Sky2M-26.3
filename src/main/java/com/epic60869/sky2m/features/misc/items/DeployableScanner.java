@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -28,16 +32,16 @@ import java.util.regex.Pattern;
  * appeared (they last three minutes) and buffs you within 40 blocks.
  */
 public final class DeployableScanner {
-    private static final Pattern ORB = Pattern.compile("^(Radiant|Mana Flux|Overflux|Plasmaflux)\\D*?(\\d+)s$");
+    private static final RepoPattern ORB = RepoPattern.of("misc.items.DeployableScanner.ORB", "^(Radiant|Mana Flux|Overflux|Plasmaflux)\\D*?(\\d+)s$");
     private static final double ORB_RANGE = 18, FLARE_RANGE = 40;
     private static final long FLARE_MS = 180_000L;
     /** The best of each kind is shown: higher tier first. */
     private static final List<String> ORB_ORDER = List.of("Plasmaflux", "Overflux", "Mana Flux", "Radiant");
     /** Flare head textures, as SkyblockAddons recognises them. A firework on the stand's head is a flare too. */
-    private static final Map<String, String> FLARE_TEXTURES = Map.of(
+    private static final Map<String, String> FLARE_TEXTURES = RepoTable.map("misc.items.DeployableScanner.FLARE_TEXTURES", Map.of(
         "22e2bf6c1ec330247927ba63479e5872ac66b06903c86c82b52dac9f1c971458", "Warning Flare",
         "9d2bf9864720d87fd06b84efa80b795c48ed539b16523c3b1f1990b40c003f6b", "Alert Flare",
-        "c0062cc98ebda72a6a4b89783adcef2815b483a01d73ea87b3df76072a89d13b", "SOS Flare");
+        "c0062cc98ebda72a6a4b89783adcef2815b483a01d73ea87b3df76072a89d13b", "SOS Flare"));
     private static final List<String> FLARE_ORDER = List.of("SOS Flare", "Alert Flare", "Warning Flare", "Flare");
 
     public record Active(String name, long endsAt) {}

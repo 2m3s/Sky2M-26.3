@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.ChromaColours;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -41,8 +43,8 @@ import java.util.regex.Pattern;
  * themes and buttons are Sky2M's own. Drawn in place of the chest by Sky2MCustomWardrobeMixin.
  */
 public final class CustomWardrobe {
-    private static final Pattern TITLE = Pattern.compile("^(?:Wardrobe \\((\\d+)/(\\d+)\\)|\\((\\d+)/(\\d+)\\) Armor Sets)$");
-    private static final Pattern SLOT_NAME = Pattern.compile("^Slot (\\d+): (.+)$");
+    private static final RepoPattern TITLE = RepoPattern.of("misc.items.CustomWardrobe.TITLE", "^(?:Wardrobe \\((\\d+)/(\\d+)\\)|\\((\\d+)/(\\d+)\\) Armor Sets)$");
+    private static final RepoPattern SLOT_NAME = RepoPattern.of("misc.items.CustomWardrobe.SLOT_NAME", "^Slot (\\d+): (.+)$");
     private static final int FIRST_BUTTON = 36;
     private static final int PREVIOUS_PAGE = 45, BACK = 48, CLOSE = 49, NEXT_PAGE = 53;
     private static final int GAP = 6, PAD = 8, HEADER = 20, FOOTER = 24, BUTTON_H = 16;

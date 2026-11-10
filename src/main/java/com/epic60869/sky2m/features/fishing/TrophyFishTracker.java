@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.fishing;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -34,7 +36,7 @@ import java.util.regex.Pattern;
  * start at 0 and can differ from Odger's menu. Saved in config/sky2m/trophy-fish.json.
  */
 public final class TrophyFishTracker {
-    private static final Pattern CATCH = Pattern.compile("TROPHY FISH! You caught an? (.+?) (BRONZE|SILVER|GOLD|DIAMOND)\\.?\\s*$");
+    private static final RepoPattern CATCH = RepoPattern.of("fishing.TrophyFishTracker.CATCH", "TROPHY FISH! You caught an? (.+?) (BRONZE|SILVER|GOLD|DIAMOND)\\.?\\s*$");
     private static final String[] TIERS = {"BRONZE", "SILVER", "GOLD", "DIAMOND"};
     private static final ChatFormatting[] COLOURS = {ChatFormatting.GOLD, ChatFormatting.GRAY, ChatFormatting.YELLOW, ChatFormatting.AQUA};
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

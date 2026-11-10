@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -25,10 +27,10 @@ import java.util.regex.Pattern;
  * from your pet!", and Autopet's "Held Item: X" hover. Saved per pet name, so switching pets shows the right item.
  */
 public final class PetHeldItems {
-    private static final Pattern NOW_HOLDING = Pattern.compile("^Your pet is now holding (?<item>.+?)\\.$");
-    private static final Pattern REMOVED = Pattern.compile("^You removed (?<item>.+?) from your pet!$");
-    private static final Pattern AUTOPET = Pattern.compile("^Autopet equipped your (?<pet>.+?)! VIEW RULE$");
-    private static final Pattern HOVER_HELD = Pattern.compile(".*Held Item: (?<item>.+)$");
+    private static final RepoPattern NOW_HOLDING = RepoPattern.of("items.PetHeldItems.NOW_HOLDING", "^Your pet is now holding (?<item>.+?)\\.$");
+    private static final RepoPattern REMOVED = RepoPattern.of("items.PetHeldItems.REMOVED", "^You removed (?<item>.+?) from your pet!$");
+    private static final RepoPattern AUTOPET = RepoPattern.of("items.PetHeldItems.AUTOPET", "^Autopet equipped your (?<pet>.+?)! VIEW RULE$");
+    private static final RepoPattern HOVER_HELD = RepoPattern.of("items.PetHeldItems.HOVER_HELD", ".*Held Item: (?<item>.+)$");
     private static final Gson GSON = new Gson();
 
     /** Pet key (see {@link #key}) -> held item id, or "" for none. */

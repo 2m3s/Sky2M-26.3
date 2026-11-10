@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -44,8 +46,8 @@ import java.util.regex.Pattern;
  * Everything is counted in server ticks.
  */
 public final class BloodCamp {
-    private static final Pattern BLOOD_START = Pattern.compile("^\\[BOSS] The Watcher: (Congratulations, you made it through the Entrance\\.|Ah, you've finally arrived\\.|Ah, we meet again\\.\\.\\.|So you made it this far\\.\\.\\. interesting\\.|You've managed to scratch and claw your way here, eh\\?|I'm starting to get tired of seeing you around here\\.\\.\\.|Oh\\.\\. hello\\?|Things feel a little more roomy now, eh\\?)$");
-    private static final Pattern BLOOD_MOVE = Pattern.compile("^\\[BOSS] The Watcher: Let's see how you can handle this\\.$");
+    private static final RepoPattern BLOOD_START = RepoPattern.of("dungeons.BloodCamp.BLOOD_START", "^\\[BOSS] The Watcher: (Congratulations, you made it through the Entrance\\.|Ah, you've finally arrived\\.|Ah, we meet again\\.\\.\\.|So you made it this far\\.\\.\\. interesting\\.|You've managed to scratch and claw your way here, eh\\?|I'm starting to get tired of seeing you around here\\.\\.\\.|Oh\\.\\. hello\\?|Things feel a little more roomy now, eh\\?)$");
+    private static final RepoPattern BLOOD_MOVE = RepoPattern.of("dungeons.BloodCamp.BLOOD_MOVE", "^\\[BOSS] The Watcher: Let's see how you can handle this\\.$");
     private static final float[] LINE_COLOUR = {1f, 0.33f, 0.33f};
 
     /** A head the Watcher has thrown. Created on its first movement, like Odin's EntityEvent.Move. */

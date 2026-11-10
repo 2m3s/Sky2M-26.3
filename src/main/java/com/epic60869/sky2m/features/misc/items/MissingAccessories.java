@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -72,15 +76,15 @@ import java.util.regex.Pattern;
  */
 public final class MissingAccessories {
     /** Accessories that never go in the bag (the Rift Prism is consumed for its Magical Power). */
-    private static final Set<String> EXCLUDED = Set.of("RIFT_PRISM");
+    private static final Set<String> EXCLUDED = RepoTable.set("misc.items.MissingAccessories.EXCLUDED", Set.of("RIFT_PRISM"));
     /** Magical Power by rarity (Hypixel's values; Divine has no accessories of its own, only recombobulated Mythics). */
-    private static final Map<String, Integer> MAGICAL_POWER = Map.of("COMMON", 3, "UNCOMMON", 5, "RARE", 8, "EPIC", 12,
-        "LEGENDARY", 16, "MYTHIC", 22, "DIVINE", 22, "SPECIAL", 3, "VERY_SPECIAL", 5);
+    private static final Map<String, Integer> MAGICAL_POWER = RepoTable.intMap("misc.items.MissingAccessories.MAGICAL_POWER", Map.of("COMMON", 3, "UNCOMMON", 5, "RARE", 8, "EPIC", 12,
+        "LEGENDARY", 16, "MYTHIC", 22, "DIVINE", 22, "SPECIAL", 3, "VERY_SPECIAL", 5));
     private static final List<String> RARITY_ORDER = List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "DIVINE");
     /** The Hegemony Artifact counts its own Magical Power twice. */
     private static final String HEGEMONY = "HEGEMONY_ARTIFACT";
     /** "Magical Power: 1,234" (Accessory Bag) or "1,234 Magical Power" (Thaumaturgy). */
-    private static final Pattern MP_LINE = Pattern.compile("Magical Power: ([\\d,]+)|^([\\d,]+) Magical Power$");
+    private static final RepoPattern MP_LINE = RepoPattern.of("misc.items.MissingAccessories.MP_LINE", "Magical Power: ([\\d,]+)|^([\\d,]+) Magical Power$");
     /** API refreshes: in the background this often, and when /s2 mp opens on data older than {@link #OPEN_REFRESH_MS}. */
     private static final long API_REFRESH_MS = 5 * 60 * 1000L;
     private static final long OPEN_REFRESH_MS = 2 * 60 * 1000L;
@@ -97,19 +101,19 @@ public final class MissingAccessories {
     /** A new Pulse Ring's first step, from the item repo's PULSE_RING ("UNCOMMON", "Reach 150k Charge for +1 Rarity!"). */
     private static final String PULSE_BASE_RARITY = "UNCOMMON";
     private static final long PULSE_FIRST_STEP = 150_000;
-    private static final Pattern PULSE_NEXT = Pattern.compile("Reach ([\\d.,]+)\\s*([kKmMbB]?) Charge for \\+1 Rarity");
-    private static final Pattern RARITY_LINE = Pattern.compile("\\b(VERY SPECIAL|UNCOMMON|COMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|SPECIAL)\\b.*\\bACCESSORY\\b");
+    private static final RepoPattern PULSE_NEXT = RepoPattern.of("misc.items.MissingAccessories.PULSE_NEXT", "Reach ([\\d.,]+)\\s*([kKmMbB]?) Charge for \\+1 Rarity");
+    private static final RepoPattern RARITY_LINE = RepoPattern.of("misc.items.MissingAccessories.RARITY_LINE", "\\b(VERY SPECIAL|UNCOMMON|COMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|SPECIAL)\\b.*\\bACCESSORY\\b");
     /**
      * Accessories that can't be had (or don't count), never listed: the item repo's constants/misc.json
      * "ignored_talisman" (NotEnoughUpdates-REPO), downloaded with the rest of the repo files. This copy of it is only
      * used until that download has worked.
      */
-    private static final Set<String> IGNORED_FALLBACK = Set.of("GARLIC_FLAVORED_GUMMY_BEAR", "PUNCHCARD_ARTIFACT",
+    private static final Set<String> IGNORED_FALLBACK = RepoTable.set("misc.items.MissingAccessories.IGNORED_FALLBACK", Set.of("GARLIC_FLAVORED_GUMMY_BEAR", "PUNCHCARD_ARTIFACT",
         "RING_OF_BROKEN_LOVE", "DEFECTIVE_MONITOR", "WARDING_TRINKET", "HARMONIOUS_SURGERY_TOOLKIT", "CRUX_TALISMAN_1",
         "CRUX_TALISMAN_2", "CRUX_TALISMAN_3", "CRUX_TALISMAN_4", "CRUX_TALISMAN_5", "CRUX_TALISMAN_6", "CRUX_TALISMAN_7",
         "BINGO_COMBAT_TALISMAN", "COMBO_MANIA_TALISMAN", "SATELITE", "RING_OF_ETERNAL_LOVE", "BINGO_HEIRLOOM", "LUCK_TALISMAN",
         "TALISMAN_OF_SPACE", "RING_OF_SPACE", "MASTER_SKULL_TIER_8", "MASTER_SKULL_TIER_9", "MASTER_SKULL_TIER_10",
-        "COMPASS_TALISMAN", "ARTIFACT_OF_SPACE", "GRIZZLY_PAW", "ETERNAL_CRYSTAL", "OLD_BOOT", "BINGO_RIFT_TALISMAN");
+        "COMPASS_TALISMAN", "ARTIFACT_OF_SPACE", "GRIZZLY_PAW", "ETERNAL_CRYSTAL", "OLD_BOOT", "BINGO_RIFT_TALISMAN"));
     private static volatile Set<String> ignored = IGNORED_FALLBACK;
 
     /** Everything runs here, off the render thread: one at a time, so rebuilds never overlap. */

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -49,8 +51,8 @@ public final class PestTimer {
         Pattern.compile("^\\w+! (?<amount>\\d) \\S* ?Pests? have spawned in Plot - (?<plot>.*)!"),
         Pattern.compile("^\\w+! (?<amount>\\d) \\S* ?Pests? have spawned in (?<plot>The Barn)!"));
     // GROSS! While you were offline,  Pest spawned in Plots 12, 9, 5, 11 and 3!
-    private static final Pattern OFFLINE_PESTS = Pattern.compile("^\\w+! While you were offline, \\S* ?Pests? spawned in Plots (?<plots>.*)!");
-    private static final Pattern CLICK_TO_TP = Pattern.compile("\\s*CLICK HERE to teleport to the plot!");
+    private static final RepoPattern OFFLINE_PESTS = RepoPattern.of("garden.PestTimer.OFFLINE_PESTS", "^\\w+! While you were offline, \\S* ?Pests? spawned in Plots (?<plots>.*)!");
+    private static final RepoPattern CLICK_TO_TP = RepoPattern.of("garden.PestTimer.CLICK_TO_TP", "\\s*CLICK HERE to teleport to the plot!");
 
     private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "Sky2M pest sounds");

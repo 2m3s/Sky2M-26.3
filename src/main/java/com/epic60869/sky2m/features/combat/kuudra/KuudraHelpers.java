@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat.kuudra;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -27,8 +29,8 @@ import java.util.regex.Pattern;
  * FreshTools (fresh timers) and KuudraInfo (hitbox and health).
  */
 final class KuudraHelpers {
-    private static final Pattern PICKUP = Pattern.compile("(?:\\[[^]]*] )?(\\w{1,16}) recovered one of Elle's supplies! \\((\\d)/(\\d)\\)");
-    private static final Pattern PARTY_NO = Pattern.compile("^Party > (?:\\[[^]]*] )?(\\w{1,16}): No ?(Triangle|X|Equals|Slash|xCannon|Square|Shop)!$");
+    private static final RepoPattern PICKUP = RepoPattern.of("combat.kuudra.KuudraHelpers.PICKUP", "(?:\\[[^]]*] )?(\\w{1,16}) recovered one of Elle's supplies! \\((\\d)/(\\d)\\)");
+    private static final RepoPattern PARTY_NO = RepoPattern.of("combat.kuudra.KuudraHelpers.PARTY_NO", "^Party > (?:\\[[^]]*] )?(\\w{1,16}): No ?(Triangle|X|Equals|Slash|xCannon|Square|Shop)!$");
     private static final String PRE = "[NPC] Elle: Head over to the main platform, I will join you when I get a bite!";
     private static final String START = "[NPC] Elle: Not again!";
     private static final float[] YELLOW = {1f, 1f, 0.33f}, RED = {1f, 0.2f, 0.2f}, GREEN = {0.2f, 1f, 0.2f}, DARK_RED = {0.67f, 0f, 0f},

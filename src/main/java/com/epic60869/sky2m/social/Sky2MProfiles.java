@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.social;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,7 +32,7 @@ import com.epic60869.sky2m.config.Sky2MConfigCode;
  * settings back if the profile can't be loaded, and keeps this player's own state.
  */
 public final class Sky2MProfiles {
-    private static final Pattern NAME = Pattern.compile("[A-Za-z0-9_-]{1,32}");
+    private static final RepoPattern NAME = RepoPattern.of("social.Sky2MProfiles.NAME", "[A-Za-z0-9_-]{1,32}");
     private static final long MAX_BYTES = 1024 * 1024;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 

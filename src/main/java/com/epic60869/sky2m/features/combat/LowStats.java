@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -18,8 +20,8 @@ import java.util.regex.Pattern;
  * drops below its percentage, then again only after it has gone back above it.
  */
 public final class LowStats {
-    private static final Pattern HEALTH = Pattern.compile("([\\d,]+)/([\\d,]+)❤");
-    private static final Pattern MANA = Pattern.compile("([\\d,]+)/([\\d,]+)✎");
+    private static final RepoPattern HEALTH = RepoPattern.of("combat.LowStats.HEALTH", "([\\d,]+)/([\\d,]+)❤");
+    private static final RepoPattern MANA = RepoPattern.of("combat.LowStats.MANA", "([\\d,]+)/([\\d,]+)✎");
     private static final long COOLDOWN_MS = 3_000;
 
     private static boolean healthLow, manaLow;

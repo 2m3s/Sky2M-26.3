@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.mining.dwarven;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -32,9 +36,9 @@ import java.util.regex.Pattern;
  * which narrows the possible offsets down until one is left.
  */
 public final class MetalDetectorSolver {
-    private static final Pattern TREASURE = Pattern.compile("TREASURE: ([\\d,.]+)m");
-    private static final Pattern FOUND = Pattern.compile("^You found .* with your Metal Detector!$");
-    private static final Set<String> TOOLS = Set.of("DWARVEN_LAPIS_SWORD", "DWARVEN_EMERALD_HAMMER", "DWARVEN_GOLD_HAMMER", "DWARVEN_DIAMOND_AXE");
+    private static final RepoPattern TREASURE = RepoPattern.of("mining.dwarven.MetalDetectorSolver.TREASURE", "TREASURE: ([\\d,.]+)m");
+    private static final RepoPattern FOUND = RepoPattern.of("mining.dwarven.MetalDetectorSolver.FOUND", "^You found .* with your Metal Detector!$");
+    private static final Set<String> TOOLS = RepoTable.set("mining.dwarven.MetalDetectorSolver.TOOLS", Set.of("DWARVEN_LAPIS_SWORD", "DWARVEN_EMERALD_HAMMER", "DWARVEN_GOLD_HAMMER", "DWARVEN_DIAMOND_AXE"));
 
     private static volatile List<int[]> offsets = List.of();
     private static final List<BlockPos> predicted = new CopyOnWriteArrayList<>();

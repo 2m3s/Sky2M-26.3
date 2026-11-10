@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.google.gson.JsonObject;
@@ -35,7 +37,7 @@ public final class PetIconRenderer {
     private static final int DIVIDER_COLOUR = 0xFF808080;
     private static final int PROGRESS_FILLED = 0xFF00FFFF;
     private static final int PROGRESS_UNFILLED = 0xFFC0C0C0;
-    private static final Pattern PERCENT = Pattern.compile("\\((\\d+(?:\\.\\d+)?)%\\)");
+    private static final RepoPattern PERCENT = RepoPattern.of("items.PetIconRenderer.PERCENT", "\\((\\d+(?:\\.\\d+)?)%\\)");
     private static final Pattern TEXTURE = Pattern.compile("Value:\\\\?\"([A-Za-z0-9+/=]+)\\\\?\"");
     private static final int[] TIER_COLOURS = {0xFFFFFFFF, 0xFF55FF55, 0xFF5555FF, 0xFFAA00AA, 0xFFFFAA00, 0xFFFF55FF};
 

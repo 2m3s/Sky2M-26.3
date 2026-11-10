@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.portfolio;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.PriceService;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.items.Sky2MStorageSearch;
@@ -61,10 +63,10 @@ public final class Portfolio {
     private static final long SNAPSHOT_MS = 30 * 60_000;
     private static final long COUNT_REFRESH_MS = 3_000;
 
-    private static final Pattern AUCTION_BOUGHT = Pattern.compile("^\\[Auction] (?<buyer>\\w+) bought (?<item>.+) for (?<price>[\\d,]+) coins.*$");
-    private static final Pattern AUCTION_COLLECTED = Pattern.compile("^You collected (?<price>[\\d,]+) coins from selling (?<item>.+) to (?<buyer>.+) in an auction!$");
-    private static final Pattern BAZAAR_SOLD = Pattern.compile("^\\[Bazaar] Sold (?<amount>[\\d,]+)x (?<item>.+) for (?<price>[\\d,.]+) coins!$");
-    private static final Pattern BAZAAR_OFFER = Pattern.compile("^\\[Bazaar] Your Sell Offer for (?<amount>[\\d,]+)x (?<item>.+) was filled!$");
+    private static final RepoPattern AUCTION_BOUGHT = RepoPattern.of("portfolio.Portfolio.AUCTION_BOUGHT", "^\\[Auction] (?<buyer>\\w+) bought (?<item>.+) for (?<price>[\\d,]+) coins.*$");
+    private static final RepoPattern AUCTION_COLLECTED = RepoPattern.of("portfolio.Portfolio.AUCTION_COLLECTED", "^You collected (?<price>[\\d,]+) coins from selling (?<item>.+) to (?<buyer>.+) in an auction!$");
+    private static final RepoPattern BAZAAR_SOLD = RepoPattern.of("portfolio.Portfolio.BAZAAR_SOLD", "^\\[Bazaar] Sold (?<amount>[\\d,]+)x (?<item>.+) for (?<price>[\\d,.]+) coins!$");
+    private static final RepoPattern BAZAAR_OFFER = RepoPattern.of("portfolio.Portfolio.BAZAAR_OFFER", "^\\[Bazaar] Your Sell Offer for (?<amount>[\\d,]+)x (?<item>.+) was filled!$");
 
     /** Old single price setting, only read to carry it over to the two new ones. */
     public enum PriceMode { LOWEST_BIN, AVERAGE, INSTABUY }
@@ -326,7 +328,7 @@ public final class Portfolio {
         PriceService.refreshMarket(force);
     }
 
-    private static final Pattern RUNE_KEY = Pattern.compile("^(.+)_RUNE_(\\d)$");
+    private static final RepoPattern RUNE_KEY = RepoPattern.of("portfolio.Portfolio.RUNE_KEY", "^(.+)_RUNE_(\\d)$");
     private static final Pattern SKULL_TEXTURE = Pattern.compile("Value:\\\\?\"([A-Za-z0-9+/=]+)\\\\?\"");
 
     /**
@@ -539,7 +541,7 @@ public final class Portfolio {
         return entry;
     }
 
-    private static final Pattern LOT = Pattern.compile("^(\\d[\\d,]*)\\s*[x*@]\\s*(.+)$", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern LOT = RepoPattern.of("portfolio.Portfolio.LOT", "^(\\d[\\d,]*)\\s*[x*@]\\s*(.+)$", Pattern.CASE_INSENSITIVE);
 
     /**
      * Sets the buy price from "1.5m", or from lots bought at different prices like "2x1.5m + 1x1.2m" (also split by ;),

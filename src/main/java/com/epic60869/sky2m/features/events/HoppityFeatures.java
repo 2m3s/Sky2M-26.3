@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.events;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -35,20 +39,20 @@ public final class HoppityFeatures {
     private static final String HUD = "events_hoppity_eggs";
     /** A meal egg is replaced by the next one a SkyBlock day (20 minutes) later. */
     private static final long EGG_LIFETIME_MS = 20 * 60 * 1000L;
-    private static final Pattern SPAWNED = Pattern.compile("^HOPPITY'S HUNT A Chocolate (\\S+) Egg has appeared!");
-    private static final Pattern FOUND = Pattern.compile("^HOPPITY'S HUNT You found a Chocolate (\\S+) Egg ");
-    private static final Pattern ALREADY = Pattern.compile("^You have already collected this Chocolate (\\S+) Egg");
+    private static final RepoPattern SPAWNED = RepoPattern.of("events.HoppityFeatures.SPAWNED", "^HOPPITY'S HUNT A Chocolate (\\S+) Egg has appeared!");
+    private static final RepoPattern FOUND = RepoPattern.of("events.HoppityFeatures.FOUND", "^HOPPITY'S HUNT You found a Chocolate (\\S+) Egg ");
+    private static final RepoPattern ALREADY = RepoPattern.of("events.HoppityFeatures.ALREADY", "^You have already collected this Chocolate (\\S+) Egg");
     private static final String COLLECTED_KEY = "hoppityCollected";
 
     /** Island name in SkyHanni's constants -> the tab list's area name. */
-    private static final Map<String, String> AREAS = Map.ofEntries(
+    private static final Map<String, String> AREAS = RepoTable.map("events.HoppityFeatures.AREAS", Map.ofEntries(
         Map.entry("THE_PARK", "The Park"), Map.entry("HUB", "Hub"), Map.entry("GOLD_MINES", "Gold Mine"),
         Map.entry("CRYSTAL_HOLLOWS", "Crystal Hollows"), Map.entry("DEEP_CAVERNS", "Deep Caverns"),
         Map.entry("THE_FARMING_ISLANDS", "The Farming Islands"), Map.entry("THE_END", "The End"),
         Map.entry("DWARVEN_MINES", "Dwarven Mines"), Map.entry("SPIDER_DEN", "Spider's Den"),
         Map.entry("CRIMSON_ISLE", "Crimson Isle"), Map.entry("DUNGEON_HUB", "Dungeon Hub"),
         Map.entry("BACKWATER_BAYOU", "Backwater Bayou"), Map.entry("GALATEA", "Galatea"),
-        Map.entry("LOTUS_ATOLL", "Lotus Atoll"), Map.entry("TORRHUS_CANYON", "Torrhus Canyon"));
+        Map.entry("LOTUS_ATOLL", "Lotus Atoll"), Map.entry("TORRHUS_CANYON", "Torrhus Canyon")));
 
     /** Lower-case area name -> egg locations. */
     private static volatile Map<String, List<BlockPos>> locations = Map.of();

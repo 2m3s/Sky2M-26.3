@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.skills;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -22,8 +24,8 @@ import java.util.regex.Pattern;
 /** Sweep display. */
 public final class SkillFeatures {
     // Sweep patterns from SkyHanni's repo (MIT).
-    private static final Pattern SWEEP = Pattern.compile("^\\s*Sweep: (?<value>[\\d,.]+)");
-    private static final Pattern TOUGHNESS = Pattern.compile("^\\s*(?<tree>[\\S ]+) Tree Toughness: (?<toughness>[\\d,.]+) (?<logs>[\\d,.]+) Logs");
+    private static final RepoPattern SWEEP = RepoPattern.of("skills.SkillFeatures.SWEEP", "^\\s*Sweep: (?<value>[\\d,.]+)");
+    private static final RepoPattern TOUGHNESS = RepoPattern.of("skills.SkillFeatures.TOUGHNESS", "^\\s*(?<tree>[\\S ]+) Tree Toughness: (?<toughness>[\\d,.]+) (?<logs>[\\d,.]+) Logs");
 
     /** XP needed for each skill level 1-50 (standard SkyBlock skill table). */
 

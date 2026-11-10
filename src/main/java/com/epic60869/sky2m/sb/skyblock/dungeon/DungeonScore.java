@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.sb.skyblock.dungeon;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -39,30 +41,30 @@ public class DungeonScore {
 	private static final Supplier<DungeonsConfig.BatMessage> BAT_MESSAGE_CONFIG = () -> SkyblockerConfigManager.get().dungeons.batMessage;
 	private static final Logger LOGGER = LoggerFactory.getLogger("Skyblocker Dungeon Score");
 	//Scoreboard patterns
-	private static final Pattern CLEARED_PATTERN = Pattern.compile("Cleared: (?<cleared>\\d+)%.*");
-	private static final Pattern FLOOR_PATTERN = Pattern.compile(".*?(?=T)The Catacombs \\((?<floor>[EFM]\\D*\\d*)\\)");
+	private static final RepoPattern CLEARED_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.CLEARED_PATTERN", "Cleared: (?<cleared>\\d+)%.*");
+	private static final RepoPattern FLOOR_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.FLOOR_PATTERN", ".*?(?=T)The Catacombs \\((?<floor>[EFM]\\D*\\d*)\\)");
 	//Playerlist patterns
-	private static final Pattern SECRETS_PATTERN = Pattern.compile("Secrets Found: (?<secper>\\d+\\.?\\d*)%");
-	private static final Pattern PUZZLES_PATTERN = Pattern.compile(".+?(?=:): \\[(?<state>.)](?: \\(\\w*\\))?");
-	private static final Pattern PUZZLE_COUNT_PATTERN = Pattern.compile("Puzzles: \\((?<count>\\d+)\\)");
-	private static final Pattern CRYPTS_PATTERN = Pattern.compile("Crypts: (?<crypts>\\d+)");
-	private static final Pattern COMPLETED_ROOMS_PATTERN = Pattern.compile(" *Completed Rooms: (?<rooms>\\d+)");
+	private static final RepoPattern SECRETS_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.SECRETS_PATTERN", "Secrets Found: (?<secper>\\d+\\.?\\d*)%");
+	private static final RepoPattern PUZZLES_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.PUZZLES_PATTERN", ".+?(?=:): \\[(?<state>.)](?: \\(\\w*\\))?");
+	private static final RepoPattern PUZZLE_COUNT_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.PUZZLE_COUNT_PATTERN", "Puzzles: \\((?<count>\\d+)\\)");
+	private static final RepoPattern CRYPTS_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.CRYPTS_PATTERN", "Crypts: (?<crypts>\\d+)");
+	private static final RepoPattern COMPLETED_ROOMS_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.COMPLETED_ROOMS_PATTERN", " *Completed Rooms: (?<rooms>\\d+)");
 	//Chat patterns
-	private static final Pattern DEATHS_PATTERN = Pattern.compile(" \\u2620 (?<whodied>\\S+) .*");
+	private static final RepoPattern DEATHS_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.DEATHS_PATTERN", " \\u2620 (?<whodied>\\S+) .*");
 	//.*?(?:Mimic dead!?|Mimic Killed!|\$SKYTILS-DUNGEON-SCORE-MIMIC\$)$
-	private static final Pattern MIMIC_PATTERN = Pattern.compile(".*?(?:Mimic dead!?|Mimic Killed!|\\$SKYTILS-DUNGEON-SCORE-MIMIC\\$)$");
+	private static final RepoPattern MIMIC_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.MIMIC_PATTERN", ".*?(?:Mimic dead!?|Mimic Killed!|\\$SKYTILS-DUNGEON-SCORE-MIMIC\\$)$");
 	private static final String HYPIXEL_PRINCE_KILL_MESSAGE = "A Prince falls. +1 Bonus Score";
 	//.*?(?:Prince dead!?|Prince Killed!)$
-	private static final Pattern PRINCE_PATTERN = Pattern.compile(".*?(?:Prince dead!?|Prince Killed!)$");
+	private static final RepoPattern PRINCE_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.PRINCE_PATTERN", ".*?(?:Prince dead!?|Prince Killed!)$");
 	private static final String HYPIXEL_BAT_KILL_MESSAGE = "A Bat has been slain. +1 Bonus Score";
 	// .*?(?:Bat dead!?|Bat Killed!)$
-	private static final Pattern BAT_PATTERN = Pattern.compile(".*?(?:Bat dead!?|Bat Killed!)$");
+	private static final RepoPattern BAT_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.BAT_PATTERN", ".*?(?:Bat dead!?|Bat Killed!)$");
 	//Other patterns
-	private static final Pattern MIMIC_FLOORS_PATTERN = Pattern.compile("[FM][67]");
+	private static final RepoPattern MIMIC_FLOORS_PATTERN = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.MIMIC_FLOORS_PATTERN", "[FM][67]");
 	//Score messages sent in party chat
 	private static final String MIMIC_MESSAGE = "Mimic dead!";
 	private static final double MIMIC_REMOVED_RANGE = 20;
-	private static final Pattern DEAD_MIMIC_TAG = Pattern.compile("\\bMimic\\b.*(?<![\\d,.])0(?:/\\S+)?❤");
+	private static final RepoPattern DEAD_MIMIC_TAG = RepoPattern.of("sb.skyblock.dungeon.DungeonScore.DEAD_MIMIC_TAG", "\\bMimic\\b.*(?<![\\d,.])0(?:/\\S+)?❤");
 	private static final String PRINCE_MESSAGE = "Prince dead!";
 	private static final String BAT_MESSAGE = "Bat dead!";
 

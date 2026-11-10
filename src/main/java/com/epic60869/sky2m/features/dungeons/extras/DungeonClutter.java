@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons.extras;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -29,16 +31,11 @@ import java.util.regex.Pattern;
  * drawn (Sky2MHideFireballsMixin), so nothing about the entities themselves changes. Particles are not hidden.
  */
 final class DungeonClutter {
-    private static final Pattern ORB_NAME = Pattern.compile("^(?:DAMAGE|ABILITY DAMAGE|DEFENSE) \\d+s?$");
+    private static final RepoPattern ORB_NAME = RepoPattern.of("dungeons.extras.DungeonClutter.ORB_NAME", "^(?:DAMAGE|ABILITY DAMAGE|DEFENSE) \\d+s?$");
     private static final Pattern URL = Pattern.compile("\"url\"\\s*:\\s*\"[^\"]*/([0-9a-fA-F]+)\"");
-    private static final Pattern CHESTS_SPAWNED = Pattern.compile("^\\s*(?:Master Mode )?The Catacombs - Floor .*$");
+    private static final RepoPattern CHESTS_SPAWNED = RepoPattern.of("dungeons.extras.DungeonClutter.CHESTS_SPAWNED", "^\\s*(?:Master Mode )?The Catacombs - Floor .*$");
     /** The last boss line of each floor (Odin's splits): its death. F4 and F5 have none, the chests line ends those. */
-    private static final Pattern BOSS_DEAD = Pattern.compile("^\\[BOSS] (?:Bonzo: Oh I'm dead!"
-        + "|Scarf: Did you forget\\? I was taught by the best! Let's dance\\."
-        + "|The Professor: What\\?! My Guardian power is unbeatable!"
-        + "|Sadan: You did it\\. I understand now, you have earned my respect\\."
-        + "|Necron: All this, for nothing\\.\\.\\."
-        + "|(?:The )?Wither King: You\\.\\.\\. again\\?)$");
+    private static final RepoPattern BOSS_DEAD = RepoPattern.of("dungeons.extras.DungeonClutter.BOSS_DEAD", "^\\[BOSS] (?:Bonzo: Oh I'm dead!|Scarf: Did you forget\\? I was taught by the best! Let's dance\\.|The Professor: What\\?! My Guardian power is unbeatable!|Sadan: You did it\\. I understand now, you have earned my respect\\.|Necron: All this, for nothing\\.\\.\\.|(?:The )?Wither King: You\\.\\.\\. again\\?)$");
 
     private static final Map<String, String> SKULLS = new HashMap<>();
     /** Skeleton skull stand id -> position and when it last moved. */

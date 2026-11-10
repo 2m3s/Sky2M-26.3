@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.events;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.tools.Sky2MSkyblockTime;
 import com.epic60869.sky2m.features.core.EntityGlow;
@@ -53,14 +55,14 @@ public final class WinterGifting {
 
     private static final String RARITY = "COMMON|RARE|SWEET|SANTA TIER|PARTY TIER";
     private static final Pattern REWARD = Pattern.compile("^(" + RARITY + ")! (.*)$");
-    private static final Pattern COINS = Pattern.compile("^\\+([\\d,]+) Coins gift with .*");
-    private static final Pattern SKILL_XP = Pattern.compile("^\\+([\\d,]+) ([\\w ]+) XP gift with .*");
-    private static final Pattern ITEM = Pattern.compile("^(.+?) gift with .*");
-    private static final Pattern NORTH_STARS = Pattern.compile("^EXTRA! \\+([\\d,]+) North Stars?");
-    private static final Pattern GIFTED_CHAT = Pattern.compile("^\\+1 Unique Gift given! To (.+)!$");
-    private static final Pattern AMOUNT_SUFFIX = Pattern.compile("^(.+?) x([\\d,]+)$");
-    private static final Pattern AMOUNT_PREFIX = Pattern.compile("^([\\d,]+)x (.+)$");
-    private static final Pattern CAKE_SIDEBAR = Pattern.compile("New Year Event! .*");
+    private static final RepoPattern COINS = RepoPattern.of("events.WinterGifting.COINS", "^\\+([\\d,]+) Coins gift with .*");
+    private static final RepoPattern SKILL_XP = RepoPattern.of("events.WinterGifting.SKILL_XP", "^\\+([\\d,]+) ([\\w ]+) XP gift with .*");
+    private static final RepoPattern ITEM = RepoPattern.of("events.WinterGifting.ITEM", "^(.+?) gift with .*");
+    private static final RepoPattern NORTH_STARS = RepoPattern.of("events.WinterGifting.NORTH_STARS", "^EXTRA! \\+([\\d,]+) North Stars?");
+    private static final RepoPattern GIFTED_CHAT = RepoPattern.of("events.WinterGifting.GIFTED_CHAT", "^\\+1 Unique Gift given! To (.+)!$");
+    private static final RepoPattern AMOUNT_SUFFIX = RepoPattern.of("events.WinterGifting.AMOUNT_SUFFIX", "^(.+?) x([\\d,]+)$");
+    private static final RepoPattern AMOUNT_PREFIX = RepoPattern.of("events.WinterGifting.AMOUNT_PREFIX", "^([\\d,]+)x (.+)$");
+    private static final RepoPattern CAKE_SIDEBAR = RepoPattern.of("events.WinterGifting.CAKE_SIDEBAR", "New Year Event! .*");
 
     private static final Set<String> giftedPlayers = new HashSet<>();
     private static final Set<Integer> notGifted = new HashSet<>();

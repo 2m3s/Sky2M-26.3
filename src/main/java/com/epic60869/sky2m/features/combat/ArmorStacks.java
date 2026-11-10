@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -20,7 +22,7 @@ import java.util.regex.Pattern;
  * changes.
  */
 public final class ArmorStacks {
-    private static final Pattern STACKS = Pattern.compile("(\\d+)([ᝐ⁑҉Ѫ])");
+    private static final RepoPattern STACKS = RepoPattern.of("combat.ArmorStacks.STACKS", "(\\d+)([ᝐ⁑҉Ѫ])");
     private static final long DECAY_MS = 4_000;
     /** The action bar is resent about every second; after this long without the counter, the stacks are gone. */
     private static final long GONE_MS = 3_000;

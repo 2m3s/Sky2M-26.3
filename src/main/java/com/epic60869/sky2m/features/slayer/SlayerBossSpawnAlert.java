@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -28,7 +30,7 @@ import java.util.regex.Pattern;
  */
 public final class SlayerBossSpawnAlert {
     /** "Tarantula Broodfather V" on the sidebar, after padding symbols are removed. */
-    private static final Pattern TIER = Pattern.compile("\\b([IVX]{1,4})$");
+    private static final RepoPattern TIER = RepoPattern.of("slayer.SlayerBossSpawnAlert.TIER", "\\b([IVX]{1,4})$");
     private static final long REPEAT_MS = 2_000;
     private static final long REPEAT_FOR_MS = 10_000;
     /** The "Slay the boss!" line can blink while a scoreboard mod redraws: only re-arm after it's been gone this long. */

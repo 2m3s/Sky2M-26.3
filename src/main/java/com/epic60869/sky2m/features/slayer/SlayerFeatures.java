@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -35,7 +37,7 @@ public final class SlayerFeatures {
     /** How far from you a Tarantula's egg sacs are looked for. */
     private static final double SACK_RANGE = 20;
 
-    private static final Pattern EGG_SAC = Pattern.compile("\\d+s \\d+/\\d+");
+    private static final RepoPattern EGG_SAC = RepoPattern.of("slayer.SlayerFeatures.EGG_SAC", "\\d+s \\d+/\\d+");
 
     private static List<Component> bossLines = List.of();
     private static LivingEntity boss;
@@ -347,8 +349,7 @@ public final class SlayerFeatures {
     }
 
     /** "☠ Voidgloom Seraph IV 45M❤": the boss, its tier and its health. */
-    private static final Pattern PHASE_HEALTH = Pattern.compile(
-        "(?<boss>Voidgloom Seraph|Inferno Demonlord) (?<tier>IV|III|II|I)\\b.*?(?<hp>[\\d.,]+)(?<unit>[kKMB]?)❤");
+    private static final RepoPattern PHASE_HEALTH = RepoPattern.of("slayer.SlayerFeatures.PHASE_HEALTH", "(?<boss>Voidgloom Seraph|Inferno Demonlord) (?<tier>IV|III|II|I)\\b.*?(?<hp>[\\d.,]+)(?<unit>[kKMB]?)❤");
 
     /** The highest health seen for the current boss: its full health, as it starts full. */
     private static double maxHealth;

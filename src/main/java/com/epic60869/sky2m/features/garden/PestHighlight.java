@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -35,9 +37,9 @@ import java.util.regex.Pattern;
  * shows how many are alive and on which plots (from the tab list). Written for Sky2M; everywhere else it's off.
  */
 public final class PestHighlight {
-    private static final Pattern ALIVE = Pattern.compile("Alive: (\\d+)");
-    private static final Pattern PLOTS = Pattern.compile("(?:Infested )?Plots?: (.+)");
-    private static final Pattern SCOREBOARD_PESTS = Pattern.compile("[ൠ\\uE07F\\uE018] x(\\d+)");
+    private static final RepoPattern ALIVE = RepoPattern.of("garden.PestHighlight.ALIVE", "Alive: (\\d+)");
+    private static final RepoPattern PLOTS = RepoPattern.of("garden.PestHighlight.PLOTS", "(?:Infested )?Plots?: (.+)");
+    private static final RepoPattern SCOREBOARD_PESTS = RepoPattern.of("garden.PestHighlight.SCOREBOARD_PESTS", "[ൠ\\uE07F\\uE018] x(\\d+)");
 
     /**
      * A pest: the entity its box follows (the head it wears, or its invisible body when it has none) and where on that
@@ -104,7 +106,7 @@ public final class PestHighlight {
     }
 
     /** SkyHanni's PestType names. */
-    private static final Pattern PEST_NAME = Pattern.compile("\\b(Beetle|Cricket|Earthworm|Field Mouse|Fly|Locust|Lunar Moth|Mite|Mosquito|Moth|Rat|Slug|Praying Mantis|Firefly|Dragonfly)\\b");
+    private static final RepoPattern PEST_NAME = RepoPattern.of("garden.PestHighlight.PEST_NAME", "\\b(Beetle|Cricket|Earthworm|Field Mouse|Fly|Locust|Lunar Moth|Mite|Mosquito|Moth|Rat|Slug|Praying Mantis|Firefly|Dragonfly)\\b");
 
     /**
      * As SkyHanni's MobFinder.tryAddGarden: a pest is an invisible Silverfish or Bat with the pest's name above it.

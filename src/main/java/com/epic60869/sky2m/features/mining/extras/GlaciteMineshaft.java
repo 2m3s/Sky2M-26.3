@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining.extras;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -45,9 +47,9 @@ import java.util.regex.Pattern;
 public final class GlaciteMineshaft {
     private static final long CAVE_IN_MS = 60_000;
     private static final int SEEN_SCANS = 3;
-    private static final Pattern CORPSE_TAB = Pattern.compile("^\\s*(Lapis|Tungsten|Umber|Vanguard): (NOT )?LOOTED\\s*$");
-    private static final Pattern PITY_TAB = Pattern.compile("Glacite Mineshafts: ([\\d,]+)/([\\d,]+)");
-    private static final Pattern LOOT_START = Pattern.compile("^\\s*(LAPIS|TUNGSTEN|UMBER|VANGUARD) CORPSE LOOT!\\s*$");
+    private static final RepoPattern CORPSE_TAB = RepoPattern.of("mining.extras.GlaciteMineshaft.CORPSE_TAB", "^\\s*(Lapis|Tungsten|Umber|Vanguard): (NOT )?LOOTED\\s*$");
+    private static final RepoPattern PITY_TAB = RepoPattern.of("mining.extras.GlaciteMineshaft.PITY_TAB", "Glacite Mineshafts: ([\\d,]+)/([\\d,]+)");
+    private static final RepoPattern LOOT_START = RepoPattern.of("mining.extras.GlaciteMineshaft.LOOT_START", "^\\s*(LAPIS|TUNGSTEN|UMBER|VANGUARD) CORPSE LOOT!\\s*$");
     private static final String RESOURCEFUL = "LUCKY! Your Resourceful perk saved your key from being consumed!";
 
     private enum Corpse {

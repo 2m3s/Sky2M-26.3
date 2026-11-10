@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.combat.extra;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
@@ -29,12 +33,12 @@ import java.util.regex.Pattern;
  */
 public final class GhostTracker {
     /** SkyHanni-REPO's GhostDrops.json ghost_drops, by name. */
-    private static final List<String> DROPS = List.of("Sorrow", "Plasma", "Volta", "Ghostly Boots");
-    private static final Pattern DROP = Pattern.compile("^RARE DROP! (?<item>.+?) \\(\\+(?<mf>\\d+)%?[^)]*Magic Find\\)");
-    private static final Pattern COMBO = Pattern.compile("Your Kill Combo has expired! You reached a (?<kill>[\\d,.]+) Kill Combo!");
-    private static final Pattern BAG = Pattern.compile("The ghost's death materialized 1,000,000 coins from the mists!");
-    private static final Pattern BESTIARY = Pattern.compile("\\s*Ghost (?<level>\\d+|[XVI]+): (?<kills>[\\d,.]+)/(?<next>[\\d,.]+)");
-    private static final Pattern BESTIARY_MAX = Pattern.compile("\\s*Ghost (?<level>\\d+|[XVI]+): MAX");
+    private static final List<String> DROPS = RepoTable.list("combat.extra.GhostTracker.DROPS", List.of("Sorrow", "Plasma", "Volta", "Ghostly Boots"));
+    private static final RepoPattern DROP = RepoPattern.of("combat.extra.GhostTracker.DROP", "^RARE DROP! (?<item>.+?) \\(\\+(?<mf>\\d+)%?[^)]*Magic Find\\)");
+    private static final RepoPattern COMBO = RepoPattern.of("combat.extra.GhostTracker.COMBO", "Your Kill Combo has expired! You reached a (?<kill>[\\d,.]+) Kill Combo!");
+    private static final RepoPattern BAG = RepoPattern.of("combat.extra.GhostTracker.BAG", "The ghost's death materialized 1,000,000 coins from the mists!");
+    private static final RepoPattern BESTIARY = RepoPattern.of("combat.extra.GhostTracker.BESTIARY", "\\s*Ghost (?<level>\\d+|[XVI]+): (?<kills>[\\d,.]+)/(?<next>[\\d,.]+)");
+    private static final RepoPattern BESTIARY_MAX = RepoPattern.of("combat.extra.GhostTracker.BESTIARY_MAX", "\\s*Ghost (?<level>\\d+|[XVI]+): MAX");
     private static final long MAX_BESTIARY = 100_000, ACTIVE_MS = 90_000;
 
     private static final class Data {

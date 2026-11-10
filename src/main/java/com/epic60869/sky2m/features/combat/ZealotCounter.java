@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -47,8 +51,8 @@ import java.util.regex.Pattern;
  * died, which Hypixel only gives for your own kills.
  */
 public final class ZealotCounter {
-    private static final List<String> END_LOCATIONS = List.of("The End", "Dragon's Nest", "Void Sepulture", "Zealot Bruiser Hideout", "Void Slate");
-    private static final List<String> WITHER_BLADES = List.of("Hyperion", "Astraea", "Scylla", "Valkyrie", "Necron's Blade");
+    private static final List<String> END_LOCATIONS = RepoTable.list("combat.ZealotCounter.END_LOCATIONS", List.of("The End", "Dragon's Nest", "Void Sepulture", "Zealot Bruiser Hideout", "Void Slate"));
+    private static final List<String> WITHER_BLADES = RepoTable.list("combat.ZealotCounter.WITHER_BLADES", List.of("Hyperion", "Astraea", "Scylla", "Valkyrie", "Necron's Blade"));
     private static final long HIT_MEMORY_MS = 5000;
     private static final double WITHER_IMPACT_RANGE = 10;
     private static final Gson GSON = new Gson();
@@ -67,13 +71,13 @@ public final class ZealotCounter {
     private static final long XP_WINDOW_MS = 1500;
     private static final java.util.regex.Pattern COMBAT_XP = java.util.regex.Pattern.compile("\\+[\\d,.]+ Combat \\(");
     /** Hypixel Wither Impact feedback, e.g. "Your Implosion hit 3 enemies for 1,023,504.2 damage." */
-    private static final Pattern IMPLOSION_HITS = Pattern.compile("Your\\s+Implosion\\s+hit\\s+(\\d+)\\s+enemies?\\s+for\\s+[\\d,.]+(?:\\s+damage)?\\.?$", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern IMPLOSION_HITS = RepoPattern.of("combat.ZealotCounter.IMPLOSION_HITS", "Your\\s+Implosion\\s+hit\\s+(\\d+)\\s+enemies?\\s+for\\s+[\\d,.]+(?:\\s+damage)?\\.?$", Pattern.CASE_INSENSITIVE);
     private static final long IMPLOSION_CONFIRM_MS = 1800;
     private static int pendingImplosionHits;
     private static long pendingImplosionAt;
-    private static final Pattern TAB_COUNTER_VALUE = Pattern.compile("([\\d,]+)\\s*/\\s*([\\d,]+)");
+    private static final RepoPattern TAB_COUNTER_VALUE = RepoPattern.of("combat.ZealotCounter.TAB_COUNTER_VALUE", "([\\d,]+)\\s*/\\s*([\\d,]+)");
     /** Hypixel TAB row: "Special Zealots: 123 / 400"; the first number is kills since the last eye. */
-    private static final Pattern SPECIAL_ZEALOTS_TAB = Pattern.compile("special\\s+zealots\\s*:\\s*([\\d,]+)\\s*/\\s*400", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern SPECIAL_ZEALOTS_TAB = RepoPattern.of("combat.ZealotCounter.SPECIAL_ZEALOTS_TAB", "special\\s+zealots\\s*:\\s*([\\d,]+)\\s*/\\s*400", Pattern.CASE_INSENSITIVE);
     /** True while Hypixel's authoritative tab-list pity counter is available. */
     private static boolean tabPityDetected;
     private static int tabPityTicks;

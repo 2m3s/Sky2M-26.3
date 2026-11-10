@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.google.gson.Gson;
@@ -31,7 +33,7 @@ import java.util.regex.Pattern;
  */
 public final class PricePaid {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Pattern COST = Pattern.compile("^Cost: ([\\d,]+) coins?");
+    private static final RepoPattern COST = RepoPattern.of("misc.items.PricePaid.COST", "^Cost: ([\\d,]+) coins?");
     private static Map<String, Long> paid = new HashMap<>();
     private static Path file;
 

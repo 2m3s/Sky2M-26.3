@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MNopoFeatures;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -27,10 +29,10 @@ import java.util.regex.Pattern;
  * says "Click to despawn!" instead of "Click to summon!".
  */
 public final class ActivePetHighlight {
-    private static final Pattern INVENTORY = Pattern.compile("^(?:\\(\\d+/\\d+\\) )?Pets\\b");
-    private static final Pattern ACTIVE_INFO = Pattern.compile("\"active\"\\s*:\\s*true");
+    private static final RepoPattern INVENTORY = RepoPattern.of("misc.items.ActivePetHighlight.INVENTORY", "^(?:\\(\\d+/\\d+\\) )?Pets\\b");
+    private static final RepoPattern ACTIVE_INFO = RepoPattern.of("misc.items.ActivePetHighlight.ACTIVE_INFO", "\"active\"\\s*:\\s*true");
     /** "[Lvl 87] Ender Dragon", or "⭐ [Lvl 87] Ender Dragon" when favourited. */
-    private static final Pattern LEVEL = Pattern.compile("\\[Lvl (\\d+)]");
+    private static final RepoPattern LEVEL = RepoPattern.of("misc.items.ActivePetHighlight.LEVEL", "\\[Lvl (\\d+)]");
     private static final float LABEL_SCALE = 0.75f;
 
     /** Per-stack results, so the pet data isn't re-read and re-parsed for every slot every frame. */

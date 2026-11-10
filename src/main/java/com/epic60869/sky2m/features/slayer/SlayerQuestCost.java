@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -27,12 +29,12 @@ public final class SlayerQuestCost {
      * auto-slayer..."), and the same message without "for auto-slayer" when Hypixel takes a normal quest's fee from the
      * bank because the purse is short.
      */
-    private static final Pattern BANK_CHARGE = Pattern.compile("^Took (.+?) coins from your bank\\b(.*)$");
+    private static final RepoPattern BANK_CHARGE = RepoPattern.of("slayer.SlayerQuestCost.BANK_CHARGE", "^Took (.+?) coins from your bank\\b(.*)$");
     /** A bank charge that doesn't say it's for auto-slayer only counts this close to a quest start (either side). */
     private static final long BANK_NEAR_START_MS = 10_000L;
     /** A bank charge this soon after a quest started is that quest's; later ones wait for the next start. */
     private static final long BANK_AFTER_START_MS = 3_000L;
-    private static final Pattern NUMBER = Pattern.compile("[\\d,]+(?:\\.\\d+)?");
+    private static final RepoPattern NUMBER = RepoPattern.of("slayer.SlayerQuestCost.NUMBER", "[\\d,]+(?:\\.\\d+)?");
     /** How long after the quest started its slayer may take to show on the scoreboard. */
     private static final long QUEST_COST_WINDOW_MS = 3_000L;
     /** The highest cost that can be a spawn fee: anything more is some other purse change. */

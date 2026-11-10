@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat.extra;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,7 +30,7 @@ import java.util.regex.Pattern;
  */
 public final class CombatExtras {
     static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Pattern TEXTURE_HASH = Pattern.compile("texture/([0-9a-fA-F]+)");
+    private static final RepoPattern TEXTURE_HASH = RepoPattern.of("combat.extra.CombatExtras.TEXTURE_HASH", "texture/([0-9a-fA-F]+)");
 
     private CombatExtras() {}
 

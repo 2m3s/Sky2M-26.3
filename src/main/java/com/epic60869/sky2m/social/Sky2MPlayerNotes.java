@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.social;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.google.gson.Gson;
@@ -44,10 +46,9 @@ public final class Sky2MPlayerNotes {
     private static final long SHOW_GAP_MS = 10 * 60_000L;
     private static final int MAX_TEXT = 150;
     /** "Party Finder > Name joined the dungeon group!", "[MVP+] Name joined the party." */
-    private static final Pattern JOINED = Pattern.compile("^(?:Party Finder > )?(?:\\[[^\\]]+] ?)?(\\w{1,16}) joined the (?:dungeon group|party)");
+    private static final RepoPattern JOINED = RepoPattern.of("social.Sky2MPlayerNotes.JOINED", "^(?:Party Finder > )?(?:\\[[^\\]]+] ?)?(\\w{1,16}) joined the (?:dungeon group|party)");
     /** A chat message's sender: channel, level, emblem and rank before the name, a symbol after it, then ": ". */
-    private static final Pattern SENDER = Pattern.compile(
-        "^(?:(?:Party|Guild|Officer|Co-op) > |From |To )?(?:\\[\\d+] )?(?:[^\\w\\s\\[]{1,3} )?(?:\\[[A-Z+ ]+] )?(\\w{3,16})(?: [^\\s:]{1,3})?: ");
+    private static final RepoPattern SENDER = RepoPattern.of("social.Sky2MPlayerNotes.SENDER", "^(?:(?:Party|Guild|Officer|Co-op) > |From |To )?(?:\\[\\d+] )?(?:[^\\w\\s\\[]{1,3} )?(?:\\[[A-Z+ ]+] )?(\\w{3,16})(?: [^\\s:]{1,3})?: ");
 
     private static Map<String, Note> notes;
     private static final Map<String, Long> SHOWN = new HashMap<>();

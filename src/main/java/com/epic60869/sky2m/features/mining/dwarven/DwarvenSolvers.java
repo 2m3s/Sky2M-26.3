@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.mining.dwarven;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
@@ -22,10 +26,10 @@ import java.util.regex.Pattern;
  * the Puzzler's arrows are turned into the block to mine, which is marked in the world.
  */
 public final class DwarvenSolvers {
-    private static final Pattern FETCHUR = Pattern.compile("^\\[NPC] Fetchur: (?:its|theyre) ([a-zA-Z, \\-]*)$");
-    private static final Pattern PUZZLER = Pattern.compile("^\\[NPC] Puzzler: ([▲▶◀▼]{10})$");
+    private static final RepoPattern FETCHUR = RepoPattern.of("mining.dwarven.DwarvenSolvers.FETCHUR", "^\\[NPC] Fetchur: (?:its|theyre) ([a-zA-Z, \\-]*)$");
+    private static final RepoPattern PUZZLER = RepoPattern.of("mining.dwarven.DwarvenSolvers.PUZZLER", "^\\[NPC] Puzzler: ([▲▶◀▼]{10})$");
 
-    private static final Map<String, String> FETCHUR_ANSWERS = Map.ofEntries(
+    private static final Map<String, String> FETCHUR_ANSWERS = RepoTable.map("mining.dwarven.DwarvenSolvers.FETCHUR_ANSWERS", Map.ofEntries(
         Map.entry("yellow and see through", "Yellow Stained Glass"),
         Map.entry("circular and sometimes moves", "Compass"),
         Map.entry("expensive minerals", "Mithril"),
@@ -37,7 +41,7 @@ public final class DwarvenSolvers {
         Map.entry("wearable and grows", "Pumpkin"),
         Map.entry("shiny and makes sparks", "Flint and Steel"),
         Map.entry("green and some dudes trade stuff for it", "Emerald"),
-        Map.entry("red and soft", "Red Wool"));
+        Map.entry("red and soft", "Red Wool")));
 
     private static volatile BlockPos puzzlerBlock;
     private static long puzzlerSet;

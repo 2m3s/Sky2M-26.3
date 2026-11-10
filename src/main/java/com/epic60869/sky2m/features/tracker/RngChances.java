@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.tracker;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.features.itemlist.ItemListData;
 
@@ -28,10 +30,10 @@ public final class RngChances {
      * Kuudra's Infernal paid chest, from each item's wiki page (read 2026-11-04). "~" marks the ones only read off the
      * Kuudra page's loot tables, which it calls outdated.
      */
-    static final Map<String, String> KUUDRA = Map.of(
+    static final Map<String, String> KUUDRA = RepoTable.map("tracker.RngChances.KUUDRA", Map.of(
         "Tentacle Dye", "0.005%", "Tormentor", "0.1%", "Hellstorm Wand", "0.1%", "Ananke Feather", "0.27%",
         "Burning Kuudra Core", "~0.51%", "Wheel of Fate", "~2.5%", "Hollow Wand", "~1%", "Fatal Tempo I", "~0.2%",
-        "Inferno I", "~0.2%");
+        "Inferno I", "~0.2%"));
 
     private static final Map<String, String> CACHE = new ConcurrentHashMap<>();
 

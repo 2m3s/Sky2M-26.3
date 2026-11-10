@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -21,7 +23,7 @@ import java.util.regex.Pattern;
  * needs ("3/5" from its "12s 3/5" nametag) drawn big on the egg, seen through walls.
  */
 public final class EggHitsDisplay {
-    private static final Pattern EGG = Pattern.compile("[0-9]+s [0-9]+/[0-9]+");
+    private static final RepoPattern EGG = RepoPattern.of("slayer.EggHitsDisplay.EGG", "[0-9]+s [0-9]+/[0-9]+");
     private static final double RANGE = 32;
 
     private static List<ArmorStand> eggs = List.of();

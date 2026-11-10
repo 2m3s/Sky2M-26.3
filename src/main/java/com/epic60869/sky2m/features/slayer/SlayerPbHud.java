@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.chat.Sky2MGlobalChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -24,7 +26,7 @@ import java.util.Set;
 public final class SlayerPbHud {
     private static final long REFRESH_MS = 60_000L;
     private static final long MIN_GAP_MS = 10_000L;
-    private static final Set<String> SLAYER_ISLANDS = Set.of("Hub", "Spider's Den", "The Park", "The End", "Crimson Isle", "The Rift");
+    private static final Set<String> SLAYER_ISLANDS = RepoTable.set("slayer.SlayerPbHud.SLAYER_ISLANDS", Set.of("Hub", "Spider's Den", "The Park", "The End", "Crimson Isle", "The Rift"));
 
     /** When the HUD shows (the "PB Leaderboard: Show" dropdown). */
     public enum Show {

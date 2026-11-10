@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -34,7 +36,7 @@ import java.util.regex.Pattern;
  * </ul>
  */
 public final class TerminalTimers {
-    private static final Pattern COMPLETE = Pattern.compile("^(\\w{1,16}) (activated|completed) a (terminal|lever|device)! \\((\\d)/(\\d)\\)(?:\\s.*)?$");
+    private static final RepoPattern COMPLETE = RepoPattern.of("dungeons.TerminalTimers.COMPLETE", "^(\\w{1,16}) (activated|completed) a (terminal|lever|device)! \\((\\d)/(\\d)\\)(?:\\s.*)?$");
     private static final Pattern[] TERMINAL_TITLES = {Pattern.compile("^Correct all the panes!$"), Pattern.compile("^Change all to same color!$"),
         Pattern.compile("^Click in order!$"), Pattern.compile("^What starts with: '\\w'\\?$"), Pattern.compile("^Select all the [\\w ]+ items!$"),
         Pattern.compile("^Click the button on time!$")};

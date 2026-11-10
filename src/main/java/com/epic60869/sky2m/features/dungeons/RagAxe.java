@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -43,8 +45,8 @@ import java.util.regex.Pattern;
 public final class RagAxe {
     private static final long CHANNEL_MS = 3_000, BUFF_MS = 10_000;
     private static final float CAST_PITCH = 1.4920635f;
-    private static final Pattern CANCEL = Pattern.compile("Ragnarock was cancelled due to (?:being hit|taking damage)!");
-    private static final Pattern STRENGTH = Pattern.compile("Strength: \\+(\\d+)");
+    private static final RepoPattern CANCEL = RepoPattern.of("dungeons.RagAxe.CANCEL", "Ragnarock was cancelled due to (?:being hit|taking damage)!");
+    private static final RepoPattern STRENGTH = RepoPattern.of("dungeons.RagAxe.STRENGTH", "Strength: \\+(\\d+)");
     private static final String LINE_WITHER_KING = "[BOSS] Wither King: I no longer wish to fight, but I know that will not stop you.";
     private static final String LINE_NECRON = "[BOSS] Necron: You went further than any human before, congratulations.";
     private static final String LINE_STORM = "[BOSS] Storm: Pathetic Maxor, just like expected.";

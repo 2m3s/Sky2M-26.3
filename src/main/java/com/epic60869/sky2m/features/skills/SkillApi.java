@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.skills;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.items.Sky2MStorageSearch;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -46,20 +48,20 @@ import java.util.regex.Pattern;
  */
 public final class SkillApi {
     // REGEX-TEST: +1.1 Mining (48.39%)
-    private static final Pattern SKILL_PERCENT = Pattern.compile("\\+(?<gained>[\\d.,]+) (?<skillName>.+) \\((?<progress>[\\d.,]+)%\\)");
+    private static final RepoPattern SKILL_PERCENT = RepoPattern.of("skills.SkillApi.SKILL_PERCENT", "\\+(?<gained>[\\d.,]+) (?<skillName>.+) \\((?<progress>[\\d.,]+)%\\)");
     // REGEX-TEST: +6.3 Foraging (24/750)   +207.2 Hunting (5,183,244/0)
-    private static final Pattern SKILL_MULTIPLIER = Pattern.compile("\\+(?<gained>[\\d.,]+) (?<skillName>.+) \\((?<current>[\\d.,]+)/(?<needed>[\\d,.]+[kmb]?)\\)");
-    private static final Pattern JERRY_BOX = Pattern.compile(".*You claimed (?<gained>[\\d,]+) (?<skillName>\\w+) XP from the Jerry Box!");
-    private static final Pattern GIFT = Pattern.compile("(?:COMMON|RARE|SWEET|SANTA(?: TIER)?|PARTY(?: TIER)?)! \\+(?<gained>[\\d,]+) (?<skillName>[\\w ]+) XP gift with .*!?");
-    private static final Pattern LILY_SPLOSION_START = Pattern.compile("LIL[YI]-SPLOSION!");
-    private static final Pattern LILY_SPLOSION_XP = Pattern.compile("\\+(?<gained>[\\d,]+) (?<skillName>\\w+) Experience");
+    private static final RepoPattern SKILL_MULTIPLIER = RepoPattern.of("skills.SkillApi.SKILL_MULTIPLIER", "\\+(?<gained>[\\d.,]+) (?<skillName>.+) \\((?<current>[\\d.,]+)/(?<needed>[\\d,.]+[kmb]?)\\)");
+    private static final RepoPattern JERRY_BOX = RepoPattern.of("skills.SkillApi.JERRY_BOX", ".*You claimed (?<gained>[\\d,]+) (?<skillName>\\w+) XP from the Jerry Box!");
+    private static final RepoPattern GIFT = RepoPattern.of("skills.SkillApi.GIFT", "(?:COMMON|RARE|SWEET|SANTA(?: TIER)?|PARTY(?: TIER)?)! \\+(?<gained>[\\d,]+) (?<skillName>[\\w ]+) XP gift with .*!?");
+    private static final RepoPattern LILY_SPLOSION_START = RepoPattern.of("skills.SkillApi.LILY_SPLOSION_START", "LIL[YI]-SPLOSION!");
+    private static final RepoPattern LILY_SPLOSION_XP = RepoPattern.of("skills.SkillApi.LILY_SPLOSION_XP", "\\+(?<gained>[\\d,]+) (?<skillName>\\w+) Experience");
     // " Farming 35: 12.4%"
-    private static final Pattern SKILL_TAB = Pattern.compile(" (?<type>\\w+)(?: (?<level>\\d+))?: (?<progress>[0-9.]+)%");
+    private static final RepoPattern SKILL_TAB = RepoPattern.of("skills.SkillApi.SKILL_TAB", " (?<type>\\w+)(?: (?<level>\\d+))?: (?<progress>[0-9.]+)%");
     // " Farming 60: MAX"
-    private static final Pattern MAX_SKILL_TAB = Pattern.compile(" (?<type>\\w+) (?<level>\\d+): MAX");
+    private static final RepoPattern MAX_SKILL_TAB = RepoPattern.of("skills.SkillApi.MAX_SKILL_TAB", " (?<type>\\w+) (?<level>\\d+): MAX");
     // " Mining 14: 22,922/75k"
-    private static final Pattern SKILL_TAB_NO_PERCENT = Pattern.compile(" (?<type>\\w+)(?: (?<level>\\d+))?: (?<current>[0-9,.]+)/(?<needed>[\\d,.]+[kMB]?+)");
-    private static final Pattern SKILL_MAX_LEVEL_MENU = Pattern.compile("Max Skill level reached!");
+    private static final RepoPattern SKILL_TAB_NO_PERCENT = RepoPattern.of("skills.SkillApi.SKILL_TAB_NO_PERCENT", " (?<type>\\w+)(?: (?<level>\\d+))?: (?<current>[0-9,.]+)/(?<needed>[\\d,.]+[kMB]?+)");
+    private static final RepoPattern SKILL_MAX_LEVEL_MENU = RepoPattern.of("skills.SkillApi.SKILL_MAX_LEVEL_MENU", "Max Skill level reached!");
     private static final String SKILL_MENU_NAME = "Your Skills";
 
     private static final long XP_NEEDED_FOR_60 = 111_672_425L;
@@ -353,7 +355,7 @@ public final class SkillApi {
     }
 
     /** Compiled once: the action bar comes through here many times a second. */
-    private static final Pattern DOUBLE_SPACE = Pattern.compile(" {2}");
+    private static final RepoPattern DOUBLE_SPACE = RepoPattern.of("skills.SkillApi.DOUBLE_SPACE", " {2}");
 
     private static void onActionBarUpdate(String actionBar) {
         if (SkillProgress.config() == null) return;

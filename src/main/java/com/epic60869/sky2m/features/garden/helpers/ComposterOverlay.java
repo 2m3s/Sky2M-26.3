@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.garden.helpers;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -35,17 +39,17 @@ final class ComposterOverlay {
     private static final String HUD = "garden_composter_overlay";
     private static final String[] UPGRADES = {"Composter Speed", "Multi Drop", "Fuel Cap", "Organic Matter Cap", "Cost Reduction"};
     private static final int FIRST_UPGRADE_SLOT = 20;
-    private static final Pattern UPGRADE_NAME = Pattern.compile("^(Composter Speed|Multi Drop|Fuel Cap|Organic Matter Cap|Cost Reduction)(?: ([IVXL]+))?$");
-    private static final Pattern ORGANIC = Pattern.compile("^\\s*Organic Matter:\\s*(?<amount>[\\d.,]+[kKmM]?)\\s*/");
-    private static final Pattern FUEL = Pattern.compile("^\\s*Fuel:\\s*(?<amount>[\\d.,]+[kKmM]?)\\s*/");
+    private static final RepoPattern UPGRADE_NAME = RepoPattern.of("garden.helpers.ComposterOverlay.UPGRADE_NAME", "^(Composter Speed|Multi Drop|Fuel Cap|Organic Matter Cap|Cost Reduction)(?: ([IVXL]+))?$");
+    private static final RepoPattern ORGANIC = RepoPattern.of("garden.helpers.ComposterOverlay.ORGANIC", "^\\s*Organic Matter:\\s*(?<amount>[\\d.,]+[kKmM]?)\\s*/");
+    private static final RepoPattern FUEL = RepoPattern.of("garden.helpers.ComposterOverlay.FUEL", "^\\s*Fuel:\\s*(?<amount>[\\d.,]+[kKmM]?)\\s*/");
     /** Enchanted versions of the plain crops are worth 160 of them. */
-    private static final Map<String, String> ENCHANTED = Map.ofEntries(
+    private static final Map<String, String> ENCHANTED = RepoTable.map("garden.helpers.ComposterOverlay.ENCHANTED", Map.ofEntries(
         Map.entry("CARROT_ITEM", "ENCHANTED_CARROT"), Map.entry("POTATO_ITEM", "ENCHANTED_POTATO"),
         Map.entry("PUMPKIN", "ENCHANTED_PUMPKIN"), Map.entry("MELON", "ENCHANTED_MELON"),
         Map.entry("RED_MUSHROOM", "ENCHANTED_RED_MUSHROOM"), Map.entry("BROWN_MUSHROOM", "ENCHANTED_BROWN_MUSHROOM"),
         Map.entry("INK_SACK:3", "ENCHANTED_COCOA"), Map.entry("SUGAR_CANE", "ENCHANTED_SUGAR"),
         Map.entry("CACTUS", "ENCHANTED_CACTUS"), Map.entry("NETHER_STALK", "ENCHANTED_NETHER_STALK"),
-        Map.entry("SEEDS", "ENCHANTED_SEEDS"));
+        Map.entry("SEEDS", "ENCHANTED_SEEDS")));
 
     private static final int[] levels = {-1, -1, -1, -1, -1};
     private static volatile Map<String, Double> organicFactors = new LinkedHashMap<>();

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -41,10 +43,10 @@ public final class DoorHighlight {
     /** A rank and an emblem can come before the name: "[MVP++] 🐟 2m3s has obtained Wither Key!". */
     private static final String WHO = "^(?:\\[[^]]*?] ?)?(?:[^\\w\\s\\[]+ )?(\\w{1,16})";
     private static final Pattern WITHER_KEY_OBTAINED = Pattern.compile(WHO + " has obtained Wither Key!?$");
-    private static final Pattern WITHER_KEY_PICKED_UP = Pattern.compile("^A Wither Key was picked up!$");
+    private static final RepoPattern WITHER_KEY_PICKED_UP = RepoPattern.of("dungeons.DoorHighlight.WITHER_KEY_PICKED_UP", "^A Wither Key was picked up!$");
     private static final Pattern WITHER_DOOR_OPENED = Pattern.compile(WHO + " opened a WITHER door!$");
     private static final Pattern BLOOD_KEY_OBTAINED = Pattern.compile(WHO + " has obtained Blood Key!$");
-    private static final Pattern BLOOD_KEY_PICKED_UP = Pattern.compile("^A Blood Key was picked up!$");
+    private static final RepoPattern BLOOD_KEY_PICKED_UP = RepoPattern.of("dungeons.DoorHighlight.BLOOD_KEY_PICKED_UP", "^A Blood Key was picked up!$");
     private static final float[] LOCKED = {1f, 0.33f, 0.33f};
     private static final float[] OPENABLE = {0.33f, 1f, 0.33f};
     private static final float[] FAIRY = {1f, 0.33f, 1f};

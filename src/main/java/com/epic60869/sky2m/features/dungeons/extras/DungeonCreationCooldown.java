@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons.extras;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -23,7 +25,7 @@ import java.util.regex.Pattern;
  * shows the time left, tells you when it is over and can swallow /joininstance while it runs.
  */
 final class DungeonCreationCooldown {
-    private static final Pattern ENTERED = Pattern.compile("^(?:\\[[^]]*] ?)*(\\w{1,16}) entered (?:MM )?The Catacombs, .*!$");
+    private static final RepoPattern ENTERED = RepoPattern.of("dungeons.extras.DungeonCreationCooldown.ENTERED", "^(?:\\[[^]]*] ?)*(\\w{1,16}) entered (?:MM )?The Catacombs, .*!$");
     private static final long COOLDOWN_MS = 30_000;
 
     private static long until;

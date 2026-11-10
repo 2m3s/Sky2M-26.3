@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.ChatFormatting;
@@ -20,8 +22,7 @@ import java.util.regex.Pattern;
  */
 public final class ChatNameLinks {
     /** "Party > [123] ☘ [MVP+] Name [Guild]: hi": the sender, whatever comes in front of it. */
-    private static final Pattern SENDER = Pattern.compile(
-        "^(?:(?:Party|Guild|Officer|Co-op) > |From |To )?(?:\\[\\d+] )?(?:[^\\w\\s\\[] )?(?:\\[[A-Z+]+] )?(\\w{3,16})(?: \\[[^]]+])?(?: [^\\w\\s:])?: ");
+    private static final RepoPattern SENDER = RepoPattern.of("misc.chat.ChatNameLinks.SENDER", "^(?:(?:Party|Guild|Officer|Co-op) > |From |To )?(?:\\[\\d+] )?(?:[^\\w\\s\\[] )?(?:\\[[A-Z+]+] )?(\\w{3,16})(?: \\[[^]]+])?(?: [^\\w\\s:])?: ");
 
     private ChatNameLinks() {}
 

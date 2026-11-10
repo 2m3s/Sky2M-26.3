@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.chat.Sky2MCurrentChat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -35,7 +37,7 @@ public final class ChatTabs {
         }
     }
 
-    private static final Pattern TIMESTAMP = Pattern.compile("^\\[\\d{1,2}:\\d{2}(?::\\d{2})?(?: [AP]M)?] ");
+    private static final RepoPattern TIMESTAMP = RepoPattern.of("misc.chat.ChatTabs.TIMESTAMP", "^\\[\\d{1,2}:\\d{2}(?::\\d{2})?(?: [AP]M)?] ");
     private static final int TAB_H = 11, GAP = 2;
     private static final DateTimeFormatter H24 = DateTimeFormatter.ofPattern("HH:mm", Locale.US);
     private static final DateTimeFormatter H24S = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.US);

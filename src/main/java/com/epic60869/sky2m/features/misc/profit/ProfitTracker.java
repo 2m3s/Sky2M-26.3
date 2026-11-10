@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.profit;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MCraftHelper;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
@@ -155,10 +157,10 @@ public final class ProfitTracker {
     /** Crafting an item from one kind of item, e.g. 160 Wheat -> 1 Enchanted Wheat. */
     private record Conversion(String input, int inputCount, int outputCount) {}
 
-    private static final Pattern PEST_KILL = Pattern.compile("^You received (\\d+)x (.+) for killing an? (.+)!$");
+    private static final RepoPattern PEST_KILL = RepoPattern.of("misc.profit.ProfitTracker.PEST_KILL", "^You received (\\d+)x (.+) for killing an? (.+)!$");
     private static final String KERNEL_DONATION = "[NPC] Feast Chef Ted: Thanks for the donation! I've added a Kernel to your purse.";
-    private static final Pattern TREASURE_CATCH = Pattern.compile("^. (?:GOOD|GREAT|OUTSTANDING|MUSICAL) CATCH!|^. (?:GOOD|GREAT|OUTSTANDING) JUNK CATCH!|^. TROPHY (?:FISH|FROG)!");
-    private static final Pattern FISHED_COINS = Pattern.compile("CATCH! You caught ([\\d,]+) Coins!");
+    private static final RepoPattern TREASURE_CATCH = RepoPattern.of("misc.profit.ProfitTracker.TREASURE_CATCH", "^. (?:GOOD|GREAT|OUTSTANDING|MUSICAL) CATCH!|^. (?:GOOD|GREAT|OUTSTANDING) JUNK CATCH!|^. TROPHY (?:FISH|FROG)!");
+    private static final RepoPattern FISHED_COINS = RepoPattern.of("misc.profit.ProfitTracker.FISHED_COINS", "CATCH! You caught ([\\d,]+) Coins!");
     private static final long BOUNTIFUL_WINDOW_MS = 2_000L;
     private static final long COMPACTION_WINDOW_MS = 60_000L;
     private static final long SACK_WINDOW_MS = 60_000L;

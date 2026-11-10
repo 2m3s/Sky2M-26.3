@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -23,7 +25,7 @@ import java.util.regex.Pattern;
  */
 public final class SecretsDisplay {
     private static final String ID = "secrets_display";
-    private static final Pattern SECRETS = Pattern.compile("(\\d+)/(\\d+) Secrets");
+    private static final RepoPattern SECRETS = RepoPattern.of("dungeons.SecretsDisplay.SECRETS", "(\\d+)/(\\d+) Secrets");
     /** Made on first draw: items can't be made while the mod loads ("Components not bound yet"). */
     private static ItemStack chest;
     private static final String TITLE = "Secrets";

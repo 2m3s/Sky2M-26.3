@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -48,9 +50,9 @@ public final class DungeonLividFinder {
     private static final BlockPos BLOCK_LOCATION = new BlockPos(6, 109, 43);
 
     /** REGEX-TEST: §2﴾ §2§lLivid§r§r §a7M§c❤ §2﴿ */
-    private static final Pattern ARMOR_STAND_NAME = Pattern.compile("§(?<colorCode>.)﴾ (?:§e§5 )?§.§lLivid.*");
+    private static final RepoPattern ARMOR_STAND_NAME = RepoPattern.of("dungeons.DungeonLividFinder.ARMOR_STAND_NAME", "§(?<colorCode>.)﴾ (?:§e§5 )?§.§lLivid.*");
     /** REGEX-TEST: Doctor Livid */
-    private static final Pattern LIVID_NAME = Pattern.compile("^(?<name>\\w+) Livid$");
+    private static final RepoPattern LIVID_NAME = RepoPattern.of("dungeons.DungeonLividFinder.LIVID_NAME", "^(?<name>\\w+) Livid$");
 
     private static final Map<String, ChatFormatting> TEXTURE_TO_COLOR = new HashMap<>();
     private static Map<String, ChatFormatting> nameToColor = new LinkedHashMap<>(Map.of(

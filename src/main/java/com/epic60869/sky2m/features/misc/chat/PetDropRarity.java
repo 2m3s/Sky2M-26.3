@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -28,13 +30,11 @@ import java.util.regex.Pattern;
  */
 public final class PetDropRarity {
     /** "PET DROP! " or "RARE DROP! " (and the rarer kinds) before the pet's name. */
-    private static final Pattern DROP = Pattern.compile(
-        "^\\s*(?<kind>PET DROP!|(?:VERY |CRAZY |INSANE |INCREDIBLY )?RARE DROP!|PRAY TO RNGESUS DROP!) +\\(?(?<name>[^(!]+?)\\)?(?:\\s+x[\\d,]+)?(?:\\s+\\(.*)?\\s*!?\\s*$");
+    private static final RepoPattern DROP = RepoPattern.of("misc.chat.PetDropRarity.DROP", "^\\s*(?<kind>PET DROP!|(?:VERY |CRAZY |INSANE |INCREDIBLY )?RARE DROP!|PRAY TO RNGESUS DROP!) +\\(?(?<name>[^(!]+?)\\)?(?:\\s+x[\\d,]+)?(?:\\s+\\(.*)?\\s*!?\\s*$");
     /** "⛃ GREAT CATCH! You caught a [Lvl 1] Squid!" (fishing a pet). */
-    private static final Pattern CATCH = Pattern.compile(
-        "^[^:]{0,4}(?:GOOD|GREAT|OUTSTANDING) CATCH! You caught an? \\[Lvl \\d+] (?<name>[^(!]+?)\\s*!?\\s*$");
+    private static final RepoPattern CATCH = RepoPattern.of("misc.chat.PetDropRarity.CATCH", "^[^:]{0,4}(?:GOOD|GREAT|OUTSTANDING) CATCH! You caught an? \\[Lvl \\d+] (?<name>[^(!]+?)\\s*!?\\s*$");
     private static final List<String> RARITIES = List.of("Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic");
-    private static final Pattern LEGACY_COLOUR = Pattern.compile("§([0-9a-fA-F])");
+    private static final RepoPattern LEGACY_COLOUR = RepoPattern.of("misc.chat.PetDropRarity.LEGACY_COLOUR", "§([0-9a-fA-F])");
 
     private PetDropRarity() {}
 

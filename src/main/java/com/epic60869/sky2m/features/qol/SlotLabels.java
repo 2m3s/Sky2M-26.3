@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.qol;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -20,11 +22,11 @@ import java.util.regex.Pattern;
  * are Item Cooldowns' own setting.
  */
 public final class SlotLabels {
-    private static final Pattern PET = Pattern.compile("^\\[Lvl (\\d+)] ");
-    private static final Pattern MINION = Pattern.compile("_GENERATOR_(\\d+)$");
-    private static final Pattern ROMAN_NAME = Pattern.compile("^(.+) ([IVXLC]+)$");
-    private static final Pattern NUMBER_NAME = Pattern.compile("^(.+?) (\\d{1,3})$");
-    private static final Pattern FORMATTING = Pattern.compile("§.");
+    private static final RepoPattern PET = RepoPattern.of("qol.SlotLabels.PET", "^\\[Lvl (\\d+)] ");
+    private static final RepoPattern MINION = RepoPattern.of("qol.SlotLabels.MINION", "_GENERATOR_(\\d+)$");
+    private static final RepoPattern ROMAN_NAME = RepoPattern.of("qol.SlotLabels.ROMAN_NAME", "^(.+) ([IVXLC]+)$");
+    private static final RepoPattern NUMBER_NAME = RepoPattern.of("qol.SlotLabels.NUMBER_NAME", "^(.+?) (\\d{1,3})$");
+    private static final RepoPattern FORMATTING = RepoPattern.of("qol.SlotLabels.FORMATTING", "§.");
     private static final String NONE = "";
     private static final Map<ItemStack, String> CACHE = new WeakHashMap<>();
 

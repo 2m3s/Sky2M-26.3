@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
@@ -146,21 +150,21 @@ public final class DianaTracker {
     }
 
     /** Charm and lootshare shards SBO counts for !kingshard, !sphinxshard and so on. */
-    static final List<String> SHARDS = List.of("King Minos", "Sphinx", "Minotaur", "Cretan Bull", "Harpy");
+    static final List<String> SHARDS = RepoTable.list("combat.DianaTracker.SHARDS", List.of("King Minos", "Sphinx", "Minotaur", "Cretan Bull", "Harpy"));
 
     // ------------------------------------------------------------------------------------------------ patterns
 
     /** SkyHanni's genericMythologicalSpawnPattern, without the colour codes. */
-    private static final Pattern DUG_MOB = Pattern.compile("^(?:Oh|Uh oh|Yikes|Oi|Good Grief|Danger|Woah)! You dug out (?:an? )?(?<mob>[A-Za-z ]+)!");
-    private static final Pattern RARE_DROP = Pattern.compile("^RARE DROP! (?<drop>.+)$");
-    private static final Pattern DUG_TREASURE = Pattern.compile("^RARE DROP! You dug out an? (?<drop>.+?)!$");
-    private static final Pattern MAGIC_FIND = Pattern.compile("\\(\\+(?<mf>\\d+) ✯ Magic Find\\)");
-    private static final Pattern DYE = Pattern.compile("^WOW! (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+) found an? Mythological Dye");
-    private static final Pattern CHARM = Pattern.compile("^CHARM! You charmed the (?<mob>.+?) and received (?<n>\\d+) (?<shard>.+?) Shards?!$");
-    private static final Pattern LS_SHARDS = Pattern.compile("^LOOT SHARE You received (?<n>\\d+) (?<shard>.+?) Shards? for assisting .+!$");
-    private static final Pattern PHOENIX = Pattern.compile("^(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+) found a Phoenix pet!");
-    private static final Pattern COCOON = Pattern.compile("^CAUGHT! You cocooned an? (?<mob>[^!]+)!$");
-    private static final List<String> PREFIXES = List.of("Empyrean", "Exalted", "Runic", "Venerable", "Stalwart", "Blessed");
+    private static final RepoPattern DUG_MOB = RepoPattern.of("combat.DianaTracker.DUG_MOB", "^(?:Oh|Uh oh|Yikes|Oi|Good Grief|Danger|Woah)! You dug out (?:an? )?(?<mob>[A-Za-z ]+)!");
+    private static final RepoPattern RARE_DROP = RepoPattern.of("combat.DianaTracker.RARE_DROP", "^RARE DROP! (?<drop>.+)$");
+    private static final RepoPattern DUG_TREASURE = RepoPattern.of("combat.DianaTracker.DUG_TREASURE", "^RARE DROP! You dug out an? (?<drop>.+?)!$");
+    private static final RepoPattern MAGIC_FIND = RepoPattern.of("combat.DianaTracker.MAGIC_FIND", "\\(\\+(?<mf>\\d+) ✯ Magic Find\\)");
+    private static final RepoPattern DYE = RepoPattern.of("combat.DianaTracker.DYE", "^WOW! (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+) found an? Mythological Dye");
+    private static final RepoPattern CHARM = RepoPattern.of("combat.DianaTracker.CHARM", "^CHARM! You charmed the (?<mob>.+?) and received (?<n>\\d+) (?<shard>.+?) Shards?!$");
+    private static final RepoPattern LS_SHARDS = RepoPattern.of("combat.DianaTracker.LS_SHARDS", "^LOOT SHARE You received (?<n>\\d+) (?<shard>.+?) Shards? for assisting .+!$");
+    private static final RepoPattern PHOENIX = RepoPattern.of("combat.DianaTracker.PHOENIX", "^(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+) found a Phoenix pet!");
+    private static final RepoPattern COCOON = RepoPattern.of("combat.DianaTracker.COCOON", "^CAUGHT! You cocooned an? (?<mob>[^!]+)!$");
+    private static final List<String> PREFIXES = RepoTable.list("combat.DianaTracker.PREFIXES", List.of("Empyrean", "Exalted", "Runic", "Venerable", "Stalwart", "Blessed"));
 
     /** Hypixel sends LOOT SHARE just before the drops and around the time the mob dies. */
     private static final long LOOTSHARE_WINDOW_MS = 2_500L;

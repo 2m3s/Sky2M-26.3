@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
@@ -43,12 +45,12 @@ import java.util.regex.Pattern;
  */
 public final class SacksValue {
     /** "[Bazaar] Sold 1,234x Enchanted Carrot for 5,678 coins!" (Sell Instantly, and each item of a bulk sell). */
-    private static final Pattern SOLD_ITEM = Pattern.compile("^\\[Bazaar] Sold (?<amount>[\\d,]+)x (?<item>.+?) for (?<price>[\\d,.]+) coins?!?$");
+    private static final RepoPattern SOLD_ITEM = RepoPattern.of("misc.items.SacksValue.SOLD_ITEM", "^\\[Bazaar] Sold (?<amount>[\\d,]+)x (?<item>.+?) for (?<price>[\\d,.]+) coins?!?$");
     /** A bulk sale's summary: "[Bazaar] Sold 1,234 items for 5,678 coins!" (any "[Bazaar] ... sold N items ..."). */
-    private static final Pattern SOLD_BULK = Pattern.compile("^\\[Bazaar] (?:You )?[Ss]old (?<amount>[\\d,]+) items?\\b.*$");
+    private static final RepoPattern SOLD_BULK = RepoPattern.of("misc.items.SacksValue.SOLD_BULK", "^\\[Bazaar] (?:You )?[Ss]old (?<amount>[\\d,]+) items?\\b.*$");
     /** One item in a bulk sale's hover: "1,234x Enchanted Carrot ..." or "Enchanted Carrot x1,234 ...". */
-    private static final Pattern HOVER_AMOUNT_FIRST = Pattern.compile("^\\s*[+-]?(?<amount>[\\d,]+)x (?<item>.+?)(?: for .*| [(].*)?$");
-    private static final Pattern HOVER_AMOUNT_LAST = Pattern.compile("^\\s*(?<item>[^\\d].*?) x(?<amount>[\\d,]+)\\b.*$");
+    private static final RepoPattern HOVER_AMOUNT_FIRST = RepoPattern.of("misc.items.SacksValue.HOVER_AMOUNT_FIRST", "^\\s*[+-]?(?<amount>[\\d,]+)x (?<item>.+?)(?: for .*| [(].*)?$");
+    private static final RepoPattern HOVER_AMOUNT_LAST = RepoPattern.of("misc.items.SacksValue.HOVER_AMOUNT_LAST", "^\\s*(?<item>[^\\d].*?) x(?<amount>[\\d,]+)\\b.*$");
     /** How far back the inventory is remembered, to know what was in it just before a sale. */
     private static final long INVENTORY_HISTORY_MS = 4_000L;
 

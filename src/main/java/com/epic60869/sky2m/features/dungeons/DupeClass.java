@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -35,10 +37,10 @@ import java.util.regex.Pattern;
  * is forgotten, so their class shows as missing.
  */
 public final class DupeClass {
-    private static final Pattern MEMBER = Pattern.compile("^ ?(\\w{1,16}): (Healer|Mage|Berserk|Archer|Tank) \\(\\d+\\)$");
-    private static final Pattern JOINED = Pattern.compile("^Party Finder > (?:\\[[^]]{1,7}] ?)?(\\w{1,16}) joined the dungeon group! \\((Healer|Mage|Berserk|Archer|Tank) Level \\d+\\)$");
-    private static final Pattern SELECTED = Pattern.compile("(?:Selected Class|Currently Selected|Selected): (Healer|Mage|Berserk|Archer|Tank)\\b");
-    private static final Pattern LEFT = Pattern.compile("^(?:\\[[^]]{1,7}] ?)?(\\w{1,16}) (?:has left the party|has been removed from the party|was removed from your party)\\.?.*$");
+    private static final RepoPattern MEMBER = RepoPattern.of("dungeons.DupeClass.MEMBER", "^ ?(\\w{1,16}): (Healer|Mage|Berserk|Archer|Tank) \\(\\d+\\)$");
+    private static final RepoPattern JOINED = RepoPattern.of("dungeons.DupeClass.JOINED", "^Party Finder > (?:\\[[^]]{1,7}] ?)?(\\w{1,16}) joined the dungeon group! \\((Healer|Mage|Berserk|Archer|Tank) Level \\d+\\)$");
+    private static final RepoPattern SELECTED = RepoPattern.of("dungeons.DupeClass.SELECTED", "(?:Selected Class|Currently Selected|Selected): (Healer|Mage|Berserk|Archer|Tank)\\b");
+    private static final RepoPattern LEFT = RepoPattern.of("dungeons.DupeClass.LEFT", "^(?:\\[[^]]{1,7}] ?)?(\\w{1,16}) (?:has left the party|has been removed from the party|was removed from your party)\\.?.*$");
 
     private static String lastClass = "";
     /** Classes of the players who joined your group through the Party Finder, by lower-case name. */
@@ -148,12 +150,12 @@ public final class DupeClass {
         }
     }
 
-    private static final Pattern REJOINED = Pattern.compile("^(?:\\[[^]]{1,7}] ?)?(\\w{1,16}) joined the party\\.$");
-    private static final Pattern KICKED_OFFLINE = Pattern.compile("^Kicked (?:\\[[^]]+] )?(\\w{1,16}) because they were offline\\.?$");
-    private static final Pattern TRANSFERRED_LEFT = Pattern.compile("^The party was transferred to .+ because (?:\\[[^]]+] )?(\\w{1,16}) left\\.?$");
-    private static final Pattern JOINED_OTHER = Pattern.compile("^You have joined (?:\\[[^]]+] )?(\\w{1,16})'s? party!.*$");
-    private static final Pattern PARTYING_WITH = Pattern.compile("^You'll be partying with: (.+)$");
-    private static final Pattern NAME = Pattern.compile("^(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(\\w{1,16})$");
+    private static final RepoPattern REJOINED = RepoPattern.of("dungeons.DupeClass.REJOINED", "^(?:\\[[^]]{1,7}] ?)?(\\w{1,16}) joined the party\\.$");
+    private static final RepoPattern KICKED_OFFLINE = RepoPattern.of("dungeons.DupeClass.KICKED_OFFLINE", "^Kicked (?:\\[[^]]+] )?(\\w{1,16}) because they were offline\\.?$");
+    private static final RepoPattern TRANSFERRED_LEFT = RepoPattern.of("dungeons.DupeClass.TRANSFERRED_LEFT", "^The party was transferred to .+ because (?:\\[[^]]+] )?(\\w{1,16}) left\\.?$");
+    private static final RepoPattern JOINED_OTHER = RepoPattern.of("dungeons.DupeClass.JOINED_OTHER", "^You have joined (?:\\[[^]]+] )?(\\w{1,16})'s? party!.*$");
+    private static final RepoPattern PARTYING_WITH = RepoPattern.of("dungeons.DupeClass.PARTYING_WITH", "^You'll be partying with: (.+)$");
+    private static final RepoPattern NAME = RepoPattern.of("dungeons.DupeClass.NAME", "^(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(\\w{1,16})$");
 
     /** Teammates' classes from the dungeon tab list, for !missing in parties that didn't come from the Party Finder. */
     private static void learnTeammates(Minecraft mc) {

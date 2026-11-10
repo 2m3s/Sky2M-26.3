@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -29,10 +31,10 @@ import java.util.regex.Pattern;
  * </ul>
  */
 public final class RngCommand {
-    private static final Pattern PERCENT = Pattern.compile("([0-9]*\\.?[0-9]+)\\s*%");
-    private static final Pattern ONE_IN = Pattern.compile("1\\s*(?:/|in|:)\\s*([0-9,]*\\.?[0-9]+)", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern PERCENT = RepoPattern.of("combat.RngCommand.PERCENT", "([0-9]*\\.?[0-9]+)\\s*%");
+    private static final RepoPattern ONE_IN = RepoPattern.of("combat.RngCommand.ONE_IN", "1\\s*(?:/|in|:)\\s*([0-9,]*\\.?[0-9]+)", Pattern.CASE_INSENSITIVE);
     /** "1-3%" or "1.5 - 3%": the lower end counts. */
-    private static final Pattern RANGE = Pattern.compile("([0-9]*\\.?[0-9]+)\\s*[-–]\\s*[0-9]*\\.?[0-9]+\\s*%");
+    private static final RepoPattern RANGE = RepoPattern.of("combat.RngCommand.RANGE", "([0-9]*\\.?[0-9]+)\\s*[-–]\\s*[0-9]*\\.?[0-9]+\\s*%");
 
     /** The formula that applies to a drop. */
     public enum Formula {

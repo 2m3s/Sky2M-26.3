@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -27,15 +29,15 @@ import java.util.regex.Pattern;
  * Attribute Menu names its attribute; the names are only a fallback for items without one.
  */
 public final class ShardLevelUpHighlight {
-    private static final Pattern HUNTING_BOX = Pattern.compile("^(?:\\(\\d+/\\d+\\) )?Hunting Box");
-    private static final Pattern ATTRIBUTE_MENU = Pattern.compile("^(?:\\(\\d+/\\d+\\) )?Attribute Menu");
+    private static final RepoPattern HUNTING_BOX = RepoPattern.of("misc.items.ShardLevelUpHighlight.HUNTING_BOX", "^(?:\\(\\d+/\\d+\\) )?Hunting Box");
+    private static final RepoPattern ATTRIBUTE_MENU = RepoPattern.of("misc.items.ShardLevelUpHighlight.ATTRIBUTE_MENU", "^(?:\\(\\d+/\\d+\\) )?Attribute Menu");
     // "Syphon 3 shards to level up!", or since October 2026 "Syphon 2 more to level up!".
-    private static final Pattern SYPHON = Pattern.compile("Syphon (\\d+) (?:shards?|more) to (?:level up|unlock)!");
-    private static final Pattern OWNED = Pattern.compile("Owned: ([\\d,]+) Shards?");
+    private static final RepoPattern SYPHON = RepoPattern.of("misc.items.ShardLevelUpHighlight.SYPHON", "Syphon (\\d+) (?:shards?|more) to (?:level up|unlock)!");
+    private static final RepoPattern OWNED = RepoPattern.of("misc.items.ShardLevelUpHighlight.OWNED", "Owned: ([\\d,]+) Shards?");
     /** The Hunting Box's lore line naming the attribute: "Veil (Combat)", "Yummy X (Foraging)". */
-    private static final Pattern BOX_NAME = Pattern.compile("^(.+?)(?: [IVXL]+)? \\(\\w+\\)$");
+    private static final RepoPattern BOX_NAME = RepoPattern.of("misc.items.ShardLevelUpHighlight.BOX_NAME", "^(.+?)(?: [IVXL]+)? \\(\\w+\\)$");
     /** The Attribute Menu's item name: "Berry Eater IX", "Nature Elemental". */
-    private static final Pattern MENU_NAME = Pattern.compile("^(.+?)(?: [IVXL]+)?$");
+    private static final RepoPattern MENU_NAME = RepoPattern.of("misc.items.ShardLevelUpHighlight.MENU_NAME", "^(.+?)(?: [IVXL]+)?$");
     private static final int COLOUR = 0x8055FF55;
 
     /** Shards owned in the Hunting Box, by item id and by attribute name. */

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.nick;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import java.util.List;
 import java.util.regex.Pattern;
 import com.epic60869.sky2m.social.Sky2MStaff;
@@ -19,7 +21,7 @@ public final class Sky2MNickFilter {
     private static final List<String> WHOLE_WORD = List.of(
         "ass", "cock", "dick", "fag", "kys", "rape", "twat", "tits", "sex", "coon", "spic", "chink", "cum", "pedo", "wank");
 
-    private static final Pattern REPEATS = Pattern.compile("(.)\\1+");
+    private static final RepoPattern REPEATS = RepoPattern.of("nick.Sky2MNickFilter.REPEATS", "(.)\\1+");
 
     private Sky2MNickFilter() {}
 

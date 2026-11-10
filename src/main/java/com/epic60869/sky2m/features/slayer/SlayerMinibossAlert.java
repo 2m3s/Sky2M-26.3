@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -15,7 +17,7 @@ import java.util.regex.Pattern;
  * don't set it off.
  */
 public final class SlayerMinibossAlert {
-    private static final Pattern SPAWNED = Pattern.compile("^\\s*SLAYER MINI-?BOSS!? (?:The )?(?<name>.+?) (?:has )?spawned!\\s*(?:\\(x\\d+\\))?\\s*$");
+    private static final RepoPattern SPAWNED = RepoPattern.of("slayer.SlayerMinibossAlert.SPAWNED", "^\\s*SLAYER MINI-?BOSS!? (?:The )?(?<name>.+?) (?:has )?spawned!\\s*(?:\\(x\\d+\\))?\\s*$");
 
     private SlayerMinibossAlert() {}
 

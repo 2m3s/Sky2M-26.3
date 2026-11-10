@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -22,9 +24,9 @@ import java.util.regex.Pattern;
  * it is always right whatever your Heart of the Mountain perks are. Turn the widget on in Hypixel's tab list settings.
  */
 public final class PickaxeAbility {
-    private static final Pattern LINE = Pattern.compile("^(?<ability>[A-Za-z' ]+?)\\s*:\\s*(?<value>.+)$");
-    private static final Pattern MINUTES = Pattern.compile("(\\d+)\\s*m");
-    private static final Pattern SECONDS = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*s");
+    private static final RepoPattern LINE = RepoPattern.of("mining.PickaxeAbility.LINE", "^(?<ability>[A-Za-z' ]+?)\\s*:\\s*(?<value>.+)$");
+    private static final RepoPattern MINUTES = RepoPattern.of("mining.PickaxeAbility.MINUTES", "(\\d+)\\s*m");
+    private static final RepoPattern SECONDS = RepoPattern.of("mining.PickaxeAbility.SECONDS", "(\\d+(?:\\.\\d+)?)\\s*s");
 
     private static String ability = "";
     /** When the ability is ready (millis), or -1 when it already is. */

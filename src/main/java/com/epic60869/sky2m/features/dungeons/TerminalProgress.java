@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -22,7 +24,7 @@ import java.util.regex.Pattern;
  * the current section from Goldor's first line until a few seconds after the core opens.
  */
 public final class TerminalProgress {
-    private static final Pattern DONE = Pattern.compile("^(\\w{1,16}) (activated|completed) a (terminal|lever|device)! \\((\\d)/(\\d)\\)(?:\\s.*)?$");
+    private static final RepoPattern DONE = RepoPattern.of("dungeons.TerminalProgress.DONE", "^(\\w{1,16}) (activated|completed) a (terminal|lever|device)! \\((\\d)/(\\d)\\)(?:\\s.*)?$");
     private static final long KEEP_AFTER_CORE_MS = 5_000;
 
     private record Done(String name, String type, int count, int total) {}
@@ -93,7 +95,7 @@ public final class TerminalProgress {
     }
 
     /** Hypixel's P3 subtitles, as NoammAddons' F7 Titles matches them (the name may have a rank). */
-    private static final Pattern SUBTITLE = Pattern.compile("^.+ (?:activated|completed) a (?:terminal|lever|device)! \\(\\d/\\d\\)$");
+    private static final RepoPattern SUBTITLE = RepoPattern.of("dungeons.TerminalProgress.SUBTITLE", "^.+ (?:activated|completed) a (?:terminal|lever|device)! \\(\\d/\\d\\)$");
 
     /** A subtitle in P3 (from {@link F7Extras}): true hides Hypixel's, when Sky2M shows its own title instead. */
     static boolean onSubtitle(String text) {

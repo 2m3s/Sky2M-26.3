@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.economy;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.mixin.gui.Sky2MContainerScreenAccessor;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -17,7 +19,7 @@ import java.util.regex.Pattern;
  * what you are offered (the right four columns), and the difference. Coins in the trade are not counted.
  */
 final class TradeValue {
-    private static final Pattern TRADE_TITLE = Pattern.compile("^You\\s{2,}\\S+");
+    private static final RepoPattern TRADE_TITLE = RepoPattern.of("economy.TradeValue.TRADE_TITLE", "^You\\s{2,}\\S+");
 
     private TradeValue() {}
 

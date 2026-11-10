@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining.dwarven;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -36,11 +38,11 @@ import java.util.regex.Pattern;
 public final class NucleusTracker {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String ID = "nucleus_tracker";
-    private static final Pattern START = Pattern.compile("^\\s*CRYSTAL NUCLEUS LOOT BUNDLE.*$");
-    private static final Pattern END = Pattern.compile("^▬{20,}$");
+    private static final RepoPattern START = RepoPattern.of("mining.dwarven.NucleusTracker.START", "^\\s*CRYSTAL NUCLEUS LOOT BUNDLE.*$");
+    private static final RepoPattern END = RepoPattern.of("mining.dwarven.NucleusTracker.END", "^▬{20,}$");
     /** "Flawed Ruby Gemstone x20", "Enchanted Book (Lapidary I)", "3x Jungle Key". */
-    private static final Pattern LOOT = Pattern.compile("^(?:(\\d[\\d,]*)x )?(.+?)(?: x(\\d[\\d,]*))?$");
-    private static final Pattern BAL = Pattern.compile("^(?:\\[[^]]*] )?(\\w{1,16}) has obtained \\[Lvl 1] Bal!$");
+    private static final RepoPattern LOOT = RepoPattern.of("mining.dwarven.NucleusTracker.LOOT", "^(?:(\\d[\\d,]*)x )?(.+?)(?: x(\\d[\\d,]*))?$");
+    private static final RepoPattern BAL = RepoPattern.of("mining.dwarven.NucleusTracker.BAL", "^(?:\\[[^]]*] )?(\\w{1,16}) has obtained \\[Lvl 1] Bal!$");
 
     private static final class Data {
         long runs;

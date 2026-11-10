@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -77,8 +79,8 @@ public final class DianaAchievements {
 
     private static final Map<Integer, Achievement> ALL = new LinkedHashMap<>();
     private static final Gson GSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
-    private static final Pattern COA_MAGIC_FIND = Pattern.compile("\\+([0-9]*\\.?[0-9]+) Magic Find");
-    private static final Pattern KILLS = Pattern.compile("^Kills: ([\\d,]+)");
+    private static final RepoPattern COA_MAGIC_FIND = RepoPattern.of("combat.DianaAchievements.COA_MAGIC_FIND", "\\+([0-9]*\\.?[0-9]+) Magic Find");
+    private static final RepoPattern KILLS = RepoPattern.of("combat.DianaAchievements.KILLS", "^Kills: ([\\d,]+)");
     private static Path file;
     private static Saved saved = new Saved();
     private static final Deque<Integer> queue = new ArrayDeque<>();

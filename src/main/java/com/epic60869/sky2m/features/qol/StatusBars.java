@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.qol;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -20,10 +22,10 @@ import java.util.regex.Pattern;
  * LGPL-3.0). The values are read from the action bar, which can optionally lose those parts. Display only.
  */
 public final class StatusBars {
-    private static final Pattern HEALTH = Pattern.compile("([\\d,]+)/([\\d,]+)❤(?:\\+[\\d,]+❤)?");
-    private static final Pattern DEFENSE = Pattern.compile("([\\d,]+)❈ Defense");
-    private static final Pattern MANA = Pattern.compile("([\\d,]+)/([\\d,]+)✎ Mana");
-    private static final Pattern OVERFLOW = Pattern.compile("([\\d,]+)ʬ");
+    private static final RepoPattern HEALTH = RepoPattern.of("qol.StatusBars.HEALTH", "([\\d,]+)/([\\d,]+)❤(?:\\+[\\d,]+❤)?");
+    private static final RepoPattern DEFENSE = RepoPattern.of("qol.StatusBars.DEFENSE", "([\\d,]+)❈ Defense");
+    private static final RepoPattern MANA = RepoPattern.of("qol.StatusBars.MANA", "([\\d,]+)/([\\d,]+)✎ Mana");
+    private static final RepoPattern OVERFLOW = RepoPattern.of("qol.StatusBars.OVERFLOW", "([\\d,]+)ʬ");
 
     private static final int HEIGHT = 10;
     private static final int BACK = 0xB0000000;
@@ -49,7 +51,7 @@ public final class StatusBars {
             if (!overlay || c == null || !c.enabled || !c.hideActionBar || !Sky2MLocation.onSkyblock()) return message;
             String plain = Sky2MLocation.strip(message.getString());
             Component result = message;
-            for (Pattern pattern : new Pattern[] {HEALTH, DEFENSE, MANA, OVERFLOW}) {
+            for (RepoPattern pattern : new RepoPattern[] {HEALTH, DEFENSE, MANA, OVERFLOW}) {
                 Matcher m = pattern.matcher(plain);
                 if (m.find()) result = SkillProgress.removeText(result, m.group());
             }

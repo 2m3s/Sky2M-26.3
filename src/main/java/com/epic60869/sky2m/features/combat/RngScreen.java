@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.itemlist.ItemListData;
@@ -35,9 +37,9 @@ public final class RngScreen extends Screen {
     private static final String[] FILTERS = {"All", "Magic Find", "Pet Luck", "Overbloom"};
     private static final String[] RARITIES = {"Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic"};
     private static final int[] RARITY_COLORS = {0xFFFFFFFF, 0xFF55FF55, 0xFF5577FF, 0xFFBB55FF, 0xFFFFAA00, 0xFFFF55FF};
-    private static final Pattern LEVEL = Pattern.compile("\\[Lvl\\s*\\d+\\]\\s*");
-    private static final Pattern PEST_PET = Pattern.compile("^(.*) Pet \\((\\w+)\\)$");
-    private static final Pattern FLOOR = Pattern.compile("\\b[FM][1-7]\\b");
+    private static final RepoPattern LEVEL = RepoPattern.of("combat.RngScreen.LEVEL", "\\[Lvl\\s*\\d+\\]\\s*");
+    private static final RepoPattern PEST_PET = RepoPattern.of("combat.RngScreen.PEST_PET", "^(.*) Pet \\((\\w+)\\)$");
+    private static final RepoPattern FLOOR = RepoPattern.of("combat.RngScreen.FLOOR", "\\b[FM][1-7]\\b");
 
     enum Cat {
         ALL("All"), COMBAT("Combat"), SLAYERS("Slayers"), FISHING("Fishing"), MINING("Mining"), FARMING("Farming"),

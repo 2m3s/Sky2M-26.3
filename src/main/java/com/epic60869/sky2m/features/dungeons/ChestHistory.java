@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
@@ -64,9 +66,9 @@ public final class ChestHistory {
     private static final int CONFIRM_TICKS = 30;
     /** A Kismet reroll is charged to the next chest of its type opened within this long. */
     private static final long KISMET_WINDOW_MS = 5 * 60_000;
-    private static final Pattern CHEST = Pattern.compile("^(?<type>Wood|Gold|Diamond|Emerald|Obsidian|Bedrock)(?: Chest)?$");
+    private static final RepoPattern CHEST = RepoPattern.of("dungeons.ChestHistory.CHEST", "^(?<type>Wood|Gold|Diamond|Emerald|Obsidian|Bedrock)(?: Chest)?$");
     /** Croesus's menu for one run: "Catacombs - Floor VII" or "Master Catacombs - Floor VII". */
-    private static final Pattern CROESUS_RUN = Pattern.compile("^(?<master>Master )?Catacombs - Floor (?<floor>[IV]+)$");
+    private static final RepoPattern CROESUS_RUN = RepoPattern.of("dungeons.ChestHistory.CROESUS_RUN", "^(?<master>Master )?Catacombs - Floor (?<floor>[IV]+)$");
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm", Locale.ROOT);
 
     /** One opened chest. Costs and values are in coins. */

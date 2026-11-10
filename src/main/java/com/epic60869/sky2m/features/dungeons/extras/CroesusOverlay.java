@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons.extras;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.items.Sky2MStorageSearch;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -50,9 +52,9 @@ import java.util.regex.Pattern;
 public final class CroesusOverlay {
     private static final Gson GSON = new GsonBuilder().create();
     private static final Path DIR = FabricLoader.getInstance().getConfigDir().resolve("sky2m");
-    private static final Pattern CROESUS = Pattern.compile("^(?:\\((\\d+)/\\d+\\) )?Croesus$");
-    private static final Pattern FLOOR = Pattern.compile("Floor (?<floor>[IVX]+)");
-    private static final Pattern TEAM_SCORE = Pattern.compile("^\\s*Team Score: [\\d,]+ \\([A-DS+]+\\)");
+    private static final RepoPattern CROESUS = RepoPattern.of("dungeons.extras.CroesusOverlay.CROESUS", "^(?:\\((\\d+)/\\d+\\) )?Croesus$");
+    private static final RepoPattern FLOOR = RepoPattern.of("dungeons.extras.CroesusOverlay.FLOOR", "Floor (?<floor>[IVX]+)");
+    private static final RepoPattern TEAM_SCORE = RepoPattern.of("dungeons.extras.CroesusOverlay.TEAM_SCORE", "^\\s*Team Score: [\\d,]+ \\([A-DS+]+\\)");
     private static final int MAX_RUNS = 60, EMPTY_SLOT = 22, FRONT_ARROW_SLOT = 53;
     private static final long MAX_AGE_MS = 3L * 24 * 60 * 60 * 1000;
 
@@ -70,7 +72,7 @@ public final class CroesusOverlay {
     private static String loadedProfile;
     private static int ticks;
     /** "Unclaimed chests: 24" in the tab list's Info widget: Hypixel's own count. */
-    private static final Pattern TAB_UNCLAIMED = Pattern.compile("^Unclaimed chests: (\\d+)$");
+    private static final RepoPattern TAB_UNCLAIMED = RepoPattern.of("dungeons.extras.CroesusOverlay.TAB_UNCLAIMED", "^Unclaimed chests: (\\d+)$");
     /** Hypixel's count from the tab, -1 until seen (on this profile), plus the runs finished since it was read. */
     private static int tabCount = -1;
     private static String tabProfile = "";

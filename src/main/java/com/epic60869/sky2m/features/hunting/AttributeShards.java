@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.hunting;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.items.Sky2MStorageSearch;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -78,24 +80,24 @@ public final class AttributeShards {
 
     // ------------------------------------------------------------------------------------------------ patterns
 
-    private static final Pattern HUNTING_BOX = Pattern.compile("^(?:\\((?<page>\\d+)/(?<pages>\\d+)\\) )?Hunting Box");
-    private static final Pattern ATTRIBUTE_MENU = Pattern.compile("^(?:\\(\\d+/\\d+\\) )?Attribute Menu");
-    public static final Pattern FUSION_BOX = Pattern.compile("^(?:\\(\\d+/\\d+\\) )?Fusion Box");
-    public static final Pattern CONFIRM_FUSION = Pattern.compile("^Confirm Fusion");
-    private static final Pattern SHARD_FUSION = Pattern.compile("^Shard Fusion");
-    private static final Pattern SEARCH_QUERY = Pattern.compile("^Query: .+");
-    private static final Pattern MENU_NAME = Pattern.compile("^(?<name>.+?) ?(?<tier>[IVXL]+)?$");
-    private static final Pattern STATE = Pattern.compile("^Enabled: (?<state>.+)");
+    private static final RepoPattern HUNTING_BOX = RepoPattern.of("hunting.AttributeShards.HUNTING_BOX", "^(?:\\((?<page>\\d+)/(?<pages>\\d+)\\) )?Hunting Box");
+    private static final RepoPattern ATTRIBUTE_MENU = RepoPattern.of("hunting.AttributeShards.ATTRIBUTE_MENU", "^(?:\\(\\d+/\\d+\\) )?Attribute Menu");
+    public static final RepoPattern FUSION_BOX = RepoPattern.of("hunting.AttributeShards.FUSION_BOX", "^(?:\\(\\d+/\\d+\\) )?Fusion Box");
+    public static final RepoPattern CONFIRM_FUSION = RepoPattern.of("hunting.AttributeShards.CONFIRM_FUSION", "^Confirm Fusion");
+    private static final RepoPattern SHARD_FUSION = RepoPattern.of("hunting.AttributeShards.SHARD_FUSION", "^Shard Fusion");
+    private static final RepoPattern SEARCH_QUERY = RepoPattern.of("hunting.AttributeShards.SEARCH_QUERY", "^Query: .+");
+    private static final RepoPattern MENU_NAME = RepoPattern.of("hunting.AttributeShards.MENU_NAME", "^(?<name>.+?) ?(?<tier>[IVXL]+)?$");
+    private static final RepoPattern STATE = RepoPattern.of("hunting.AttributeShards.STATE", "^Enabled: (?<state>.+)");
     // "Syphon 3 shards to level up!", or since October 2026 "Syphon 2 more to level up!".
-    private static final Pattern SYPHON_AMOUNT = Pattern.compile("Syphon (?<amount>\\d+) (?:shards?|more) to (?:level up|unlock)!");
-    private static final Pattern LORE_NAME = Pattern.compile("^(?<name>.+?) ?(?<tier>[IVXL]+)? \\(\\w+\\)$");
-    private static final Pattern OWNED = Pattern.compile("Owned: (?<amount>[\\d,]+) Shards?");
-    private static final Pattern REQUIRED_TO_FUSE = Pattern.compile("Required to fuse: (?<amount>\\d+)");
-    private static final Pattern SYPHONED = Pattern.compile("^\\+(?<amount>\\d+) (?<attributeName>.+) Attribute \\(Level (?<level>\\d+)\\) - (?<untilNext>\\d+) more to upgrade!");
-    private static final Pattern SYPHONED_MAXED = Pattern.compile("^\\+(?<amount>\\d+) (?<attributeName>.+) Attribute \\(Level (?<level>\\d+)\\) MAXED");
-    private static final Pattern ENABLED = Pattern.compile("^(?<attributeName>.+) is now enabled!");
-    private static final Pattern DISABLED = Pattern.compile("^(?<attributeName>.+) is now disabled!");
-    private static final Pattern FUSION = Pattern.compile("^FUSION! You obtained(?: an?)? (?<shardName>.+) Shard(?: x(?<amount>\\d+))?!(?: NEW!)?");
+    private static final RepoPattern SYPHON_AMOUNT = RepoPattern.of("hunting.AttributeShards.SYPHON_AMOUNT", "Syphon (?<amount>\\d+) (?:shards?|more) to (?:level up|unlock)!");
+    private static final RepoPattern LORE_NAME = RepoPattern.of("hunting.AttributeShards.LORE_NAME", "^(?<name>.+?) ?(?<tier>[IVXL]+)? \\(\\w+\\)$");
+    private static final RepoPattern OWNED = RepoPattern.of("hunting.AttributeShards.OWNED", "Owned: (?<amount>[\\d,]+) Shards?");
+    private static final RepoPattern REQUIRED_TO_FUSE = RepoPattern.of("hunting.AttributeShards.REQUIRED_TO_FUSE", "Required to fuse: (?<amount>\\d+)");
+    private static final RepoPattern SYPHONED = RepoPattern.of("hunting.AttributeShards.SYPHONED", "^\\+(?<amount>\\d+) (?<attributeName>.+) Attribute \\(Level (?<level>\\d+)\\) - (?<untilNext>\\d+) more to upgrade!");
+    private static final RepoPattern SYPHONED_MAXED = RepoPattern.of("hunting.AttributeShards.SYPHONED_MAXED", "^\\+(?<amount>\\d+) (?<attributeName>.+) Attribute \\(Level (?<level>\\d+)\\) MAXED");
+    private static final RepoPattern ENABLED = RepoPattern.of("hunting.AttributeShards.ENABLED", "^(?<attributeName>.+) is now enabled!");
+    private static final RepoPattern DISABLED = RepoPattern.of("hunting.AttributeShards.DISABLED", "^(?<attributeName>.+) is now disabled!");
+    private static final RepoPattern FUSION = RepoPattern.of("hunting.AttributeShards.FUSION", "^FUSION! You obtained(?: an?)? (?<shardName>.+) Shard(?: x(?<amount>\\d+))?!(?: NEW!)?");
     private static final Map<Pattern, Source> GAIN_PATTERNS = new LinkedHashMap<>();
 
     static {

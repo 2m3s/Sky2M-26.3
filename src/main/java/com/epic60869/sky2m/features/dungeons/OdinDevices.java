@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -324,7 +326,7 @@ public final class OdinDevices {
 
     // ----- Sharp Shooter (i4) -----
 
-    private static final Pattern DEVICE_COMPLETE = Pattern.compile("^(.{1,16}) completed a device! \\((\\d)/(\\d)\\)$");
+    private static final RepoPattern DEVICE_COMPLETE = RepoPattern.of("dungeons.OdinDevices.DEVICE_COMPLETE", "^(.{1,16}) completed a device! \\((\\d)/(\\d)\\)$");
     private static final AABB I4_ROOM = new AABB(20, 100, 30, 89, 151, 51);
     private static final List<BlockPos> I4_BLOCKS = List.of(
         new BlockPos(68, 130, 50), new BlockPos(66, 130, 50), new BlockPos(64, 130, 50),

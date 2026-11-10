@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.misc.system;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.mixin.world.Sky2MClientPacketListenerAccessor;
@@ -52,11 +56,11 @@ import java.util.regex.Pattern;
  */
 public final class KeepTerrainLoaded {
     /** Skysoft's TerrainCacheIsland list, as the tab list names them. */
-    private static final Set<String> ISLANDS = Set.of("The End", "Dwarven Mines", "Glacite Tunnels", "Dungeon Hub", "Hub",
+    private static final Set<String> ISLANDS = RepoTable.set("misc.system.KeepTerrainLoaded.ISLANDS", Set.of("The End", "Dwarven Mines", "Glacite Tunnels", "Dungeon Hub", "Hub",
         "The Farming Islands", "Crystal Hollows", "The Park", "Deep Caverns", "Gold Mine", "Garden", "Spider's Den",
         "Jerry's Workshop", "The Rift", "Crimson Isle", "Backwater Bayou", "Galatea", "Torrhus Canyon", "Safari",
-        "Lotus Atoll");
-    private static final Pattern SERVER_LINE = Pattern.compile("\\d{2}/\\d{2}/\\d{2}\\s+(\\S+)");
+        "Lotus Atoll"));
+    private static final RepoPattern SERVER_LINE = RepoPattern.of("misc.system.KeepTerrainLoaded.SERVER_LINE", "\\d{2}/\\d{2}/\\d{2}\\s+(\\S+)");
     private static final boolean BOBBY = FabricLoader.getInstance().isModLoaded("bobby");
     private static final int MAX_CONCURRENT_LOADS = 16;
     private static final int MAX_SCAN_CHECKS_PER_TICK = 64;

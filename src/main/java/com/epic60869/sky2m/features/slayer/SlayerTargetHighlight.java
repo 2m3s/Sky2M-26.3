@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.EntityGlow;
@@ -32,7 +34,7 @@ import java.util.regex.Pattern;
  * closest miniboss when there's no boss. Minibosses are yours when Hypixel said "SLAYER MINI-BOSS ... has spawned!".
  */
 public final class SlayerTargetHighlight {
-    private static final Pattern MINIBOSS_SPAWNED = Pattern.compile("^\\s*SLAYER MINI-?BOSS!? (?:The )?(?<name>.+?) (?:has )?spawned!\\s*(?:\\(x\\d+\\))?\\s*$");
+    private static final RepoPattern MINIBOSS_SPAWNED = RepoPattern.of("slayer.SlayerTargetHighlight.MINIBOSS_SPAWNED", "^\\s*SLAYER MINI-?BOSS!? (?:The )?(?<name>.+?) (?:has )?spawned!\\s*(?:\\(x\\d+\\))?\\s*$");
     private static final int SCAN_INTERVAL_TICKS = 4;
     private static final double SCAN_RANGE = 48;
 

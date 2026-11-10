@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.economy;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -26,8 +28,8 @@ import java.util.regex.Pattern;
  * and a counter of the coins you sell on the Bazaar each UTC day, read from the Bazaar chat messages.
  */
 final class BazaarExtras {
-    private static final Pattern SOLD = Pattern.compile("^\\[Bazaar] Sold ([\\d,]+)x .+ for ([\\d,.]+) coins!");
-    private static final Pattern CLAIMED = Pattern.compile("^\\[Bazaar] Claimed ([\\d,.]+) coins from selling ");
+    private static final RepoPattern SOLD = RepoPattern.of("economy.BazaarExtras.SOLD", "^\\[Bazaar] Sold ([\\d,]+)x .+ for ([\\d,.]+) coins!");
+    private static final RepoPattern CLAIMED = RepoPattern.of("economy.BazaarExtras.CLAIMED", "^\\[Bazaar] Claimed ([\\d,.]+) coins from selling ");
     private static final double TAX = 0.0125;
     private static final Gson GSON = new Gson();
 

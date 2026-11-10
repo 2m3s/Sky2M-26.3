@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -38,10 +40,10 @@ import java.util.Set;
 public final class SecretChime {
     private static final String WITHER_ESSENCE = "2865274b-3097-394e-8149-ec629c72d850";
     private static final String REDSTONE_KEY = "fed95410-aba1-39df-9b95-1d4f361eb66e";
-    private static final List<String> ITEMS = List.of("Health Potion VIII Splash Potion", "Healing Potion 8 Splash Potion",
+    private static final List<String> ITEMS = RepoTable.list("dungeons.SecretChime.ITEMS", List.of("Health Potion VIII Splash Potion", "Healing Potion 8 Splash Potion",
         "Healing Potion VIII Splash Potion", "Healing VIII Splash Potion", "Healing 8 Splash Potion", "Decoy",
         "Inflatable Jerry", "Spirit Leap", "Trap", "Training Weights", "Defuse Kit", "Dungeon Chest Key",
-        "Treasure Talisman", "Revive Stone", "Architect's First Draft", "Secret Dye", "Candycomb");
+        "Treasure Talisman", "Revive Stone", "Architect's First Draft", "Secret Dye", "Candycomb"));
     private static final Set<Object> BATS = Set.of(SoundEvents.BAT_HURT, SoundEvents.BAT_DEATH);
     private static long lastPlayed;
 

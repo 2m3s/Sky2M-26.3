@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.qol;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -30,7 +32,7 @@ import java.util.regex.Pattern;
  */
 public final class MentionAlerts {
     /** "Guild > [VIP] Name [GM]: text", "[123] [MVP+] Name: text", "Party > Name: text": the sender and the message. */
-    private static final Pattern CHAT_LINE = Pattern.compile("^(?:(?:Party|Guild|Officer|Co-op) > )?(?:\\[\\d+] )?(?:\\S )?(?:\\[[A-Za-z+]+] )?(\\w{1,16})(?: \\[[^\\]]+])?(?: \\S)?: (.+)$");
+    private static final RepoPattern CHAT_LINE = RepoPattern.of("qol.MentionAlerts.CHAT_LINE", "^(?:(?:Party|Guild|Officer|Co-op) > )?(?:\\[\\d+] )?(?:\\S )?(?:\\[[A-Za-z+]+] )?(\\w{1,16})(?: \\[[^\\]]+])?(?: \\S)?: (.+)$");
 
     private static String cachedKeywords;
     private static List<Pattern> cachedPatterns = List.of();

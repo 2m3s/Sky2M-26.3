@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
@@ -46,7 +48,7 @@ public final class SlayerBossProfit {
     /** How long after the kill late drops (sacks, pickups) still count. */
     private static final long TRACK_MS = 30_000L;
     /** "+64 Revenant Flesh (Combat Sack)" in a "[Sacks]" message's hover. */
-    private static final Pattern SACK_CHANGE = Pattern.compile("^ *([+-])([0-9,]+) (.+?) [(].*[)] *$");
+    private static final RepoPattern SACK_CHANGE = RepoPattern.of("slayer.SlayerBossProfit.SACK_CHANGE", "^ *([+-])([0-9,]+) (.+?) [(].*[)] *$");
 
     /** Inventory when your boss spawned: item price id -> count. */
     private static Map<String, Integer> baseline;
@@ -250,7 +252,7 @@ public final class SlayerBossProfit {
         return false;
     }
 
-    private static final Pattern PET_ID = Pattern.compile("^LVL_\\d+_[A-Z]+_(.+)$");
+    private static final RepoPattern PET_ID = RepoPattern.of("slayer.SlayerBossProfit.PET_ID", "^LVL_\\d+_[A-Z]+_(.+)$");
 
     public static void init(java.nio.file.Path configDir) {
         loadDrops(configDir);

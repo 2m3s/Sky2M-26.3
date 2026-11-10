@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -276,18 +278,18 @@ public final class DianaRareMobs {
     private static final Pattern COORDINATE_SHARE = Pattern.compile("^(?<marker>x:) (?<x>" + NUMBER + "),? y: (?<y>" + NUMBER + "),? z: (?<z>" + NUMBER + ")(?: \\| (?<mob>.*))?$", Pattern.CASE_INSENSITIVE);
     private static final Pattern INQUISITOR_SPAWN = Pattern.compile("^(?<marker>A MINOS INQUISITOR) has spawned near \\[.*] at Coords (?<x>" + NUMBER + ") (?<y>" + NUMBER + ") (?<z>" + NUMBER + ")$", Pattern.CASE_INSENSITIVE);
     private static final Pattern EXPLICIT_CLEAR = Pattern.compile("^(?<marker>Defeated (?:by )?(?:a |an )?(?<mob>" + LABELS + ")!)$");
-    private static final Pattern GENERIC_CLEAR = Pattern.compile("^(?<marker>(?:Inquisitor|Rare Diana Mob) dead!)$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern PLAYER_DEATH = Pattern.compile("^(?:☠ )?(?<player>[A-Za-z0-9_]{1,16}) was killed by (?<killer>.+)\\.$");
-    private static final Pattern PARTY_COCOON = Pattern.compile("^(?<marker>Cocooned an? (?<mob>[^!]+)!)$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern LOCAL_COCOON = Pattern.compile("^CAUGHT! You cocooned an? (?<mob>[^!]+)!$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern DUG_OUT = Pattern.compile("You dug out (?:a |an )?(?<mob>[^!§(]+)!", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern GENERIC_CLEAR = RepoPattern.of("combat.DianaRareMobs.GENERIC_CLEAR", "^(?<marker>(?:Inquisitor|Rare Diana Mob) dead!)$", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern PLAYER_DEATH = RepoPattern.of("combat.DianaRareMobs.PLAYER_DEATH", "^(?:☠ )?(?<player>[A-Za-z0-9_]{1,16}) was killed by (?<killer>.+)\\.$");
+    private static final RepoPattern PARTY_COCOON = RepoPattern.of("combat.DianaRareMobs.PARTY_COCOON", "^(?<marker>Cocooned an? (?<mob>[^!]+)!)$", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern LOCAL_COCOON = RepoPattern.of("combat.DianaRareMobs.LOCAL_COCOON", "^CAUGHT! You cocooned an? (?<mob>[^!]+)!$", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern DUG_OUT = RepoPattern.of("combat.DianaRareMobs.DUG_OUT", "You dug out (?:a |an )?(?<mob>[^!§(]+)!", Pattern.CASE_INSENSITIVE);
     /** "Party > [MVP+] Name ♲: message". */
-    private static final Pattern PARTY_LINE = Pattern.compile("^Party > (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>[A-Za-z0-9_]{1,16})[^:]*: (?<body>.+)$");
-    private static final Pattern DAMAGE = Pattern.compile("^[✧✯]?(?<damage>[0-9,.]+[KMBkmb]?)[⚔+✧❤♞☄✷ﬗ✯]*$");
-    private static final Pattern FULL_HEALTH = Pattern.compile("(?<current>[0-9,.]+[KMBkmb]?)\\s*/\\s*(?<max>[0-9,.]+[KMBkmb]?)");
-    private static final Pattern CURRENT_HEALTH = Pattern.compile("(?<current>[0-9,.]+[KMBkmb]?)❤");
-    private static final Pattern LEVEL_PREFIX = Pattern.compile("^\\[Lv\\d+]\\s*", Pattern.CASE_INSENSITIVE);
-    private static final Pattern TIER_SUFFIX = Pattern.compile("\\s+[IVX]+$");
+    private static final RepoPattern PARTY_LINE = RepoPattern.of("combat.DianaRareMobs.PARTY_LINE", "^Party > (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>[A-Za-z0-9_]{1,16})[^:]*: (?<body>.+)$");
+    private static final RepoPattern DAMAGE = RepoPattern.of("combat.DianaRareMobs.DAMAGE", "^[✧✯]?(?<damage>[0-9,.]+[KMBkmb]?)[⚔+✧❤♞☄✷ﬗ✯]*$");
+    private static final RepoPattern FULL_HEALTH = RepoPattern.of("combat.DianaRareMobs.FULL_HEALTH", "(?<current>[0-9,.]+[KMBkmb]?)\\s*/\\s*(?<max>[0-9,.]+[KMBkmb]?)");
+    private static final RepoPattern CURRENT_HEALTH = RepoPattern.of("combat.DianaRareMobs.CURRENT_HEALTH", "(?<current>[0-9,.]+[KMBkmb]?)❤");
+    private static final RepoPattern LEVEL_PREFIX = RepoPattern.of("combat.DianaRareMobs.LEVEL_PREFIX", "^\\[Lv\\d+]\\s*", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern TIER_SUFFIX = RepoPattern.of("combat.DianaRareMobs.TIER_SUFFIX", "\\s+[IVX]+$");
     private static final Set<String> MODIFIER_PREFIXES = Set.of("Empyrean", "Exalted", "Runic", "Venerable", "Stalwart", "Blessed");
 
     // ------------------------------------------------------------------------------------------------ state

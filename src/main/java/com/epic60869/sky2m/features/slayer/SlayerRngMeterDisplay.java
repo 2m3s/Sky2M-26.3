@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -43,18 +47,17 @@ import java.util.regex.Pattern;
  */
 public final class SlayerRngMeterDisplay {
     /** "   RNG Meter - 12,345 Stored XP" (SkyHanni's slayer.rngmeter.update, without colours). */
-    private static final Pattern UPDATE = Pattern.compile("RNG Meter - ([\\d,.]+[kKmM]?) Stored XP");
+    private static final RepoPattern UPDATE = RepoPattern.of("slayer.SlayerRngMeterDisplay.UPDATE", "RNG Meter - ([\\d,.]+[kKmM]?) Stored XP");
     /** "Revenant Horror RNG Meter" (SkyHanni's slayer.rngmeter.inventoryname). */
-    private static final Pattern INVENTORY = Pattern.compile("^(.*) RNG Meter$");
+    private static final RepoPattern INVENTORY = RepoPattern.of("slayer.SlayerRngMeterDisplay.INVENTORY", "^(.*) RNG Meter$");
     /** The "1,234/100k" progress on an RNG meter drop. */
-    private static final Pattern PROGRESS = Pattern.compile("([\\d,.]+[kKmMbB]?)/([\\d,.]+[kKmMbB]?)\\s*$");
+    private static final RepoPattern PROGRESS = RepoPattern.of("slayer.SlayerRngMeterDisplay.PROGRESS", "([\\d,.]+[kKmMbB]?)/([\\d,.]+[kKmMbB]?)\\s*$");
     /** "Enchanted Book (Duplex I)" (SkyHanni's book.format) -> "Duplex I". */
-    private static final Pattern BOOK = Pattern.compile("^Enchanted Book \\((.*)\\)$");
+    private static final RepoPattern BOOK = RepoPattern.of("slayer.SlayerRngMeterDisplay.BOOK", "^Enchanted Book \\((.*)\\)$");
     /** The quest's tier on the scoreboard, "Revenant Horror IV". */
-    private static final Pattern TIER = Pattern.compile("(Revenant Horror|Atoned Horror|Tarantula Broodfather|Conjoined Brood"
-        + "|Sven Packmaster|Voidgloom Seraph|Inferno Demonlord|Riftstalker Bloodfiend) ([IVX]+)");
-    private static final Set<String> SLAYERS = Set.of("Revenant Horror", "Tarantula Broodfather", "Sven Packmaster",
-        "Voidgloom Seraph", "Inferno Demonlord", "Riftstalker Bloodfiend");
+    private static final RepoPattern TIER = RepoPattern.of("slayer.SlayerRngMeterDisplay.TIER", "(Revenant Horror|Atoned Horror|Tarantula Broodfather|Conjoined Brood|Sven Packmaster|Voidgloom Seraph|Inferno Demonlord|Riftstalker Bloodfiend) ([IVX]+)");
+    private static final Set<String> SLAYERS = RepoTable.set("slayer.SlayerRngMeterDisplay.SLAYERS", Set.of("Revenant Horror", "Tarantula Broodfather", "Sven Packmaster",
+        "Voidgloom Seraph", "Inferno Demonlord", "Riftstalker Bloodfiend"));
     /** Slayer XP per boss for tiers I-V (Hypixel's values), used until two meter updates give the real gain. */
     private static final long[] TIER_XP = {5, 25, 100, 500, 1500};
     private static final long[] VAMPIRE_TIER_XP = {10, 25, 60, 120, 150};

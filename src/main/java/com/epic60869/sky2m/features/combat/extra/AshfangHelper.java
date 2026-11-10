@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat.extra;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -30,8 +32,8 @@ import java.util.regex.Pattern;
  * Souls and Gravity Orbs, the Cryogenic Blast freeze timer and the time to Ashfang's next reset.
  */
 public final class AshfangHelper {
-    private static final Pattern CRYOGENIC = Pattern.compile("Ashfang Follower's Cryogenic Blast hit you for .* damage!");
-    private static final Pattern ASHFANG_TAG = Pattern.compile("Ashfang(?! (?:Follower|Underling|Acolyte))\\b");
+    private static final RepoPattern CRYOGENIC = RepoPattern.of("combat.extra.AshfangHelper.CRYOGENIC", "Ashfang Follower's Cryogenic Blast hit you for .* damage!");
+    private static final RepoPattern ASHFANG_TAG = RepoPattern.of("combat.extra.AshfangHelper.ASHFANG_TAG", "Ashfang(?! (?:Follower|Underling|Acolyte))\\b");
     private static final long FREEZE_MS = 3_000L, RESET_MS = 46_100L, SCAN_RANGE = 50;
     /** Texture hashes of the Blazing Soul and Gravity Orb skulls (SkyHanni-REPO Skulls.json). */
     private static final String SOUL_HASH = CombatExtras.textureHash(

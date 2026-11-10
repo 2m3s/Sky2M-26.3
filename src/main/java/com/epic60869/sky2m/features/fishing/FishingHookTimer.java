@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.fishing;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -31,7 +33,7 @@ import java.util.regex.Pattern;
  */
 public final class FishingHookTimer {
     /** Hypixel's timer stand over the bobber: "§e§l3.0" counting down, then "§c§l!!!". */
-    private static final Pattern TIMER = Pattern.compile("§e§l(?<time>\\d+(?:\\.\\d+)?)|(?:§.)*(?<alert>!!!)");
+    private static final RepoPattern TIMER = RepoPattern.of("fishing.FishingHookTimer.TIMER", "§e§l(?<time>\\d+(?:\\.\\d+)?)|(?:§.)*(?<alert>!!!)");
 
     private static int bobberId = -1;
     private static long deployTime = -1;

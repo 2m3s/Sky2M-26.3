@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat.extra;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -28,8 +30,8 @@ import java.util.regex.Pattern;
  * "15 Hits" counter (Voidgloom Seraph) and the health it heals back. Display only.
  */
 public final class BossDamageIndicator {
-    private static final Pattern TAG = Pattern.compile("☠\\s*(?<name>.+?)\\s+(?<hp>[\\d.,]+[kKmMbB]?)(?:/(?<max>[\\d.,]+[kKmMbB]?))?\\s*❤");
-    private static final Pattern HITS = Pattern.compile("\\b(\\d+) Hits?\\b");
+    private static final RepoPattern TAG = RepoPattern.of("combat.extra.BossDamageIndicator.TAG", "☠\\s*(?<name>.+?)\\s+(?<hp>[\\d.,]+[kKmMbB]?)(?:/(?<max>[\\d.,]+[kKmMbB]?))?\\s*❤");
+    private static final RepoPattern HITS = RepoPattern.of("combat.extra.BossDamageIndicator.HITS", "\\b(\\d+) Hits?\\b");
     private static final double RANGE = 40;
 
     private record Sample(long at, double health) {}

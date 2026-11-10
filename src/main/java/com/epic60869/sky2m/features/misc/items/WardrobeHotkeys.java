@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -14,8 +16,8 @@ import java.util.regex.Pattern;
 
 /** Configurable hotkeys for armor sets and loadouts on their open pages. */
 public final class WardrobeHotkeys {
-    private static final Pattern WARDROBE_TITLE = Pattern.compile(".*\\(\\d+/\\d+\\) Armor Sets.*");
-    private static final Pattern LOADOUT_TITLE = Pattern.compile(".*\\(\\d+/\\d+\\) Loadouts.*");
+    private static final RepoPattern WARDROBE_TITLE = RepoPattern.of("misc.items.WardrobeHotkeys.WARDROBE_TITLE", ".*\\(\\d+/\\d+\\) Armor Sets.*");
+    private static final RepoPattern LOADOUT_TITLE = RepoPattern.of("misc.items.WardrobeHotkeys.LOADOUT_TITLE", ".*\\(\\d+/\\d+\\) Loadouts.*");
     private static final int[] LOADOUT_MENU_SLOTS = {14, 15, 16, 23, 24, 25, 32, 33, 34, 41, 42, 43};
 
     private WardrobeHotkeys() {}

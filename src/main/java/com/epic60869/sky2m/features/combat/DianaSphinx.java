@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.mojang.blaze3d.platform.InputConstants;
 
 import com.epic60869.sky2m.config.Sky2MConfig;
@@ -30,19 +34,19 @@ import java.util.regex.Pattern;
  * underlined and the others in red; clicking anywhere while chat is open (or the Sphinx Solver key) answers it.
  */
 public final class DianaSphinx {
-    private static final Set<String> QUESTIONS = Set.of(
+    private static final Set<String> QUESTIONS = RepoTable.set("combat.DianaSphinx.QUESTIONS", Set.of(
         "Which of these is NOT a pet?", "What type of mob is exclusive to the Fishing Festival?",
         "Where is Trevor the Trapper found?", "Who helps you apply Rod Parts?",
         "Which type of Gemstone has the lowest Breaking Power?", "Which item rarity comes after Mythic?",
         "How do you obtain the Dark Purple Dye?", "Who runs the Chocolate Factory?",
         "How many floors are there in The Catacombs?", "What is the first type of slayer Maddox offers?",
         "What item do you use to kill Pests?", "Who owns the Gold Essence Shop?",
-        "Which of these is NOT a type of Gemstone?", "What does Junker Joel collect?", "Where is the Titanoboa found?");
-    private static final Set<String> ANSWERS = Set.of("Slime", "Shark", "Mushroom Desert", "Roddy", "Ruby", "Divine",
-        "Dark Auction", "Hoppity", "7", "Zombie", "Vacuum", "Marigold", "Prismite", "Junk", "Backwater Bayou");
+        "Which of these is NOT a type of Gemstone?", "What does Junker Joel collect?", "Where is the Titanoboa found?"));
+    private static final Set<String> ANSWERS = RepoTable.set("combat.DianaSphinx.ANSWERS", Set.of("Slime", "Shark", "Mushroom Desert", "Roddy", "Ruby", "Divine",
+        "Dark Auction", "Hoppity", "7", "Zombie", "Vacuum", "Marigold", "Prismite", "Junk", "Backwater Bayou"));
 
     /** "   A) Mushroom Desert" */
-    private static final Pattern ANSWER = Pattern.compile("^ {3}([ABC])\\) (.*)$");
+    private static final RepoPattern ANSWER = RepoPattern.of("combat.DianaSphinx.ANSWER", "^ {3}([ABC])\\) (.*)$");
 
     private static final Map<String, Component> answerLines = new LinkedHashMap<>();
     private static int correctIndex = -1;

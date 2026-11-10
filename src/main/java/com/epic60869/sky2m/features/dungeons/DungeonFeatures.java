@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -118,7 +120,7 @@ public final class DungeonFeatures {
             this.cooldownSeconds = cooldownSeconds;
         }
     }
-    private static final Pattern COOLDOWN_LORE = Pattern.compile("^Cooldown: (\\d+)s$");
+    private static final RepoPattern COOLDOWN_LORE = RepoPattern.of("dungeons.DungeonFeatures.COOLDOWN_LORE", "^Cooldown: (\\d+)s$");
 
     // ----- Debuffs -----
     private static int lastBreath, iceSpray, lethality;
@@ -300,7 +302,7 @@ public final class DungeonFeatures {
         SPLITS.add(new Split(CLEARED, "§1Total"));
     }
 
-    private static final Pattern TIME_ELAPSED = Pattern.compile("Time Elapsed: (?:(\\d+)h )?(?:(\\d+)m )?(\\d+)s");
+    private static final RepoPattern TIME_ELAPSED = RepoPattern.of("dungeons.DungeonFeatures.TIME_ELAPSED", "Time Elapsed: (?:(\\d+)h )?(?:(\\d+)m )?(\\d+)s");
 
     /**
      * A run joined (or rejoined) after its start: the splits start from the sidebar's "Time Elapsed", so the timer and

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.fishing;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -52,7 +54,7 @@ public final class RareSc {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String DEFAULT_ALERT = "&6&l[&fα&6&l] {color}&l{name} &6&l[&fα&6&l]";
     private static final double LS_RADIUS = 30;
-    private static final Pattern NAMETAG = Pattern.compile("^(?:﴾ )?\\[Lv\\d+] \\S+ (.+) ([\\d.,]+[kKmMbB]?)/([\\d.,]+[kKmMbB]?)❤(?: ﴿)?( ✯)?.*$");
+    private static final RepoPattern NAMETAG = RepoPattern.of("fishing.RareSc.NAMETAG", "^(?:﴾ )?\\[Lv\\d+] \\S+ (.+) ([\\d.,]+[kKmMbB]?)/([\\d.,]+[kKmMbB]?)❤(?: ﴿)?( ✯)?.*$");
 
     public enum PartyStyle {
         CLASSIC("Sky2M Classic"), RFU("Surfaced"), CUSTOM("Custom");

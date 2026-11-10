@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons.party;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -31,7 +33,7 @@ import java.util.regex.Pattern;
  */
 public final class TeamMelody {
     private static final String TITLE = "Click the button on time!";
-    private static final Pattern PARTY_MELODY = Pattern.compile("^Party > (?:\\[[^\\]]{1,24}] )?(\\w{1,16}): Melody \\(?(\\d)/(\\d)\\)?.*$");
+    private static final RepoPattern PARTY_MELODY = RepoPattern.of("dungeons.party.TeamMelody.PARTY_MELODY", "^Party > (?:\\[[^\\]]{1,24}] )?(\\w{1,16}): Melody \\(?(\\d)/(\\d)\\)?.*$");
     private static final String GOLDOR = "[BOSS] Goldor: Who dares trespass into my domain?";
     private static final String CORE = "The Core entrance is opening!";
 

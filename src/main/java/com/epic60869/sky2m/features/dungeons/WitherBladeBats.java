@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -24,7 +26,7 @@ import java.util.Set;
  * Hypixel's line or a teammate's message turns up for it within a second (then that line has already counted it).
  */
 public final class WitherBladeBats {
-    private static final List<String> WITHER_BLADES = List.of("Hyperion", "Astraea", "Scylla", "Valkyrie");
+    private static final List<String> WITHER_BLADES = RepoTable.list("dungeons.WitherBladeBats.WITHER_BLADES", List.of("Hyperion", "Astraea", "Scylla", "Valkyrie"));
     /** Wither Impact's teleport plus its blast. */
     private static final double RANGE = 12;
     /** Long enough for the bat's removal, about a second after it dies, if its death event never came. */

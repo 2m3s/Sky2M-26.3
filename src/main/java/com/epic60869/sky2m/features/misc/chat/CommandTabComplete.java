@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
 import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -23,16 +25,16 @@ import com.epic60869.sky2m.features.misc.social.SocialNames;
  */
 final class CommandTabComplete {
     /** SkyHanni-REPO constants/Warps.json warpCommands. */
-    private static final List<String> WARPS = List.of("arachne", "atoll", "backwater", "barn", "base", "basecamp", "bayou", "camp",
+    private static final List<String> WARPS = RepoTable.list("misc.chat.CommandTabComplete.WARPS", List.of("arachne", "atoll", "backwater", "barn", "base", "basecamp", "bayou", "camp",
         "canyon", "carnival", "castle", "ch", "ci", "cn", "crimson", "crypt", "crypts", "crystals", "da", "deep", "deeper", "desert", "dh",
         "dhub", "dmines", "drag", "dragons", "dungeon_hub", "dungeons", "dwarves", "elizabeth", "end", "farming", "foraging", "forge",
         "galatea", "garden", "glacite", "glowing", "gold", "gt", "hollows", "home", "howl", "howling_cave", "hub", "island", "isle", "jerry",
         "jungle", "kuudra", "loch", "lotus", "mines", "moby", "moonglade", "mound", "murk", "murkwater", "museum", "nest", "nether", "nuc",
         "nucleus", "park", "rift", "safari", "sepulture", "skull", "smold", "smoldering", "smoldering_tomb", "spider", "spiders", "spring",
         "springs", "stonks", "taylor", "the_rift", "top", "torrhus", "torrhus_canyon", "tower", "trap", "trapper", "trees", "tunnel", "tunnels",
-        "village", "void", "winter", "wiz", "wizard", "wizard_tower", "workshop");
+        "village", "void", "winter", "wiz", "wizard", "wizard_tower", "workshop"));
     /** SkyHanni-REPO constants/VipVisits.json. */
-    private static final List<String> VIP_VISITS = List.of("prtlhub", "PortalHub", "cake_hub", "Hubportal", "MelonKingDe", "Minikloon");
+    private static final List<String> VIP_VISITS = RepoTable.list("misc.chat.CommandTabComplete.VIP_VISITS", List.of("prtlhub", "PortalHub", "cake_hub", "Hubportal", "MelonKingDe", "Minikloon"));
     private static final List<String> SHOW_ITEM = List.of("item", "helmet", "chestplate", "leggings", "boots", "necklace", "cloak", "belt",
         "bracelet", "gloves", "pet");
     private static final List<String> FRIEND_SUBS = List.of("accept", "add", "deny", "best", "remove", "nickname", "list", "help",

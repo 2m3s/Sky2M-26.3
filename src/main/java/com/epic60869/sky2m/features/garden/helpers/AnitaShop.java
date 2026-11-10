@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden.helpers;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -29,12 +31,12 @@ final class AnitaShop {
     /** {gold medals, Jacob's Tickets} to buy level 1..15 (SkyHanni repo AnitaUpgradeCosts.json). */
     private static final int[][] LEVELS = {{1, 0}, {1, 50}, {1, 50}, {2, 100}, {2, 100}, {3, 150}, {3, 150}, {4, 200}, {4, 200},
         {5, 250}, {6, 300}, {7, 350}, {8, 400}, {9, 450}, {10, 1000}};
-    private static final Pattern FARMING_FORTUNE = Pattern.compile("^You have: \\+(\\d+)\\S* Farming Fortune");
-    private static final Pattern TICKETS = Pattern.compile("^Jacob's Ticket x([\\d,]+)");
-    private static final Pattern COST_HEADER = Pattern.compile("^Costs?:?$");
-    private static final Pattern COST_LINE = Pattern.compile("^(?<name>.+?)(?: x(?<amount>[\\d,]+))?$");
-    private static final Pattern REWARD_AMOUNT_AFTER = Pattern.compile("^(?<name>.+?) x(?<amount>[\\d,]+)$");
-    private static final Pattern REWARD_AMOUNT_BEFORE = Pattern.compile("^(?<amount>[\\d,]+)x (?<name>.+)$");
+    private static final RepoPattern FARMING_FORTUNE = RepoPattern.of("garden.helpers.AnitaShop.FARMING_FORTUNE", "^You have: \\+(\\d+)\\S* Farming Fortune");
+    private static final RepoPattern TICKETS = RepoPattern.of("garden.helpers.AnitaShop.TICKETS", "^Jacob's Ticket x([\\d,]+)");
+    private static final RepoPattern COST_HEADER = RepoPattern.of("garden.helpers.AnitaShop.COST_HEADER", "^Costs?:?$");
+    private static final RepoPattern COST_LINE = RepoPattern.of("garden.helpers.AnitaShop.COST_LINE", "^(?<name>.+?)(?: x(?<amount>[\\d,]+))?$");
+    private static final RepoPattern REWARD_AMOUNT_AFTER = RepoPattern.of("garden.helpers.AnitaShop.REWARD_AMOUNT_AFTER", "^(?<name>.+?) x(?<amount>[\\d,]+)$");
+    private static final RepoPattern REWARD_AMOUNT_BEFORE = RepoPattern.of("garden.helpers.AnitaShop.REWARD_AMOUNT_BEFORE", "^(?<amount>[\\d,]+)x (?<name>.+)$");
 
     private static volatile List<Component> lines = List.of();
 

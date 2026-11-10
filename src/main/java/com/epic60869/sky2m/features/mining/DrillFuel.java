@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -28,7 +30,7 @@ import java.util.regex.Pattern;
 public final class DrillFuel {
     private static final String ID = "drill_fuel";
     /** "Fuel: 3,000/20k" or "Fuel: 3,000/20,000". */
-    private static final Pattern FUEL = Pattern.compile("Fuel: (?<fuel>[\\d,.]+[kKmM]?)/(?<max>[\\d,.]+[kKmM]?)");
+    private static final RepoPattern FUEL = RepoPattern.of("mining.DrillFuel.FUEL", "Fuel: (?<fuel>[\\d,.]+[kKmM]?)/(?<max>[\\d,.]+[kKmM]?)");
 
     /** The stack the cached values were read from (compared by identity). */
     private static ItemStack cachedStack = ItemStack.EMPTY;

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.qol;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.google.gson.annotations.Expose;
@@ -32,7 +34,7 @@ import java.util.regex.Pattern;
  */
 public final class VisualTweaks {
     /** Hypixel's health stand over a dead mob: "Zealot 0❤" or "Zealot 0/13M❤". */
-    private static final Pattern DEAD_STAND = Pattern.compile(".* 0(?:/.*)?❤");
+    private static final RepoPattern DEAD_STAND = RepoPattern.of("qol.VisualTweaks.DEAD_STAND", ".* 0(?:/.*)?❤");
 
     private static Set<String> hiddenParticles = Set.of();
     private static String hiddenParticlesSource;

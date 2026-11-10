@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.social;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MWorldRender;
@@ -32,10 +34,9 @@ import java.util.regex.Pattern;
  * {@code /sendcoords [all|party|guild|officer] [note]} to share where you stand.
  */
 public final class ChatWaypoints {
-    private static final Pattern SENDER = Pattern.compile(
-        "^(?:(?:Party|Guild|Officer|Co-op) > |From |To )?(?:\\[\\d+] )?(?:[^\\w\\s\\[] )?(?:\\[[A-Z+]+] )?(?<name>\\w{3,16})(?: \\[[^]]+])?(?: [^\\w\\s:])?: (?<body>.+)$");
-    private static final Pattern LABELLED = Pattern.compile("x: ?(?<x>-?\\d+(?:\\.\\d+)?),? y: ?(?<y>-?\\d+(?:\\.\\d+)?),? z: ?(?<z>-?\\d+(?:\\.\\d+)?)(?: ?\\| ?(?<note>.+))?", Pattern.CASE_INSENSITIVE);
-    private static final Pattern BRACKETED = Pattern.compile("\\((?<x>-?\\d{1,6}), ?(?<y>-?\\d{1,4}), ?(?<z>-?\\d{1,6})\\)");
+    private static final RepoPattern SENDER = RepoPattern.of("social.ChatWaypoints.SENDER", "^(?:(?:Party|Guild|Officer|Co-op) > |From |To )?(?:\\[\\d+] )?(?:[^\\w\\s\\[] )?(?:\\[[A-Z+]+] )?(?<name>\\w{3,16})(?: \\[[^]]+])?(?: [^\\w\\s:])?: (?<body>.+)$");
+    private static final RepoPattern LABELLED = RepoPattern.of("social.ChatWaypoints.LABELLED", "x: ?(?<x>-?\\d+(?:\\.\\d+)?),? y: ?(?<y>-?\\d+(?:\\.\\d+)?),? z: ?(?<z>-?\\d+(?:\\.\\d+)?)(?: ?\\| ?(?<note>.+))?", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern BRACKETED = RepoPattern.of("social.ChatWaypoints.BRACKETED", "\\((?<x>-?\\d{1,6}), ?(?<y>-?\\d{1,4}), ?(?<z>-?\\d{1,6})\\)");
     private static final long LIFETIME_MS = 180_000L;
     private static final double REACHED = 5.0;
     private static final float[] COLOUR = {0.3f, 0.85f, 1f};

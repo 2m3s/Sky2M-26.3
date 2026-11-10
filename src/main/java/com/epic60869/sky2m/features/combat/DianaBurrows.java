@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.input.Sky2MKeyMappings;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -147,9 +149,9 @@ public final class DianaBurrows {
     private static final double EPSILON = 1e-6;
 
     /** "You dug out a Griffin Burrow! (1/4)" */
-    private static final Pattern BURROW_DUG = Pattern.compile("^You (.*?) Griffin [Bb]urrow(.*?) \\((\\d+)/(\\d+)\\)$");
-    private static final Pattern DUG_OUT = Pattern.compile("You (?:just )?dug out");
-    private static final Pattern ENDS_WITH_COUNT = Pattern.compile("\\(\\d+/\\d+\\)$");
+    private static final RepoPattern BURROW_DUG = RepoPattern.of("combat.DianaBurrows.BURROW_DUG", "^You (.*?) Griffin [Bb]urrow(.*?) \\((\\d+)/(\\d+)\\)$");
+    private static final RepoPattern DUG_OUT = RepoPattern.of("combat.DianaBurrows.DUG_OUT", "You (?:just )?dug out");
+    private static final RepoPattern ENDS_WITH_COUNT = RepoPattern.of("combat.DianaBurrows.ENDS_WITH_COUNT", "\\(\\d+/\\d+\\)$");
 
     /** SBO's hub warps: where /warp puts you. */
     private record Warp(String name, Vec3 pos, int extraBlocks) {}

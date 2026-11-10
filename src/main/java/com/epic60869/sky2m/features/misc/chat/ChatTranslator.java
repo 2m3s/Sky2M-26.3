@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -36,7 +38,7 @@ import java.util.regex.Pattern;
 public final class ChatTranslator {
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     /** "[289] ✭ [MVP++] ☘ Name: message", "Party > Name: message", "Guild > [VIP] Name [Rank]: message", "From Name: message". */
-    private static final Pattern PLAYER_CHAT = Pattern.compile("^(?:\\[\\d+\\] .*?|(?:Party|Guild|Officer|Co-op) > .*?|(?:From|To) .*?)\\b(?<name>\\w{1,16})(?: \\[[^]]+])?: (?<message>.+)$");
+    private static final RepoPattern PLAYER_CHAT = RepoPattern.of("misc.chat.ChatTranslator.PLAYER_CHAT", "^(?:\\[\\d+\\] .*?|(?:Party|Guild|Officer|Co-op) > .*?|(?:From|To) .*?)\\b(?<name>\\w{1,16})(?: \\[[^]]+])?: (?<message>.+)$");
 
     private ChatTranslator() {}
 

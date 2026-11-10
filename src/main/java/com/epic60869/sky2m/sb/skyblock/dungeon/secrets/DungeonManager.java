@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.sb.skyblock.dungeon.secrets;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import java.awt.Color;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -123,10 +125,10 @@ public class DungeonManager {
 	public static final String DUNGEONS_PATH = "dungeons";
 	private static final Path CUSTOM_WAYPOINTS_DIR = SkyblockerMod.CONFIG_DIR.resolve("custom_secret_waypoints.json");
 
-	private static final Pattern KEY_FOUND = Pattern.compile("^RIGHT CLICK on (?:the BLOOD DOOR|a WITHER door) to open it. This key can only be used to open 1 door!$");
-	private static final Pattern WITHER_DOOR_OPENED = Pattern.compile("^\\w+ opened a WITHER door!$");
+	private static final RepoPattern KEY_FOUND = RepoPattern.of("sb.skyblock.dungeon.secrets.DungeonManager.KEY_FOUND", "^RIGHT CLICK on (?:the BLOOD DOOR|a WITHER door) to open it. This key can only be used to open 1 door!$");
+	private static final RepoPattern WITHER_DOOR_OPENED = RepoPattern.of("sb.skyblock.dungeon.secrets.DungeonManager.WITHER_DOOR_OPENED", "^\\w+ opened a WITHER door!$");
 	private static final String BLOOD_DOOR_OPENED = "The BLOOD DOOR has been opened!";
-	private static final Pattern TEAM_SCORE_PATTERN = Pattern.compile(" +Team Score: [0-9]+ \\([A-z+]+\\)");
+	private static final RepoPattern TEAM_SCORE_PATTERN = RepoPattern.of("sb.skyblock.dungeon.secrets.DungeonManager.TEAM_SCORE_PATTERN", " +Team Score: [0-9]+ \\([A-z+]+\\)");
 
 	protected static final float[] RED_COLOR_COMPONENTS = {1, 0, 0};
 	protected static final float[] GREEN_COLOR_COMPONENTS = {0, 1, 0};

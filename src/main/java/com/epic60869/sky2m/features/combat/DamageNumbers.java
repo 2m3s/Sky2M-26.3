@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -32,7 +34,7 @@ import java.util.regex.Pattern;
  */
 public final class DamageNumbers {
     /** Only symbols around the digits: mob names and health bars always have letters. */
-    private static final Pattern DAMAGE = Pattern.compile("^([^\\w\\s]{0,2})([\\d,]{1,15})([^\\w\\s]{0,3})$");
+    private static final RepoPattern DAMAGE = RepoPattern.of("combat.DamageNumbers.DAMAGE", "^([^\\w\\s]{0,2})([\\d,]{1,15})([^\\w\\s]{0,3})$");
 
     private record Hit(long at, double amount) {}
 

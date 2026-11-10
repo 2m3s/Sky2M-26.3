@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.ChromaColours;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -55,7 +57,7 @@ import java.util.zip.GZIPInputStream;
  */
 public final class OrderedWaypoints {
     private static final String SKYTILS_V1 = "<Skytils-Waypoint-Data>(V1):";
-    private static final Pattern SHAFT = Pattern.compile("\\b([A-Z]{4}_[0-9C])\\b");
+    private static final RepoPattern SHAFT = RepoPattern.of("mining.OrderedWaypoints.SHAFT", "\\b([A-Z]{4}_[0-9C])\\b");
     private static final double SNEAK_EYE = 1.27, STAND_EYE = 1.62;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 

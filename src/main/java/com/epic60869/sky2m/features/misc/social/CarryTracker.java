@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.social;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -46,8 +48,8 @@ import java.util.regex.Pattern;
  * in {@code sky2m/carries.json}.
  */
 public final class CarryTracker {
-    private static final Pattern FLOOR = Pattern.compile("(?i)^(?:e|[fm][0-7])$");
-    private static final Pattern PRICE = Pattern.compile("(?i)^([\\d.,]+)([kmb]?)$");
+    private static final RepoPattern FLOOR = RepoPattern.of("misc.social.CarryTracker.FLOOR", "(?i)^(?:e|[fm][0-7])$");
+    private static final RepoPattern PRICE = RepoPattern.of("misc.social.CarryTracker.PRICE", "(?i)^([\\d.,]+)([kmb]?)$");
     private static final Gson GSON = new Gson();
 
     private static final class Carry {

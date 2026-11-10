@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -26,7 +28,7 @@ import java.util.regex.Pattern;
  */
 public final class PristineRecord {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Pattern PRISTINE = Pattern.compile("^PRISTINE! You found . Flawed (?<gemstone>\\w+) Gemstone x(?<amount>\\d+)!$");
+    private static final RepoPattern PRISTINE = RepoPattern.of("mining.PristineRecord.PRISTINE", "^PRISTINE! You found . Flawed (?<gemstone>\\w+) Gemstone x(?<amount>\\d+)!$");
 
     /** "Overall" and each gemstone -> highest amount. */
     private static Map<String, Integer> pbs = new HashMap<>();

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -21,7 +23,7 @@ import java.util.regex.Pattern;
  * "Your Class" option overrides it.
  */
 public final class SelfClass {
-    private static final Pattern CLASS = Pattern.compile("\\((Healer|Mage|Berserk|Archer|Tank)\\b");
+    private static final RepoPattern CLASS = RepoPattern.of("dungeons.SelfClass.CLASS", "\\((Healer|Mage|Berserk|Archer|Tank)\\b");
     private static DungeonClass cached = DungeonClass.UNKNOWN;
     private static int ticks;
 

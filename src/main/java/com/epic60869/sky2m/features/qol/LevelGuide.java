@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.qol;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -27,16 +29,16 @@ import java.util.regex.Pattern;
  * item is highlighted when its name or lore matches that menu's "not done yet" line.
  */
 public final class LevelGuide {
-    private static final Pattern CROSS = Pattern.compile("^\\s?✖.*");
-    private static final Pattern ONCE = Pattern.compile("^This task can only be completed once!");
-    private static final Pattern DUNGEON_ONCE = Pattern.compile("^This task can only be completed once!|^You have not unlocked the content");
-    private static final Pattern TOTAL_PROGRESS = Pattern.compile("^Total Progress: \\d{1,2}(?:\\.\\d)?%");
-    private static final Pattern CATEGORY_PROGRESS = Pattern.compile("^Progress to Complete Category: \\d{1,2}(?:\\.\\d)?%");
-    private static final Pattern MINION_MISSING = Pattern.compile("^\\s?✖.*|^You haven't crafted this minion\\.");
-    private static final Pattern CONSUMABLE = Pattern.compile("^This task can be completed \\d+ times!");
-    private static final Pattern COLLECTION = Pattern.compile("^Progress to .*|^Find this item to add it to your|^Kill this boss once to view collection|^(?:Boss )?Collections (?:Unlocked|Maxed Out): .*");
+    private static final RepoPattern CROSS = RepoPattern.of("qol.LevelGuide.CROSS", "^\\s?✖.*");
+    private static final RepoPattern ONCE = RepoPattern.of("qol.LevelGuide.ONCE", "^This task can only be completed once!");
+    private static final RepoPattern DUNGEON_ONCE = RepoPattern.of("qol.LevelGuide.DUNGEON_ONCE", "^This task can only be completed once!|^You have not unlocked the content");
+    private static final RepoPattern TOTAL_PROGRESS = RepoPattern.of("qol.LevelGuide.TOTAL_PROGRESS", "^Total Progress: \\d{1,2}(?:\\.\\d)?%");
+    private static final RepoPattern CATEGORY_PROGRESS = RepoPattern.of("qol.LevelGuide.CATEGORY_PROGRESS", "^Progress to Complete Category: \\d{1,2}(?:\\.\\d)?%");
+    private static final RepoPattern MINION_MISSING = RepoPattern.of("qol.LevelGuide.MINION_MISSING", "^\\s?✖.*|^You haven't crafted this minion\\.");
+    private static final RepoPattern CONSUMABLE = RepoPattern.of("qol.LevelGuide.CONSUMABLE", "^This task can be completed \\d+ times!");
+    private static final RepoPattern COLLECTION = RepoPattern.of("qol.LevelGuide.COLLECTION", "^Progress to .*|^Find this item to add it to your|^Kill this boss once to view collection|^(?:Boss )?Collections (?:Unlocked|Maxed Out): .*");
 
-    private record Menu(Pattern title, Pattern condition, Predicate<Config> enabled) {}
+    private record Menu(Pattern title, RepoPattern condition, Predicate<Config> enabled) {}
 
     private static final Menu[] MENUS = {
         new Menu(Pattern.compile(".*Guide ➜.*"), CROSS, c -> c.missingTasks),

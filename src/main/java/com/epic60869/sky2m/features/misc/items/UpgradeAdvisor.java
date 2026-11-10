@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.combat.CombatFeatures;
@@ -53,7 +55,7 @@ public final class UpgradeAdvisor {
     public record Gear(String piece, Kind kind, boolean dungeon, int potatoBooks, boolean recombobulated, boolean artOfWar, boolean artOfPeace,
                        int stars, @Nullable JsonArray starCosts) {}
 
-    private static final Pattern RARITY_LINE = Pattern.compile("\\b(?:COMMON|UNCOMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|SPECIAL)\\b(.*)");
+    private static final RepoPattern RARITY_LINE = RepoPattern.of("misc.items.UpgradeAdvisor.RARITY_LINE", "\\b(?:COMMON|UNCOMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|SPECIAL)\\b(.*)");
     private static final String[] MASTER_STARS = {"FIRST_MASTER_STAR", "SECOND_MASTER_STAR", "THIRD_MASTER_STAR", "FOURTH_MASTER_STAR", "FIFTH_MASTER_STAR"};
 
     private UpgradeAdvisor() {}

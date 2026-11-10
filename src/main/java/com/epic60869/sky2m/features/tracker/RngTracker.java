@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.tracker;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.sb.mixins.accessors.AbstractContainerScreenAccessor;
 import com.google.gson.Gson;
@@ -51,23 +53,20 @@ public final class RngTracker {
     static Path file;
 
     /** A drop line: optional spaces, then Hypixel's capitals ending in "!" with a drop word in them. */
-    private static final Pattern DROP_LINE = Pattern.compile(
-        "^\\s*(?<tag>[A-Z][A-Z ]*?(?:DROP|CROP|LOOT|CATCH|RNGESUS|RNG METER|REWARD)[A-Z ]*!+)\\s*(?<rest>.+)$");
-    private static final Pattern DUG_OUT = Pattern.compile("^\\s*(?:Wow! )?You dug out (?:an? )?(?<rest>.+)$");
-    private static final Pattern RARE_REWARD = Pattern.compile(
-        "^\\s*RARE REWARD! (?<who>\\S+) found (?:an? )?(?<item>.+?) in (?:their|your) .+? Chest!?$");
+    private static final RepoPattern DROP_LINE = RepoPattern.of("tracker.RngTracker.DROP_LINE", "^\\s*(?<tag>[A-Z][A-Z ]*?(?:DROP|CROP|LOOT|CATCH|RNGESUS|RNG METER|REWARD)[A-Z ]*!+)\\s*(?<rest>.+)$");
+    private static final RepoPattern DUG_OUT = RepoPattern.of("tracker.RngTracker.DUG_OUT", "^\\s*(?:Wow! )?You dug out (?:an? )?(?<rest>.+)$");
+    private static final RepoPattern RARE_REWARD = RepoPattern.of("tracker.RngTracker.RARE_REWARD", "^\\s*RARE REWARD! (?<who>\\S+) found (?:an? )?(?<item>.+?) in (?:their|your) .+? Chest!?$");
     /**
      * A drop line about someone else's drop: "RNG DROP! [MVP+] Koehy just found a ..." (a party member's drop, shared by
      * Hypixel or another mod). The rank is optional; the name is a Minecraft name.
      */
-    private static final Pattern FINDER = Pattern.compile(
-        "^(?:\\[[^\\]]+]\\s*)?(?<who>[A-Za-z0-9_]{1,16}) (?:just |has )?(?:found|got|obtained|dropped|pulled|caught|dug out)\\b(?<rest>.*)$");
-    private static final Pattern MAGIC_FIND = Pattern.compile("\\s*\\(\\+[^)]*\\)\\s*$");
-    private static final Pattern QUANTITY = Pattern.compile("^(?:x\\d+\\s+|\\d+x\\s+)|\\s+x\\d+$");
-    private static final Pattern PET_LEVEL = Pattern.compile("^\\[Lvl \\d+]\\s*");
-    private static final Pattern BOOK = Pattern.compile("^Enchanted Book \\((.+)\\)$");
+    private static final RepoPattern FINDER = RepoPattern.of("tracker.RngTracker.FINDER", "^(?:\\[[^\\]]+]\\s*)?(?<who>[A-Za-z0-9_]{1,16}) (?:just |has )?(?:found|got|obtained|dropped|pulled|caught|dug out)\\b(?<rest>.*)$");
+    private static final RepoPattern MAGIC_FIND = RepoPattern.of("tracker.RngTracker.MAGIC_FIND", "\\s*\\(\\+[^)]*\\)\\s*$");
+    private static final RepoPattern QUANTITY = RepoPattern.of("tracker.RngTracker.QUANTITY", "^(?:x\\d+\\s+|\\d+x\\s+)|\\s+x\\d+$");
+    private static final RepoPattern PET_LEVEL = RepoPattern.of("tracker.RngTracker.PET_LEVEL", "^\\[Lvl \\d+]\\s*");
+    private static final RepoPattern BOOK = RepoPattern.of("tracker.RngTracker.BOOK", "^Enchanted Book \\((.+)\\)$");
     /** Reward chests: dungeon chests at the end of a run or at Croesus, and Kuudra's. */
-    private static final Pattern CHEST_TITLE = Pattern.compile("^(?:Wood|Gold|Diamond|Emerald|Obsidian|Bedrock|Paid|Free)(?: Chest)?$");
+    private static final RepoPattern CHEST_TITLE = RepoPattern.of("tracker.RngTracker.CHEST_TITLE", "^(?:Wood|Gold|Diamond|Emerald|Obsidian|Bedrock|Paid|Free)(?: Chest)?$");
     static final int CONFIRM_TICKS = 30;
 
     /** Save file contents. */

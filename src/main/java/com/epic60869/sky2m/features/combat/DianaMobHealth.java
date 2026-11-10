@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -45,8 +47,8 @@ public final class DianaMobHealth {
     private static final int DARK_GREEN = 0x00AA00;
     private static final long NAME_TIMEOUT_MS = 1_000L;
 
-    private static final Pattern HEALTH = Pattern.compile("(?<current>\\d+(?:\\.\\d+)?[kKmMbB]?)/\\d");
-    private static final Pattern KING_HITS = Pattern.compile("(\\d+)\\s+Hits");
+    private static final RepoPattern HEALTH = RepoPattern.of("combat.DianaMobHealth.HEALTH", "(?<current>\\d+(?:\\.\\d+)?[kKmMbB]?)/\\d");
+    private static final RepoPattern KING_HITS = RepoPattern.of("combat.DianaMobHealth.KING_HITS", "(\\d+)\\s+Hits");
 
     /** Armor stands that just appeared, waiting for their name: entity id -> first seen. */
     private static final Map<Integer, Long> unconfirmed = new HashMap<>();

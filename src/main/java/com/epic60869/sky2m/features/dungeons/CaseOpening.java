@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.items.Sky2MItemBackgrounds;
@@ -46,12 +50,12 @@ import java.util.regex.Pattern;
  * (assets/sky2m/sounds/gold.ogg; a resource pack can replace it).
  */
 public final class CaseOpening {
-    private static final Pattern CHEST = Pattern.compile("^(?<type>Wood|Gold|Diamond|Emerald|Obsidian|Bedrock)(?: Chest)?$");
+    private static final RepoPattern CHEST = RepoPattern.of("dungeons.CaseOpening.CHEST", "^(?<type>Wood|Gold|Diamond|Emerald|Obsidian|Bedrock)(?: Chest)?$");
     /** Croesus's back arrow: "To Catacombs - Floor VII" or "To Master Catacombs - Floor VII". */
-    private static final Pattern CROESUS_BACK = Pattern.compile("^To (?<master>Master )?Catacombs - Floor (?<floor>[IV]+)$");
+    private static final RepoPattern CROESUS_BACK = RepoPattern.of("dungeons.CaseOpening.CROESUS_BACK", "^To (?<master>Master )?Catacombs - Floor (?<floor>[IV]+)$");
     /** Croesus's menu for one run, which lists its chests. */
-    private static final Pattern CROESUS_RUN = Pattern.compile("^(?:Master )?Catacombs - Floor [IV]+$");
-    private static final Pattern CHEST_HEAD = Pattern.compile("^(?<type>Wood|Gold|Diamond|Emerald|Obsidian|Bedrock)(?: Chest)?");
+    private static final RepoPattern CROESUS_RUN = RepoPattern.of("dungeons.CaseOpening.CROESUS_RUN", "^(?:Master )?Catacombs - Floor [IV]+$");
+    private static final RepoPattern CHEST_HEAD = RepoPattern.of("dungeons.CaseOpening.CHEST_HEAD", "^(?<type>Wood|Gold|Diamond|Emerald|Obsidian|Bedrock)(?: Chest)?");
     private static final Identifier GOLD_SOUND = Identifier.fromNamespaceAndPath("sky2m", "gold");
     private static final SoundEvent GOLD_SOUND_EVENT = Registry.register(BuiltInRegistries.SOUND_EVENT, GOLD_SOUND,
         SoundEvent.createVariableRangeEvent(GOLD_SOUND));
@@ -241,10 +245,10 @@ public final class CaseOpening {
             "POWER_WITHER_CHESTPLATE", "POWER_WITHER_HELMET", "POWER_WITHER_LEGGINGS", "POWER_WITHER_BOOTS", "WITHER_BLOOD",
             "WITHER_CLOAK", "PRECURSOR_GEAR", "DARK_CLAYMORE"));
     /** Drops every floor's chests can have. */
-    private static final List<String> COMMON_DROPS = List.of("RECOMBOBULATOR_3000", "FUMING_POTATO_BOOK", "HOT_POTATO_BOOK");
+    private static final List<String> COMMON_DROPS = RepoTable.list("dungeons.CaseOpening.COMMON_DROPS", List.of("RECOMBOBULATOR_3000", "FUMING_POTATO_BOOK", "HOT_POTATO_BOOK"));
     /** Master Mode chests can also have a master star. */
-    private static final List<String> MASTER_DROPS = List.of("FIRST_MASTER_STAR", "SECOND_MASTER_STAR", "THIRD_MASTER_STAR",
-        "FOURTH_MASTER_STAR", "FIFTH_MASTER_STAR", "MASTER_SKULL_TIER_1");
+    private static final List<String> MASTER_DROPS = RepoTable.list("dungeons.CaseOpening.MASTER_DROPS", List.of("FIRST_MASTER_STAR", "SECOND_MASTER_STAR", "THIRD_MASTER_STAR",
+        "FOURTH_MASTER_STAR", "FIFTH_MASTER_STAR", "MASTER_SKULL_TIER_1"));
 
     /** Item icons for the floor's drops (unknown ids are left out). */
     private static List<ItemStack> floorPool(String floor) {

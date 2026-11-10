@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -46,7 +48,7 @@ import java.util.regex.Pattern;
  */
 public final class PartyFinderStats {
     // Party Finder > [MVP+] Name joined the dungeon group! (Mage Level 30)
-    private static final Pattern JOINED = Pattern.compile("^Party Finder > (?:\\[[^]]{1,7}] ?)?(?<name>\\w{1,16}) joined the dungeon group! \\(.*\\)$");
+    private static final RepoPattern JOINED = RepoPattern.of("dungeons.PartyFinderStats.JOINED", "^Party Finder > (?:\\[[^]]{1,7}] ?)?(?<name>\\w{1,16}) joined the dungeon group! \\(.*\\)$");
     /** Catacombs XP needed for each level 1 to 50; every level after 50 takes another 200M. */
     static final long[] CATA_XP = {50, 75, 110, 160, 230, 330, 470, 670, 950, 1340, 1890, 2665, 3760, 5260, 7380, 10300,
         14400, 20000, 27600, 38000, 52500, 71500, 97000, 132000, 180000, 243000, 328000, 445000, 600000, 800000, 1065000, 1410000,
@@ -62,7 +64,7 @@ public final class PartyFinderStats {
     private static final Set<String> KICKED = ConcurrentHashMap.newKeySet();
 
     /** "Floor: Master Mode Floor V", "Floor VII", "The Catacombs - Floor 5" in a Party Finder item. */
-    private static final Pattern MENU_FLOOR = Pattern.compile("(?i)\\bfloor:?\\s+(?:master mode\\s+)?(?:the catacombs\\s+)?(?:floor\\s+)?(?<floor>VII|VI|V|IV|III|II|I|[1-7])\\b|\\bfloor\\s+(?<floor2>VII|VI|V|IV|III|II|I|[1-7])\\b");
+    private static final RepoPattern MENU_FLOOR = RepoPattern.of("dungeons.PartyFinderStats.MENU_FLOOR", "(?i)\\bfloor:?\\s+(?:master mode\\s+)?(?:the catacombs\\s+)?(?:floor\\s+)?(?<floor>VII|VI|V|IV|III|II|I|[1-7])\\b|\\bfloor\\s+(?<floor2>VII|VI|V|IV|III|II|I|[1-7])\\b");
     private static volatile int pickedFloor;
     private static volatile boolean pickedMaster;
     private static volatile long pickedFloorAt;

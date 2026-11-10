@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -27,7 +29,7 @@ import java.util.regex.Pattern;
  */
 public final class SlayerXpHud {
     /** "Zombie Slayer LVL 7 - Next LVL in 12,345 XP!" / "Wolf Slayer LVL 9 - LVL MAXED OUT!". */
-    static final Pattern LEVEL = Pattern.compile("(Zombie|Spider|Wolf|Enderman|Blaze|Vampire) Slayer LVL (\\d+) - (?:Next LVL in ([\\d,]+) XP!|LVL MAXED OUT!)");
+    static final RepoPattern LEVEL = RepoPattern.of("slayer.SlayerXpHud.LEVEL", "(Zombie|Spider|Wolf|Enderman|Blaze|Vampire) Slayer LVL (\\d+) - (?:Next LVL in ([\\d,]+) XP!|LVL MAXED OUT!)");
     /** Gaps between quests longer than this were a break, not part of the grind. */
     static final long MAX_GAP_MS = 3 * 60_000L;
 

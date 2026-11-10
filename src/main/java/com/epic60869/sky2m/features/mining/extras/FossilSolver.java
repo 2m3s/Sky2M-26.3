@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining.extras;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -36,8 +38,8 @@ import java.util.regex.Pattern;
  * is best against all fossils. Display only: you still click the tile yourself.
  */
 public final class FossilSolver {
-    private static final Pattern CHARGES = Pattern.compile("Chisel Charges Remaining: (\\d+)");
-    private static final Pattern PROGRESS = Pattern.compile("Fossil Excavation Progress: ([\\d.]+%)");
+    private static final RepoPattern CHARGES = RepoPattern.of("mining.extras.FossilSolver.CHARGES", "Chisel Charges Remaining: (\\d+)");
+    private static final RepoPattern PROGRESS = RepoPattern.of("mining.extras.FossilSolver.PROGRESS", "Fossil Excavation Progress: ([\\d.]+%)");
 
     private record Tile(int x, int y) {
         Tile(int slot) {

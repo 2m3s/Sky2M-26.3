@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -19,17 +23,17 @@ import com.epic60869.sky2m.features.misc.social.Sky2MAchievements;
  * party, guild, co-op or private messages.
  */
 public final class ChatFilters {
-    private static final Pattern LOBBY_JOIN = Pattern.compile("^(?:>>> )?\\[[A-Z+]+] \\w{1,16} .*(?:joined|into) the lobby!(?: <<<)?$");
-    private static final Pattern MYSTERY_BOX = Pattern.compile("^(?:\\[Mystery Box] |✦ )?\\w{1,16} found an? .*Mystery Box!?.*$|^\\[Mystery Box].*");
+    private static final RepoPattern LOBBY_JOIN = RepoPattern.of("misc.chat.ChatFilters.LOBBY_JOIN", "^(?:>>> )?\\[[A-Z+]+] \\w{1,16} .*(?:joined|into) the lobby!(?: <<<)?$");
+    private static final RepoPattern MYSTERY_BOX = RepoPattern.of("misc.chat.ChatFilters.MYSTERY_BOX", "^(?:\\[Mystery Box] |✦ )?\\w{1,16} found an? .*Mystery Box!?.*$|^\\[Mystery Box].*");
     /** "[123] [MVP+] Name: hello" or "Name: hello" with nothing in front saying it's party, guild or private chat. */
-    private static final Pattern ALL_CHAT = Pattern.compile("^(?:\\[\\d+] )?(?:\\S )?(?:\\[[A-Z+]+] )?\\w{1,16}(?: \\S)?: .+");
+    private static final RepoPattern ALL_CHAT = RepoPattern.of("misc.chat.ChatFilters.ALL_CHAT", "^(?:\\[\\d+] )?(?:\\S )?(?:\\[[A-Z+]+] )?\\w{1,16}(?: \\S)?: .+");
     private static final List<String> PRIVATE_PREFIXES = List.of("Party > ", "Guild > ", "Officer > ", "Co-op > ", "From ", "To ", "[S2M]");
-    private static final List<String> WATCHDOG = List.of("[WATCHDOG ANNOUNCEMENT]", "Watchdog has banned", "Staff have banned an additional",
-        "Blacklisted modifications are a bannable offense!");
-    private static final List<String> WARPING = List.of("Sending to server ", "Warping...", "Warping you to your SkyBlock island...", "Request join for ",
-        "Sending you to ", "Evacuating to Hub...");
-    private static final List<String> ABILITY = List.of("This ability is on cooldown for", "There are blocks in the way!",
-        "You do not have enough mana to do this!", "This ability is currently on cooldown");
+    private static final List<String> WATCHDOG = RepoTable.list("misc.chat.ChatFilters.WATCHDOG", List.of("[WATCHDOG ANNOUNCEMENT]", "Watchdog has banned", "Staff have banned an additional",
+        "Blacklisted modifications are a bannable offense!"));
+    private static final List<String> WARPING = RepoTable.list("misc.chat.ChatFilters.WARPING", List.of("Sending to server ", "Warping...", "Warping you to your SkyBlock island...", "Request join for ",
+        "Sending you to ", "Evacuating to Hub..."));
+    private static final List<String> ABILITY = RepoTable.list("misc.chat.ChatFilters.ABILITY", List.of("This ability is on cooldown for", "There are blocks in the way!",
+        "You do not have enough mana to do this!", "This ability is currently on cooldown"));
 
     private static String customSource;
     private static List<Object> custom = List.of();

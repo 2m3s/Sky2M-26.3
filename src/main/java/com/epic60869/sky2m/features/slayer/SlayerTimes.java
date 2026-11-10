@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -30,8 +32,7 @@ import java.util.regex.Pattern;
  */
 public final class SlayerTimes {
     /** "☠ Revenant Horror V 12M❤" -> "Revenant Horror", "V". */
-    private static final Pattern BOSS = Pattern.compile("(Revenant Horror|Atoned Horror|Tarantula Broodfather|Conjoined Brood"
-        + "|Sven Packmaster|Voidgloom Seraph|Inferno Demonlord|Riftstalker Bloodfiend)(?: ([IVX]+))?");
+    private static final RepoPattern BOSS = RepoPattern.of("slayer.SlayerTimes.BOSS", "(Revenant Horror|Atoned Horror|Tarantula Broodfather|Conjoined Brood|Sven Packmaster|Voidgloom Seraph|Inferno Demonlord|Riftstalker Bloodfiend)(?: ([IVX]+))?");
     private static final Gson GSON = new Gson();
 
     /** Minecraft username (lowercase) -> boss key ("Revenant Horror V") -> best kill time in ms. */
@@ -46,7 +47,7 @@ public final class SlayerTimes {
     /** When its health showed 0: certainly dead, unlike a nametag that went (Tier 5 Tarantula between phases). */
     private static long zeroAt;
     /** "☠ Revenant Horror V 0❤": the boss is dead even if its nametag lingers. */
-    private static final Pattern ZERO_HEALTH = Pattern.compile("(?<![\\d.,])0❤");
+    private static final RepoPattern ZERO_HEALTH = RepoPattern.of("slayer.SlayerTimes.ZERO_HEALTH", "(?<![\\d.,])0❤");
     private static String boss;
     /** Set after a kill until your boss's nametag is gone, so the lingering tag doesn't start a new timer. */
     private static boolean killed;

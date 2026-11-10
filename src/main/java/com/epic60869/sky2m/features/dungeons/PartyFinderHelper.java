@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -37,15 +39,15 @@ import java.util.regex.Pattern;
 public final class PartyFinderHelper {
     private static final String[] CLASSES = {"Healer", "Mage", "Berserk", "Archer", "Tank"};
     /** " Name: Archer (42)"; the level can carry extra text, as SkyHanni allows for. */
-    private static final Pattern MEMBER = Pattern.compile("^ ?(\\w{1,16}): (Healer|Mage|Berserk|Archer|Tank) \\(.*?(\\d+).*?\\)$");
-    private static final Pattern INELIGIBLE = Pattern.compile("Requires .*$|You don't meet the requirement!|Complete previous floor first!$");
-    private static final Pattern NOTE = Pattern.compile("^Note: (.*)$");
-    private static final Pattern PRICE = Pattern.compile("(?i).*(?:[0-9]{2,3}K|[0-9]{1,3}M|[0-9]+\\.[0-9]M|[0-9] ?MIL).*");
-    private static final Pattern CARRY = Pattern.compile("(?i).*(?:CARRY|CARY|CARRIES|CARIES|COMP|TO CATA [0-9]{2}).*");
-    private static final Pattern NON_PUG = Pattern.compile("(?i).*(?:PERM|VC|DISCORD).*");
-    private static final Pattern DUNGEON = Pattern.compile("^Dungeon: (.*)$");
-    private static final Pattern FLOOR = Pattern.compile("^Floor:? (.*)$");
-    private static final Pattern FLOOR_NUMBER = Pattern.compile(".* ([IVX]+|\\d+)$");
+    private static final RepoPattern MEMBER = RepoPattern.of("dungeons.PartyFinderHelper.MEMBER", "^ ?(\\w{1,16}): (Healer|Mage|Berserk|Archer|Tank) \\(.*?(\\d+).*?\\)$");
+    private static final RepoPattern INELIGIBLE = RepoPattern.of("dungeons.PartyFinderHelper.INELIGIBLE", "Requires .*$|You don't meet the requirement!|Complete previous floor first!$");
+    private static final RepoPattern NOTE = RepoPattern.of("dungeons.PartyFinderHelper.NOTE", "^Note: (.*)$");
+    private static final RepoPattern PRICE = RepoPattern.of("dungeons.PartyFinderHelper.PRICE", "(?i).*(?:[0-9]{2,3}K|[0-9]{1,3}M|[0-9]+\\.[0-9]M|[0-9] ?MIL).*");
+    private static final RepoPattern CARRY = RepoPattern.of("dungeons.PartyFinderHelper.CARRY", "(?i).*(?:CARRY|CARY|CARRIES|CARIES|COMP|TO CATA [0-9]{2}).*");
+    private static final RepoPattern NON_PUG = RepoPattern.of("dungeons.PartyFinderHelper.NON_PUG", "(?i).*(?:PERM|VC|DISCORD).*");
+    private static final RepoPattern DUNGEON = RepoPattern.of("dungeons.PartyFinderHelper.DUNGEON", "^Dungeon: (.*)$");
+    private static final RepoPattern FLOOR = RepoPattern.of("dungeons.PartyFinderHelper.FLOOR", "^Floor:? (.*)$");
+    private static final RepoPattern FLOOR_NUMBER = RepoPattern.of("dungeons.PartyFinderHelper.FLOOR_NUMBER", ".* ([IVX]+|\\d+)$");
 
     private static final int INELIGIBLE_COLOUR = 0x80AA0000, CARRY_COLOUR = 0x80FF5555, NON_PUG_COLOUR = 0x80FF55FF,
         LOW_LEVEL_COLOUR = 0x80FFFF55, MISSING_CLASS_COLOUR = 0x8055FF55;

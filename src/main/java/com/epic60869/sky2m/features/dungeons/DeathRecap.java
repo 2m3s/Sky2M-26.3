@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -24,7 +26,7 @@ import java.util.regex.Pattern;
  * 40 blocks of you, otherwise their coordinates (the dungeon map doesn't expose the room at an arbitrary position).
  */
 final class DeathRecap {
-    private static final Pattern DEATH = Pattern.compile("^ ?☠ (You|\\w{1,16}) (.+?)(?: and became a ghost)?\\.$");
+    private static final RepoPattern DEATH = RepoPattern.of("dungeons.DeathRecap.DEATH", "^ ?☠ (You|\\w{1,16}) (.+?)(?: and became a ghost)?\\.$");
 
     /** One death. {@code ms} is the time into the run, -1 if unknown. */
     public record DeathEntry(String name, String cause, String room, long ms) {}

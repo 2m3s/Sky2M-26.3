@@ -27,18 +27,18 @@ import java.util.regex.Pattern;
  * Updated twice a second; listeners are told when the tab-list area changes.
  */
 public final class Sky2MLocation {
-    private static final Pattern FLOOR = Pattern.compile("Catacombs \\((?<floor>[FM]\\d|E)\\)");
+    private static final RepoPattern FLOOR = RepoPattern.of("core.Sky2MLocation.FLOOR", "Catacombs \\((?<floor>[FM]\\d|E)\\)");
     /** Compiled once: String.replaceAll compiled these for every scoreboard line and team, twice a second. */
-    private static final Pattern PADDING_EMOJI = Pattern.compile("[\\x{10000}-\\x{10FFFF}]");
-    private static final Pattern NOT_ASCII = Pattern.compile("[^\\x20-\\x7E]");
+    private static final RepoPattern PADDING_EMOJI = RepoPattern.of("core.Sky2MLocation.PADDING_EMOJI", "[\\x{10000}-\\x{10FFFF}]");
+    private static final RepoPattern NOT_ASCII = RepoPattern.of("core.Sky2MLocation.NOT_ASCII", "[^\\x20-\\x7E]");
     /**
      * "[MVP+] Name entered The Catacombs, Floor VII!" (MM before The Catacombs in Master Mode), between two lines of
      * dashes, when the party is sent into a run (Odin's DungeonQueue reads the same message).
      */
-    private static final Pattern ENTERED = Pattern.compile("entered (?<master>MM )?The Catacombs, (?:Floor (?<floor>[IVX]+)|(?<entrance>Entrance))!");
+    private static final RepoPattern ENTERED = RepoPattern.of("core.Sky2MLocation.ENTERED", "entered (?<master>MM )?The Catacombs, (?:Floor (?<floor>[IVX]+)|(?<entrance>Entrance))!");
     /** The Floor 7 bosses; when one talks you're on floor 7 (F7 unless the run's start message said MM). */
-    private static final Pattern F7_BOSS = Pattern.compile("^\\[BOSS] (?:Maxor|Storm|Goldor|Necron|Wither King):");
-    private static final Pattern GLACITE = Pattern.compile("Glacite Tunnels|Dwarven Base Camp|Great Glacite Lake|Fossil Research Center");
+    private static final RepoPattern F7_BOSS = RepoPattern.of("core.Sky2MLocation.F7_BOSS", "^\\[BOSS] (?:Maxor|Storm|Goldor|Necron|Wither King):");
+    private static final RepoPattern GLACITE = RepoPattern.of("core.Sky2MLocation.GLACITE", "Glacite Tunnels|Dwarven Base Camp|Great Glacite Lake|Fossil Research Center");
     private static final List<Consumer<String>> AREA_LISTENERS = new CopyOnWriteArrayList<>();
 
     private static List<String> scoreboard = List.of();
@@ -269,5 +269,5 @@ public final class Sky2MLocation {
         return null;
     }
 
-    private static final Pattern LEADING_TEXT = Pattern.compile("[\\p{L}\\p{N}]");
+    private static final RepoPattern LEADING_TEXT = RepoPattern.of("core.Sky2MLocation.LEADING_TEXT", "[\\p{L}\\p{N}]");
 }

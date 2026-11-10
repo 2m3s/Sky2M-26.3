@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.5
 
 ### Added
+- Sky2M-REPO now covers most of the Hypixel text the mod reads: about 700 chat, menu, lore, tab list and scoreboard patterns and 68 data tables (drop lists, NPC, mob and area names, Fetchur's and the Sphinx's answers, warps, fishing and garden lists, slayer areas) can be fixed from the repo without a new version. A broken fix is ignored and the mod keeps working as before.
 - Sky2M-REPO (https://github.com/2m3s/Sky2M-REPO): Hypixel wording and values the mod relies on can now be fixed without a new version. The mod downloads them (checked every 12 hours) and falls back to the copy in the jar. Carnival goals, game start and end lines, Fruit Digging hints and fruit values, and Quick Start's NPCs come from it first.
 - Fruit Digging helper (Events > Carnival > Fruit Digging, off by default): during a game it shows each dig's hint above its cell (bombs nearby, Treasure and Anchor fruit), the fruit found, a HUD of the fruit, bombs and rum still hidden, and the best cell to dig next with which shovel mode and its bomb chance. Move the HUDs in `/s2 gui`.
 - Carnival Quick Start (Events > Carnival, off by default): click a game NPC again while its options are in chat to start the game straight away.

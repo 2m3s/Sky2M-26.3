@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden.helpers;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.sbc.SbcItems;
@@ -43,7 +45,7 @@ final class FarmingWeightHud {
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
     private static final long REFRESH_MS = 10 * 60_000L;
     private static final long ACTIVE_WINDOW_MS = 4_000L;
-    private static final Pattern TAB_FORTUNE = Pattern.compile("Farming Fortune:\\s*\\S?\\s*([\\d,]+)");
+    private static final RepoPattern TAB_FORTUNE = RepoPattern.of("garden.helpers.FarmingWeightHud.TAB_FORTUNE", "Farming Fortune:\\s*\\S?\\s*([\\d,]+)");
 
     /** Elite crop name to {weight factor, base drops per break} (SkyHanni's backup factors and CropType.baseDrops). */
     private static final Map<String, double[]> CROPS = new ConcurrentHashMap<>();

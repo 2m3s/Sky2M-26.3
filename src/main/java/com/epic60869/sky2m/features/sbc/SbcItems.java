@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.sbc;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.chat.Sky2MGlobalChat;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -62,13 +64,12 @@ public final class SbcItems {
     };
     private static int nextShared = 1;
     /** Ids may hold ';' (pets "GOLDEN_DRAGON;4", books "ENCHANTMENT_ULTIMATE_WISE;5", runes). */
-    private static final Pattern PUBLIC_ITEM = Pattern.compile("\\[\\[SBITEM\\|([A-Za-z0-9_:;.\\-]+)\\|(\\d{1,2})(?:\\|([A-Za-z0-9_-]+))?]]"
-        + "|\\[([^\\[\\]()]{1,60})]\\(sb:([A-Za-z0-9_:;.\\-]+)(?:\\*(\\d{1,2}))?(?:#([a-z0-9]{4,12}))?\\)");
-    private static final Pattern ITEM_TOKEN = Pattern.compile("(?i)\\[item]");
+    private static final RepoPattern PUBLIC_ITEM = RepoPattern.of("sbc.SbcItems.PUBLIC_ITEM", "\\[\\[SBITEM\\|([A-Za-z0-9_:;.\\-]+)\\|(\\d{1,2})(?:\\|([A-Za-z0-9_-]+))?]]|\\[([^\\[\\]()]{1,60})]\\(sb:([A-Za-z0-9_:;.\\-]+)(?:\\*(\\d{1,2}))?(?:#([a-z0-9]{4,12}))?\\)");
+    private static final RepoPattern ITEM_TOKEN = RepoPattern.of("sbc.SbcItems.ITEM_TOKEN", "(?i)\\[item]");
     /** [inv] shares your whole inventory; [brag] still works the same way. */
-    private static final Pattern INV_TOKEN = Pattern.compile("(?i)\\[(?:inv|brag)]");
+    private static final RepoPattern INV_TOKEN = RepoPattern.of("sbc.SbcItems.INV_TOKEN", "(?i)\\[(?:inv|brag)]");
     /** A shared inventory, or part of one: {@code [[SBINV|key|part/parts|data]]}. */
-    private static final Pattern INV_MARKER = Pattern.compile("\\[\\[SBINV\\|([a-z0-9]{1,8})\\|(\\d{1,2})/(\\d{1,2})\\|([A-Za-z0-9_-]*)]]");
+    private static final RepoPattern INV_MARKER = RepoPattern.of("sbc.SbcItems.INV_MARKER", "\\[\\[SBINV\\|([a-z0-9]{1,8})\\|(\\d{1,2})/(\\d{1,2})\\|([A-Za-z0-9_-]*)]]");
     /** Data per public chat message: Hypixel allows 256 characters, a "/msg SomeLongName " command included. */
     private static final int INV_PART_LENGTH = 170;
     private static final long FOLLOWUP_DELAY_MS = 350L;

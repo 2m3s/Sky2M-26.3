@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.items.Sky2MStorageSearch;
 import com.epic60869.sky2m.custom.RepoItems;
@@ -40,7 +42,7 @@ import java.util.regex.Pattern;
  * can't answer.
  */
 public final class MuseumTooltip {
-    private static final Pattern MUSEUM_TITLE = Pattern.compile("^Museum ➜ (.+)$");
+    private static final RepoPattern MUSEUM_TITLE = RepoPattern.of("misc.items.MuseumTooltip.MUSEUM_TITLE", "^Museum ➜ (.+)$");
     private static final Gson GSON = new Gson();
 
     /** Museum id (item id, or set id for armor) -> category ("Combat", ..., "Special"). */

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.tools.Sky2MCalculator;
 import com.epic60869.sky2m.custom.util.Compat;
 import net.minecraft.client.Minecraft;
@@ -15,8 +17,8 @@ import java.util.regex.Pattern;
  * Drawn by Sky2MChatScreenMixin.
  */
 public final class ChatCalculator {
-    private static final Pattern SUM = Pattern.compile("[\\d\\s.,+\\-*/()kmbtKMBT]+");
-    private static final Pattern HAS_OPERATOR = Pattern.compile(".*\\d.*[+\\-*/].*\\d.*|.*\\d\\s*[kmbtKMBT].*");
+    private static final RepoPattern SUM = RepoPattern.of("misc.chat.ChatCalculator.SUM", "[\\d\\s.,+\\-*/()kmbtKMBT]+");
+    private static final RepoPattern HAS_OPERATOR = RepoPattern.of("misc.chat.ChatCalculator.HAS_OPERATOR", ".*\\d.*[+\\-*/].*\\d.*|.*\\d\\s*[kmbtKMBT].*");
     private static String lastInput;
     private static String lastAnswer;
 

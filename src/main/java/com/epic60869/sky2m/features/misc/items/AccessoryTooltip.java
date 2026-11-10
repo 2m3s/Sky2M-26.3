@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.items.Sky2MStorageSearch;
 import com.epic60869.sky2m.custom.RepoItems;
@@ -52,7 +54,7 @@ import java.util.stream.Collectors;
  */
 public final class AccessoryTooltip {
     private static final String ACCESSORIES_URL = "https://hysky.de/api/accessories";
-    static final Pattern ACCESSORY_BAG_TITLE = Pattern.compile("Accessory Bag(?: \\((?<page>\\d+)/\\d+\\))?");
+    static final RepoPattern ACCESSORY_BAG_TITLE = RepoPattern.of("misc.items.AccessoryTooltip.ACCESSORY_BAG_TITLE", "Accessory Bag(?: \\((?<page>\\d+)/\\d+\\))?");
     /** Built on first use (on the repo thread), not while the mod starts. */
     private static final class Http {
         static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))

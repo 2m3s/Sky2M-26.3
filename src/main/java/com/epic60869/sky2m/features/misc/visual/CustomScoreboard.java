@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.misc.visual;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.custom.util.ChromaColours;
@@ -71,26 +75,26 @@ import com.epic60869.sky2m.features.misc.chat.PartyCommands;
 public final class CustomScoreboard {
     private static final String HUD = "custom_scoreboard";
     private static final Path FOLDER = FabricLoader.getInstance().getConfigDir().resolve("sky2m").resolve("scoreboard");
-    private static final Pattern PADDING_EMOJI = Pattern.compile("[\\x{10000}-\\x{10FFFF}]");
-    private static final Pattern LOBBY = Pattern.compile("\\d{2}/\\d{2}/\\d{2,4} .+");
-    private static final Pattern DATE = Pattern.compile("(?:Early |Late )?(?:Spring|Summer|Autumn|Winter) \\d{1,2}(?:st|nd|rd|th)");
-    private static final Pattern TIME = Pattern.compile("(\\d{1,2}):(\\d{2})(am|pm)\\b.*");
-    private static final Pattern AREA = Pattern.compile("(?:[⏣ф] .+|Plot -.+|✌ \\(\\d+/\\d+\\))");
+    private static final RepoPattern PADDING_EMOJI = RepoPattern.of("misc.visual.CustomScoreboard.PADDING_EMOJI", "[\\x{10000}-\\x{10FFFF}]");
+    private static final RepoPattern LOBBY = RepoPattern.of("misc.visual.CustomScoreboard.LOBBY", "\\d{2}/\\d{2}/\\d{2,4} .+");
+    private static final RepoPattern DATE = RepoPattern.of("misc.visual.CustomScoreboard.DATE", "(?:Early |Late )?(?:Spring|Summer|Autumn|Winter) \\d{1,2}(?:st|nd|rd|th)");
+    private static final RepoPattern TIME = RepoPattern.of("misc.visual.CustomScoreboard.TIME", "(\\d{1,2}):(\\d{2})(am|pm)\\b.*");
+    private static final RepoPattern AREA = RepoPattern.of("misc.visual.CustomScoreboard.AREA", "(?:[⏣ф] .+|Plot -.+|✌ \\(\\d+/\\d+\\))");
     /** Hypixel's footer, or the Dungeon Sim's own in its place (SimSidebar.FOOTER), which never names Hypixel. */
-    private static final Pattern FOOTER = Pattern.compile("(?:www|alpha)\\.hypixel\\.net|sky2m sim");
-    private static final Pattern OBJECTIVE = Pattern.compile("(?:Objective|Quest)\\b.*");
-    private static final Pattern SLAYER = Pattern.compile("Slayer(?::| Quest).*");
-    private static final Pattern NUMBER = Pattern.compile("(Purse|Piggy|Motes|Bits|Copper|Sowdust|Heat|Cold|North Stars): ([\\d,.]+)(.*)");
+    private static final RepoPattern FOOTER = RepoPattern.of("misc.visual.CustomScoreboard.FOOTER", "(?:www|alpha)\\.hypixel\\.net|sky2m sim");
+    private static final RepoPattern OBJECTIVE = RepoPattern.of("misc.visual.CustomScoreboard.OBJECTIVE", "(?:Objective|Quest)\\b.*");
+    private static final RepoPattern SLAYER = RepoPattern.of("misc.visual.CustomScoreboard.SLAYER", "Slayer(?::| Quest).*");
+    private static final RepoPattern NUMBER = RepoPattern.of("misc.visual.CustomScoreboard.NUMBER", "(Purse|Piggy|Motes|Bits|Copper|Sowdust|Heat|Cold|North Stars): ([\\d,.]+)(.*)");
     /**
      * While sowdust is being gained Hypixel shortens its line to "Sowdust: 30.1M (+798)" (SkyHanni's sowdustGainedPattern);
      * read as a plain number that's 30.1, so the line jumped between that and the exact value with huge fake changes.
      */
-    private static final Pattern SHORTENED = Pattern.compile("([\\d.]+)([kKmMbB])\\s*(?:\\((\\+[\\d.,kKmMbB]+)\\))?.*");
+    private static final RepoPattern SHORTENED = RepoPattern.of("misc.visual.CustomScoreboard.SHORTENED", "([\\d.]+)([kKmMbB])\\s*(?:\\((\\+[\\d.,kKmMbB]+)\\))?.*");
     /** The Garden's tab widget line, for the exact sowdust while the sidebar only has the shortened one. */
-    private static final Pattern TAB_SOWDUST = Pattern.compile("Sowdust: ([\\d,]+)");
-    private static final Pattern TAB_VALUE = Pattern.compile("(Gems|Bank|Soulflow): (.+)");
-    private static final Pattern POWDER = Pattern.compile("(Mithril|Gemstone|Glacite): ([\\d,.]+)");
-    private static final Pattern PLAYERS = Pattern.compile("(?:Players|Island|Coop|Guests) \\((\\d+)\\)");
+    private static final RepoPattern TAB_SOWDUST = RepoPattern.of("misc.visual.CustomScoreboard.TAB_SOWDUST", "Sowdust: ([\\d,]+)");
+    private static final RepoPattern TAB_VALUE = RepoPattern.of("misc.visual.CustomScoreboard.TAB_VALUE", "(Gems|Bank|Soulflow): (.+)");
+    private static final RepoPattern POWDER = RepoPattern.of("misc.visual.CustomScoreboard.POWDER", "(Mithril|Gemstone|Glacite): ([\\d,.]+)");
+    private static final RepoPattern PLAYERS = RepoPattern.of("misc.visual.CustomScoreboard.PLAYERS", "(?:Players|Island|Coop|Guests) \\((\\d+)\\)");
     private static final DecimalFormat COMMAS = new DecimalFormat("#,##0", DecimalFormatSymbols.getInstance(Locale.US));
     private static final DecimalFormat SHORT = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.US));
 
@@ -494,11 +498,19 @@ public final class CustomScoreboard {
         return out;
     }
 
+    private static int find(List<Raw> lines, RepoPattern pattern, Set<Integer> used) {
+        return find(lines, pattern.get(), used);
+    }
+
     private static int find(List<Raw> lines, Pattern pattern, Set<Integer> used) {
         for (int i = 0; i < lines.size(); i++) {
             if ((used == null || !used.contains(i)) && pattern.matcher(lines.get(i).plain()).matches()) return i;
         }
         return -1;
+    }
+
+    private static void single(List<Line> out, List<Raw> sidebar, Set<Integer> used, RepoPattern pattern, Align align, String indent) {
+        single(out, sidebar, used, pattern.get(), align, indent);
     }
 
     private static void single(List<Line> out, List<Raw> sidebar, Set<Integer> used, Pattern pattern, Align align, String indent) {
@@ -741,7 +753,7 @@ public final class CustomScoreboard {
     private static final List<Pattern> QUEUE = List.of(p("Queued:.*"), p("Tier: .*"), p("Position: #\\d+ Since: .*"));
     private static final List<Pattern> VOTING = List.of(p("Year \\d+ Votes"), p("Waiting for|your vote\\.\\.\\."), p("\\|{15}.+"));
     private static final Pattern ENDS_IN = p("Ends In: (.*)");
-    private static final List<String> TAB_EVENT_BLOCKED = List.of("Spooky Festival", "Carnival", "th SkyBlock Anniversary", "New Year Celebration");
+    private static final List<String> TAB_EVENT_BLOCKED = RepoTable.list("misc.visual.CustomScoreboard.TAB_EVENT_BLOCKED", List.of("Spooky Festival", "Carnival", "th SkyBlock Anniversary", "New Year Celebration"));
 
     /** Every event that's going on, in the Events order; Other (lines nobody took) is worked out last. */
     private static List<Line> events(FeatureConfigs.CustomScoreboard c, List<Raw> sidebar, List<Raw> tab, Set<Integer> used, Align align) {

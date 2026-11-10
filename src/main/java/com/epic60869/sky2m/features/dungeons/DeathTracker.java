@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -35,7 +37,7 @@ import java.util.regex.Pattern;
  * Runs, each player's deaths in your runs are also kept in {@code sky2m/deaths.json}.
  */
 public final class DeathTracker {
-    private static final Pattern DEATH = Pattern.compile("^ ?☠ (You|\\w{1,16}) (.+?)(?: and became a ghost)?\\.$");
+    private static final RepoPattern DEATH = RepoPattern.of("dungeons.DeathTracker.DEATH", "^ ?☠ (You|\\w{1,16}) (.+?)(?: and became a ghost)?\\.$");
     private static final Gson GSON = new Gson();
 
     private record Death(String name, String cause) {}

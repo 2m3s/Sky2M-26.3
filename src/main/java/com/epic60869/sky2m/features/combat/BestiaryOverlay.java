@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -47,21 +49,21 @@ public final class BestiaryOverlay {
     private static final String HUD_ID = "bestiary_overlay";
 
     // SkyHanni's repo patterns (combat.bestiary, combat.bestiary.data), on colourless text.
-    private static final Pattern TIER_PROGRESS = Pattern.compile("Progress to Tier [\\dIVXC]+: [\\d.]+%");
-    private static final Pattern OVERALL_PROGRESS = Pattern.compile("Overall Progress: [\\d.]+%(?: \\(MAX!\\))?");
-    private static final Pattern PROGRESS = Pattern.compile("(?<current>[0-9kKmMbB,.]+)/(?<needed>[0-9kKmMbB,.]+)$");
-    private static final Pattern TITLE = Pattern.compile("^(?:\\(\\d+/\\d+\\) )?(?<parent>[^➜]+) ➜ (?<category>.+)$");
-    private static final Pattern SEARCH_RESULTS = Pattern.compile("^Search Results$");
-    private static final Pattern CATEGORY_OF_CATEGORIES = Pattern.compile("^(?:Bestiary|Bestiary ➜ Fishing|Bestiary ➜ Critter Safari)$");
-    private static final Pattern MOB_LEVEL = Pattern.compile("^(?<name>.+?)(?: (?<level>[IVX0-9]+))?$");
-    private static final Pattern KILLS_LINE = Pattern.compile("Kills: (?<kills>[0-9,.]+)");
-    private static final Pattern PROGRESS_BAR_LINE = Pattern.compile(" {20}.*");
-    private static final Pattern NOT_UNLOCKED_FAMILY = Pattern.compile("You haven't unlocked this Family yet!");
-    private static final Pattern OVERALL_PROGRESS_SHOWN = Pattern.compile("Overall Progress: SHOWN");
-    private static final Pattern FAMILY_FOUND = Pattern.compile("\\s*Families Found.*");
-    private static final Pattern FAMILY_COMPLETED = Pattern.compile("\\s*Families Completed.*");
-    private static final Pattern COMPLETED = Pattern.compile("Overall Progress: 100% \\(MAX!\\)|Families Completed: 100%");
-    private static final Pattern HIDDEN_PROGRESS = Pattern.compile("Overall Progress: HIDDEN");
+    private static final RepoPattern TIER_PROGRESS = RepoPattern.of("combat.BestiaryOverlay.TIER_PROGRESS", "Progress to Tier [\\dIVXC]+: [\\d.]+%");
+    private static final RepoPattern OVERALL_PROGRESS = RepoPattern.of("combat.BestiaryOverlay.OVERALL_PROGRESS", "Overall Progress: [\\d.]+%(?: \\(MAX!\\))?");
+    private static final RepoPattern PROGRESS = RepoPattern.of("combat.BestiaryOverlay.PROGRESS", "(?<current>[0-9kKmMbB,.]+)/(?<needed>[0-9kKmMbB,.]+)$");
+    private static final RepoPattern TITLE = RepoPattern.of("combat.BestiaryOverlay.TITLE", "^(?:\\(\\d+/\\d+\\) )?(?<parent>[^➜]+) ➜ (?<category>.+)$");
+    private static final RepoPattern SEARCH_RESULTS = RepoPattern.of("combat.BestiaryOverlay.SEARCH_RESULTS", "^Search Results$");
+    private static final RepoPattern CATEGORY_OF_CATEGORIES = RepoPattern.of("combat.BestiaryOverlay.CATEGORY_OF_CATEGORIES", "^(?:Bestiary|Bestiary ➜ Fishing|Bestiary ➜ Critter Safari)$");
+    private static final RepoPattern MOB_LEVEL = RepoPattern.of("combat.BestiaryOverlay.MOB_LEVEL", "^(?<name>.+?)(?: (?<level>[IVX0-9]+))?$");
+    private static final RepoPattern KILLS_LINE = RepoPattern.of("combat.BestiaryOverlay.KILLS_LINE", "Kills: (?<kills>[0-9,.]+)");
+    private static final RepoPattern PROGRESS_BAR_LINE = RepoPattern.of("combat.BestiaryOverlay.PROGRESS_BAR_LINE", " {20}.*");
+    private static final RepoPattern NOT_UNLOCKED_FAMILY = RepoPattern.of("combat.BestiaryOverlay.NOT_UNLOCKED_FAMILY", "You haven't unlocked this Family yet!");
+    private static final RepoPattern OVERALL_PROGRESS_SHOWN = RepoPattern.of("combat.BestiaryOverlay.OVERALL_PROGRESS_SHOWN", "Overall Progress: SHOWN");
+    private static final RepoPattern FAMILY_FOUND = RepoPattern.of("combat.BestiaryOverlay.FAMILY_FOUND", "\\s*Families Found.*");
+    private static final RepoPattern FAMILY_COMPLETED = RepoPattern.of("combat.BestiaryOverlay.FAMILY_COMPLETED", "\\s*Families Completed.*");
+    private static final RepoPattern COMPLETED = RepoPattern.of("combat.BestiaryOverlay.COMPLETED", "Overall Progress: 100% \\(MAX!\\)|Families Completed: 100%");
+    private static final RepoPattern HIDDEN_PROGRESS = RepoPattern.of("combat.BestiaryOverlay.HIDDEN_PROGRESS", "Overall Progress: HIDDEN");
 
     private static final int OVERALL_PROGRESS_SLOT = 52;
     private static final int LINE_HEIGHT = 10;

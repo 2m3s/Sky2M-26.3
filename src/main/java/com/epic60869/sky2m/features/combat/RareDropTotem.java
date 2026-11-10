@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.RepoItems;
 import net.minecraft.client.Minecraft;
@@ -21,7 +25,7 @@ import java.util.regex.Pattern;
  */
 public final class RareDropTotem {
     /** Skyblocker's list: the drop name in chat -> its item id. */
-    private static final Map<String, String> RNG_DROPS = Map.ofEntries(
+    private static final Map<String, String> RNG_DROPS = RepoTable.map("combat.RareDropTotem.RNG_DROPS", Map.ofEntries(
         // Mythological Ritual
         Map.entry("Enchanted Book (Chimera I)", "ULTIMATE_CHIMERA;1"),
         Map.entry("Chimera I", "ULTIMATE_CHIMERA;1"),
@@ -47,7 +51,7 @@ public final class RareDropTotem {
         Map.entry("Pocket-sized Igloo", "POCKET_SIZED_IGLOO"),
         Map.entry("Radioactive Vial", "RADIOACTIVE_VIAL"),
         Map.entry("Tiki Mask", "TIKI_MASK"),
-        Map.entry("Titanoboa Shed", "TITANOBOA_SHED"));
+        Map.entry("Titanoboa Shed", "TITANOBOA_SHED")));
 
     private RareDropTotem() {}
 
@@ -72,7 +76,7 @@ public final class RareDropTotem {
     }
 
     /** A special Garden drop: a farming dye or a Ray of Helios. */
-    private static final Pattern GARDEN_SPECIAL = Pattern.compile("\\b(?<item>(?:[A-Z][\\w'-]* )+Dye|Ray of Helios)\\b");
+    private static final RepoPattern GARDEN_SPECIAL = RepoPattern.of("combat.RareDropTotem.GARDEN_SPECIAL", "\\b(?<item>(?:[A-Z][\\w'-]* )+Dye|Ray of Helios)\\b");
 
     /** Whether this item is a special Garden drop (a dye or a Ray of Helios). */
     static boolean isGardenSpecial(String item) {

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -32,8 +34,8 @@ import java.util.regex.Pattern;
  * container still open when the sign screen is built; Sky2MSignEditMixin does the hooking.
  */
 public final class SignAutofill {
-    private static final Pattern UNIT_PRICE = Pattern.compile("(?:Price per unit|Unit price|Per unit): ?([\\d,]+(?:\\.\\d+)?) coins");
-    private static final Pattern ORDER_ITEM = Pattern.compile("(?:Ordering|Selling|Order|Offer): ?([\\d,]+)x (.+)");
+    private static final RepoPattern UNIT_PRICE = RepoPattern.of("misc.chat.SignAutofill.UNIT_PRICE", "(?:Price per unit|Unit price|Per unit): ?([\\d,]+(?:\\.\\d+)?) coins");
+    private static final RepoPattern ORDER_ITEM = RepoPattern.of("misc.chat.SignAutofill.ORDER_ITEM", "(?:Ordering|Selling|Order|Offer): ?([\\d,]+)x (.+)");
 
     private enum Kind { BUY_PRICE, SELL_PRICE, AMOUNT, AH_BIN }
 

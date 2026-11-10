@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.misc.waypoints;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -109,15 +113,15 @@ public final class AreaWaypoints {
         }
     }
 
-    private static final Pattern KUUDRA_TIER = Pattern.compile("\\(T(\\d)\\)");
-    private static final List<String> ISLANDS = List.of("Private Island", "Hub", "The Park", "The Farming Islands", "Garden", "Gold Mine",
+    private static final RepoPattern KUUDRA_TIER = RepoPattern.of("misc.waypoints.AreaWaypoints.KUUDRA_TIER", "\\(T(\\d)\\)");
+    private static final List<String> ISLANDS = RepoTable.list("misc.waypoints.AreaWaypoints.ISLANDS", List.of("Private Island", "Hub", "The Park", "The Farming Islands", "Garden", "Gold Mine",
         "Deep Caverns", "Dwarven Mines", "Crystal Hollows", "Mineshaft", "Spider's Den", "The End", "Crimson Isle", "The Rift",
-        "Backwater Bayou", "Galatea", "Jerry's Workshop", "Dungeon Hub", "Dark Auction");
+        "Backwater Bayou", "Galatea", "Jerry's Workshop", "Dungeon Hub", "Dark Auction"));
     private static final Map<Integer, List<String>> BOSS_PHASES = Map.of(
         6, List.of("Terracottas", "Giants", "Cleared"),
         7, List.of("Maxor", "Storm", "Terminals", "Goldor", "Necron", "Cleared"));
     /** The boss lines that start each F6 and F7 phase (the same ones as Sky2M's splits). */
-    private static final Map<String, String> PHASE_LINES = Map.of(
+    private static final Map<String, String> PHASE_LINES = RepoTable.map("misc.waypoints.AreaWaypoints.PHASE_LINES", Map.of(
         "[BOSS] Sadan: So you made it all the way here... Now you wish to defy me? Sadan?!", "Terracottas",
         "[BOSS] Sadan: ENOUGH!", "Giants",
         "[BOSS] Sadan: You did it. I understand now, you have earned my respect.", "Cleared",
@@ -128,7 +132,7 @@ public final class AreaWaypoints {
         "[BOSS] Necron: You went further than any human before, congratulations.", "Necron",
         "[BOSS] Necron: All this, for nothing...", "Cleared",
         // Since Hypixel's 2026 dungeon update Necron's last line is gone and the Wither King's first line comes instead.
-        "[BOSS] Wither King: You... again?", "Cleared");
+        "[BOSS] Wither King: You... again?", "Cleared"));
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private static final List<Area> AREAS = new ArrayList<>();

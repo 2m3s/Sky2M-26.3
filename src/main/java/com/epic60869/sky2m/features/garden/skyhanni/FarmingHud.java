@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden.skyhanni;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -39,11 +41,11 @@ import java.util.regex.Pattern;
  * widget times your blocks per second), as in SkyHanni.
  */
 public final class FarmingHud {
-    private static final Pattern EXP_NEXT = Pattern.compile("(?<have>[\\d,.]+[kKmM]?)/(?<need>[\\d,.]+[kKmM]?)\\s*$");
-    private static final Pattern OVERFLOW = Pattern.compile("^\\s{8,}(?<exp>[\\d,]+)\\s*$");
-    private static final Pattern PROGRESS = Pattern.compile("Progress to Level (?<level>[^:]*)");
-    private static final Pattern GARDEN_NAME = Pattern.compile("Garden Level (?<level>\\S+)");
-    private static final Pattern VISITOR_EXP = Pattern.compile("^\\s*\\+(?<exp>[\\d,]+) Garden Experience");
+    private static final RepoPattern EXP_NEXT = RepoPattern.of("garden.skyhanni.FarmingHud.EXP_NEXT", "(?<have>[\\d,.]+[kKmM]?)/(?<need>[\\d,.]+[kKmM]?)\\s*$");
+    private static final RepoPattern OVERFLOW = RepoPattern.of("garden.skyhanni.FarmingHud.OVERFLOW", "^\\s{8,}(?<exp>[\\d,]+)\\s*$");
+    private static final RepoPattern PROGRESS = RepoPattern.of("garden.skyhanni.FarmingHud.PROGRESS", "Progress to Level (?<level>[^:]*)");
+    private static final RepoPattern GARDEN_NAME = RepoPattern.of("garden.skyhanni.FarmingHud.GARDEN_NAME", "Garden Level (?<level>\\S+)");
+    private static final RepoPattern VISITOR_EXP = RepoPattern.of("garden.skyhanni.FarmingHud.VISITOR_EXP", "^\\s*\\+(?<exp>[\\d,]+) Garden Experience");
     private static final int OVERFLOW_EXP = 10_000;
 
     private static final NumberFormat INT = NumberFormat.getIntegerInstance(Locale.US);

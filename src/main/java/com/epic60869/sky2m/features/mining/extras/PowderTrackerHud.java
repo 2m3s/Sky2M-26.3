@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining.extras;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -22,7 +24,7 @@ import java.util.regex.Pattern;
  * it). The clock only runs while powder keeps coming in: it pauses after {@link #PAUSE_MS} without a gain.
  */
 public final class PowderTrackerHud {
-    private static final Pattern POWDER = Pattern.compile("(Mithril|Gemstone|Glacite)(?: Powder)?: ([\\d,]+)");
+    private static final RepoPattern POWDER = RepoPattern.of("mining.extras.PowderTrackerHud.POWDER", "(Mithril|Gemstone|Glacite)(?: Powder)?: ([\\d,]+)");
     private static final long PAUSE_MS = 60_000;
 
     private enum Type {

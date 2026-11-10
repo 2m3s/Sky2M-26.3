@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -142,7 +144,7 @@ public final class OdinPuzzleSolvers {
     private static long waterOpenedTick = -1;
     private static int ticks;
 
-    private static final Pattern WEIRDOS_NPC = Pattern.compile("^\\[NPC] (.+): (.+).?$");
+    private static final RepoPattern WEIRDOS_NPC = RepoPattern.of("dungeons.OdinPuzzleSolvers.WEIRDOS_NPC", "^\\[NPC] (.+): (.+).?$");
     private static final List<Pattern> WEIRDOS_RIGHT = patterns(
         "The reward is not in my chest!", "At least one of them is lying, and the reward is not in .+'s chest.?",
         "My chest doesn't have the reward. We are all telling the truth.?", "My chest has the reward and I'm telling the truth!",
@@ -153,7 +155,7 @@ public final class OdinPuzzleSolvers {
         "One of the others is lying.", "They are both telling the truth, the reward is in .+'s chest.", "They are both lying, the reward is in my chest!",
         "The reward is in my chest.", "The reward is not in my chest. They are both lying.", ".+ is telling the truth.", "My chest has the reward.");
     /** "[Lv15] ♨ Blaze 20,000/20,000❤": the mob-type symbol varies, so only the "Blaze hp/max❤" part is matched. */
-    private static final Pattern BLAZE_HP = Pattern.compile("\\bBlaze [\\d,]+/([\\d,]+)❤");
+    private static final RepoPattern BLAZE_HP = RepoPattern.of("dungeons.OdinPuzzleSolvers.BLAZE_HP", "\\bBlaze [\\d,]+/([\\d,]+)❤");
     private static final int[][] TP_PADS = {
         {4, 69, 12}, {4, 69, 6}, {10, 69, 12}, {10, 69, 6}, {4, 69, 20}, {4, 69, 14}, {10, 69, 20}, {10, 69, 14},
         {4, 69, 28}, {4, 69, 22}, {10, 69, 28}, {10, 69, 22}, {12, 69, 28}, {12, 69, 22}, {18, 69, 28}, {18, 69, 22},

@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.garden.helpers;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.tools.Sky2MSkyblockTime;
 import com.epic60869.sky2m.input.Sky2MMouseLock;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -30,11 +34,11 @@ import java.util.regex.Pattern;
 final class StereoAndFilter {
     private static final String STEREO_HUD = "garden_stereo_harmony";
     private static final String FILTER_HUD = "garden_atmospheric_filter";
-    private static final Pattern NOW_PLAYING = Pattern.compile("^Now Playing: (?<vinyl>[^(]+?)(?: \\(.*\\))?$");
-    private static final Pattern WHEN_PLAYING = Pattern.compile("^When playing, (?<pest>.+?) Pests.*");
+    private static final RepoPattern NOW_PLAYING = RepoPattern.of("garden.helpers.StereoAndFilter.NOW_PLAYING", "^Now Playing: (?<vinyl>[^(]+?)(?: \\(.*\\))?$");
+    private static final RepoPattern WHEN_PLAYING = RepoPattern.of("garden.helpers.StereoAndFilter.WHEN_PLAYING", "^When playing, (?<pest>.+?) Pests.*");
 
     /** Vinyl name to {pest, crop} (SkyHanni's VinylType and Skyblocker's CROP_BY_VINYL). */
-    private static final Map<String, String[]> VINYLS = Map.ofEntries(
+    private static final Map<String, String[]> VINYLS = RepoTable.arrayMap("garden.helpers.StereoAndFilter.VINYLS", Map.ofEntries(
         Map.entry("Pretty Fly", new String[]{"Fly", "Wheat"}),
         Map.entry("Cricket Choir", new String[]{"Cricket", "Carrot"}),
         Map.entry("Cicada Symphony", new String[]{"Locust", "Potato"}),
@@ -47,20 +51,20 @@ final class StereoAndFilter {
         Map.entry("Not Just a Pest", new String[]{"Beetle", "Nether Wart"}),
         Map.entry("Firefly in the Hole", new String[]{"Firefly", "Moonflower"}),
         Map.entry("Imagine Dragonflies", new String[]{"Dragonfly", "Sunflower"}),
-        Map.entry("Pray For Me", new String[]{"Praying Mantis", "Wild Rose"}));
-    private static final Map<String, String> CROP_BY_PEST = Map.ofEntries(
+        Map.entry("Pray For Me", new String[]{"Praying Mantis", "Wild Rose"})));
+    private static final Map<String, String> CROP_BY_PEST = RepoTable.map("garden.helpers.StereoAndFilter.CROP_BY_PEST", Map.ofEntries(
         Map.entry("Fly", "Wheat"), Map.entry("Mosquito", "Sugar Cane"), Map.entry("Cricket", "Carrot"),
         Map.entry("Locust", "Potato"), Map.entry("Earthworm", "Melon Slice"), Map.entry("Rat", "Pumpkin"),
         Map.entry("Moth", "Cocoa Beans"), Map.entry("Beetle", "Nether Wart"), Map.entry("Mite", "Cactus"),
         Map.entry("Slug", "Mushroom"), Map.entry("Firefly", "Moonflower"), Map.entry("Dragonfly", "Sunflower"),
-        Map.entry("Praying Mantis", "Wild Rose"));
+        Map.entry("Praying Mantis", "Wild Rose")));
     /** Farming tool collection id to the crop name above. */
-    private static final Map<String, String> CROP_BY_COLLECTION = Map.ofEntries(
+    private static final Map<String, String> CROP_BY_COLLECTION = RepoTable.map("garden.helpers.StereoAndFilter.CROP_BY_COLLECTION", Map.ofEntries(
         Map.entry("WHEAT", "Wheat"), Map.entry("CARROT_ITEM", "Carrot"), Map.entry("POTATO_ITEM", "Potato"),
         Map.entry("NETHER_STALK", "Nether Wart"), Map.entry("PUMPKIN", "Pumpkin"), Map.entry("MELON", "Melon Slice"),
         Map.entry("INK_SACK:3", "Cocoa Beans"), Map.entry("SUGAR_CANE", "Sugar Cane"), Map.entry("CACTUS", "Cactus"),
         Map.entry("MUSHROOM_COLLECTION", "Mushroom"), Map.entry("WILD_ROSE", "Wild Rose"),
-        Map.entry("DOUBLE_PLANT", "Sunflower"), Map.entry("MOONFLOWER", "Moonflower"));
+        Map.entry("DOUBLE_PLANT", "Sunflower"), Map.entry("MOONFLOWER", "Moonflower")));
 
     private static volatile String playing;
     private static int tick;

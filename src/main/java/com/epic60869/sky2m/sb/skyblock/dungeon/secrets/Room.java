@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.sb.skyblock.dungeon.secrets;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,8 +59,8 @@ import com.epic60869.sky2m.sb.utils.render.primitive.PrimitiveCollector;
 import com.epic60869.sky2m.sb.utils.scheduler.Scheduler;
 
 public class Room implements Tickable, Renderable {
-	public static final Pattern SECRET_INDEX = Pattern.compile("^(\\d+)");
-	private static final Pattern SECRETS = Pattern.compile("(\\d{1,2})/(\\d{1,2}) Secrets");
+	public static final RepoPattern SECRET_INDEX = RepoPattern.of("sb.skyblock.dungeon.secrets.Room.SECRET_INDEX", "^(\\d+)");
+	private static final RepoPattern SECRETS = RepoPattern.of("sb.skyblock.dungeon.secrets.Room.SECRETS", "(\\d{1,2})/(\\d{1,2}) Secrets");
 	private static final String CHEST_ALREADY_OPENED = "This chest has already been searched!";
 	protected static final float[] RED_COLOR_COMPONENTS = {1, 0, 0};
 	protected static final float[] GREEN_COLOR_COMPONENTS = {0, 1, 0};

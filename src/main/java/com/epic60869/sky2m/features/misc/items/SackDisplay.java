@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -45,11 +47,11 @@ import java.util.regex.Pattern;
  */
 public final class SackDisplay {
     /** "Stored: 1,234/80k": the amount and, after the slash, how many the sack holds. */
-    private static final Pattern STORED = Pattern.compile("^Stored: ([\\d,]+)(?:/(\\S+))?.*$");
+    private static final RepoPattern STORED = RepoPattern.of("misc.items.SackDisplay.STORED", "^Stored: ([\\d,]+)(?:/(\\S+))?.*$");
     /** One quality of a gemstone in the Gemstones Sack: "Rough: 1,234" (maybe "/2,240" or "(...)" after it). */
-    private static final Pattern GEM_QUALITY = Pattern.compile("^(Rough|Flawed|Fine|Flawless|Perfect)(?: Gemstones?)?: ([\\d,]+)(?:/(\\S+))?.*$");
+    private static final RepoPattern GEM_QUALITY = RepoPattern.of("misc.items.SackDisplay.GEM_QUALITY", "^(Rough|Flawed|Fine|Flawless|Perfect)(?: Gemstones?)?: ([\\d,]+)(?:/(\\S+))?.*$");
     /** A page number after a menu's name: "Gemstones Sack (1/2)". */
-    private static final Pattern PAGE = Pattern.compile("\\s*\\(\\d+/\\d+\\)$");
+    private static final RepoPattern PAGE = RepoPattern.of("misc.items.SackDisplay.PAGE", "\\s*\\(\\d+/\\d+\\)$");
     private static final Gson GSON = new Gson();
 
     private static final int ROW_HEIGHT = 12;

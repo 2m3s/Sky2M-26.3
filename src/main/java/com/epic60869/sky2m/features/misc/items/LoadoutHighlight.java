@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -22,15 +24,15 @@ import java.util.regex.Pattern;
  * "Left-click to equip!" on every loadout but the equipped one.
  */
 public final class LoadoutHighlight {
-    private static final Pattern INVENTORY = Pattern.compile("(?i)(?:\\(\\d+/\\d+\\)\\s*)?Loadouts");
-    private static final Pattern LOCKED = Pattern.compile("(?i)Loadout \\d+ Locked");
+    private static final RepoPattern INVENTORY = RepoPattern.of("misc.items.LoadoutHighlight.INVENTORY", "(?i)(?:\\(\\d+/\\d+\\)\\s*)?Loadouts");
+    private static final RepoPattern LOCKED = RepoPattern.of("misc.items.LoadoutHighlight.LOCKED", "(?i)Loadout \\d+ Locked");
     private static final int FIRST_ICON_SLOT = 14;
     private static final int ROWS = 4;
     private static final int SLOTS_PER_ROW = 3;
 
     private LoadoutHighlight() {}
 
-    private static final Pattern EQUIPPED_CHAT = Pattern.compile("^You equipped (.+)!$");
+    private static final RepoPattern EQUIPPED_CHAT = RepoPattern.of("misc.items.LoadoutHighlight.EQUIPPED_CHAT", "^You equipped (.+)!$");
     /** The loadout named in the last "You equipped X!" message: Hypixel no longer leaves "Left-click to equip!" off the equipped one. */
     private static volatile String equippedName = "";
     private static net.minecraft.client.gui.screens.Screen cacheScreen;

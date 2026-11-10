@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining.dwarven;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -22,7 +24,7 @@ import java.util.regex.Pattern;
  * display-only version of SkyHanni's MiningNotifications rope helper (it never fetches the rope or uses it for you).
  */
 public final class GlaciteCold {
-    private static final Pattern COLD = Pattern.compile("Cold: (-?\\d+)❄");
+    private static final RepoPattern COLD = RepoPattern.of("mining.dwarven.GlaciteCold.COLD", "Cold: (-?\\d+)❄");
     private static final Identifier FROST = Identifier.withDefaultNamespace("textures/misc/powder_snow_outline.png");
 
     private static int cold;

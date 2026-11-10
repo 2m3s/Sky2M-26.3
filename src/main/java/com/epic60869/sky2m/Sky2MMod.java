@@ -80,6 +80,9 @@ public final class Sky2MMod implements ClientModInitializer {
         Minecraft minecraft = Minecraft.getInstance();
         Path configDir = minecraft.gameDirectory.toPath().resolve("config");
         config = Sky2MConfig.load(configDir.resolve("sky2m-mod.json"));
+        // Sky2M-REPO's pattern and table replacements: ones made before they arrive are updated, later ones start with them.
+        com.epic60869.sky2m.features.core.RepoPattern.init(); lap("RepoPattern.init");
+        com.epic60869.sky2m.features.core.RepoTable.init(); lap("RepoTable.init");
         // Register key mappings during client initialization, before GameOptions is initialized.
         Sky2MKeyMappings.init(); lap("Sky2MKeyMappings.init");
         Sky2MRecipeCommand.init(); lap("Sky2MRecipeCommand.init");

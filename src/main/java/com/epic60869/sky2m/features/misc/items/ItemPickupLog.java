@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.items.Sky2MItemRarity;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
@@ -54,8 +56,8 @@ public final class ItemPickupLog {
         Pattern.compile("^You sent (?:an?|(?<amount>\\d+)) (?<name>.+) Shards? to your Hunting Box\\."));
 
     /** SkyHanni's shop pattern: "Mite Gel x33" in a shop is the same item as "Mite Gel". */
-    private static final Pattern SHOP_AMOUNT = Pattern.compile("^(?<name>.+?)(?: x\\d+)?$");
-    private static final Pattern PET_LEVEL = Pattern.compile("^\\[Lvl \\d+] ");
+    private static final RepoPattern SHOP_AMOUNT = RepoPattern.of("misc.items.ItemPickupLog.SHOP_AMOUNT", "^(?<name>.+?)(?: x\\d+)?$");
+    private static final RepoPattern PET_LEVEL = RepoPattern.of("misc.items.ItemPickupLog.PET_LEVEL", "^\\[Lvl \\d+] ");
     private static final List<String> PET_TIERS = List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC");
     private static final String COINS = "coins";
     /** No changes are logged this long after a world change, like SkyHanni (the inventory is still loading). */
@@ -254,7 +256,7 @@ public final class ItemPickupLog {
         return id + "|" + clean.toLowerCase(Locale.ROOT);
     }
 
-    private static final Pattern PURSE_NUMBER = Pattern.compile("[\\d,]+(?:\\.\\d+)?");
+    private static final RepoPattern PURSE_NUMBER = RepoPattern.of("misc.items.ItemPickupLog.PURSE_NUMBER", "[\\d,]+(?:\\.\\d+)?");
 
     private static void trackPurse() {
         String value = Sky2MLocation.scoreboardValue("Purse:");

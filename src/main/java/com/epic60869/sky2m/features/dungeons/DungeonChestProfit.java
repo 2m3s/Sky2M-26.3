@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
@@ -46,13 +50,13 @@ import java.util.regex.Pattern;
  * </ul>
  */
 public final class DungeonChestProfit {
-    private static final Set<String> CHEST_NAMES = Set.of("Wood", "Gold", "Diamond", "Emerald", "Obsidian", "Bedrock");
-    private static final Set<String> NPC_SELL_ITEMS = Set.of("STORM_THE_FISH", "MAXOR_THE_FISH", "GOLDOR_THE_FISH",
-        "DUNGEON_DISC_1", "DUNGEON_DISC_2", "DUNGEON_DISC_3", "DUNGEON_DISC_4", "DUNGEON_DISC_5");
-    private static final Pattern ITEM_QUANTITY = Pattern.compile(".* x[0-9]*");
-    private static final Pattern CROESUS = Pattern.compile("(?:|\\([0-9]*/[0-9]*\\) )Croesus");
-    private static final Pattern VESUVIUS = Pattern.compile("(?:|\\([0-9]*/[0-9]*\\) )Vesuvius");
-    private static final Set<String> LOOT_AREAS = Set.of("Catacombs", "Kuudra", "Dungeon Hub", "Crimson Isle");
+    private static final Set<String> CHEST_NAMES = RepoTable.set("dungeons.DungeonChestProfit.CHEST_NAMES", Set.of("Wood", "Gold", "Diamond", "Emerald", "Obsidian", "Bedrock"));
+    private static final Set<String> NPC_SELL_ITEMS = RepoTable.set("dungeons.DungeonChestProfit.NPC_SELL_ITEMS", Set.of("STORM_THE_FISH", "MAXOR_THE_FISH", "GOLDOR_THE_FISH",
+        "DUNGEON_DISC_1", "DUNGEON_DISC_2", "DUNGEON_DISC_3", "DUNGEON_DISC_4", "DUNGEON_DISC_5"));
+    private static final RepoPattern ITEM_QUANTITY = RepoPattern.of("dungeons.DungeonChestProfit.ITEM_QUANTITY", ".* x[0-9]*");
+    private static final RepoPattern CROESUS = RepoPattern.of("dungeons.DungeonChestProfit.CROESUS", "(?:|\\([0-9]*/[0-9]*\\) )Croesus");
+    private static final RepoPattern VESUVIUS = RepoPattern.of("dungeons.DungeonChestProfit.VESUVIUS", "(?:|\\([0-9]*/[0-9]*\\) )Vesuvius");
+    private static final Set<String> LOOT_AREAS = RepoTable.set("dungeons.DungeonChestProfit.LOOT_AREAS", Set.of("Catacombs", "Kuudra", "Dungeon Hub", "Crimson Isle"));
 
     private enum LootState { UNOPENED, REROLLED, OPENED, OPENED_KEY, UNKNOWN }
 

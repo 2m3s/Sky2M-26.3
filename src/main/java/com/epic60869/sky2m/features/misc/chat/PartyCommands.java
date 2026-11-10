@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -36,23 +38,23 @@ import com.epic60869.sky2m.features.misc.system.ServerInfo;
  */
 public final class PartyCommands {
     // (?:[^\w\s\[]+ )? skips a Hypixel emblem (☘, ☣, ...) before a name: "Party > [MVP++] ☘ Name: !warp".
-    private static final Pattern PARTY_CHAT = Pattern.compile("^Party > (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)[^:]*: !(?<command>\\w+)(?: +(?:[^\\w\\s\\[]+ )?(?<arg>\\S+))?(?<more> +\\S.*?)?\\s*$");
-    private static final Pattern INVITED = Pattern.compile("^(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<me>\\w+) invited (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?\\w+ to the party!");
-    private static final Pattern TRANSFERRED = Pattern.compile("^The party was transferred to (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)");
-    private static final Pattern JOINED_OTHER = Pattern.compile("^You have joined (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)'s? party!");
-    private static final Pattern LEADER_LIST = Pattern.compile("^Party Leader: (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)");
+    private static final RepoPattern PARTY_CHAT = RepoPattern.of("misc.chat.PartyCommands.PARTY_CHAT", "^Party > (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)[^:]*: !(?<command>\\w+)(?: +(?:[^\\w\\s\\[]+ )?(?<arg>\\S+))?(?<more> +\\S.*?)?\\s*$");
+    private static final RepoPattern INVITED = RepoPattern.of("misc.chat.PartyCommands.INVITED", "^(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<me>\\w+) invited (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?\\w+ to the party!");
+    private static final RepoPattern TRANSFERRED = RepoPattern.of("misc.chat.PartyCommands.TRANSFERRED", "^The party was transferred to (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)");
+    private static final RepoPattern JOINED_OTHER = RepoPattern.of("misc.chat.PartyCommands.JOINED_OTHER", "^You have joined (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)'s? party!");
+    private static final RepoPattern LEADER_LIST = RepoPattern.of("misc.chat.PartyCommands.LEADER_LIST", "^Party Leader: (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)");
     // Who's in the party, for "!pt nix" -> NixJussid: joins, leaves, kicks, /p list and the list when you join.
     private static final String PLAYER = "(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)";
     private static final Pattern MEMBER_JOINED = Pattern.compile("^" + PLAYER + " joined the party\\.");
     private static final Pattern MEMBER_LEFT = Pattern.compile("^" + PLAYER + " (?:has left the party|has been removed from the party|was removed from your party because they disconnected)");
-    private static final Pattern MEMBER_LIST = Pattern.compile("^(?:Party (?:Leader|Moderators|Members): |You'll be partying with: )(?<names>.+)$");
-    private static final Pattern LIST_NAME = Pattern.compile("(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w{1,16})");
+    private static final RepoPattern MEMBER_LIST = RepoPattern.of("misc.chat.PartyCommands.MEMBER_LIST", "^(?:Party (?:Leader|Moderators|Members): |You'll be partying with: )(?<names>.+)$");
+    private static final RepoPattern LIST_NAME = RepoPattern.of("misc.chat.PartyCommands.LIST_NAME", "(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w{1,16})");
     /** A kick you send ("/p kick Name", the [KICK] buttons, auto kick), to tell your kicks from a moderator's. */
-    private static final Pattern KICK_COMMAND = Pattern.compile("^(?:p|party) kick (?<name>\\w{1,16})\\b", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern KICK_COMMAND = RepoPattern.of("misc.chat.PartyCommands.KICK_COMMAND", "^(?:p|party) kick (?<name>\\w{1,16})\\b", Pattern.CASE_INSENSITIVE);
     /** How long after sending a kick Hypixel's "has been removed from the party" still counts as yours. */
     private static final long KICK_CONFIRM_MS = 10_000L;
 
-    private static final Pattern INSTANCE = Pattern.compile("([fmt])([1-7])");
+    private static final RepoPattern INSTANCE = RepoPattern.of("misc.chat.PartyCommands.INSTANCE", "([fmt])([1-7])");
     private static final String[] FLOORS = {"ENTRANCE", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN"};
     private static final String[] KUUDRA = {"NORMAL", "HOT", "BURNING", "FIERY", "INFERNAL"};
 

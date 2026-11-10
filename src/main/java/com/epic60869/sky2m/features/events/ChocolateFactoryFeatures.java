@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.events;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -46,21 +48,21 @@ public final class ChocolateFactoryFeatures {
     private static final long TOWER_WARNING_MS = 5 * 60 * 1000L;
     private static final long TOWER_CHARGE_MS = 8 * 60 * 60 * 1000L;
 
-    private static final Pattern PER_SECOND = Pattern.compile("([\\d.,]+) per second");
-    private static final Pattern MULTIPLIER = Pattern.compile("Total Multiplier: ([\\d.,]+)x");
-    private static final Pattern AMOUNT = Pattern.compile("([\\d,]+(?:\\.\\d+)?)");
-    private static final Pattern COST = Pattern.compile("^([\\d,]+) Chocolate$");
-    private static final Pattern CHARGES = Pattern.compile("Charges: (\\d+)/(\\d+)");
-    private static final Pattern STATUS = Pattern.compile("Status: (INACTIVE|ACTIVE)\\s*(.*)");
-    private static final Pattern NEXT_CHARGE = Pattern.compile("Next Charge: (.+)");
-    private static final Pattern ALL_TIME = Pattern.compile("All-time Chocolate: ([\\d,]+)");
-    private static final Pattern PRESTIGE = Pattern.compile("^Chocolate Factory ([IVX]+)$");
-    private static final Pattern THIS_PRESTIGE = Pattern.compile("Chocolate this Prestige: ([\\d,]+)");
-    private static final Pattern FOR_PRESTIGE = Pattern.compile("Requires ([\\d.]+[kMBT]?) Chocolate this");
-    private static final Pattern BARN = Pattern.compile("Your Barn: (\\d+)/(\\d+) Rabbits");
-    private static final Pattern POSITION = Pattern.compile("You are #([\\d,]+)");
-    private static final Pattern PERCENTILE = Pattern.compile("You are in the top ([\\d.]+)% of players");
-    private static final Pattern DURATION_PART = Pattern.compile("(\\d+)([dhms])");
+    private static final RepoPattern PER_SECOND = RepoPattern.of("events.ChocolateFactoryFeatures.PER_SECOND", "([\\d.,]+) per second");
+    private static final RepoPattern MULTIPLIER = RepoPattern.of("events.ChocolateFactoryFeatures.MULTIPLIER", "Total Multiplier: ([\\d.,]+)x");
+    private static final RepoPattern AMOUNT = RepoPattern.of("events.ChocolateFactoryFeatures.AMOUNT", "([\\d,]+(?:\\.\\d+)?)");
+    private static final RepoPattern COST = RepoPattern.of("events.ChocolateFactoryFeatures.COST", "^([\\d,]+) Chocolate$");
+    private static final RepoPattern CHARGES = RepoPattern.of("events.ChocolateFactoryFeatures.CHARGES", "Charges: (\\d+)/(\\d+)");
+    private static final RepoPattern STATUS = RepoPattern.of("events.ChocolateFactoryFeatures.STATUS", "Status: (INACTIVE|ACTIVE)\\s*(.*)");
+    private static final RepoPattern NEXT_CHARGE = RepoPattern.of("events.ChocolateFactoryFeatures.NEXT_CHARGE", "Next Charge: (.+)");
+    private static final RepoPattern ALL_TIME = RepoPattern.of("events.ChocolateFactoryFeatures.ALL_TIME", "All-time Chocolate: ([\\d,]+)");
+    private static final RepoPattern PRESTIGE = RepoPattern.of("events.ChocolateFactoryFeatures.PRESTIGE", "^Chocolate Factory ([IVX]+)$");
+    private static final RepoPattern THIS_PRESTIGE = RepoPattern.of("events.ChocolateFactoryFeatures.THIS_PRESTIGE", "Chocolate this Prestige: ([\\d,]+)");
+    private static final RepoPattern FOR_PRESTIGE = RepoPattern.of("events.ChocolateFactoryFeatures.FOR_PRESTIGE", "Requires ([\\d.]+[kMBT]?) Chocolate this");
+    private static final RepoPattern BARN = RepoPattern.of("events.ChocolateFactoryFeatures.BARN", "Your Barn: (\\d+)/(\\d+) Rabbits");
+    private static final RepoPattern POSITION = RepoPattern.of("events.ChocolateFactoryFeatures.POSITION", "You are #([\\d,]+)");
+    private static final RepoPattern PERCENTILE = RepoPattern.of("events.ChocolateFactoryFeatures.PERCENTILE", "You are in the top ([\\d.]+)% of players");
+    private static final RepoPattern DURATION_PART = RepoPattern.of("events.ChocolateFactoryFeatures.DURATION_PART", "(\\d+)([dhms])");
 
     /** What the last look at the open factory found. */
     private record Option(int slot, String name, long cost, double extraPerSecond) {

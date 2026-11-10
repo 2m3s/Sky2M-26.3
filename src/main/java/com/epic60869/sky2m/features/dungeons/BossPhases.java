@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -54,9 +56,9 @@ public final class BossPhases {
     private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("sky2m").resolve("boss-phases.json");
     private static final long KEEP_MS = 15_000;
 
-    private static final Pattern DEFEATED = Pattern.compile("^\\s*☠ Defeated .+ in ");
+    private static final RepoPattern DEFEATED = RepoPattern.of("dungeons.BossPhases.DEFEATED", "^\\s*☠ Defeated .+ in ");
     /** SkyHanni's goldorTerminalPattern, on stripped text. */
-    private static final Pattern SECTION = Pattern.compile("^\\w{1,16} (?:activated|completed) a (?:lever|terminal|device)! \\((\\d)/(\\d)\\)$");
+    private static final RepoPattern SECTION = RepoPattern.of("dungeons.BossPhases.SECTION", "^\\w{1,16} (?:activated|completed) a (?:lever|terminal|device)! \\((\\d)/(\\d)\\)$");
     private static final String STORM_DEATH = "[BOSS] Storm: I should have known that I stood no chance.";
     private static final String STORM_PY_1 = "[BOSS] Storm: ENERGY HEED MY CALL!";
     private static final String STORM_PY_2 = "[BOSS] Storm: THUNDER LET ME BE YOUR CATALYST!";

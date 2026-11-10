@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining.dwarven;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.ChatFormatting;
@@ -27,8 +29,8 @@ import java.util.regex.Pattern;
  * next level's cost is taken from the lore when it is listed there.
  */
 public final class HotxOverlay {
-    private static final Pattern LEVEL = Pattern.compile("^Level (\\d+)/(\\d+)$");
-    private static final Pattern COST = Pattern.compile("([\\d,]+) (Mithril|Gemstone|Glacite) Powder");
+    private static final RepoPattern LEVEL = RepoPattern.of("mining.dwarven.HotxOverlay.LEVEL", "^Level (\\d+)/(\\d+)$");
+    private static final RepoPattern COST = RepoPattern.of("mining.dwarven.HotxOverlay.COST", "([\\d,]+) (Mithril|Gemstone|Glacite) Powder");
 
     /** HOTM perk -> {max level, cost exponent, cost offset (n + offset)^exponent}. */
     private record Perk(int max, double exponent, double offset, String powder) {}

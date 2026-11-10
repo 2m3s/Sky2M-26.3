@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.sb.skyblock.dungeon.secrets;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
@@ -33,8 +35,8 @@ public class DungeonPlayerManager {
 	 * This regex filters out the ironman icon as well as rank prefixes and emblems
 	 * \[\d+\] (?:\[[A-Za-z]+\] )?(?&lt;name&gt;[A-Za-z0-9_]+) (?:.+ )?\((?&lt;class&gt;\S+) ?(?&lt;level&gt;[LXVI0]+)?\)
 	 */
-	public static final Pattern PLAYER_TAB_PATTERN = Pattern.compile("\\[\\d+] (?:\\[[A-Za-z]+] )?(?<name>[A-Za-z0-9_]+) (?:.+ )?\\((?<class>\\S+) ?(?<level>[LXVI0]+)?\\)");
-	public static final Pattern PLAYER_GHOST_PATTERN = Pattern.compile(" ☠ (?<name>[A-Za-z0-9_]+) .+ became a ghost\\.");
+	public static final RepoPattern PLAYER_TAB_PATTERN = RepoPattern.of("sb.skyblock.dungeon.secrets.DungeonPlayerManager.PLAYER_TAB_PATTERN", "\\[\\d+] (?:\\[[A-Za-z]+] )?(?<name>[A-Za-z0-9_]+) (?:.+ )?\\((?<class>\\S+) ?(?<level>[LXVI0]+)?\\)");
+	public static final RepoPattern PLAYER_GHOST_PATTERN = RepoPattern.of("sb.skyblock.dungeon.secrets.DungeonPlayerManager.PLAYER_GHOST_PATTERN", " ☠ (?<name>[A-Za-z0-9_]+) .+ became a ghost\\.");
 	private static boolean dungeonLoaded;
 	/**
 	 * Use an array to ensure order, since the order of players in the player list is used to determine which decoration corresponds to which player in the dungeon map.

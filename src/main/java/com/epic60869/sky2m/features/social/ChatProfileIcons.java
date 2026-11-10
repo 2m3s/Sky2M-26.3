@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.social;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -34,7 +36,7 @@ public final class ChatProfileIcons {
      * ("!B-a"), not the player, so the name has to come from the text. Player rows start with the SkyBlock level, which
      * keeps rows like "Gems: 50" out.
      */
-    private static final Pattern TAB_NAME = Pattern.compile("^\\s*\\[\\d+]\\s+(?:[^\\w\\s\\[]{1,3}\\s+)?(?:\\[[A-Z+]+]\\s+)?(\\w{3,16})\\b");
+    private static final RepoPattern TAB_NAME = RepoPattern.of("social.ChatProfileIcons.TAB_NAME", "^\\s*\\[\\d+]\\s+(?:[^\\w\\s\\[]{1,3}\\s+)?(?:\\[[A-Z+]+]\\s+)?(\\w{3,16})\\b");
 
     /** Lower-case name -> the icon as it looks in the tab list. */
     private static final Map<String, Component> KNOWN = new ConcurrentHashMap<>();

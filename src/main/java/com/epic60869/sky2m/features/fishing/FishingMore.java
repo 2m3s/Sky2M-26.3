@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.fishing;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.ChromaColours;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -57,8 +59,8 @@ import java.util.regex.Pattern;
 public final class FishingMore {
     // Totem of Corruption
     private record Totem(Vec3 pos, int seconds, String owner, long readAt) {}
-    private static final Pattern TOTEM_TIME = Pattern.compile("Remaining: (?:(\\d+)m )?(\\d+)s");
-    private static final Pattern TOTEM_OWNER = Pattern.compile("Owner: (.+)");
+    private static final RepoPattern TOTEM_TIME = RepoPattern.of("fishing.FishingMore.TOTEM_TIME", "Remaining: (?:(\\d+)m )?(\\d+)s");
+    private static final RepoPattern TOTEM_OWNER = RepoPattern.of("fishing.FishingMore.TOTEM_OWNER", "Owner: (.+)");
     private static List<Totem> totems = List.of();
     private static final Map<Long, Boolean> warnedTotems = new LinkedHashMap<>();
 
@@ -92,7 +94,7 @@ public final class FishingMore {
     // Odger
     private static final Vec3 ODGER = new Vec3(-373, 207, -808);
     private static boolean trophyInInventory;
-    private static final Pattern TROPHY_COUNT = Pattern.compile("^(Bronze|Silver|Gold|Diamond) \\u2714 \\((\\d+)\\)");
+    private static final RepoPattern TROPHY_COUNT = RepoPattern.of("fishing.FishingMore.TROPHY_COUNT", "^(Bronze|Silver|Gold|Diamond) \\u2714 \\((\\d+)\\)");
 
     // Barn timer
     private static final List<Long> ownCatches = new ArrayList<>();

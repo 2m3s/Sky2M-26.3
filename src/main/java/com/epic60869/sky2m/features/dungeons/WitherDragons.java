@@ -5,6 +5,8 @@
 // CC0 1.0): features/impl/floor7/dragons/DragonCheck.kt and M7Relics.kt.
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -119,7 +121,7 @@ public final class WitherDragons {
     /** The M7 boss room; the dragon phase is the part of it below y 50. */
     private static final AABB BOSS_ROOM = new AABB(-8, 0, -8, 134, 254, 147);
 
-    private static final Pattern RELIC_PICKUP = Pattern.compile("^(\\w{3,16}) picked the Corrupted (\\w{3,6}) Relic!$");
+    private static final RepoPattern RELIC_PICKUP = RepoPattern.of("dungeons.WitherDragons.RELIC_PICKUP", "^(\\w{3,16}) picked the Corrupted (\\w{3,6}) Relic!$");
 
     /** Dragons that have started spawning this run (Solo Priority's First Dragon Only). */
     private static int spawnStarts;

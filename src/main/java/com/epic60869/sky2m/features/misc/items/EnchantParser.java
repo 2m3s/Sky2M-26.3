@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.nick.Sky2MNick;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -40,11 +42,9 @@ import java.util.regex.Pattern;
  */
 public final class EnchantParser {
     /** The line contains only enchants (and what comes with them: commas, stacking numbers). */
-    private static final Pattern EXCLUSIVE = Pattern.compile(
-        "^(?:(?:§.)*[A-Za-z][A-Za-z '-]+ (?:[IVXLCDM]+|[0-9]+)(?:(?:§r)?, |$| (?:§r)?§8\\d{1,3}(?:[,.]\\d{1,3})*)[kKmMbB]?)+$");
-    private static final Pattern ENCHANT = Pattern.compile(
-        "(?<=^|, )(?:§.)*(?<enchant>[A-Za-z][A-Za-z '-]+) (?<levelNumeral>[IVXLCDM]+|[0-9]+)(?<stacking>(?:§r)?, |$| (?:§r)?§8\\d{1,3}(?:[,.]\\d{1,3})*[kKmMbB]?)");
-    private static final Pattern STACKING_NUMBER = Pattern.compile("[\\d,.kKmMbB]+$");
+    private static final RepoPattern EXCLUSIVE = RepoPattern.of("misc.items.EnchantParser.EXCLUSIVE", "^(?:(?:§.)*[A-Za-z][A-Za-z '-]+ (?:[IVXLCDM]+|[0-9]+)(?:(?:§r)?, |$| (?:§r)?§8\\d{1,3}(?:[,.]\\d{1,3})*)[kKmMbB]?)+$");
+    private static final RepoPattern ENCHANT = RepoPattern.of("misc.items.EnchantParser.ENCHANT", "(?<=^|, )(?:§.)*(?<enchant>[A-Za-z][A-Za-z '-]+) (?<levelNumeral>[IVXLCDM]+|[0-9]+)(?<stacking>(?:§r)?, |$| (?:§r)?§8\\d{1,3}(?:[,.]\\d{1,3})*[kKmMbB]?)");
+    private static final RepoPattern STACKING_NUMBER = RepoPattern.of("misc.items.EnchantParser.STACKING_NUMBER", "[\\d,.kKmMbB]+$");
 
     private static volatile Repo repo = new Repo(Map.of(), Map.of(), Map.of());
 

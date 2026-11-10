@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.system;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -26,8 +28,7 @@ public final class Sky2MTimer {
     /** A longer time is more likely a typo. */
     static final long MAX_MS = 100L * 60 * 60 * 1000;
     private static final long DONE_SHOW_MS = 10_000L;
-    private static final Pattern UNITS = Pattern.compile(
-        "^(?:(\\d+(?:\\.\\d+)?)\\s*h)?\\s*(?:(\\d+(?:\\.\\d+)?)\\s*m)?\\s*(?:(\\d+(?:\\.\\d+)?)\\s*s)?$");
+    private static final RepoPattern UNITS = RepoPattern.of("misc.system.Sky2MTimer.UNITS", "^(?:(\\d+(?:\\.\\d+)?)\\s*h)?\\s*(?:(\\d+(?:\\.\\d+)?)\\s*m)?\\s*(?:(\\d+(?:\\.\\d+)?)\\s*s)?$");
 
     private static Mode mode = Mode.TIMER;
     private static boolean on, paused;

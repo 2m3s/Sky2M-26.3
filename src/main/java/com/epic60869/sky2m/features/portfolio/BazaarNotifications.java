@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.portfolio;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -33,8 +35,8 @@ import java.util.regex.Pattern;
 
 /** Outbid and filled-order alerts, using the Bazaar Utils-style watched-order flow. */
 public final class BazaarNotifications {
-    private static final Pattern FILLED = Pattern.compile("^(?:\\[Bazaar] )?Your (?<side>Buy Order|Sell Offer) for [\\d,]+x (?<item>.+) was filled!$");
-    private static final Pattern CANCELLED = Pattern.compile("^(?:\\[Bazaar] )?Your (?<side>Buy Order|Sell Offer) for (?:[\\d,]+x )?(?<item>.+) was cancelled!$");
+    private static final RepoPattern FILLED = RepoPattern.of("portfolio.BazaarNotifications.FILLED", "^(?:\\[Bazaar] )?Your (?<side>Buy Order|Sell Offer) for [\\d,]+x (?<item>.+) was filled!$");
+    private static final RepoPattern CANCELLED = RepoPattern.of("portfolio.BazaarNotifications.CANCELLED", "^(?:\\[Bazaar] )?Your (?<side>Buy Order|Sell Offer) for (?:[\\d,]+x )?(?<item>.+) was cancelled!$");
     private static final long ORDER_CHECK_MS = 1_000L;
     private static final long SOUND_GAP_MS = 180L;
 
@@ -250,7 +252,7 @@ public final class BazaarNotifications {
         return new WatchedOrder(key, name, id, amount, buyOrder, unitPrice);
     }
 
-    private static final Pattern ENCHANTMENT = Pattern.compile("^(?<name>.+?) (?<level>[IVXL]+|\\d+)$");
+    private static final RepoPattern ENCHANTMENT = RepoPattern.of("portfolio.BazaarNotifications.ENCHANTMENT", "^(?<name>.+?) (?<level>[IVXL]+|\\d+)$");
 
     /**
      * An enchanted book's bazaar id from its order's name: "Legion I" is ENCHANTMENT_ULTIMATE_LEGION_1, "Sharpness VI"
@@ -346,8 +348,8 @@ public final class BazaarNotifications {
         for (int i = 0; i < count; i++) SOUND_BURSTS.add(i);
     }
 
-    private static final Pattern INTEGER = Pattern.compile("[\\d,]+");
-    private static final Pattern DECIMAL = Pattern.compile("[\\d,]+(?:\\.\\d+)?");
+    private static final RepoPattern INTEGER = RepoPattern.of("portfolio.BazaarNotifications.INTEGER", "[\\d,]+");
+    private static final RepoPattern DECIMAL = RepoPattern.of("portfolio.BazaarNotifications.DECIMAL", "[\\d,]+(?:\\.\\d+)?");
 
     private static int firstInteger(String text) {
         Matcher matcher = INTEGER.matcher(text);

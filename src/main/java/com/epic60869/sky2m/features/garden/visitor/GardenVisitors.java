@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.garden.visitor;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MCraftHelper;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
@@ -92,25 +96,24 @@ public final class GardenVisitors {
     private static final int REFUSE_SLOT = 33;
     private static final int VINYL_SLOT = 48;
 
-    private static final Pattern VISITORS_HEADER = Pattern.compile("^\\s*Visitors: \\((\\d+)\\)\\s*$");
-    private static final Pattern NEXT_VISITOR = Pattern.compile("^\\s*Next Visitor: (.*)$");
-    private static final Pattern OFFERS_ACCEPTED = Pattern.compile("^Offers Accepted: (\\d+)");
-    private static final Pattern COPPER = Pattern.compile("^\\s*\\+([\\d,]+) Copper(?: .*)?$");
-    private static final Pattern GARDEN_EXP = Pattern.compile("^\\s*\\+([\\d,]+) Garden Experience$");
-    private static final Pattern ITEM_LINE = Pattern.compile("^(?:([\\d,]+)x )?(.+?)(?: x([\\d,]+))?$");
-    private static final Pattern ARRIVED = Pattern.compile("^.* has arrived on your Garden!$");
-    private static final Pattern NPC_CHAT = Pattern.compile("^§e\\[NPC] (?:§r)?(?<color>§[0-9a-f])?(?<name>[^§]*)(?:§r)?§f: .*");
-    private static final Pattern BARN_SKIN = Pattern.compile("^Changing Barn skin to .*");
-    private static final Pattern CHARMED = Pattern.compile("^This Visitor has been Charmed!.*");
-    private static final Pattern DURATION_PART = Pattern.compile("(\\d+)([dhms])");
+    private static final RepoPattern VISITORS_HEADER = RepoPattern.of("garden.visitor.GardenVisitors.VISITORS_HEADER", "^\\s*Visitors: \\((\\d+)\\)\\s*$");
+    private static final RepoPattern NEXT_VISITOR = RepoPattern.of("garden.visitor.GardenVisitors.NEXT_VISITOR", "^\\s*Next Visitor: (.*)$");
+    private static final RepoPattern OFFERS_ACCEPTED = RepoPattern.of("garden.visitor.GardenVisitors.OFFERS_ACCEPTED", "^Offers Accepted: (\\d+)");
+    private static final RepoPattern COPPER = RepoPattern.of("garden.visitor.GardenVisitors.COPPER", "^\\s*\\+([\\d,]+) Copper(?: .*)?$");
+    private static final RepoPattern GARDEN_EXP = RepoPattern.of("garden.visitor.GardenVisitors.GARDEN_EXP", "^\\s*\\+([\\d,]+) Garden Experience$");
+    private static final RepoPattern ITEM_LINE = RepoPattern.of("garden.visitor.GardenVisitors.ITEM_LINE", "^(?:([\\d,]+)x )?(.+?)(?: x([\\d,]+))?$");
+    private static final RepoPattern ARRIVED = RepoPattern.of("garden.visitor.GardenVisitors.ARRIVED", "^.* has arrived on your Garden!$");
+    private static final RepoPattern NPC_CHAT = RepoPattern.of("garden.visitor.GardenVisitors.NPC_CHAT", "^§e\\[NPC] (?:§r)?(?<color>§[0-9a-f])?(?<name>[^§]*)(?:§r)?§f: .*");
+    private static final RepoPattern BARN_SKIN = RepoPattern.of("garden.visitor.GardenVisitors.BARN_SKIN", "^Changing Barn skin to .*");
+    private static final RepoPattern CHARMED = RepoPattern.of("garden.visitor.GardenVisitors.CHARMED", "^This Visitor has been Charmed!.*");
+    private static final RepoPattern DURATION_PART = RepoPattern.of("garden.visitor.GardenVisitors.DURATION_PART", "(\\d+)([dhms])");
     // Compact chat (on the § text with the resets removed).
-    private static final Pattern FULLY_ACCEPTED = Pattern.compile("§6§lOFFER ACCEPTED §8with (?<color>§.)?(?<name>.*) §8\\((?<rarity>.*)\\)");
-    private static final Pattern VISITOR_REWARD = Pattern.compile(
-        "^ {4}(?:(?:§.)+\\+)?(?:(?<amountcolor>§.)(?<amount>[\\d,]+(?:\\.?(?:\\d)?k)?)x? )?(?:(?<rewardcolor>(?:§.)+)?(?<reward>.*?))(?: (?:(?:§.)?)?x(?<altamount>\\d+))?$");
-    private static final Pattern DISCARD_REWARD_NAME = Pattern.compile("^(?:Copper|Farming XP|Farming Experience|Garden Experience|Bits)$");
-    private static final Pattern REWARDS_TEXT = Pattern.compile("^ {2}§a§lREWARDS");
+    private static final RepoPattern FULLY_ACCEPTED = RepoPattern.of("garden.visitor.GardenVisitors.FULLY_ACCEPTED", "§6§lOFFER ACCEPTED §8with (?<color>§.)?(?<name>.*) §8\\((?<rarity>.*)\\)");
+    private static final RepoPattern VISITOR_REWARD = RepoPattern.of("garden.visitor.GardenVisitors.VISITOR_REWARD", "^ {4}(?:(?:§.)+\\+)?(?:(?<amountcolor>§.)(?<amount>[\\d,]+(?:\\.?(?:\\d)?k)?)x? )?(?:(?<rewardcolor>(?:§.)+)?(?<reward>.*?))(?: (?:(?:§.)?)?x(?<altamount>\\d+))?$");
+    private static final RepoPattern DISCARD_REWARD_NAME = RepoPattern.of("garden.visitor.GardenVisitors.DISCARD_REWARD_NAME", "^(?:Copper|Farming XP|Farming Experience|Garden Experience|Bits)$");
+    private static final RepoPattern REWARDS_TEXT = RepoPattern.of("garden.visitor.GardenVisitors.REWARDS_TEXT", "^ {2}§a§lREWARDS");
     // Drop statistics (on the plain text).
-    private static final Pattern STAT_ACCEPT = Pattern.compile("^OFFER ACCEPTED with (?<visitor>.*) \\((?<rarity>.*)\\)$");
+    private static final RepoPattern STAT_ACCEPT = RepoPattern.of("garden.visitor.GardenVisitors.STAT_ACCEPT", "^OFFER ACCEPTED with (?<visitor>.*) \\((?<rarity>.*)\\)$");
     private static final Map<Pattern, String> STAT_PATTERNS = new LinkedHashMap<>();
 
     static {
@@ -126,15 +129,15 @@ public final class GardenVisitors {
         STAT_PATTERNS.put(Pattern.compile("^[+]?Ectoplasm x([\\d,]+)$"), "ectoplasm");
     }
 
-    private static final Set<String> NOT_ITEMS = Set.of("Copper", "Garden Experience", "Farming XP", "Farming Experience", "Bits",
-        "Mithril Powder", "Gemstone Powder", "Glacite Powder");
-    private static final List<String> STATIC_VISITORS = List.of("Jacob", "Anita");
+    private static final Set<String> NOT_ITEMS = RepoTable.set("garden.visitor.GardenVisitors.NOT_ITEMS", Set.of("Copper", "Garden Experience", "Farming XP", "Farming Experience", "Bits",
+        "Mithril Powder", "Gemstone Powder", "Glacite Powder"));
+    private static final List<String> STATIC_VISITORS = RepoTable.list("garden.visitor.GardenVisitors.STATIC_VISITORS", List.of("Jacob", "Anita"));
     /** The visitor queue without upgrades, and how many Max Occupancy tiers SkyMart sells (one visitor each). */
     private static final int BASE_QUEUE_SIZE = 5, MAX_OCCUPANCY_TIERS = 5;
     private static final String[] RARITIES = {"UNCOMMON", "RARE", "LEGENDARY", "MYTHIC", "SPECIAL"};
     private static final ChatFormatting[] RARITY_COLOURS = {ChatFormatting.GREEN, ChatFormatting.BLUE, ChatFormatting.GOLD, ChatFormatting.LIGHT_PURPLE, ChatFormatting.RED};
-    private static final Set<String> CROPS = Set.of("Wheat", "Carrot", "Potato", "Pumpkin", "Melon Slice", "Melon", "Sugar Cane", "Cactus",
-        "Cocoa Beans", "Nether Wart", "Red Mushroom", "Brown Mushroom", "Seeds", "Sunflower", "Moonflower", "Wild Rose");
+    private static final Set<String> CROPS = RepoTable.set("garden.visitor.GardenVisitors.CROPS", Set.of("Wheat", "Carrot", "Potato", "Pumpkin", "Melon Slice", "Melon", "Sugar Cane", "Cactus",
+        "Cocoa Beans", "Nether Wart", "Red Mushroom", "Brown Mushroom", "Seeds", "Sunflower", "Moonflower", "Wild Rose"));
     /** SkyHanni's GardenApi.barnArea. */
     private static final AABB BARN_AREA = new AABB(-32.5, 70.0, -46.5, 35.5, 100.0, -4.5);
     private static final Gson GSON = new Gson();
@@ -580,7 +583,7 @@ public final class GardenVisitors {
         return out;
     }
 
-    private static final Pattern FIRST_COLOUR = Pattern.compile("§([0-9a-f])");
+    private static final RepoPattern FIRST_COLOUR = RepoPattern.of("garden.visitor.GardenVisitors.FIRST_COLOUR", "§([0-9a-f])");
 
     private static String firstColour(String legacy) {
         Matcher m = FIRST_COLOUR.matcher(legacy);

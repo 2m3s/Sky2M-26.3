@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.foraging;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.ChromaColours;
@@ -64,10 +66,10 @@ import java.util.regex.Pattern;
  */
 public final class ForagingExtras {
     // Tracker
-    private static final Pattern GIFT_HEADER = Pattern.compile("^TREE GIFT$");
-    private static final Pattern CUT = Pattern.compile("You helped cut ([\\d.]+)% of the (.+) Tree\\.");
-    private static final Pattern REWARDS = Pattern.compile("\\+([\\d,]+) rewards gained!.*");
-    private static final Pattern HOVER_STAT = Pattern.compile("^(Foraging Experience|HOTF Experience|Forest Whispers)\\D*([\\d,]+)");
+    private static final RepoPattern GIFT_HEADER = RepoPattern.of("foraging.ForagingExtras.GIFT_HEADER", "^TREE GIFT$");
+    private static final RepoPattern CUT = RepoPattern.of("foraging.ForagingExtras.CUT", "You helped cut ([\\d.]+)% of the (.+) Tree\\.");
+    private static final RepoPattern REWARDS = RepoPattern.of("foraging.ForagingExtras.REWARDS", "\\+([\\d,]+) rewards gained!.*");
+    private static final RepoPattern HOVER_STAT = RepoPattern.of("foraging.ForagingExtras.HOVER_STAT", "^(Foraging Experience|HOTF Experience|Forest Whispers)\\D*([\\d,]+)");
     private static boolean inGift;
     private static boolean sawRewards;
     private static int trees;
@@ -82,7 +84,7 @@ public final class ForagingExtras {
     private static long activeMs;
 
     // Tree progress
-    private static final Pattern TREE_PROGRESS = Pattern.compile("(\\w+) TREE (\\d+)%");
+    private static final RepoPattern TREE_PROGRESS = RepoPattern.of("foraging.ForagingExtras.TREE_PROGRESS", "(\\w+) TREE (\\d+)%");
     private static Component progress;
 
     // Clean tree view
@@ -111,7 +113,7 @@ public final class ForagingExtras {
         new Portal("Cult Meeting there RIGHT NOW!", new Vec3(-361.2, 90, -14.8)),
         new Portal("You completed each Trial of Fire! Congratulations!", new Vec3(-397.3, 98, -37.5)),
         new Portal("Talk to me again if you ever want to give my Harp a try!", new Vec3(-436.4, 110.5, -14.4)));
-    private static final Pattern QUEST_REQUIRED = Pattern.compile("You must complete the (.+) Quest to use this!");
+    private static final RepoPattern QUEST_REQUIRED = RepoPattern.of("foraging.ForagingExtras.QUEST_REQUIRED", "You must complete the (.+) Quest to use this!");
     private static Vec3 questTarget;
     private static String questLabel = "";
 
@@ -119,7 +121,7 @@ public final class ForagingExtras {
     private static final Map<Integer, Integer> glow = new HashMap<>();
 
     // Agatha / Miria coupon profit
-    private static final Pattern COST_LINE = Pattern.compile("^(?:([\\d,]+)x )?(.+?)(?: x([\\d,]+))?$");
+    private static final RepoPattern COST_LINE = RepoPattern.of("foraging.ForagingExtras.COST_LINE", "^(?:([\\d,]+)x )?(.+?)(?: x([\\d,]+))?$");
 
     // Honeyhive
     private static long honeyhiveReadyAt;

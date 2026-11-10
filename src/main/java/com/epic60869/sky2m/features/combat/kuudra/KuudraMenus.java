@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat.kuudra;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
@@ -32,11 +34,11 @@ import java.util.regex.Pattern;
  * the chest profit panel beside the Free and Paid chest menus (and Vesuvius's run chests), and the Perk Menu cleaner.
  */
 final class KuudraMenus {
-    private static final Pattern CHEST_TITLE = Pattern.compile("^(?:(?:Free|Paid) Chest|Kuudra - .+)$");
-    private static final Pattern QUANTITY = Pattern.compile("^(.+?) x([\\d,]+)$");
-    private static final Pattern BOOK = Pattern.compile("^Enchanted Book \\(?([\\w ]+) (\\w+)\\)?$");
-    private static final Pattern SALVAGE = Pattern.compile("Boots|Leggings|Chestplate|Helmet|Cloak|Aurora Staff|Hollow Wand");
-    private static final Pattern USELESS = Pattern.compile("^(?:Contents|Cost|Click to open!|FREE|This Chest is Free!|Already opened!|Can't open another chest!|(?:Paid|Free) Chest|Open Reward Chest)?$");
+    private static final RepoPattern CHEST_TITLE = RepoPattern.of("combat.kuudra.KuudraMenus.CHEST_TITLE", "^(?:(?:Free|Paid) Chest|Kuudra - .+)$");
+    private static final RepoPattern QUANTITY = RepoPattern.of("combat.kuudra.KuudraMenus.QUANTITY", "^(.+?) x([\\d,]+)$");
+    private static final RepoPattern BOOK = RepoPattern.of("combat.kuudra.KuudraMenus.BOOK", "^Enchanted Book \\(?([\\w ]+) (\\w+)\\)?$");
+    private static final RepoPattern SALVAGE = RepoPattern.of("combat.kuudra.KuudraMenus.SALVAGE", "Boots|Leggings|Chestplate|Helmet|Cloak|Aurora Staff|Hollow Wand");
+    private static final RepoPattern USELESS = RepoPattern.of("combat.kuudra.KuudraMenus.USELESS", "^(?:Contents|Cost|Click to open!|FREE|This Chest is Free!|Already opened!|Can't open another chest!|(?:Paid|Free) Chest|Open Reward Chest)?$");
     private static final int[] STAR_ESSENCE = {120, 138, 158, 182, 210, 240, 272, 308};
     private static final int[] CHEST_SLOTS = {31, 13, 14};
 

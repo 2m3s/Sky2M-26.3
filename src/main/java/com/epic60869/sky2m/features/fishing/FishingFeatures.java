@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.fishing;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -58,39 +62,39 @@ import java.util.regex.Pattern;
  * sea creature highlights that never show through walls (rendering/RareMobHighlight.kt).
  */
 public final class FishingFeatures {
-    private static final Pattern DOUBLE_HOOK = Pattern.compile("^It's a Double Hook!");
-    private static final Pattern COCOONED = Pattern.compile("^CAUGHT! You cocooned (?:a|an) (.+)!$");
-    private static final Pattern PARTY = Pattern.compile("^Party > (?:\\[[^]]+] )?([A-Za-z0-9_]{1,16})[^:]*: (.*)$");
+    private static final RepoPattern DOUBLE_HOOK = RepoPattern.of("fishing.FishingFeatures.DOUBLE_HOOK", "^It's a Double Hook!");
+    private static final RepoPattern COCOONED = RepoPattern.of("fishing.FishingFeatures.COCOONED", "^CAUGHT! You cocooned (?:a|an) (.+)!$");
+    private static final RepoPattern PARTY = RepoPattern.of("fishing.FishingFeatures.PARTY", "^Party > (?:\\[[^]]+] )?([A-Za-z0-9_]{1,16})[^:]*: (.*)$");
     // Party messages from Feesh (and Sky2M) and from SkyHanni.
-    private static final Pattern PARTY_CAUGHT = Pattern.compile("^--> (?:A|An) (.+) has spawned (?:.*)?<--$");
-    private static final Pattern PARTY_DOUBLE_HOOK = Pattern.compile("^--> DOUBLE HOOK! Two (.+)s have spawned (?:.*)?<--$");
-    private static final Pattern PARTY_COCOONED = Pattern.compile("^--> (?:A|An) (.+) was cocooned (?:.*)?<--$");
+    private static final RepoPattern PARTY_CAUGHT = RepoPattern.of("fishing.FishingFeatures.PARTY_CAUGHT", "^--> (?:A|An) (.+) has spawned (?:.*)?<--$");
+    private static final RepoPattern PARTY_DOUBLE_HOOK = RepoPattern.of("fishing.FishingFeatures.PARTY_DOUBLE_HOOK", "^--> DOUBLE HOOK! Two (.+)s have spawned (?:.*)?<--$");
+    private static final RepoPattern PARTY_COCOONED = RepoPattern.of("fishing.FishingFeatures.PARTY_COCOONED", "^--> (?:A|An) (.+) was cocooned (?:.*)?<--$");
     // Riccio Fishing Utils: "WOAH! An Alligator just surfaced! Catch #245 after 18d 17h!" (also "The Loch Emperor", and a double hook text).
-    private static final Pattern RFU_CAUGHT = Pattern.compile("^WOAH! (?:An? )?(.+?) just surfaced!(?: (.*))?$");
-    private static final Pattern RFU_COCOONED = Pattern.compile("^WOAH! (?:An? )?(.+?) was cocooned!(?: .*)?$");
-    private static final Pattern SKYHANNI_CAUGHT = Pattern.compile("^(DOUBLE HOOK: )?I caught (?:a|an) (.+)!$");
-    private static final Pattern SKYHANNI_COCOONED = Pattern.compile("^My (.+) has been cocooned!$");
-    private static final Pattern PARTY_DROP = Pattern.compile("^--> (?:A|An) (.+?) has dropped(?: \\([^)]*\\))? <--$");
+    private static final RepoPattern RFU_CAUGHT = RepoPattern.of("fishing.FishingFeatures.RFU_CAUGHT", "^WOAH! (?:An? )?(.+?) just surfaced!(?: (.*))?$");
+    private static final RepoPattern RFU_COCOONED = RepoPattern.of("fishing.FishingFeatures.RFU_COCOONED", "^WOAH! (?:An? )?(.+?) was cocooned!(?: .*)?$");
+    private static final RepoPattern SKYHANNI_CAUGHT = RepoPattern.of("fishing.FishingFeatures.SKYHANNI_CAUGHT", "^(DOUBLE HOOK: )?I caught (?:a|an) (.+)!$");
+    private static final RepoPattern SKYHANNI_COCOONED = RepoPattern.of("fishing.FishingFeatures.SKYHANNI_COCOONED", "^My (.+) has been cocooned!$");
+    private static final RepoPattern PARTY_DROP = RepoPattern.of("fishing.FishingFeatures.PARTY_DROP", "^--> (?:A|An) (.+?) has dropped(?: \\([^)]*\\))? <--$");
     private static final String DEATH_MESSAGE = "--> I was killed, please wait for me until I come back <--";
     private static final String LOOTSHARE = "Lootshare!";
-    private static final Pattern YOU_DIED = Pattern.compile("^ ☠ You were killed by (Ragnarok|Thunder|Lord Jawbus|Jawbus Follower|Wiki Tiki|Wiki Tiki Laser Totem|Titanoboa|Nessie|Torrid|Silkbreeze|Giant Isopod)\\.$");
+    private static final RepoPattern YOU_DIED = RepoPattern.of("fishing.FishingFeatures.YOU_DIED", "^ ☠ You were killed by (Ragnarok|Thunder|Lord Jawbus|Jawbus Follower|Wiki Tiki|Wiki Tiki Laser Totem|Titanoboa|Nessie|Torrid|Silkbreeze|Giant Isopod)\\.$");
     // Rare drops, read from the plain text (Feesh reads the § codes; the rarity of a pet comes from its colour here).
-    private static final Pattern RARE_DROP_BOOK = Pattern.compile("^RARE DROP! Enchanted Book \\((.+?)\\)(?: \\(\\+(\\d+) . Magic Find\\))?$");
-    private static final Pattern RARE_DROP = Pattern.compile("^RARE DROP! (.+?)(?: \\(\\+(\\d+) . Magic Find\\))?$");
-    private static final Pattern PET_DROP = Pattern.compile("^PET DROP! (?:(?:LEGENDARY|EPIC|RARE|UNCOMMON|COMMON) )?(.+?)(?: \\(\\+\\d+.*\\))?$");
-    private static final Pattern PET_CATCH = Pattern.compile("^. (?:GREAT|OUTSTANDING) CATCH! You caught a \\[Lvl 1] (?:(?:LEGENDARY|EPIC|RARE|UNCOMMON|COMMON) )?(.+?)!$");
-    private static final Pattern DYE_DROP = Pattern.compile("^WOW! (.+?) found an? (.+? Dye)(?: #\\d+)?!.*$");
-    private static final Pattern PHOENIX_DROP = Pattern.compile("^Wow! (.+?) found a Phoenix pet!.*$");
-    private static final Pattern NEW_DISCOVERY = Pattern.compile("^NEW DISCOVERY: (.+)$");
-    private static final Pattern PET_LEVEL_UP = Pattern.compile("^Your (.+?) leveled up to level (\\d+)!$");
+    private static final RepoPattern RARE_DROP_BOOK = RepoPattern.of("fishing.FishingFeatures.RARE_DROP_BOOK", "^RARE DROP! Enchanted Book \\((.+?)\\)(?: \\(\\+(\\d+) . Magic Find\\))?$");
+    private static final RepoPattern RARE_DROP = RepoPattern.of("fishing.FishingFeatures.RARE_DROP", "^RARE DROP! (.+?)(?: \\(\\+(\\d+) . Magic Find\\))?$");
+    private static final RepoPattern PET_DROP = RepoPattern.of("fishing.FishingFeatures.PET_DROP", "^PET DROP! (?:(?:LEGENDARY|EPIC|RARE|UNCOMMON|COMMON) )?(.+?)(?: \\(\\+\\d+.*\\))?$");
+    private static final RepoPattern PET_CATCH = RepoPattern.of("fishing.FishingFeatures.PET_CATCH", "^. (?:GREAT|OUTSTANDING) CATCH! You caught a \\[Lvl 1] (?:(?:LEGENDARY|EPIC|RARE|UNCOMMON|COMMON) )?(.+?)!$");
+    private static final RepoPattern DYE_DROP = RepoPattern.of("fishing.FishingFeatures.DYE_DROP", "^WOW! (.+?) found an? (.+? Dye)(?: #\\d+)?!.*$");
+    private static final RepoPattern PHOENIX_DROP = RepoPattern.of("fishing.FishingFeatures.PHOENIX_DROP", "^Wow! (.+?) found a Phoenix pet!.*$");
+    private static final RepoPattern NEW_DISCOVERY = RepoPattern.of("fishing.FishingFeatures.NEW_DISCOVERY", "^NEW DISCOVERY: (.+)$");
+    private static final RepoPattern PET_LEVEL_UP = RepoPattern.of("fishing.FishingFeatures.PET_LEVEL_UP", "^Your (.+?) leveled up to level (\\d+)!$");
     private static final String WORMHOLE_CLOSED = "Your Wormhole closed up...";
     private static final String FESTIVAL_ENDED = "FISHING FESTIVAL The festival has concluded! Time to dry off and repair your rods!";
     private static final long FESTIVAL_MS = 61 * 60 * 1000L;
-    private static final List<String> SHARKS = List.of("Great White Shark", "Tiger Shark", "Blue Shark", "Nurse Shark");
-    private static final Set<String> NO_FISHING = Set.of("The Rift", "Rift Dimension", "Garden", "Kuudra", "Catacombs",
-        "Dungeon Hub", "The End", "Glacite Mineshafts", "Mineshaft", "Safari");
-    private static final Set<String> HOTSPOT_ISLANDS = Set.of("Backwater Bayou", "Spider's Den", "Hub", "Jerry's Workshop",
-        "Lotus Atoll", "The Park", "Crimson Isle", "Torrhus Canyon");
+    private static final List<String> SHARKS = RepoTable.list("fishing.FishingFeatures.SHARKS", List.of("Great White Shark", "Tiger Shark", "Blue Shark", "Nurse Shark"));
+    private static final Set<String> NO_FISHING = RepoTable.set("fishing.FishingFeatures.NO_FISHING", Set.of("The Rift", "Rift Dimension", "Garden", "Kuudra", "Catacombs",
+        "Dungeon Hub", "The End", "Glacite Mineshafts", "Mineshaft", "Safari"));
+    private static final Set<String> HOTSPOT_ISLANDS = RepoTable.set("fishing.FishingFeatures.HOTSPOT_ISLANDS", Set.of("Backwater Bayou", "Spider's Den", "Hub", "Jerry's Workshop",
+        "Lotus Atoll", "The Park", "Crimson Isle", "Torrhus Canyon"));
 
     private static boolean doubleHook;
     private static int ticks;
@@ -748,7 +752,7 @@ public final class FishingFeatures {
 
     // ------------------------------------------------------------------------------------------------ highlight
 
-    private static final Pattern NAMETAG_HP = Pattern.compile("[0-9.,]+[kKmMbB]?/[0-9.,]+[kKmMbB]?❤");
+    private static final RepoPattern NAMETAG_HP = RepoPattern.of("fishing.FishingFeatures.NAMETAG_HP", "[0-9.,]+[kKmMbB]?/[0-9.,]+[kKmMbB]?❤");
 
     /** Sea creature nametags ("[Lv600] ♆⚙♣ Lord Jawbus 69M/100M❤"): the creature is an entity just before its stand. */
     private static void findHighlights(ClientLevel level, List<FishingData.HighlightableSeaCreature> list) {
@@ -933,8 +937,8 @@ public final class FishingFeatures {
 
     /** Your deployables, from their armour stands, for the "expires soon" alert (Feesh's DeployablesTimer). */
     static final class Deployables {
-        private static final List<String> LANTERNS = List.of("Dwarven Lantern", "Mithril Lantern", "Titanium Lantern", "Glacite Lantern", "Will-o'-wisp");
-        private static final List<String> FLUXES = List.of("Overflux", "Plasmaflux", "Mana Flux");
+        private static final List<String> LANTERNS = RepoTable.list("fishing.FishingFeatures.LANTERNS", List.of("Dwarven Lantern", "Mithril Lantern", "Titanium Lantern", "Glacite Lantern", "Will-o'-wisp"));
+        private static final List<String> FLUXES = RepoTable.list("fishing.FishingFeatures.FLUXES", List.of("Overflux", "Plasmaflux", "Mana Flux"));
 
         private static final class Tracked {
             final boolean shortLived;

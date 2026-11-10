@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.system;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -18,7 +20,7 @@ import java.util.Set;
  * applies straight away. The names are also registered (without doing anything) so they tab-complete.
  */
 public final class WarpShortcuts {
-    private static final Set<String> WARPS = Set.of(
+    private static final Set<String> WARPS = RepoTable.set("misc.system.WarpShortcuts.WARPS", Set.of(
         "arachne", "atoll", "backwater", "barn", "base", "basecamp", "bayou", "camp", "canyon", "carnival", "castle", "ch",
         "ci", "cn", "crimson", "crypt", "crypts", "crystals", "da", "deep", "deeper", "desert", "dh", "dhub", "dmines",
         "drag", "dragons", "dungeon_hub", "dungeons", "dwarves", "elizabeth", "end", "farming", "foraging", "forge",
@@ -27,7 +29,7 @@ public final class WarpShortcuts {
         "murkwater", "museum", "nest", "nether", "nuc", "nucleus", "park", "rift", "safari", "sepulture", "skull",
         "smold", "smoldering", "smoldering_tomb", "spider", "spiders", "spring", "springs", "stonks", "taylor",
         "the_rift", "top", "torrhus", "tower", "trap", "trapper", "trees", "tunnel", "tunnels", "village", "void",
-        "winter", "wiz", "wizard", "wizard_tower", "workshop");
+        "winter", "wiz", "wizard", "wizard_tower", "workshop"));
 
     private WarpShortcuts() {}
 

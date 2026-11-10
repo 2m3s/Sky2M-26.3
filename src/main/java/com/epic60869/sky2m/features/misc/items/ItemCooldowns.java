@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -50,11 +52,11 @@ public final class ItemCooldowns {
     /** A cooldown that starts from a chat message, for items the lore can't describe. */
     private record Special(Pattern message, List<String> ids, long defaultMs) {}
 
-    private static final Pattern ABILITY = Pattern.compile("Ability: (.+?)\\s+(SNEAK )?(RIGHT|LEFT) CLICK");
-    private static final Pattern MANA_COST = Pattern.compile("Mana Cost: ([\\d,]+)");
-    private static final Pattern COOLDOWN = Pattern.compile("Cooldown: (?:(\\d+)m\\s*)?(\\d+(?:\\.\\d+)?)?s?");
-    private static final Pattern USED = Pattern.compile("-[\\d,]+ Mana \\(([^)]+)\\)");
-    private static final Pattern ON_COOLDOWN = Pattern.compile("This (?:ability|item) is on cooldown for (\\d+(?:\\.\\d+)?)s");
+    private static final RepoPattern ABILITY = RepoPattern.of("misc.items.ItemCooldowns.ABILITY", "Ability: (.+?)\\s+(SNEAK )?(RIGHT|LEFT) CLICK");
+    private static final RepoPattern MANA_COST = RepoPattern.of("misc.items.ItemCooldowns.MANA_COST", "Mana Cost: ([\\d,]+)");
+    private static final RepoPattern COOLDOWN = RepoPattern.of("misc.items.ItemCooldowns.COOLDOWN", "Cooldown: (?:(\\d+)m\\s*)?(\\d+(?:\\.\\d+)?)?s?");
+    private static final RepoPattern USED = RepoPattern.of("misc.items.ItemCooldowns.USED", "-[\\d,]+ Mana \\(([^)]+)\\)");
+    private static final RepoPattern ON_COOLDOWN = RepoPattern.of("misc.items.ItemCooldowns.ON_COOLDOWN", "This (?:ability|item) is on cooldown for (\\d+(?:\\.\\d+)?)s");
     private static final long GRAPPLE_MS = 2_000L;
     private static final List<Special> SPECIAL = List.of(
         new Special(Pattern.compile("^Your (?:⚚ )?Bonzo's Mask saved your life!"), List.of("BONZO_MASK", "STARRED_BONZO_MASK"), 360_000L),
@@ -71,7 +73,7 @@ public final class ItemCooldowns {
         "ALERT_FLARE", new Cooldown("ALERT_FLARE", "Alert Flare", 0, 180_000L),
         "SOS_FLARE", new Cooldown("SOS_FLARE", "SOS Flare", 0, 180_000L));
     /** A power orb's name tag, "Overflux 57s": the time it has left. */
-    private static final Pattern ORB_TIME = Pattern.compile("^(Radiant|Mana Flux|Overflux|Plasmaflux) (\\d+)s$");
+    private static final RepoPattern ORB_TIME = RepoPattern.of("misc.items.ItemCooldowns.ORB_TIME", "^(Radiant|Mana Flux|Overflux|Plasmaflux) (\\d+)s$");
     /** Where you were when you deployed each one, to find its name tag. */
     private static final Map<String, net.minecraft.world.phys.Vec3> DEPLOYED_AT = new ConcurrentHashMap<>();
     /** A mana ability that was clicked, waiting for the action bar to confirm it was used. */

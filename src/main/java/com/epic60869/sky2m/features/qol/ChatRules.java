@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.qol;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.google.gson.annotations.Expose;
@@ -24,7 +26,7 @@ import java.util.regex.PatternSyntaxException;
  */
 public final class ChatRules {
     /** "[123] ✿ [MVP+] Name ✯: hello": level, a one-character prefix, rank, name, an emblem. Only all-chat lines match. */
-    private static final Pattern PLAYER_LINE = Pattern.compile("^(\\[\\d+] )?(\\S )?(\\[[A-Z+]+] )?(\\w{1,16})( \\S)?: .+");
+    private static final RepoPattern PLAYER_LINE = RepoPattern.of("qol.ChatRules.PLAYER_LINE", "^(\\[\\d+] )?(\\S )?(\\[[A-Z+]+] )?(\\w{1,16})( \\S)?: .+");
 
     private enum Action { HIDE, REPLACE, NOTIFY }
 

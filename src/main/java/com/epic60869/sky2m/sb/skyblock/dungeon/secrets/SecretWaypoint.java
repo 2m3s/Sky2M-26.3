@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.sb.skyblock.dungeon.secrets;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
 import java.awt.Color;
 import java.util.List;
 import java.util.Objects;
@@ -39,7 +41,7 @@ public class SecretWaypoint extends DistancedNamedWaypoint {
 			BlockPos.CODEC.fieldOf("pos").forGetter(secretWaypoint -> secretWaypoint.pos)
 	).apply(instance, SecretWaypoint::new));
 	public static final Codec<List<SecretWaypoint>> LIST_CODEC = CODEC.listOf();
-	static final List<String> SECRET_ITEMS = List.of("Architect's First Draft", "Candycomb", "Decoy", "Defuse Kit", "Dungeon Chest Key", "Healing 8", "Healing Potion", "Healing VIII", "Health Potion", "Inflatable Jerry", "Revive Stone", "Secret Dye", "Spirit Leap", "Training Weights", "Trap", "Treasure Talisman");
+	static final List<String> SECRET_ITEMS = RepoTable.list("sb.skyblock.dungeon.secrets.SecretWaypoint.SECRET_ITEMS", List.of("Architect's First Draft", "Candycomb", "Decoy", "Defuse Kit", "Dungeon Chest Key", "Healing 8", "Healing Potion", "Healing VIII", "Health Potion", "Inflatable Jerry", "Revive Stone", "Secret Dye", "Spirit Leap", "Training Weights", "Trap", "Treasure Talisman"));
 	private static final Supplier<DungeonsConfig.SecretWaypoints> CONFIG = () -> SkyblockerConfigManager.get().dungeons.secretWaypoints;
 	static final Supplier<Type> TYPE_SUPPLIER = () -> CONFIG.get().waypointType;
 	public final int secretIndex;

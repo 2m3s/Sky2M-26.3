@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -26,7 +28,7 @@ public final class KeyAlerts {
     /** A rank and an emblem can come before the name: "[MVP++] 🐟 2m3s has obtained Wither Key!", "🐟 2m3s opened a WITHER door!". */
     private static final String WHO = "^(?:\\[[^]]*?] ?)?(?:[^\\w\\s\\[]+ )?(\\w{1,16})";
     private static final Pattern KEY_OBTAINED = Pattern.compile(WHO + " has obtained (Wither|Blood) Key!?$");
-    private static final Pattern KEY_PICKED_UP = Pattern.compile("^A (Wither|Blood) Key was picked up!$");
+    private static final RepoPattern KEY_PICKED_UP = RepoPattern.of("dungeons.KeyAlerts.KEY_PICKED_UP", "^A (Wither|Blood) Key was picked up!$");
     private static final Pattern WITHER_DOOR = Pattern.compile(WHO + " opened a WITHER door!$");
 
     private static String witherHolder, bloodHolder, lastDoorOpener;

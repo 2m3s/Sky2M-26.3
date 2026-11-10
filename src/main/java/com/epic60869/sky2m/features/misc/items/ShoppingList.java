@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -38,7 +40,7 @@ public final class ShoppingList {
     private static final String HUD_ID = "shopping_list";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     /** An amount at the end of the name: "enchanted hay bale 12", "emeralds ×24", with or without the x/×. */
-    private static final Pattern TRAILING_AMOUNT = Pattern.compile("\\s+[x×]?([0-9,]+)\\s*$");
+    private static final RepoPattern TRAILING_AMOUNT = RepoPattern.of("misc.items.ShoppingList.TRAILING_AMOUNT", "\\s+[x×]?([0-9,]+)\\s*$");
 
     /** One line of the list: what to get, how many (0 = just "get it"), and how many you already have. */
     public static final class Item {

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.events;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.garden.skyhanni.FarmingHud;
@@ -42,10 +44,10 @@ public final class HarvestFeast {
     private static final String API = "https://api.eliteskyblock.com/harvest-feast/current";
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
     private static final long RETRY_MS = 5 * 60_000L;
-    private static final Pattern FEAST_MENU = Pattern.compile("(?:Harvest|(?<grand>Grand)) Feast");
-    private static final Pattern OUT_OF_SEASON = Pattern.compile("Out of season until the next Feast!");
-    private static final Pattern WILL_BE_IN_SEASON = Pattern.compile("Will be in-season in (?<time>.+)!");
-    private static final Pattern TIME_PART = Pattern.compile("(\\d+)\\s*([dhms])");
+    private static final RepoPattern FEAST_MENU = RepoPattern.of("events.HarvestFeast.FEAST_MENU", "(?:Harvest|(?<grand>Grand)) Feast");
+    private static final RepoPattern OUT_OF_SEASON = RepoPattern.of("events.HarvestFeast.OUT_OF_SEASON", "Out of season until the next Feast!");
+    private static final RepoPattern WILL_BE_IN_SEASON = RepoPattern.of("events.HarvestFeast.WILL_BE_IN_SEASON", "Will be in-season in (?<time>.+)!");
+    private static final RepoPattern TIME_PART = RepoPattern.of("events.HarvestFeast.TIME_PART", "(\\d+)\\s*([dhms])");
 
     /** One month's rotation: the crops in season now and when each other crop comes in season (0 = not this Feast). */
     private record Feast(int year, int month, boolean grand, List<GardenCrop> current, Map<GardenCrop, Long> next) {}

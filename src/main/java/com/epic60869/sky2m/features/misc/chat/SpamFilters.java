@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.google.gson.annotations.Expose;
@@ -215,7 +217,7 @@ public final class SpamFilters {
     private static final Pattern PRISTINE = p("^PRISTINE! You found . Flawed \\w+ Gemstone x\\d+!$");
 
     /** Any § code, even ones vanilla doesn't know (and a lone § at the end), for {@link #isBlank}. */
-    private static final Pattern FORMAT_CODE = Pattern.compile("(?s)§.?");
+    private static final RepoPattern FORMAT_CODE = RepoPattern.of("misc.chat.SpamFilters.FORMAT_CODE", "(?s)§.?");
 
     /** Inside a powder mining chest's reward block (between the two ▬ lines). */
     private static boolean inPowderRewards;

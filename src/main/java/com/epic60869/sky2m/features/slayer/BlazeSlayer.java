@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.EntityGlow;
@@ -106,11 +108,11 @@ public final class BlazeSlayer {
     }
 
     /** "Strike using the SPIRIT attunement on your dagger!" */
-    private static final Pattern ATTUNEMENT = Pattern.compile("^Strike using the .+ attunement on your dagger!$");
+    private static final RepoPattern ATTUNEMENT = RepoPattern.of("slayer.BlazeSlayer.ATTUNEMENT", "^Strike using the .+ attunement on your dagger!$");
     /** A Fire Pillar's nametag: "2s 8 hits". */
-    private static final Pattern FIRE_PILLAR = Pattern.compile("^(\\d+)s 8 hits$");
+    private static final RepoPattern FIRE_PILLAR = RepoPattern.of("slayer.BlazeSlayer.FIRE_PILLAR", "^(\\d+)s 8 hits$");
     /** A Hellion Shield line: "ASHEN ♨3". */
-    private static final Pattern SHIELD_TAG = Pattern.compile("\\b(AURIC|ASHEN|SPIRIT|CRYSTAL)\\b.*?♨\\s*(\\d)");
+    private static final RepoPattern SHIELD_TAG = RepoPattern.of("slayer.BlazeSlayer.SHIELD_TAG", "\\b(AURIC|ASHEN|SPIRIT|CRYSTAL)\\b.*?♨\\s*(\\d)");
 
     /** Mobs with a Hellion Shield (the boss and its demons), with the number after the shield's ♨. */
     private static Map<LivingEntity, Shield> shieldMobs = Map.of();

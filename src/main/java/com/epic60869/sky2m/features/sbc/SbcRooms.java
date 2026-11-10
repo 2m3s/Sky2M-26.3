@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.sbc;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -33,7 +35,7 @@ import java.util.regex.Pattern;
 public final class SbcRooms {
     private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("sky2m").resolve("chat-rooms.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Pattern ROOM = Pattern.compile("[a-z0-9_-]{1,24}");
+    private static final RepoPattern ROOM = RepoPattern.of("sbc.SbcRooms.ROOM", "[a-z0-9_-]{1,24}");
 
     private static final class Data {
         Set<String> rooms = new LinkedHashSet<>();

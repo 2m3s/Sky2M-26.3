@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.mining;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -24,10 +28,10 @@ import java.util.regex.Pattern;
 
 /** Crystal Hollows map, Mines of Divan tools alert and mineshaft timer. */
 public final class MiningFeatures {
-    private static final Set<String> DIVAN_TOOLS = Set.of("Scavenged Diamond Axe", "Scavenged Golden Hammer", "Scavenged Emerald Hammer", "Scavenged Lapis Sword");
-    private static final Set<String> STRUCTURES = Set.of("Mines of Divan", "Lost Precursor City", "Jungle Temple", "Goblin Queen's Den", "Khazad-dûm", "Fairy Grotto", "Dragon's Lair", "Crystal Nucleus");
+    private static final Set<String> DIVAN_TOOLS = RepoTable.set("mining.MiningFeatures.DIVAN_TOOLS", Set.of("Scavenged Diamond Axe", "Scavenged Golden Hammer", "Scavenged Emerald Hammer", "Scavenged Lapis Sword"));
+    private static final Set<String> STRUCTURES = RepoTable.set("mining.MiningFeatures.STRUCTURES", Set.of("Mines of Divan", "Lost Precursor City", "Jungle Temple", "Goblin Queen's Den", "Khazad-dûm", "Fairy Grotto", "Dragon's Lair", "Crystal Nucleus"));
     // Cold pattern from SkyHanni's repo (MIT). Freezing happens at -100 cold.
-    private static final Pattern COLD = Pattern.compile("Cold: (?<cold>-?\\d+)❄");
+    private static final RepoPattern COLD = RepoPattern.of("mining.MiningFeatures.COLD", "Cold: (?<cold>-?\\d+)❄");
 
     // Crystal Hollows playable area in world coordinates.
     private static final double MIN = 202, MAX = 824;

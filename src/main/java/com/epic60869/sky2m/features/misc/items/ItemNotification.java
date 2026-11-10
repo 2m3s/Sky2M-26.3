@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
@@ -71,7 +73,7 @@ public final class ItemNotification {
     private static int settleTicks;
     private static final int SETTLE_AFTER_MENU = 20;
     /** "Moved 64 Gold Ingot from your Sacks to your inventory." (/gfs): items taken out of your sacks aren't gains. */
-    private static final Pattern FROM_SACKS = Pattern.compile("^Moved ([0-9,]+) (.+?) from your Sacks to your inventory\\.?$");
+    private static final RepoPattern FROM_SACKS = RepoPattern.of("misc.items.ItemNotification.FROM_SACKS", "^Moved ([0-9,]+) (.+?) from your Sacks to your inventory\\.?$");
     /** Lower-case item name -> until when gains of it are ignored. */
     private static final Map<String, Long> fromSacksUntil = new HashMap<>();
 
@@ -221,7 +223,7 @@ public final class ItemNotification {
 
 
     /** One line of a "[Sacks]" hover: "+64 Gold Ingot (Mining Sack)" or "-64 Gold Ingot (Mining Sack)". */
-    private static final Pattern SACK_CHANGE = Pattern.compile("^ *([+-])([0-9,]+) (.+?) [(].*[)] *$");
+    private static final RepoPattern SACK_CHANGE = RepoPattern.of("misc.items.ItemNotification.SACK_CHANGE", "^ *([+-])([0-9,]+) (.+?) [(].*[)] *$");
 
     /**
      * What one "[Sacks]" message added (positive) or took out (negative), per item name. Hypixel puts the same hover on

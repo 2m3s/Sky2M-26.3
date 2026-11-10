@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.mining.dwarven;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -40,17 +44,17 @@ public final class MiningEventsHud {
     private static final String URL = "https://api.soopy.dev/skyblock/chevents/get";
     private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
-    private static final Pattern BAR_PASSIVE = Pattern.compile("^PASSIVE EVENT (.+) RUNNING FOR (\\S+)$");
-    private static final Pattern BAR_ACTIVE = Pattern.compile("^EVENT (.+) ACTIVE IN (.+) for (\\S+)$");
-    private static final Pattern STARTED = Pattern.compile("^\\s*([A-Z0-9][A-Z0-9 ]+) STARTED!$");
+    private static final RepoPattern BAR_PASSIVE = RepoPattern.of("mining.dwarven.MiningEventsHud.BAR_PASSIVE", "^PASSIVE EVENT (.+) RUNNING FOR (\\S+)$");
+    private static final RepoPattern BAR_ACTIVE = RepoPattern.of("mining.dwarven.MiningEventsHud.BAR_ACTIVE", "^EVENT (.+) ACTIVE IN (.+) for (\\S+)$");
+    private static final RepoPattern STARTED = RepoPattern.of("mining.dwarven.MiningEventsHud.STARTED", "^\\s*([A-Z0-9][A-Z0-9 ]+) STARTED!$");
 
-    private static final Map<String, String> EVENT_NAMES = Map.of(
+    private static final Map<String, String> EVENT_NAMES = RepoTable.map("mining.dwarven.MiningEventsHud.EVENT_NAMES", Map.of(
         "GONE_WITH_THE_WIND", "Gone with the Wind",
         "DOUBLE_POWDER", "2x Powder",
         "GOBLIN_RAID", "Goblin Raid",
         "BETTER_TOGETHER", "Better Together",
         "RAFFLE", "Raffle",
-        "MITHRIL_GOURMAND", "Mithril Gourmand");
+        "MITHRIL_GOURMAND", "Mithril Gourmand"));
     private static final Map<String, String> ISLAND_NAMES = new LinkedHashMap<>();
 
     static {

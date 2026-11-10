@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.profileviewer.networth;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -47,8 +49,8 @@ final class SkyHelperItem {
         "TALISMAN_ENRICHMENT_WALK_SPEED", "TALISMAN_ENRICHMENT_STRENGTH", "TALISMAN_ENRICHMENT_ATTACK_SPEED", "TALISMAN_ENRICHMENT_FEROCITY",
         "TALISMAN_ENRICHMENT_SEA_CREATURE_CHANCE"};
     private static final List<String> GEMSTONE_SLOTS = List.of("COMBAT", "OFFENSIVE", "DEFENSIVE", "MINING", "UNIVERSAL", "CHISEL");
-    private static final Pattern DIVANS = Pattern.compile("^DIVAN_(HELMET|CHESTPLATE|LEGGINGS|BOOTS|PENDANT)$");
-    private static final Pattern KUUDRA_ARMOUR = Pattern.compile("^((HOT|FIERY|BURNING|INFERNAL)_)?(AURORA|CRIMSON|TERROR|HOLLOW|FERVOR)_(HELMET|CHESTPLATE|LEGGINGS|BOOTS)$");
+    private static final RepoPattern DIVANS = RepoPattern.of("profileviewer.networth.SkyHelperItem.DIVANS", "^DIVAN_(HELMET|CHESTPLATE|LEGGINGS|BOOTS|PENDANT)$");
+    private static final RepoPattern KUUDRA_ARMOUR = RepoPattern.of("profileviewer.networth.SkyHelperItem.KUUDRA_ARMOUR", "^((HOT|FIERY|BURNING|INFERNAL)_)?(AURORA|CRIMSON|TERROR|HOLLOW|FERVOR)_(HELMET|CHESTPLATE|LEGGINGS|BOOTS)$");
     private static final String[] DRILL_PARTS = {"drill_part_upgrade_module", "drill_part_fuel_tank", "drill_part_engine"};
     private static final String[] ROD_PARTS = {"line", "hook", "sinker"};
     /** constants/pets.js TIERS, which the booster handler counts tiers with. */

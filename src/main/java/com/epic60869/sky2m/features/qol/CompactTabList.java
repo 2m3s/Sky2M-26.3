@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.qol;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.sbc.SbcItems;
@@ -37,19 +39,19 @@ public final class CompactTabList {
     private static final int COLUMN_SPACING = 6;
     private static final String HYPIXEL_ADVERT = "HYPIXEL.NET";
 
-    private static final Pattern USERNAME = Pattern.compile("^\\[(?<sblevel>\\d+)] (?:\\[\\w+] )?(?<username>\\w+)");
-    private static final Pattern GOD_POT = Pattern.compile("You have a God Potion active! (?<timer>[\\w ]+)");
-    private static final Pattern ACTIVE_EFFECTS = Pattern.compile("Active Effects");
-    private static final Pattern NO_ACTIVE_EFFECTS = Pattern.compile("No effects active\\. Drink Potions or splash them on the|ground to buff yourself!");
-    private static final Pattern EFFECT_COUNT = Pattern.compile("You have (?<effectCount>[0-9]+) (?:active|non-god) effects?.*");
-    private static final Pattern COOKIE = Pattern.compile("Cookie Buff");
-    private static final Pattern NO_COOKIE = Pattern.compile("Not active! Obtain booster cookies from the community|shop in the hub\\.");
-    private static final Pattern DUNGEON_BUFF = Pattern.compile("Dungeon Buffs");
-    private static final Pattern EFFECTS_USE_COMMAND = Pattern.compile("Use \"/effects\".*");
-    private static final Pattern UPGRADES_HEADER = Pattern.compile("Upgrades");
-    private static final Pattern UPGRADES = Pattern.compile("(?<firstPart>[A-Za-z ]+)(?<secondPart> [\\w ]+)");
-    private static final Pattern WINTER_POWER_UPS = Pattern.compile("Active Power Ups");
-    private static final Pattern FIRE_SALE_TITLE = Pattern.compile("Fire Sales: \\([0-9]+\\)");
+    private static final RepoPattern USERNAME = RepoPattern.of("qol.CompactTabList.USERNAME", "^\\[(?<sblevel>\\d+)] (?:\\[\\w+] )?(?<username>\\w+)");
+    private static final RepoPattern GOD_POT = RepoPattern.of("qol.CompactTabList.GOD_POT", "You have a God Potion active! (?<timer>[\\w ]+)");
+    private static final RepoPattern ACTIVE_EFFECTS = RepoPattern.of("qol.CompactTabList.ACTIVE_EFFECTS", "Active Effects");
+    private static final RepoPattern NO_ACTIVE_EFFECTS = RepoPattern.of("qol.CompactTabList.NO_ACTIVE_EFFECTS", "No effects active\\. Drink Potions or splash them on the|ground to buff yourself!");
+    private static final RepoPattern EFFECT_COUNT = RepoPattern.of("qol.CompactTabList.EFFECT_COUNT", "You have (?<effectCount>[0-9]+) (?:active|non-god) effects?.*");
+    private static final RepoPattern COOKIE = RepoPattern.of("qol.CompactTabList.COOKIE", "Cookie Buff");
+    private static final RepoPattern NO_COOKIE = RepoPattern.of("qol.CompactTabList.NO_COOKIE", "Not active! Obtain booster cookies from the community|shop in the hub\\.");
+    private static final RepoPattern DUNGEON_BUFF = RepoPattern.of("qol.CompactTabList.DUNGEON_BUFF", "Dungeon Buffs");
+    private static final RepoPattern EFFECTS_USE_COMMAND = RepoPattern.of("qol.CompactTabList.EFFECTS_USE_COMMAND", "Use \"/effects\".*");
+    private static final RepoPattern UPGRADES_HEADER = RepoPattern.of("qol.CompactTabList.UPGRADES_HEADER", "Upgrades");
+    private static final RepoPattern UPGRADES = RepoPattern.of("qol.CompactTabList.UPGRADES", "(?<firstPart>[A-Za-z ]+)(?<secondPart> [\\w ]+)");
+    private static final RepoPattern WINTER_POWER_UPS = RepoPattern.of("qol.CompactTabList.WINTER_POWER_UPS", "Active Power Ups");
+    private static final RepoPattern FIRE_SALE_TITLE = RepoPattern.of("qol.CompactTabList.FIRE_SALE_TITLE", "Fire Sales: \\([0-9]+\\)");
 
     private enum Type { TITLE, SUB_TITLE, TEXT, PLAYER }
 
@@ -225,7 +227,7 @@ public final class CompactTabList {
         return column.lines.isEmpty() ? null : column;
     }
 
-    private static boolean matches(Pattern pattern, Component component) {
+    private static boolean matches(RepoPattern pattern, Component component) {
         return component != null && pattern.matcher(component.getString()).matches();
     }
 

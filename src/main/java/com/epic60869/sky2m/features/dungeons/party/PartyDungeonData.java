@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons.party;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.social.Sky2MLogin;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -50,8 +52,8 @@ import java.util.regex.Pattern;
  * The server side is described in party-data-server-prompt.md.
  */
 public final class PartyDungeonData {
-    private static final Pattern LOBBY = Pattern.compile("^\\d{2}/\\d{2}/\\d{2,4} (\\w+)");
-    private static final Pattern DEVICE = Pattern.compile("^(\\w{1,16}) (activated|completed) a (terminal|lever|device)! \\((\\d)/(\\d)\\)(?:\\s.*)?$");
+    private static final RepoPattern LOBBY = RepoPattern.of("dungeons.party.PartyDungeonData.LOBBY", "^\\d{2}/\\d{2}/\\d{2,4} (\\w+)");
+    private static final RepoPattern DEVICE = RepoPattern.of("dungeons.party.PartyDungeonData.DEVICE", "^(\\w{1,16}) (activated|completed) a (terminal|lever|device)! \\((\\d)/(\\d)\\)(?:\\s.*)?$");
     private static final int MAX_FACTS = 10;
 
     private static String run;

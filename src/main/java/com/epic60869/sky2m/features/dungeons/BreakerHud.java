@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -24,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public final class BreakerHud {
     private static final String ITEM_ID = "DUNGEONBREAKER";
-    private static final Pattern CHARGES = Pattern.compile("Charges: (\\d+)/(\\d+)");
+    private static final RepoPattern CHARGES = RepoPattern.of("dungeons.BreakerHud.CHARGES", "Charges: (\\d+)/(\\d+)");
 
     private static int charges;
     /** 0 when there's no Dungeon Breaker in your inventory. */

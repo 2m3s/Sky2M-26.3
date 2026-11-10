@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -37,7 +39,7 @@ public final class LeapMenu {
     private static final int GAP = 24;
     /** The box of a dead teammate: dark red (NoammAddons' Tint Dead Players, CC0-1.0). */
     private static final int DEAD_TINT = 0xD0401010;
-    private static final Pattern LEAPED = Pattern.compile("^You have teleported to (\\w{1,16})!$");
+    private static final RepoPattern LEAPED = RepoPattern.of("dungeons.LeapMenu.LEAPED", "^You have teleported to (\\w{1,16})!$");
 
     private record Teammate(String name, DungeonClass dungeonClass, boolean alive) {}
 

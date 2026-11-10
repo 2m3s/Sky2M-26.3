@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
 import com.epic60869.sky2m.features.sbc.Flags;
@@ -27,7 +29,7 @@ import java.util.regex.Pattern;
  * fetches the summary from the Sky2M server (runSummaryPost / runSummaryGet) and opens the screen.
  */
 public final class RunSummary {
-    private static final Pattern ID = Pattern.compile("[a-z0-9]{4,12}");
+    private static final RepoPattern ID = RepoPattern.of("dungeons.RunSummary.ID", "[a-z0-9]{4,12}");
     /** Summaries fetched from the server this session, by id. */
     private static final Map<String, Remote> CACHE = new LinkedHashMap<>();
     /** Runs (by start time) already posted to S2C this session. */

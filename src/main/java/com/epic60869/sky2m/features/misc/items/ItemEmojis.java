@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MNopoFeatures;
 import com.epic60869.sky2m.custom.RepoItems;
@@ -57,8 +59,8 @@ import java.util.regex.Pattern;
  * lagged), with each emoji's picture next to its name.
  */
 public final class ItemEmojis {
-    private static final Pattern EMOJI = Pattern.compile(":([a-z0-9_]+):");
-    private static final Pattern NAME = Pattern.compile("[a-z0-9_]+");
+    private static final RepoPattern EMOJI = RepoPattern.of("misc.items.ItemEmojis.EMOJI", ":([a-z0-9_]+):");
+    private static final RepoPattern NAME = RepoPattern.of("misc.items.ItemEmojis.NAME", "[a-z0-9_]+");
     private static final int MAX_SUGGESTIONS = 50;
     /** Width of the picture drawn before each suggestion, plus its gap. */
     public static final int PREVIEW_WIDTH = 11;

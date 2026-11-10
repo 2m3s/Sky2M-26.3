@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat.kuudra;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -28,10 +30,10 @@ import java.util.regex.Pattern;
  * https://github.com/odtheking/Odin). Phases: 0 waiting, 1 supplies, 2 build, 3 fuel and stun, 4 Kuudra, 5 over.
  */
 final class KuudraState {
-    private static final Pattern TIER = Pattern.compile("Kuudra's Hollow \\(T(\\d)\\)");
-    private static final Pattern PROGRESS = Pattern.compile("PROGRESS: (\\d+)%");
-    private static final Pattern BUILD = Pattern.compile("Building Progress (\\d+)% \\((\\d+) Players? Helping\\)");
-    private static final Pattern PARTY_FRESH = Pattern.compile("^Party > (?:\\[[^]]*] )?(\\w{1,16}): FRESH$");
+    private static final RepoPattern TIER = RepoPattern.of("combat.kuudra.KuudraState.TIER", "Kuudra's Hollow \\(T(\\d)\\)");
+    private static final RepoPattern PROGRESS = RepoPattern.of("combat.kuudra.KuudraState.PROGRESS", "PROGRESS: (\\d+)%");
+    private static final RepoPattern BUILD = RepoPattern.of("combat.kuudra.KuudraState.BUILD", "Building Progress (\\d+)% \\((\\d+) Players? Helping\\)");
+    private static final RepoPattern PARTY_FRESH = RepoPattern.of("combat.kuudra.KuudraState.PARTY_FRESH", "^Party > (?:\\[[^]]*] )?(\\w{1,16}): FRESH$");
     private static final String OWN_FRESH = "Your Fresh Tools Perk bonus doubles your building speed for the next 10 seconds!";
     static final long FRESH_MS = 10_000L;
 

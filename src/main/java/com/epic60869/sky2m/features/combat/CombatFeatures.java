@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -26,14 +30,14 @@ import java.util.regex.Pattern;
 /** Arrow counter, legion display, cocoon alert and rare drop copy/animation. */
 public final class CombatFeatures {
     // Quiver patterns from SkyHanni's repo (MIT).
-    private static final Pattern ACTIVE_ARROW = Pattern.compile("Active Arrow: (?<type>.*) \\((?<amount>[\\d,]+)\\)");
-    private static final Pattern ARROWS_REMAINING = Pattern.compile("Arrows Remaining: (?<amount>[\\d,]+)");
-    private static final Pattern ARROW_ADDED = Pattern.compile("You've added (?<type>.*) x(?<amount>[\\d,]+) to your quiver!");
-    private static final Pattern ARROW_SELECT = Pattern.compile("You set your selected arrow type to (?<arrow>.*)!");
-    private static final Pattern ARROW_RAN_OUT = Pattern.compile("QUIVER! You have run out of (?<type>.*)s!");
+    private static final RepoPattern ACTIVE_ARROW = RepoPattern.of("combat.CombatFeatures.ACTIVE_ARROW", "Active Arrow: (?<type>.*) \\((?<amount>[\\d,]+)\\)");
+    private static final RepoPattern ARROWS_REMAINING = RepoPattern.of("combat.CombatFeatures.ARROWS_REMAINING", "Arrows Remaining: (?<amount>[\\d,]+)");
+    private static final RepoPattern ARROW_ADDED = RepoPattern.of("combat.CombatFeatures.ARROW_ADDED", "You've added (?<type>.*) x(?<amount>[\\d,]+) to your quiver!");
+    private static final RepoPattern ARROW_SELECT = RepoPattern.of("combat.CombatFeatures.ARROW_SELECT", "You set your selected arrow type to (?<arrow>.*)!");
+    private static final RepoPattern ARROW_RAN_OUT = RepoPattern.of("combat.CombatFeatures.ARROW_RAN_OUT", "QUIVER! You have run out of (?<type>.*)s!");
     /** Any name, apostrophes included ("Arachne's Keeper"), with or without "a"/"an"/"the" before it. */
-    private static final Pattern COCOON = Pattern.compile("CAUGHT! You cocooned (?:an? |the )?(?<name>.+?)!");
-    private static final Pattern COCOON_BOSS = Pattern.compile("^\\s*YOU COCOONED YOUR SLAYER BOSS");
+    private static final RepoPattern COCOON = RepoPattern.of("combat.CombatFeatures.COCOON", "CAUGHT! You cocooned (?:an? |the )?(?<name>.+?)!");
+    private static final RepoPattern COCOON_BOSS = RepoPattern.of("combat.CombatFeatures.COCOON_BOSS", "^\\s*YOU COCOONED YOUR SLAYER BOSS");
     /**
      * Every rare drop line: RARE / VERY RARE / CRAZY RARE / INSANE / PRAY TO RNGESUS / PET / RNG METER drops, the
      * Garden's RARE CROP lines, RARE REWARD and OUTSTANDING CATCH, with or without spaces before them.
@@ -43,9 +47,9 @@ public final class CombatFeatures {
             // The "(+241% ✯ Magic Find)" or "(+100 ☘ Farming Fortune)" after the item isn't part of its name.
             + "\\s+(?:\\((?<wrapped>[^()]+)\\)|(?<item>.+?))(?:\\s+x(?<amount>[\\d,]+))?(?:\\s+\\(\\+[\\d,.]+%? ?[^)]*\\))?\\s*$");
     /** "You dug out a Minos Relic!", "You found a Recombobulator 3000!": just the item. */
-    private static final Pattern DROP_WORDS = Pattern.compile("^(?:You (?:dug out|found|caught|got)(?: an?)? )?(?<item>.+?)!?$");
+    private static final RepoPattern DROP_WORDS = RepoPattern.of("combat.CombatFeatures.DROP_WORDS", "^(?:You (?:dug out|found|caught|got)(?: an?)? )?(?<item>.+?)!?$");
     /** "WOW! You found a Mythological Dye #123!" or "WOW! [MVP+] Name found a Pure Black Dye #4!". */
-    private static final Pattern DYE_DROP = Pattern.compile("^\\s*WOW! (?:\\[[^]]+] )?(?<name>\\w+) found an? (?<item>.+? Dye)(?: #[\\d,]+)?!?\\s*$");
+    private static final RepoPattern DYE_DROP = RepoPattern.of("combat.CombatFeatures.DYE_DROP", "^\\s*WOW! (?:\\[[^]]+] )?(?<name>\\w+) found an? (?<item>.+? Dye)(?: #[\\d,]+)?!?\\s*$");
     private static final double LEGION_RANGE = 30;
 
     private static String arrowType;
@@ -252,11 +256,11 @@ public final class CombatFeatures {
         }
     }
 
-    private static final Pattern AMOUNT_FIRST = Pattern.compile("^(?<amount>\\d+)\\s*x\\s+(?<item>.+)$", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern AMOUNT_FIRST = RepoPattern.of("combat.CombatFeatures.AMOUNT_FIRST", "^(?<amount>\\d+)\\s*x\\s+(?<item>.+)$", Pattern.CASE_INSENSITIVE);
     /** "[MVP+] Name has obtained X" / "Name found X" anywhere in the line: a player's drop announced to the lobby. */
-    private static final Pattern NAMED_DROP = Pattern.compile("(?:\\[[^\\]]+]\\s*)?\\b(?<name>[A-Za-z0-9_]{1,16})\\s+(?:has obtained|has found|has dropped|obtained|found|got|dropped)\\b");
+    private static final RepoPattern NAMED_DROP = RepoPattern.of("combat.CombatFeatures.NAMED_DROP", "(?:\\[[^\\]]+]\\s*)?\\b(?<name>[A-Za-z0-9_]{1,16})\\s+(?:has obtained|has found|has dropped|obtained|found|got|dropped)\\b");
     /** A Hypixel rank before a name ("[MVP++] Name"): only other players' drops are announced with one. */
-    private static final Pattern RANKED_NAME = Pattern.compile("\\[(?:VIP|MVP|YOUTUBE|ADMIN|GM|MOD|HELPER|OWNER|PIG|INNIT|MOJANG|EVENTS|BUILD TEAM|STAFF)[+]*]\\s*(?<name>[A-Za-z0-9_]{1,16})");
+    private static final RepoPattern RANKED_NAME = RepoPattern.of("combat.CombatFeatures.RANKED_NAME", "\\[(?:VIP|MVP|YOUTUBE|ADMIN|GM|MOD|HELPER|OWNER|PIG|INNIT|MOJANG|EVENTS|BUILD TEAM|STAFF)[+]*]\\s*(?<name>[A-Za-z0-9_]{1,16})");
 
     /**
      * Whether a rare drop line is someone else's (the Dungeon Hub announces other players' drops), so it isn't copied
@@ -285,7 +289,7 @@ public final class CombatFeatures {
     }
 
     /** Mobs worth a cocoon alert: slayer bosses and minibosses, elusive mobs and important bosses. */
-    private static final List<String> IMPORTANT_MOBS = List.of(
+    private static final List<String> IMPORTANT_MOBS = RepoTable.list("combat.CombatFeatures.IMPORTANT_MOBS", List.of(
         // Slayer bosses
         "Revenant Horror", "Atoned Horror", "Tarantula Broodfather", "Conjoined Brood", "Sven Packmaster",
         "Voidgloom Seraph", "Inferno Demonlord", "Riftstalker Bloodfiend",
@@ -305,7 +309,7 @@ public final class CombatFeatures {
         "Fire Mage", "Elusive",
         // Important bosses
         "Magma Boss", "Arachne", "Bladesoul", "Mage Outlaw", "Barbarian Duke", "Ashfang", "Endstone Protector",
-        "Dragon", "Bal", "Kuudra", "Leech Supreme", "Bacte", "Headless Horseman", "Dreadlord");
+        "Dragon", "Bal", "Kuudra", "Leech Supreme", "Bacte", "Headless Horseman", "Dreadlord"));
 
     private static boolean important(String mob) {
         String lower = mob.toLowerCase(Locale.ROOT);

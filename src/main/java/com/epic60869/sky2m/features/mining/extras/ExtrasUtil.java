@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining.extras;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.sim.util.TabText;
@@ -15,8 +17,8 @@ import java.util.regex.Pattern;
 /** Shared helpers of the Glacite Mineshaft and Fossil Excavator features: loot lines, prices and the tab list. */
 final class ExtrasUtil {
     /** A loot line without colours: "☠ Fine Onyx Gemstone x2", "Tusk Fossil", "Enchanted Book (Ice Cold I)". */
-    private static final Pattern LOOT = Pattern.compile("^(?<name>.+?)(?: x(?<amount>[\\d,]+))?$");
-    static final Pattern DIVIDER = Pattern.compile("^\\s*▬{20,}\\s*$");
+    private static final RepoPattern LOOT = RepoPattern.of("mining.extras.ExtrasUtil.LOOT", "^(?<name>.+?)(?: x(?<amount>[\\d,]+))?$");
+    static final RepoPattern DIVIDER = RepoPattern.of("mining.extras.ExtrasUtil.DIVIDER", "^\\s*▬{20,}\\s*$");
 
     record Loot(String name, int amount) {}
 

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.items.Sky2MStorageSearch;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -36,9 +38,9 @@ import java.util.regex.Pattern;
  * ("Stored: 1,234/20k") and kept up to date with the "[Sacks]" messages' hovers. Saved per profile.
  */
 public final class SackTracker {
-    private static final Pattern STORED = Pattern.compile("^Stored: ([0-9,]+)/.*$");
+    private static final RepoPattern STORED = RepoPattern.of("misc.items.SackTracker.STORED", "^Stored: ([0-9,]+)/.*$");
     /** One line of a "[Sacks]" hover: "+64 Gold Ingot (Mining Sack)". */
-    private static final Pattern SACK_CHANGE = Pattern.compile("^ *([+-])([0-9,]+) (.+?) [(].*[)] *$");
+    private static final RepoPattern SACK_CHANGE = RepoPattern.of("misc.items.SackTracker.SACK_CHANGE", "^ *([+-])([0-9,]+) (.+?) [(].*[)] *$");
     private static final Gson GSON = new Gson();
 
     /** Profile id -> lowercase item name -> amount. */

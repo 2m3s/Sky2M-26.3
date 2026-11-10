@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -29,13 +31,13 @@ import java.util.regex.Pattern;
  * Leave Class In Chat (its own switch, on by default) adds that class to Hypixel's leave line itself while in a dungeon.
  */
 public final class AutoRequeue {
-    private static final Pattern MEMBER_GONE = Pattern.compile("(?:has left the party|has been removed from the party|was removed from your party because they disconnected|has disconnected|has been kicked from the party|You left the party|The party was disbanded)");
+    private static final RepoPattern MEMBER_GONE = RepoPattern.of("dungeons.AutoRequeue.MEMBER_GONE", "(?:has left the party|has been removed from the party|was removed from your party because they disconnected|has disconnected|has been kicked from the party|You left the party|The party was disbanded)");
     private static long requeueAt;
     private static boolean skipNext;
     /** Someone left the party since this run started, so the run's end must not requeue. */
     private static boolean memberLeft;
     /** "[MVP+] Name has left the party." and the like: the name of who's gone. */
-    private static final Pattern GONE_NAME = Pattern.compile("^(?:\\[[^\\]]+] )?(?<name>[A-Za-z0-9_]{1,16}) (?:has|was) ");
+    private static final RepoPattern GONE_NAME = RepoPattern.of("dungeons.AutoRequeue.GONE_NAME", "^(?:\\[[^\\]]+] )?(?<name>[A-Za-z0-9_]{1,16}) (?:has|was) ");
     /** The last class seen in the dungeon tab for each teammate, kept after they leave the tab list. */
     private static final Map<String, DungeonClass> classes = new HashMap<>();
     private static int colourTicks;

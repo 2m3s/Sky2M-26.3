@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -18,10 +20,10 @@ import com.epic60869.sky2m.config.Sky2MConfig;
  */
 public final class Sky2MChatCompactor {
     private static final int WINDOW_TICKS = 100; // 5 seconds at Minecraft's 20 TPS
-    private static final Pattern COUNT_SUFFIX =
-        Pattern.compile("\\s*\\u00a7?7?\\s*\\(x(\\d+)\\)$");
+    private static final RepoPattern COUNT_SUFFIX =
+        RepoPattern.of("chat.Sky2MChatCompactor.COUNT_SUFFIX", "\\s*\\u00a7?7?\\s*\\(x(\\d+)\\)$");
     /** Hypixel's decorative lines (▬▬▬, ----, blank padding): never compacted, they belong to the message around them. */
-    private static final Pattern SEPARATOR = Pattern.compile("^[\\s▬\\-=_~*⏤━─]*$");
+    private static final RepoPattern SEPARATOR = RepoPattern.of("chat.Sky2MChatCompactor.SEPARATOR", "^[\\s▬\\-=_~*⏤━─]*$");
 
     private static String lastKey;
     private static long lastAt;

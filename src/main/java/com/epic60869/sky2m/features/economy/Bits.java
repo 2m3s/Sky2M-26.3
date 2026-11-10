@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.economy;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -19,8 +21,8 @@ import java.util.regex.Pattern;
  * coins each bit is worth for an item and how many Booster Cookies your bits make.
  */
 final class Bits {
-    private static final Pattern NUMBER = Pattern.compile("[\\d,]+");
-    private static final Pattern COST = Pattern.compile("^([\\d,]+) Bits$");
+    private static final RepoPattern NUMBER = RepoPattern.of("economy.Bits.NUMBER", "[\\d,]+");
+    private static final RepoPattern COST = RepoPattern.of("economy.Bits.COST", "^([\\d,]+) Bits$");
     private static final double COOKIE_BITS = 4800;
 
     private static long last = -1;

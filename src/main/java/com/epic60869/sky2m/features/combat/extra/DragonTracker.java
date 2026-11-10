@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat.extra;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
@@ -33,17 +35,16 @@ import java.util.regex.Pattern;
  * {@code sky2m/dragons.json}.
  */
 public final class DragonTracker {
-    private static final Pattern SPAWN = Pattern.compile("The (?<d>Protector|Old|Unstable|Young|Strong|Wise|Superior) Dragon has spawned!");
-    private static final Pattern EYE_PLACED = Pattern.compile("You placed a Summoning Eye!");
-    private static final Pattern EYE_REMOVED = Pattern.compile("You recovered a Summoning Eye!");
-    private static final Pattern DOWN = Pattern.compile("^(?<d>[A-Z]+) DRAGON DOWN!$");
-    private static final Pattern POSITION = Pattern.compile("Your Damage: (?<dmg>[\\d.,]+) (?:\\(NEW RECORD!\\) )?\\(Position #(?<pos>\\d+)\\)");
-    private static final Pattern DAMAGER = Pattern.compile("^(?<pos>\\d+)(?:st|nd|rd|th) Damager - .* - (?<dmg>[\\d.,]+)$");
-    private static final Pattern SCORE_DAMAGE = Pattern.compile("Your Damage: (?<dmg>[\\d.,]+[kKmMbB]?)");
-    private static final Pattern TAB_DAMAGE = Pattern.compile("\\s*(?<name>[^:]+): (?<dmg>[\\d.]+[kKmM]?)❤?");
+    private static final RepoPattern SPAWN = RepoPattern.of("combat.extra.DragonTracker.SPAWN", "The (?<d>Protector|Old|Unstable|Young|Strong|Wise|Superior) Dragon has spawned!");
+    private static final RepoPattern EYE_PLACED = RepoPattern.of("combat.extra.DragonTracker.EYE_PLACED", "You placed a Summoning Eye!");
+    private static final RepoPattern EYE_REMOVED = RepoPattern.of("combat.extra.DragonTracker.EYE_REMOVED", "You recovered a Summoning Eye!");
+    private static final RepoPattern DOWN = RepoPattern.of("combat.extra.DragonTracker.DOWN", "^(?<d>[A-Z]+) DRAGON DOWN!$");
+    private static final RepoPattern POSITION = RepoPattern.of("combat.extra.DragonTracker.POSITION", "Your Damage: (?<dmg>[\\d.,]+) (?:\\(NEW RECORD!\\) )?\\(Position #(?<pos>\\d+)\\)");
+    private static final RepoPattern DAMAGER = RepoPattern.of("combat.extra.DragonTracker.DAMAGER", "^(?<pos>\\d+)(?:st|nd|rd|th) Damager - .* - (?<dmg>[\\d.,]+)$");
+    private static final RepoPattern SCORE_DAMAGE = RepoPattern.of("combat.extra.DragonTracker.SCORE_DAMAGE", "Your Damage: (?<dmg>[\\d.,]+[kKmMbB]?)");
+    private static final RepoPattern TAB_DAMAGE = RepoPattern.of("combat.extra.DragonTracker.TAB_DAMAGE", "\\s*(?<name>[^:]+): (?<dmg>[\\d.]+[kKmM]?)❤?");
     /** SkyHanni-REPO's DragonProfitTrackerItems, plus the dragon armour sets (matched by name). */
-    private static final Pattern LOOT = Pattern.compile("(?:OLD|PROTECTOR|YOUNG|STRONG|WISE|SUPERIOR|UNSTABLE)_DRAGON_(?:HELMET|CHESTPLATE|LEGGINGS|BOOTS)"
-        + "|DRAGON_HORN|DRAGON_CLAW|DRAGON_SCALE|DRAGON_NEST_TRAVEL_SCROLL|ASPECT_OF_THE_DRAGON|ATTRIBUTE_SHARD_DRAGON_ESSENCE.*|DYE_PEARLESCENT|ENDER_DRAGON.*");
+    private static final RepoPattern LOOT = RepoPattern.of("combat.extra.DragonTracker.LOOT", "(?:OLD|PROTECTOR|YOUNG|STRONG|WISE|SUPERIOR|UNSTABLE)_DRAGON_(?:HELMET|CHESTPLATE|LEGGINGS|BOOTS)|DRAGON_HORN|DRAGON_CLAW|DRAGON_SCALE|DRAGON_NEST_TRAVEL_SCROLL|ASPECT_OF_THE_DRAGON|ATTRIBUTE_SHARD_DRAGON_ESSENCE.*|DYE_PEARLESCENT|ENDER_DRAGON.*");
 
     private static final class Data {
         Map<String, Long> kills = new LinkedHashMap<>();

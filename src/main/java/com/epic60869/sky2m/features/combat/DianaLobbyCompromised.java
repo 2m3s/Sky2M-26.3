@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -33,7 +35,7 @@ import java.util.regex.Pattern;
  */
 public final class DianaLobbyCompromised {
     private static final String MESSAGE = "Lobby compromised!";
-    private static final Pattern PLAYER_COUNT = Pattern.compile("Players \\((\\d+)\\)");
+    private static final RepoPattern PLAYER_COUNT = RepoPattern.of("combat.DianaLobbyCompromised.PLAYER_COUNT", "Players \\((\\d+)\\)");
     /** Each party member's whole-word pattern, compiled once instead of on every check. */
     private static final Map<String, Pattern> MEMBER_PATTERNS = new HashMap<>();
     private static final String RANK = "(?:\\[[^]]+] )?";
@@ -41,7 +43,7 @@ public final class DianaLobbyCompromised {
     private static final Pattern JOINED = Pattern.compile("^" + RANK + "(\\w{1,16}) joined the party\\.$");
     private static final Pattern LEFT = Pattern.compile("^" + RANK + "(\\w{1,16}) (?:has left|has been removed from) the party\\.$");
     private static final Pattern JOINED_OTHER = Pattern.compile("^You have joined " + RANK + "(\\w{1,16})'s? party!$");
-    private static final Pattern LIST_LINE = Pattern.compile("^Party (?:Leader|Moderators|Members): (.+)$");
+    private static final RepoPattern LIST_LINE = RepoPattern.of("combat.DianaLobbyCompromised.LIST_LINE", "^Party (?:Leader|Moderators|Members): (.+)$");
     private static final long STABLE_MS = 2_000L;
     private static final long FRIENDLY_GRACE_MS = 15_000L;
 

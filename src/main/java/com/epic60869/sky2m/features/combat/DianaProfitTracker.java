@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.combat;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
@@ -50,13 +54,13 @@ import java.util.regex.Pattern;
  */
 public final class DianaProfitTracker {
     /** SkyHanni-REPO's Diana drops. */
-    private static final List<String> DROPS = List.of("ANCIENT_CLAW", "ANTIQUE_REMEDIES", "CROCHET_TIGER_PLUSHIE",
+    private static final List<String> DROPS = RepoTable.list("combat.DianaProfitTracker.DROPS", List.of("ANCIENT_CLAW", "ANTIQUE_REMEDIES", "CROCHET_TIGER_PLUSHIE",
         "CROWN_OF_GREED", "DAEDALUS_STICK", "DWARF_TURTLE_SHELMET", "ENCHANTED_ANCIENT_CLAW", "ENCHANTED_GOLD",
         "ENCHANTED_IRON", "GRIFFIN_FEATHER", "MINOS_RELIC", "ULTIMATE_CHIMERA;1", "WASHED_UP_SOUVENIR",
         "HILT_OF_REVELATIONS", "CRETAN_URN", "MANTI_CORE", "SHIMMERING_WOOL", "BRAIN_FOOD", "FABLED_STINGER",
         "DYE_MYTHOLOGICAL", "MYTHOS_FRAGMENT", "ATTRIBUTE_SHARD_BIG_GAME_HUNTER;1", "ATTRIBUTE_SHARD_KING_OF_GREED;1",
         "ATTRIBUTE_SHARD_MYTHOLOGICAL_FORTUNE;1", "ATTRIBUTE_SHARD_MYTHOLOGICAL_RESISTANCE;1",
-        "ATTRIBUTE_SHARD_TREE_LURKER;1", "BRAIDED_GRIFFIN_FEATHER", "FATEFUL_STINGER", "MYTH_THE_FISH");
+        "ATTRIBUTE_SHARD_TREE_LURKER;1", "BRAIDED_GRIFFIN_FEATHER", "FATEFUL_STINGER", "MYTH_THE_FISH"));
     /** Every id a listed drop can have here (NEU's "ULTIMATE_CHIMERA;1" is the book ENCHANTMENT_ULTIMATE_CHIMERA_1). */
     private static final Set<String> DROP_IDS = new HashSet<>();
 
@@ -77,8 +81,8 @@ public final class DianaProfitTracker {
         return id != null && DROP_IDS.contains(id);
     }
 
-    private static final Pattern DUG_BURROW =Pattern.compile("^(?:You dug out a Griffin Burrow!|You finished the Griffin burrow chain!).*");
-    private static final Pattern DUG_COINS = Pattern.compile("^Wow! You dug out ([\\d,.]+) coins!");
+    private static final RepoPattern DUG_BURROW =RepoPattern.of("combat.DianaProfitTracker.DUG_BURROW", "^(?:You dug out a Griffin Burrow!|You finished the Griffin burrow chain!).*");
+    private static final RepoPattern DUG_COINS = RepoPattern.of("combat.DianaProfitTracker.DUG_COINS", "^Wow! You dug out ([\\d,.]+) coins!");
     /** Idle for longer than this and the clock stops. */
     private static final long ACTIVE_WINDOW_MS = 90_000L;
 

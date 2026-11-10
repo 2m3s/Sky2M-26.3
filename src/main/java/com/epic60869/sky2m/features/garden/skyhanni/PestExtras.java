@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden.skyhanni;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -32,9 +34,9 @@ import java.util.regex.Pattern;
  */
 public final class PestExtras {
     // "You received 7x Enchanted Potato for killing a Locust!"
-    private static final Pattern PEST_DEATH = Pattern.compile("^You received (?<amount>[\\d,]+)x (?<item>.+) for killing an? (?<pest>.+)!$");
+    private static final RepoPattern PEST_DEATH = RepoPattern.of("garden.skyhanni.PestExtras.PEST_DEATH", "^You received (?<amount>[\\d,]+)x (?<item>.+) for killing an? (?<pest>.+)!$");
     // "RARE DROP! Enchanted Potato x2 (+250 ...)"
-    private static final Pattern RARE_DROP = Pattern.compile("(?:RARE|PET) DROP! (?<item>.+?)(?: x(?<amount>[\\d,]+))? \\((?:\\+[\\d.,]+|Cocoaleech)");
+    private static final RepoPattern RARE_DROP = RepoPattern.of("garden.skyhanni.PestExtras.RARE_DROP", "(?:RARE|PET) DROP! (?<item>.+?)(?: x(?<amount>[\\d,]+))? \\((?:\\+[\\d.,]+|Cocoaleech)");
 
     private static final Map<String, Long> DROPS = new LinkedHashMap<>();
     private static int kills;

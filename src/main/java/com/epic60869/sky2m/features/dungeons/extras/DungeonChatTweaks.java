@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons.extras;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -21,9 +23,9 @@ import java.util.regex.Pattern;
  * (BonusScoreMessage, https://github.com/WhatYouThing/NoFrills, BSD-3-Clause).
  */
 final class DungeonChatTweaks {
-    private static final Pattern SOLO_CLASS = Pattern.compile("^Your (?:Healer|Mage|Berserk|Archer|Tank) stats are doubled because you are the only player using this class!$");
-    private static final Pattern SOLO_STATS = Pattern.compile("^\\[(?:Healer|Mage|Berserk|Archer|Tank)].*");
-    private static final Pattern MILESTONE = Pattern.compile(".*Milestone .: You have (?:tanked and )?(?:dealt|healed) *.*so far! .*");
+    private static final RepoPattern SOLO_CLASS = RepoPattern.of("dungeons.extras.DungeonChatTweaks.SOLO_CLASS", "^Your (?:Healer|Mage|Berserk|Archer|Tank) stats are doubled because you are the only player using this class!$");
+    private static final RepoPattern SOLO_STATS = RepoPattern.of("dungeons.extras.DungeonChatTweaks.SOLO_STATS", "^\\[(?:Healer|Mage|Berserk|Archer|Tank)].*");
+    private static final RepoPattern MILESTONE = RepoPattern.of("dungeons.extras.DungeonChatTweaks.MILESTONE", ".*Milestone .: You have (?:tanked and )?(?:dealt|healed) *.*so far! .*");
     private static final String PRINCE = "A Prince falls. +1 Bonus Score";
     private static final String BAT = "A Bat has been slain. +1 Bonus Score";
 

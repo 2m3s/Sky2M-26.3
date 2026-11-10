@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.items.Sky2MStorageSearch;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
@@ -71,24 +73,24 @@ public final class PestFinder {
     };
 
     // " ⏣ The Garden ൠ x1"
-    private static final Pattern PESTS_IN_SCOREBOARD = Pattern.compile("^\\S The Garden \\S x(?<pests>\\d+)");
+    private static final RepoPattern PESTS_IN_SCOREBOARD = RepoPattern.of("garden.PestFinder.PESTS_IN_SCOREBOARD", "^\\S The Garden \\S x(?<pests>\\d+)");
     // " ⏣ Plot - 22a" / " ⏣ The Garden" in green: no pests anywhere.
-    private static final Pattern NO_PESTS_IN_SCOREBOARD = Pattern.compile("^\\S (?:The Garden|Plot - .+)$");
+    private static final RepoPattern NO_PESTS_IN_SCOREBOARD = RepoPattern.of("garden.PestFinder.NO_PESTS_IN_SCOREBOARD", "^\\S (?:The Garden|Plot - .+)$");
     // "   Plot - 4 ൠ x1"
-    private static final Pattern PESTS_IN_PLOT_SCOREBOARD = Pattern.compile("\\s*Plot - (?<plot>.+) \\S x(?<pests>\\d+)");
+    private static final RepoPattern PESTS_IN_PLOT_SCOREBOARD = RepoPattern.of("garden.PestFinder.PESTS_IN_PLOT_SCOREBOARD", "\\s*Plot - (?<plot>.+) \\S x(?<pests>\\d+)");
     // " Plot - 3"
-    private static final Pattern NO_PESTS_IN_PLOT_SCOREBOARD = Pattern.compile("\\s*Plot - (?<plot>.{1,3})");
+    private static final RepoPattern NO_PESTS_IN_PLOT_SCOREBOARD = RepoPattern.of("garden.PestFinder.NO_PESTS_IN_PLOT_SCOREBOARD", "\\s*Plot - (?<plot>.{1,3})");
     // "ൠ This plot has 5 ൠ Pests!"
-    private static final Pattern PEST_INVENTORY = Pattern.compile("\\S This plot has (?<amount>\\d+) \\S Pests?!");
+    private static final RepoPattern PEST_INVENTORY = RepoPattern.of("garden.PestFinder.PEST_INVENTORY", "\\S This plot has (?<amount>\\d+) \\S Pests?!");
     // " Plots: 4, 12, 13, 18, 20"
-    private static final Pattern INFESTED_PLOTS_TAB_LIST = Pattern.compile("\\s*Plots: (?<plots>.*)");
+    private static final RepoPattern INFESTED_PLOTS_TAB_LIST = RepoPattern.of("garden.PestFinder.INFESTED_PLOTS_TAB_LIST", "\\s*Plots: (?<plots>.*)");
     // "You received 7x Enchanted Potato for killing a Locust!"
-    private static final Pattern PEST_DEATH_CHAT = Pattern.compile("You received (?<amount>[0-9]*)x (?<item>.*) for killing an? (?<pest>.*)!");
+    private static final RepoPattern PEST_DEATH_CHAT = RepoPattern.of("garden.PestFinder.PEST_DEATH_CHAT", "You received (?<amount>[0-9]*)x (?<item>.*) for killing an? (?<pest>.*)!");
     private static final String NO_PESTS_CHAT = "There are not any Pests on your Garden right now! Keep farming!";
-    private static final Pattern PLOT_NAME = Pattern.compile("Plot - (?<name>.*)");
-    private static final Pattern UNCLEANED_PLOT = Pattern.compile("Cleanup: .* Completed");
-    private static final Pattern UNLOCK_PLOT_CHAT = Pattern.compile("Unlocked Garden Plot - (?<plot>.*)!");
-    private static final Pattern CLEAN_PLOT_CHAT = Pattern.compile("Plot - (?<plot>.*) is now clean!");
+    private static final RepoPattern PLOT_NAME = RepoPattern.of("garden.PestFinder.PLOT_NAME", "Plot - (?<name>.*)");
+    private static final RepoPattern UNCLEANED_PLOT = RepoPattern.of("garden.PestFinder.UNCLEANED_PLOT", "Cleanup: .* Completed");
+    private static final RepoPattern UNLOCK_PLOT_CHAT = RepoPattern.of("garden.PestFinder.UNLOCK_PLOT_CHAT", "Unlocked Garden Plot - (?<plot>.*)!");
+    private static final RepoPattern CLEAN_PLOT_CHAT = RepoPattern.of("garden.PestFinder.CLEAN_PLOT_CHAT", "Plot - (?<plot>.*) is now clean!");
 
     /** A plot's saved state (SkyHanni's GardenPlotApi.PlotData). */
     static final class PlotData {
@@ -543,8 +545,8 @@ public final class PestFinder {
     }
 
     // Compiled once: these ran for every sidebar line on every check.
-    private static final Pattern SUPPLEMENTARY = Pattern.compile("[\\x{10000}-\\x{10FFFF}]");
-    private static final Pattern LOCATION_COLOUR = Pattern.compile("§(.)(?:The Garden|Plot)");
+    private static final RepoPattern SUPPLEMENTARY = RepoPattern.of("garden.PestFinder.SUPPLEMENTARY", "[\\x{10000}-\\x{10FFFF}]");
+    private static final RepoPattern LOCATION_COLOUR = RepoPattern.of("garden.PestFinder.LOCATION_COLOUR", "§(.)(?:The Garden|Plot)");
 
     /** Whether "The Garden" / "Plot" is green: Hypixel shows it red while there are pests in the Garden. */
     private static boolean locationIsGreen(Component component) {

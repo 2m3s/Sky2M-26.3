@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.itemlist;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -61,7 +63,7 @@ public final class ItemListData {
     public static final List<String> RARITIES = List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC",
         "DIVINE", "SPECIAL", "VERY SPECIAL", "ULTIMATE", "ADMIN");
     /** The rarity line at the end of the lore: "LEGENDARY DUNGEON HELMET", "a MYTHIC SWORD a" (obfuscated edges). */
-    private static final Pattern RARITY_LINE = Pattern.compile("\\b(VERY SPECIAL|UNCOMMON|COMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|SPECIAL|ULTIMATE|ADMIN)\\b(.*)");
+    private static final RepoPattern RARITY_LINE = RepoPattern.of("itemlist.ItemListData.RARITY_LINE", "\\b(VERY SPECIAL|UNCOMMON|COMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|SPECIAL|ULTIMATE|ADMIN)\\b(.*)");
 
     /**
      * One entry of the list. Names and lore keep their § colour codes; {@code search} is the lower-case plain text.
@@ -340,8 +342,8 @@ public final class ItemListData {
         return new Data(Collections.unmodifiableList(entries), byId, recipes, usages, craftText);
     }
 
-    private static final Pattern PET_ID = Pattern.compile("(.+);(\\d)");
-    private static final Pattern PET_PLACEHOLDER = Pattern.compile("\\{([A-Z_]+|\\d+)}");
+    private static final RepoPattern PET_ID = RepoPattern.of("itemlist.ItemListData.PET_ID", "(.+);(\\d)");
+    private static final RepoPattern PET_PLACEHOLDER = RepoPattern.of("itemlist.ItemListData.PET_PLACEHOLDER", "\\{([A-Z_]+|\\d+)}");
 
     /**
      * A pet as Hypixel shows it at max level: the repo writes its stats as "{HEALTH}" and ability numbers as "{0}",

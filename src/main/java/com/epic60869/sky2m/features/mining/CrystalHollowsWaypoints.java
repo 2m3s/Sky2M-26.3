@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -81,7 +83,7 @@ public final class CrystalHollowsWaypoints {
     }
 
     /** Skyblocker's coordinate pattern: three numbers with optional x/y/z and separators. */
-    private static final Pattern COORDS = Pattern.compile("\\Dx?(\\d{3})(?=[, ]),? ?y?(\\d{2,3})(?=[, ]),? ?z?(\\d{3})\\D?(?!\\d)");
+    private static final RepoPattern COORDS = RepoPattern.of("mining.CrystalHollowsWaypoints.COORDS", "\\Dx?(\\d{3})(?=[, ]),? ?y?(\\d{2,3})(?=[, ]),? ?z?(\\d{3})\\D?(?!\\d)");
     private static final Map<Place, BlockPos> ACTIVE = new LinkedHashMap<>();
     private static final java.util.Set<Place> VERIFIED = java.util.EnumSet.noneOf(Place.class);
     /** Places already posted in party chat this lobby, so each is shared at most once. */

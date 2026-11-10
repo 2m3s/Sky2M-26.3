@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -32,11 +34,10 @@ import java.util.regex.Pattern;
  * message is hidden, and the same counts aren't reported twice.
  */
 public final class StashCompact {
-    private static final Pattern MATERIAL_COUNT = Pattern.compile("§f *§7You have §.(?<count>[\\d,]+) (?:§.)+(?<type>item|material)s? stashed away!.*");
-    private static final Pattern DIFFERING_COUNT = Pattern.compile("§f *§8\\(This totals (?<count>[\\d,]+) types? of (?<type>item|material)s? stashed!\\).*");
-    private static final Pattern PICKUP = Pattern.compile("§f *§.§l>>> §.§lCLICK HERE§. to pick (?:them|it) up! §.§l<<<.*");
-    private static final Pattern GENERIC_ADDED = Pattern.compile(
-        "§eOne or more (?:item|material)s? didn't fit in your inventory and were added to your (?:item|material) stash! §6Click here §eto pick them up!");
+    private static final RepoPattern MATERIAL_COUNT = RepoPattern.of("misc.chat.StashCompact.MATERIAL_COUNT", "§f *§7You have §.(?<count>[\\d,]+) (?:§.)+(?<type>item|material)s? stashed away!.*");
+    private static final RepoPattern DIFFERING_COUNT = RepoPattern.of("misc.chat.StashCompact.DIFFERING_COUNT", "§f *§8\\(This totals (?<count>[\\d,]+) types? of (?<type>item|material)s? stashed!\\).*");
+    private static final RepoPattern PICKUP = RepoPattern.of("misc.chat.StashCompact.PICKUP", "§f *§.§l>>> §.§lCLICK HERE§. to pick (?:them|it) up! §.§l<<<.*");
+    private static final RepoPattern GENERIC_ADDED = RepoPattern.of("misc.chat.StashCompact.GENERIC_ADDED", "§eOne or more (?:item|material)s? didn't fit in your inventory and were added to your (?:item|material) stash! §6Click here §eto pick them up!");
 
     private enum StashType {
         ITEM("item", "§e", "§6"), MATERIAL("material", "§b", "§3");

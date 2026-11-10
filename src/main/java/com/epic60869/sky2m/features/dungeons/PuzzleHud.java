@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
@@ -67,11 +69,11 @@ public final class PuzzleHud {
         }
     }
 
-    private static final Pattern COUNT = Pattern.compile("Puzzles: \\((\\d+)\\)");
-    private static final Pattern TAB_LINE = Pattern.compile("^ ?(.+?): \\[([✦✔✖])] ?(?:\\(([^)]*)\\))?$");
+    private static final RepoPattern COUNT = RepoPattern.of("dungeons.PuzzleHud.COUNT", "Puzzles: \\((\\d+)\\)");
+    private static final RepoPattern TAB_LINE = RepoPattern.of("dungeons.PuzzleHud.TAB_LINE", "^ ?(.+?): \\[([✦✔✖])] ?(?:\\(([^)]*)\\))?$");
     /** An emblem like the fish in "PUZZLE SOLVED! 🐟 2m3s tied Tic Tac Toe! Good job!" comes before the name. */
-    private static final Pattern CHAT_LINE = Pattern.compile("^PUZZLE (SOLVED|FAIL)! (?:\\[[^]]*] ?)?(?:[^\\w\\s\\[]+ )?(\\w{1,16}) (.+)$");
-    private static final Pattern QUIZ_FAIL = Pattern.compile("^\\[STATUE] Oruo the Omniscient: (?:\\[[^]]*] ?)?(?:[^\\w\\s\\[]+ )?(\\w{1,16}) chose the wrong answer!.*$");
+    private static final RepoPattern CHAT_LINE = RepoPattern.of("dungeons.PuzzleHud.CHAT_LINE", "^PUZZLE (SOLVED|FAIL)! (?:\\[[^]]*] ?)?(?:[^\\w\\s\\[]+ )?(\\w{1,16}) (.+)$");
+    private static final RepoPattern QUIZ_FAIL = RepoPattern.of("dungeons.PuzzleHud.QUIZ_FAIL", "^\\[STATUE] Oruo the Omniscient: (?:\\[[^]]*] ?)?(?:[^\\w\\s\\[]+ )?(\\w{1,16}) chose the wrong answer!.*$");
     private static final long PENDING_MS = 30_000;
 
     private static List<Entry> puzzles = List.of();

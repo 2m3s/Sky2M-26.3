@@ -4,6 +4,8 @@
 // features/impl/boss/TerminalSounds.kt.
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -90,9 +92,9 @@ public final class F7Extras {
     };
 
     private static final int CRYSTAL_RESPAWN_TICKS = 34, RELIC_SPAWN_TICKS = 61;
-    private static final Pattern CRYSTAL_PICKUP = Pattern.compile("^(\\w{1,16}) picked up an Energy Crystal!$");
-    private static final Pattern CRYSTALS_ACTIVE = Pattern.compile("^(\\d)/(\\d) Energy Crystals are now active!$");
-    private static final Pattern ENRAGED = Pattern.compile("^⚠ (\\w+) is enraged! ⚠$");
+    private static final RepoPattern CRYSTAL_PICKUP = RepoPattern.of("dungeons.F7Extras.CRYSTAL_PICKUP", "^(\\w{1,16}) picked up an Energy Crystal!$");
+    private static final RepoPattern CRYSTALS_ACTIVE = RepoPattern.of("dungeons.F7Extras.CRYSTALS_ACTIVE", "^(\\d)/(\\d) Energy Crystals are now active!$");
+    private static final RepoPattern ENRAGED = RepoPattern.of("dungeons.F7Extras.ENRAGED", "^⚠ (\\w+) is enraged! ⚠$");
 
     private static long serverTicks;
     private static long crystalSpawnAt = -1, crystalPickupMs = -1;

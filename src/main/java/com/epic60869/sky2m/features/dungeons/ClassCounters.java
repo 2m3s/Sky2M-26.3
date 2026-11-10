@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.combat.CombatFeatures;
@@ -27,7 +29,7 @@ import java.util.regex.Pattern;
  * take any off). Both start over when the run starts.
  */
 public final class ClassCounters {
-    private static final Pattern HEALTH = Pattern.compile("([\\d,]+)/([\\d,]+)❤");
+    private static final RepoPattern HEALTH = RepoPattern.of("dungeons.ClassCounters.HEALTH", "([\\d,]+)/([\\d,]+)❤");
 
     private static int arrows;
     private static long damage;

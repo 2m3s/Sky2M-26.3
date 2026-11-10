@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden.skyhanni;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -42,11 +44,11 @@ import java.util.regex.Pattern;
  * A contest is running while the sidebar shows its "Jacob's Contest" line with the crop under it.
  */
 public final class JacobContest {
-    private static final Pattern YOUR_CONTESTS = Pattern.compile("(?:\\(\\d+/\\d+\\) )?Your Contests");
-    private static final Pattern CONTEST_DATE = Pattern.compile("(?<month>(?:Early |Late )?(?:Spring|Summer|Autumn|Winter)) (?<day>\\d+)(?:st|nd|rd|th), Year (?<year>\\d+)");
-    private static final Pattern CONTEST_CROP = Pattern.compile("^(?<crop>.+) Contest$");
-    private static final Pattern BRACKET = Pattern.compile("(?<bracket>BRONZE|SILVER|GOLD|PLATINUM|DIAMOND) \\(Top \\d{1,2}%\\): (?<amount>[\\d,]+)");
-    private static final Pattern SIDEBAR_CROP = Pattern.compile("^\\s*\\S?\\s*(?<crop>[A-Za-z ]+?)\\s+(?<time>(?:\\d+[hms])+)\\s*$");
+    private static final RepoPattern YOUR_CONTESTS = RepoPattern.of("garden.skyhanni.JacobContest.YOUR_CONTESTS", "(?:\\(\\d+/\\d+\\) )?Your Contests");
+    private static final RepoPattern CONTEST_DATE = RepoPattern.of("garden.skyhanni.JacobContest.CONTEST_DATE", "(?<month>(?:Early |Late )?(?:Spring|Summer|Autumn|Winter)) (?<day>\\d+)(?:st|nd|rd|th), Year (?<year>\\d+)");
+    private static final RepoPattern CONTEST_CROP = RepoPattern.of("garden.skyhanni.JacobContest.CONTEST_CROP", "^(?<crop>.+) Contest$");
+    private static final RepoPattern BRACKET = RepoPattern.of("garden.skyhanni.JacobContest.BRACKET", "(?<bracket>BRONZE|SILVER|GOLD|PLATINUM|DIAMOND) \\(Top \\d{1,2}%\\): (?<amount>[\\d,]+)");
+    private static final RepoPattern SIDEBAR_CROP = RepoPattern.of("garden.skyhanni.JacobContest.SIDEBAR_CROP", "^\\s*\\S?\\s*(?<crop>[A-Za-z ]+?)\\s+(?<time>(?:\\d+[hms])+)\\s*$");
     private static final String[] MONTHS = {"Early Spring", "Spring", "Late Spring", "Early Summer", "Summer", "Late Summer",
         "Early Autumn", "Autumn", "Late Autumn", "Early Winter", "Winter", "Late Winter"};
     private static final String[] BRACKET_NAMES = {"DIAMOND", "PLATINUM", "GOLD", "SILVER", "BRONZE"};

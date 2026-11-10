@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.items;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -66,8 +68,8 @@ public final class Sky2MStorageSearch {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String FILE_NAME = "sky2m-storage-search.json";
 
-    private static final Pattern ENDER_CHEST = Pattern.compile("(?i)ender\\s+chest.*?(?:#|\\(|\\s)(\\d+)(?:\\)|\\s|$)");
-    private static final Pattern BACKPACK = Pattern.compile("(?i)(?:small|medium|large|greater|jumbo)?\\s*backpack.*?(?:#|\\(|\\s)(\\d+)(?:\\)|\\s|$)");
+    private static final RepoPattern ENDER_CHEST = RepoPattern.of("items.Sky2MStorageSearch.ENDER_CHEST", "(?i)ender\\s+chest.*?(?:#|\\(|\\s)(\\d+)(?:\\)|\\s|$)");
+    private static final RepoPattern BACKPACK = RepoPattern.of("items.Sky2MStorageSearch.BACKPACK", "(?i)(?:small|medium|large|greater|jumbo)?\\s*backpack.*?(?:#|\\(|\\s)(\\d+)(?:\\)|\\s|$)");
 
     private static final long CAPTURE_INTERVAL_MS = 400L;
     private static final long SAVE_INTERVAL_MS = 1200L;
@@ -650,7 +652,7 @@ public final class Sky2MStorageSearch {
 
     // ---------------------------------------------------------------- museum (SkyblockAPI's MuseumAPI)
 
-    private static final Pattern MUSEUM_TITLE = Pattern.compile("^Museum ➜ (.+)$");
+    private static final RepoPattern MUSEUM_TITLE = RepoPattern.of("items.Sky2MStorageSearch.MUSEUM_TITLE", "^Museum ➜ (.+)$");
 
     /** "Museum ➜ Combat" and the other category menus in the Hub: donated items that are kept in the museum. */
     private static boolean captureMuseum(AbstractContainerScreen<?> container, long now) {
@@ -745,7 +747,7 @@ public final class Sky2MStorageSearch {
         return null;
     }
 
-    private static final Pattern DIGITS = Pattern.compile("\\d+");
+    private static final RepoPattern DIGITS = RepoPattern.of("items.Sky2MStorageSearch.DIGITS", "\\d+");
 
     private static int firstNumber(String text) {
         Matcher m = DIGITS.matcher(text);

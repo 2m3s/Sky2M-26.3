@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.features.hunting.IslandGraph;
 import net.minecraft.client.Minecraft;
@@ -18,7 +22,7 @@ import java.util.regex.Pattern;
  */
 public final class SlayerArea {
     /** The slayer name SkyHanni's drop lists use ("Revenant Horror"...), per island graph area. */
-    private static final Map<String, String> AREAS = Map.ofEntries(
+    private static final Map<String, String> AREAS = RepoTable.map("slayer.SlayerArea.AREAS", Map.ofEntries(
         Map.entry("Graveyard", "Revenant Horror"),
         Map.entry("Revenant Cave", "Revenant Horror"),
         Map.entry("Crypts", "Revenant Horror"),
@@ -36,16 +40,16 @@ public final class SlayerArea {
         Map.entry("The Wasteland", "Inferno Demonlord"),
         Map.entry("Smoldering Tomb", "Inferno Demonlord"),
         Map.entry("Stillgore Château", "Riftstalker Bloodfiend"),
-        Map.entry("Oubliette", "Riftstalker Bloodfiend"));
+        Map.entry("Oubliette", "Riftstalker Bloodfiend")));
 
     /** The islands slayers are done on -> SkyHanni's island graph for them. */
-    private static final Map<String, String> GRAPHS = Map.of(
+    private static final Map<String, String> GRAPHS = RepoTable.map("slayer.SlayerArea.GRAPHS", Map.of(
         "Hub", "HUB",
         "Spider's Den", "SPIDER_DEN",
         "The Park", "THE_PARK",
         "The End", "THE_END",
         "Crimson Isle", "CRIMSON_ISLE",
-        "The Rift", "THE_RIFT");
+        "The Rift", "THE_RIFT"));
 
     private static boolean loaded;
 
@@ -122,5 +126,5 @@ public final class SlayerArea {
         return null;
     }
 
-    private static final Pattern LETTERS_ONLY = Pattern.compile("[^A-Za-z]");
+    private static final RepoPattern LETTERS_ONLY = RepoPattern.of("slayer.SlayerArea.LETTERS_ONLY", "[^A-Za-z]");
 }

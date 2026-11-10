@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -40,9 +42,9 @@ import java.util.regex.Pattern;
 public final class RunHistory {
     private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("sky2m").resolve("run-history.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Pattern DEFEATED = Pattern.compile("^\\s*☠ Defeated (.+) in 0?([\\dhms ]+?)\\s*(\\(NEW RECORD!\\))?$");
-    private static final Pattern TEAM_SCORE = Pattern.compile("^\\s*Team Score: ([\\d,]+) \\(([A-DS+]+)\\)");
-    private static final Pattern DEVICE = Pattern.compile("^(\\w{1,16}) (activated|completed) a (terminal|lever|device)! \\((\\d)/(\\d)\\)(?:\\s.*)?$");
+    private static final RepoPattern DEFEATED = RepoPattern.of("dungeons.RunHistory.DEFEATED", "^\\s*☠ Defeated (.+) in 0?([\\dhms ]+?)\\s*(\\(NEW RECORD!\\))?$");
+    private static final RepoPattern TEAM_SCORE = RepoPattern.of("dungeons.RunHistory.TEAM_SCORE", "^\\s*Team Score: ([\\d,]+) \\(([A-DS+]+)\\)");
+    private static final RepoPattern DEVICE = RepoPattern.of("dungeons.RunHistory.DEVICE", "^(\\w{1,16}) (activated|completed) a (terminal|lever|device)! \\((\\d)/(\\d)\\)(?:\\s.*)?$");
     /** Built on first use, not at start-up. */
     private static final class DateFormat {
         static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm", Locale.ROOT);

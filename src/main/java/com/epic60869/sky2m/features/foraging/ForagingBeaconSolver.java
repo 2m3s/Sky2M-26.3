@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.foraging;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -30,10 +32,10 @@ import java.util.regex.Pattern;
  * slot moves, the reference pitch from the bass note block sounds.
  */
 public final class ForagingBeaconSolver {
-    private static final Pattern MENU = Pattern.compile("Upgrade Signal Strength|Tune Frequency");
-    private static final Pattern CURRENT_COLOR = Pattern.compile("Current color: (?<v>[\\w ]+)");
-    private static final Pattern CURRENT_SPEED = Pattern.compile("Current speed: (?<v>\\d+)");
-    private static final Pattern CURRENT_PITCH = Pattern.compile("Current pitch: (?<v>\\w+)");
+    private static final RepoPattern MENU = RepoPattern.of("foraging.ForagingBeaconSolver.MENU", "Upgrade Signal Strength|Tune Frequency");
+    private static final RepoPattern CURRENT_COLOR = RepoPattern.of("foraging.ForagingBeaconSolver.CURRENT_COLOR", "Current color: (?<v>[\\w ]+)");
+    private static final RepoPattern CURRENT_SPEED = RepoPattern.of("foraging.ForagingBeaconSolver.CURRENT_SPEED", "Current speed: (?<v>\\d+)");
+    private static final RepoPattern CURRENT_PITCH = RepoPattern.of("foraging.ForagingBeaconSolver.CURRENT_PITCH", "Current pitch: (?<v>\\w+)");
 
     /** The order of the beacon's colours, which is also the order of the stained glass panes. */
     private static final String[] COLORS = {"White", "Orange", "Magenta", "Light Blue", "Yellow", "Lime", "Pink", "Cyan",
@@ -80,7 +82,7 @@ public final class ForagingBeaconSolver {
      * Beacon Ready alert, a port of SkyHanni's ForagingBeaconWarning (hannibal002/SkyHanni, LGPL-2.1): the Moonglade
      * Beacon widget in the tab list shows "Cooldown: AVAILABLE" once it can be used again.
      */
-    private static final Pattern COOLDOWN = Pattern.compile("^\\s*Cooldown: (?<v>.+)$");
+    private static final RepoPattern COOLDOWN = RepoPattern.of("foraging.ForagingBeaconSolver.COOLDOWN", "^\\s*Cooldown: (?<v>.+)$");
     private static boolean wasAvailable = true;
     private static int readyTicks;
 
@@ -251,7 +253,7 @@ public final class ForagingBeaconSolver {
         return out;
     }
 
-    private static String loreValue(ItemStack stack, Pattern pattern) {
+    private static String loreValue(ItemStack stack, RepoPattern pattern) {
         for (String line : lore(stack)) {
             Matcher m = pattern.matcher(line);
             if (m.find()) return m.group("v").trim();

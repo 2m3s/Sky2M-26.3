@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.slayer;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import com.epic60869.sky2m.custom.RepoItems;
@@ -29,11 +31,11 @@ import java.util.regex.Pattern;
  */
 public final class RngMeterValue {
     /** The "0/100k" (or "1,234/1.3M") progress amount on an RNG meter drop. */
-    private static final Pattern PROGRESS = Pattern.compile("([\\d,.]+[kKmMbB]?)/([\\d,.]+[kKmMbB]?)\\s*$");
+    private static final RepoPattern PROGRESS = RepoPattern.of("slayer.RngMeterValue.PROGRESS", "([\\d,.]+[kKmMbB]?)/([\\d,.]+[kKmMbB]?)\\s*$");
     /** "Required Slayer XP: 100k" style lines, used when the drop shows no progress amount. */
-    private static final Pattern REQUIRED = Pattern.compile("(?i)(?:required|needed)[^:]*:\\s*([\\d,.]+[kmb]?)");
+    private static final RepoPattern REQUIRED = RepoPattern.of("slayer.RngMeterValue.REQUIRED", "(?i)(?:required|needed)[^:]*:\\s*([\\d,.]+[kmb]?)");
     /** "Smite VII" -> enchantment and level, for enchanted book drops. */
-    private static final Pattern ENCHANT = Pattern.compile("^([A-Za-z' ]+) ([IVX]+)$");
+    private static final RepoPattern ENCHANT = RepoPattern.of("slayer.RngMeterValue.ENCHANT", "^([A-Za-z' ]+) ([IVX]+)$");
 
     private RngMeterValue() {}
 

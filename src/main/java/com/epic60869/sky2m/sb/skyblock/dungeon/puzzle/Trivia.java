@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.sb.skyblock.dungeon.puzzle;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +40,7 @@ public class Trivia extends DungeonPuzzle {
 	//Note: I think its worth replacing this with something less fragile and is capable of handing multiple lines
 	//perhaps manual incremental reading based off the start of a question
 	@VisibleForTesting
-	public static final Pattern PATTERN = Pattern.compile("^ +(?:([A-Za-z,' ]*\\?)| ([ⓐⓑⓒ]) ([a-zA-Z0-9 ]+))|(\\[STATUE] Oruo the Omniscient: (\\w+ answered Question #\\d correctly!|I bestow upon you all the power of a hundred years!|Yikes))$");
+	public static final RepoPattern PATTERN = RepoPattern.of("sb.skyblock.dungeon.puzzle.Trivia.PATTERN", "^ +(?:([A-Za-z,' ]*\\?)| ([ⓐⓑⓒ]) ([a-zA-Z0-9 ]+))|(\\[STATUE] Oruo the Omniscient: (\\w+ answered Question #\\d correctly!|I bestow upon you all the power of a hundred years!|Yikes))$");
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final BlockPos CHOICE_A = new BlockPos(20, 70, 6);
 	private static final BlockPos CHOICE_B = new BlockPos(15, 70, 9);

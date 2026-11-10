@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.misc.waypoints;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.custom.util.ChromaColours;
@@ -54,9 +58,9 @@ import java.util.regex.Pattern;
 public final class FairySoulsFinder {
     private static final String HUD_ID = "fairy_souls_finder";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Pattern SOUL_PICKUP = Pattern.compile("fairy soul", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern SOUL_PICKUP = RepoPattern.of("misc.waypoints.FairySoulsFinder.SOUL_PICKUP", "fairy soul", Pattern.CASE_INSENSITIVE);
     /** NEU key → the names Sky2MLocation.area() reports for that island, matched case-insensitively (NEU's constants/misc.json names them). */
-    private static final Map<String, List<String>> ISLANDS = Map.ofEntries(
+    private static final Map<String, List<String>> ISLANDS = RepoTable.listMap("misc.waypoints.FairySoulsFinder.ISLANDS", Map.ofEntries(
         Map.entry("hub", List.of("Hub", "Dark Auction")),
         Map.entry("combat_1", List.of("Spider's Den")),
         Map.entry("combat_3", List.of("The End")),
@@ -72,9 +76,9 @@ public final class FairySoulsFinder {
         Map.entry("dungeon_hub", List.of("Dungeon Hub")),
         Map.entry("fishing_1", List.of("Backwater Bayou")),
         Map.entry("lotus_atoll", List.of("Lotus Atoll")),
-        Map.entry("safari", List.of("Safari")));
+        Map.entry("safari", List.of("Safari"))));
     /// The island's usual name for statuses, chat and the list (at most one per NEU key).
-    private static final Map<String, String> NAMES = Map.ofEntries(
+    private static final Map<String, String> NAMES = RepoTable.map("misc.waypoints.FairySoulsFinder.NAMES", Map.ofEntries(
         Map.entry("hub", "Hub"),
         Map.entry("combat_1", "Spider's Den"),
         Map.entry("combat_3", "The End"),
@@ -90,7 +94,7 @@ public final class FairySoulsFinder {
         Map.entry("dungeon_hub", "Dungeon Hub"),
         Map.entry("fishing_1", "Backwater Bayou"),
         Map.entry("lotus_atoll", "Lotus Atoll"),
-        Map.entry("safari", "Safari"));
+        Map.entry("safari", "Safari")));
 
     /** The souls of one island: where each soul is, in the order of NEU's file. */
     public static final class Souls {

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import net.minecraft.client.Minecraft;
@@ -14,7 +16,7 @@ import java.util.regex.Pattern;
  * stopped and one that comes soon after is never played.
  */
 public final class OverflowDropSound {
-    private static final Pattern OVERFLOW_DROP = Pattern.compile("^OVERFLOW! Your .+ has just dropped an? .+!$");
+    private static final RepoPattern OVERFLOW_DROP = RepoPattern.of("garden.OverflowDropSound.OVERFLOW_DROP", "^OVERFLOW! Your .+ has just dropped an? .+!$");
     /** How close together the message and the sound have to be. */
     private static final long WINDOW_MS = 2_000L;
 

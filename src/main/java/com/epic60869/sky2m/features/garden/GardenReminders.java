@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.features.FeatureConfigs;
 import com.epic60869.sky2m.features.core.Sky2MAlerts;
@@ -19,9 +21,9 @@ import java.util.regex.Pattern;
  * reminder moved to {@link com.epic60869.sky2m.features.foraging.SafariTicketReminder}.
  */
 public final class GardenReminders {
-    private static final Pattern ORGANIC = Pattern.compile("^\\s*Organic Matter:\\s*(?<amount>[\\d.,]+[kKmM]?)\\s*/");
-    private static final Pattern FUEL = Pattern.compile("^\\s*Fuel:\\s*(?<amount>[\\d.,]+[kKmM]?)\\s*/");
-    private static final Pattern TIME_LEFT = Pattern.compile("^\\s*Time Left:\\s*(?<time>.+?)\\s*$");
+    private static final RepoPattern ORGANIC = RepoPattern.of("garden.GardenReminders.ORGANIC", "^\\s*Organic Matter:\\s*(?<amount>[\\d.,]+[kKmM]?)\\s*/");
+    private static final RepoPattern FUEL = RepoPattern.of("garden.GardenReminders.FUEL", "^\\s*Fuel:\\s*(?<amount>[\\d.,]+[kKmM]?)\\s*/");
+    private static final RepoPattern TIME_LEFT = RepoPattern.of("garden.GardenReminders.TIME_LEFT", "^\\s*Time Left:\\s*(?<time>.+?)\\s*$");
 
     private static final long COMPOSTER_COOLDOWN_MS = 5 * 60_000L;
 

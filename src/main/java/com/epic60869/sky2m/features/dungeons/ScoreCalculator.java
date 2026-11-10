@@ -1,5 +1,9 @@
 package com.epic60869.sky2m.features.dungeons;
 
+import com.epic60869.sky2m.features.core.RepoTable;
+
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.features.FeatureConfigs;
@@ -31,33 +35,33 @@ import java.util.regex.Pattern;
  * having started. Used by the Score Display HUD, the dungeon map's extra info and the 270/300 alerts.
  */
 public final class ScoreCalculator {
-    private static final Pattern SECRETS_FOUND = Pattern.compile("Secrets Found: (\\d+)$");
-    private static final Pattern SECRETS_PERCENT = Pattern.compile("Secrets Found: ([\\d.]+)%");
-    private static final Pattern CRYPTS = Pattern.compile("Crypts: (\\d+)");
-    private static final Pattern COMPLETED_ROOMS = Pattern.compile("Completed Rooms: (\\d+)");
-    private static final Pattern PUZZLE_COUNT = Pattern.compile("Puzzles: \\((\\d)\\)");
-    private static final Pattern PUZZLE = Pattern.compile("^ ?(.+): \\[([✦✔✖])");
-    private static final Pattern CLEARED = Pattern.compile("Cleared: (\\d+)%");
-    private static final Pattern ELAPSED = Pattern.compile("Time Elapsed: (?:(\\d+)h )?(?:(\\d+)m )?(?:(\\d+)s)?");
-    private static final Pattern DEATH = Pattern.compile("^ ☠ (?:You were|(\\w+)) (.+?)(?: and became a ghost)?\\.$");
+    private static final RepoPattern SECRETS_FOUND = RepoPattern.of("dungeons.ScoreCalculator.SECRETS_FOUND", "Secrets Found: (\\d+)$");
+    private static final RepoPattern SECRETS_PERCENT = RepoPattern.of("dungeons.ScoreCalculator.SECRETS_PERCENT", "Secrets Found: ([\\d.]+)%");
+    private static final RepoPattern CRYPTS = RepoPattern.of("dungeons.ScoreCalculator.CRYPTS", "Crypts: (\\d+)");
+    private static final RepoPattern COMPLETED_ROOMS = RepoPattern.of("dungeons.ScoreCalculator.COMPLETED_ROOMS", "Completed Rooms: (\\d+)");
+    private static final RepoPattern PUZZLE_COUNT = RepoPattern.of("dungeons.ScoreCalculator.PUZZLE_COUNT", "Puzzles: \\((\\d)\\)");
+    private static final RepoPattern PUZZLE = RepoPattern.of("dungeons.ScoreCalculator.PUZZLE", "^ ?(.+): \\[([✦✔✖])");
+    private static final RepoPattern CLEARED = RepoPattern.of("dungeons.ScoreCalculator.CLEARED", "Cleared: (\\d+)%");
+    private static final RepoPattern ELAPSED = RepoPattern.of("dungeons.ScoreCalculator.ELAPSED", "Time Elapsed: (?:(\\d+)h )?(?:(\\d+)m )?(?:(\\d+)s)?");
+    private static final RepoPattern DEATH = RepoPattern.of("dungeons.ScoreCalculator.DEATH", "^ ☠ (?:You were|(\\w+)) (.+?)(?: and became a ghost)?\\.$");
 
     private static final Map<String, Double> REQUIRED_SECRETS = Map.ofEntries(
         Map.entry("E", 0.3), Map.entry("F1", 0.3), Map.entry("F2", 0.4), Map.entry("F3", 0.5), Map.entry("F4", 0.6),
         Map.entry("F5", 0.7), Map.entry("F6", 0.85), Map.entry("F7", 1.0), Map.entry("M1", 1.0), Map.entry("M2", 1.0),
         Map.entry("M3", 1.0), Map.entry("M4", 1.0), Map.entry("M5", 1.0), Map.entry("M6", 1.0), Map.entry("M7", 1.0));
-    private static final Map<String, Integer> TIME_LIMIT = Map.ofEntries(
+    private static final Map<String, Integer> TIME_LIMIT = RepoTable.intMap("dungeons.ScoreCalculator.TIME_LIMIT", Map.ofEntries(
         Map.entry("E", 600), Map.entry("F1", 600), Map.entry("F2", 600), Map.entry("F3", 600), Map.entry("F4", 720),
         Map.entry("F5", 600), Map.entry("F6", 720), Map.entry("F7", 840), Map.entry("M1", 480), Map.entry("M2", 480),
-        Map.entry("M3", 480), Map.entry("M4", 480), Map.entry("M5", 480), Map.entry("M6", 600), Map.entry("M7", 840));
-    private static final Set<String> MIMIC_MESSAGES = Set.of(
+        Map.entry("M3", 480), Map.entry("M4", 480), Map.entry("M5", 480), Map.entry("M6", 600), Map.entry("M7", 840)));
+    private static final Set<String> MIMIC_MESSAGES = RepoTable.set("dungeons.ScoreCalculator.MIMIC_MESSAGES", Set.of(
         "mimic dead!", "mimic dead", "mimic killed!", "mimic killed", "$skytils-dungeon-score-mimic$", "child destroyed!",
-        "mimic obliterated!", "mimic exorcised!", "mimic destroyed!", "mimic annhilated!", "breefing killed", "breefing dead");
-    private static final Set<String> PRINCE_MESSAGES = Set.of(
+        "mimic obliterated!", "mimic exorcised!", "mimic destroyed!", "mimic annhilated!", "breefing killed", "breefing dead"));
+    private static final Set<String> PRINCE_MESSAGES = RepoTable.set("dungeons.ScoreCalculator.PRINCE_MESSAGES", Set.of(
         "prince dead", "prince dead!", "$skytils-dungeon-score-prince$", "prince killed", "prince slain", "prince killed!",
-        "a prince falls. +1 bonus score");
+        "a prince falls. +1 bonus score"));
 
     /** Each Bat killed in a run is +1: Hypixel tells only the killer, and teammates' mods say so in party chat. */
-    private static final Pattern BAT_PARTY = Pattern.compile("^Party > (.+): (?:Bat dead!?|Bat Killed!)$");
+    private static final RepoPattern BAT_PARTY = RepoPattern.of("dungeons.ScoreCalculator.BAT_PARTY", "^Party > (.+): (?:Bat dead!?|Bat Killed!)$");
     private static final String BAT_HYPIXEL = "A Bat has been slain. +1 Bonus Score";
 
     private static boolean started;

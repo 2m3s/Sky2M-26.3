@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.tracker;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.custom.util.Compat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -33,7 +35,7 @@ import java.util.regex.Pattern;
  */
 public final class DungeonDropTracker {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Pattern COUNT = Pattern.compile("^(?<n>\\d+)x\\s+(?<name>.+)$|^(?<name2>.+?)\\s+x(?<n2>[\\d,]+)$");
+    private static final RepoPattern COUNT = RepoPattern.of("tracker.DungeonDropTracker.COUNT", "^(?<n>\\d+)x\\s+(?<name>.+)$|^(?<name2>.+?)\\s+x(?<n2>[\\d,]+)$");
     static Path file;
 
     /** One item from a chest. */

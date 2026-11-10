@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -30,9 +32,9 @@ import java.util.regex.Pattern;
  * the Spam Filters still ends the block; the lines are then hidden from the main chat in ALLOW_GAME.
  */
 public final class CompactBestiary {
-    private static final Pattern BORDER = Pattern.compile("^▬{20,}$");
+    private static final RepoPattern BORDER = RepoPattern.of("misc.chat.CompactBestiary.BORDER", "^▬{20,}$");
     /** A milestone line ends in "4➡5" (SkyHanni: {@code ^.+(§8\d{1,3}➡§e\d{1,3})$}). */
-    private static final Pattern MILESTONE = Pattern.compile("^.+?(\\d{1,3})➡(\\d{1,3})$");
+    private static final RepoPattern MILESTONE = RepoPattern.of("misc.chat.CompactBestiary.MILESTONE", "^.+?(\\d{1,3})➡(\\d{1,3})$");
     /** Hypixel's padding lines just before the title, already in chat (SkyHanni: sent under 500 ms ago). */
     private static final int RECENT_TICKS = 10;
 

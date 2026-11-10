@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.social;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -42,10 +44,9 @@ import com.epic60869.sky2m.gui.Sky2MLeaderboardScreen;
  * </pre>
  */
 public final class Sky2MLeaderboards {
-    private static final Pattern TRAILING_LEVEL = Pattern.compile("^(.+?)\\s+(\\d+)$");
+    private static final RepoPattern TRAILING_LEVEL = RepoPattern.of("social.Sky2MLeaderboards.TRAILING_LEVEL", "^(.+?)\\s+(\\d+)$");
     /** Hypixel's drop messages: "RARE DROP! Summoning Eye (+312% ✯ Magic Find)", "PET DROP! Ender Dragon". */
-    private static final Pattern DROP = Pattern.compile(
-        "^(?:(?:VERY |CRAZY |INSANE |PRAY TO RNGESUS )?RARE DROP!|PET DROP!|INSANE DROP!)\\s+\\(?(?<item>.+?)\\)?(?:\\s+x(?<amount>[\\d,]+))?(?:\\s+\\(\\+[\\d,.]+%? ?.*Magic Find\\))?\\s*$");
+    private static final RepoPattern DROP = RepoPattern.of("social.Sky2MLeaderboards.DROP", "^(?:(?:VERY |CRAZY |INSANE |PRAY TO RNGESUS )?RARE DROP!|PET DROP!|INSANE DROP!)\\s+\\(?(?<item>.+?)\\)?(?:\\s+x(?<amount>[\\d,]+))?(?:\\s+\\(\\+[\\d,.]+%? ?.*Magic Find\\))?\\s*$");
     private static final int MAX_PATTERN_LENGTH = 300;
 
     private record Tracker(String kind, List<String> items, Pattern pattern, String amountGroup) {}
@@ -82,10 +83,10 @@ public final class Sky2MLeaderboards {
     private static final long DUPLICATE_MS = 250L;
     private static final java.util.Map<String, Long> RECENT = new java.util.concurrent.ConcurrentHashMap<>();
     /** A level at the end of a name: "Chimera I", or "Chimera 1" as the drop line sometimes writes it. */
-    private static final Pattern ROMAN_LEVEL = Pattern.compile("\\s+(?:[IVXLCDM]+|\\d+)$");
+    private static final RepoPattern ROMAN_LEVEL = RepoPattern.of("social.Sky2MLeaderboards.ROMAN_LEVEL", "\\s+(?:[IVXLCDM]+|\\d+)$");
     /** "Enchanted Book (Chimera 1": the drop pattern leaves the closing bracket out of the item. */
-    private static final Pattern NAMED_IN_BRACKETS = Pattern.compile("^(?<base>.+?)\\s+\\((?<inner>[^()]+)\\)?$");
-    private static final Pattern ARABIC_LEVEL = Pattern.compile("^(?<name>.+?)\\s+(?<level>\\d{1,2})$");
+    private static final RepoPattern NAMED_IN_BRACKETS = RepoPattern.of("social.Sky2MLeaderboards.NAMED_IN_BRACKETS", "^(?<base>.+?)\\s+\\((?<inner>[^()]+)\\)?$");
+    private static final RepoPattern ARABIC_LEVEL = RepoPattern.of("social.Sky2MLeaderboards.ARABIC_LEVEL", "^(?<name>.+?)\\s+(?<level>\\d{1,2})$");
 
     private static void onChat(String text, Component component) {
         process(text, component, true, true);

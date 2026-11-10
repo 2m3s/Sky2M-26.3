@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.sbc;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.nick.Sky2MNick;
 import com.epic60869.sky2m.social.Sky2MLogin;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -62,7 +64,7 @@ public final class SbcSocial {
     public record Request(String username, UUID uuid, long at) {}
 
     private static final long PRESENCE_EVERY_MS = 2_000L;
-    private static final Pattern SERVER_LINE = Pattern.compile("\\d{2}/\\d{2}/\\d{2}\\s+(\\S+)");
+    private static final RepoPattern SERVER_LINE = RepoPattern.of("sbc.SbcSocial.SERVER_LINE", "\\d{2}/\\d{2}/\\d{2}\\s+(\\S+)");
     private static final Map<String, String> ISLANDS = Map.ofEntries(
         Map.entry("Hub", "hub"), Map.entry("Private Island", "dynamic"), Map.entry("Garden", "garden"),
         Map.entry("Gold Mine", "mining_1"), Map.entry("Deep Caverns", "mining_2"), Map.entry("Dwarven Mines", "mining_3"),

@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.mining;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.price.ItemPriceResolver;
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.price.Sky2MPriceTooltip;
@@ -82,12 +84,12 @@ public final class GemstoneTracker {
     }
 
     /** "Flawed Ruby Gemstone" (a [Sacks] hover line's item name) or the item id "FLAWED_RUBY_GEM". */
-    private static final Pattern GEM_NAME = Pattern.compile("^(Rough|Flawed|Fine|Flawless|Perfect) (\\w+) Gemstone$");
-    private static final Pattern GEM_ID = Pattern.compile("^(ROUGH|FLAWED|FINE|FLAWLESS|PERFECT)_([A-Z]+)_GEM$");
+    private static final RepoPattern GEM_NAME = RepoPattern.of("mining.GemstoneTracker.GEM_NAME", "^(Rough|Flawed|Fine|Flawless|Perfect) (\\w+) Gemstone$");
+    private static final RepoPattern GEM_ID = RepoPattern.of("mining.GemstoneTracker.GEM_ID", "^(ROUGH|FLAWED|FINE|FLAWLESS|PERFECT)_([A-Z]+)_GEM$");
     /** SkyHanni's mining.pristine pattern (same as {@link PristineRecord}). */
-    private static final Pattern PRISTINE = Pattern.compile("^PRISTINE! You found . Flawed (?<gemstone>\\w+) Gemstone x(?<amount>\\d+)!$");
+    private static final RepoPattern PRISTINE = RepoPattern.of("mining.GemstoneTracker.PRISTINE", "^PRISTINE! You found . Flawed (?<gemstone>\\w+) Gemstone x(?<amount>\\d+)!$");
     /** "Moved 64 Flawed Ruby Gemstone from your Sacks to your inventory." (/gfs), as CollectionTracker reads it. */
-    private static final Pattern FROM_SACKS = Pattern.compile("^Moved ([0-9,]+) (.+?) from your Sacks to your inventory\\.?$");
+    private static final RepoPattern FROM_SACKS = RepoPattern.of("mining.GemstoneTracker.FROM_SACKS", "^Moved ([0-9,]+) (.+?) from your Sacks to your inventory\\.?$");
 
     /** The HUD shows this long after the last gemstone; the per-hour clock stops after IDLE_MS (sack messages come every ~30s). */
     private static final long SHOW_MS = 5 * 60_000L, IDLE_MS = 90_000L, CREDIT_MS = 60_000L;

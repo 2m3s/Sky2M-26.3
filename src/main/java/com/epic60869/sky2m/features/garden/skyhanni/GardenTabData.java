@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.garden.skyhanni;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
 import com.epic60869.sky2m.sim.util.TabText;
@@ -22,20 +24,20 @@ import java.util.regex.Pattern;
  * (or empty) while its widget isn't in your tab list.
  */
 public final class GardenTabData {
-    private static final Pattern UNIVERSAL_FF = Pattern.compile("^\\s*Farming Fortune:\\s*[^\\d\\s]?(?<v>[\\d,]+)");
-    private static final Pattern CROP_FF = Pattern.compile("^\\s*(?<crop>Wheat|Carrot|Potato|Nether Wart|Pumpkin|Melon Slice|Cocoa Beans|Sugar Cane|Cactus|Mushroom|Sunflower|Moonflower|Wild Rose) Fortune:\\s*[^\\d\\s]?(?<v>[\\d,]+)");
-    private static final Pattern MILESTONE = Pattern.compile("^\\s*(?<crop>[A-Za-z ]+?) (?<tier>\\d+):\\s*(?:(?<pct>[\\d.]+)%|(?<max>MAX))");
-    private static final Pattern BONUS = Pattern.compile("^\\s*Bonus:\\s*(?:(?<inactive>INACTIVE)|\\+(?<ff>\\d+)\\S*\\s+(?<time>.*))");
-    private static final Pattern ALIVE = Pattern.compile("^\\s*Alive:\\s*(?<v>\\d+)");
-    private static final Pattern BONUS_PEST_CHANCE = Pattern.compile("^\\s*Bonus Pest Chance:\\s*[^\\d\\s]?(?<v>[\\d,.]+)");
-    private static final Pattern TRAPS = Pattern.compile("^\\s*Pest Traps:\\s*(?<c>\\d+)/(?<m>\\d+)");
-    private static final Pattern FULL_TRAPS = Pattern.compile("^\\s*Full Traps:\\s*(?<t>.*)$");
-    private static final Pattern NO_BAIT = Pattern.compile("^\\s*No Bait:\\s*(?<t>.*)$");
-    private static final Pattern JACOB = Pattern.compile("^\\s*Jacob's Contest:\\s*(?<t>.*)$");
-    private static final Pattern JACOB_CROP = Pattern.compile("^\\s*[^\\w\\s]\\s*(?<crop>[A-Za-z ]+?)\\s*$");
-    private static final Pattern GARDEN_LEVEL = Pattern.compile("^\\s*Garden Level:\\s*(?<l>\\S+)");
-    private static final Pattern SPRAY = Pattern.compile("^\\s*Spray:\\s*(?<spray>[A-Za-z ]+?)\\s*(?:\\((?<time>[^)]*)\\))?\\s*$");
-    private static final Pattern TIME_PART = Pattern.compile("(\\d+)\\s*([hms])");
+    private static final RepoPattern UNIVERSAL_FF = RepoPattern.of("garden.skyhanni.GardenTabData.UNIVERSAL_FF", "^\\s*Farming Fortune:\\s*[^\\d\\s]?(?<v>[\\d,]+)");
+    private static final RepoPattern CROP_FF = RepoPattern.of("garden.skyhanni.GardenTabData.CROP_FF", "^\\s*(?<crop>Wheat|Carrot|Potato|Nether Wart|Pumpkin|Melon Slice|Cocoa Beans|Sugar Cane|Cactus|Mushroom|Sunflower|Moonflower|Wild Rose) Fortune:\\s*[^\\d\\s]?(?<v>[\\d,]+)");
+    private static final RepoPattern MILESTONE = RepoPattern.of("garden.skyhanni.GardenTabData.MILESTONE", "^\\s*(?<crop>[A-Za-z ]+?) (?<tier>\\d+):\\s*(?:(?<pct>[\\d.]+)%|(?<max>MAX))");
+    private static final RepoPattern BONUS = RepoPattern.of("garden.skyhanni.GardenTabData.BONUS", "^\\s*Bonus:\\s*(?:(?<inactive>INACTIVE)|\\+(?<ff>\\d+)\\S*\\s+(?<time>.*))");
+    private static final RepoPattern ALIVE = RepoPattern.of("garden.skyhanni.GardenTabData.ALIVE", "^\\s*Alive:\\s*(?<v>\\d+)");
+    private static final RepoPattern BONUS_PEST_CHANCE = RepoPattern.of("garden.skyhanni.GardenTabData.BONUS_PEST_CHANCE", "^\\s*Bonus Pest Chance:\\s*[^\\d\\s]?(?<v>[\\d,.]+)");
+    private static final RepoPattern TRAPS = RepoPattern.of("garden.skyhanni.GardenTabData.TRAPS", "^\\s*Pest Traps:\\s*(?<c>\\d+)/(?<m>\\d+)");
+    private static final RepoPattern FULL_TRAPS = RepoPattern.of("garden.skyhanni.GardenTabData.FULL_TRAPS", "^\\s*Full Traps:\\s*(?<t>.*)$");
+    private static final RepoPattern NO_BAIT = RepoPattern.of("garden.skyhanni.GardenTabData.NO_BAIT", "^\\s*No Bait:\\s*(?<t>.*)$");
+    private static final RepoPattern JACOB = RepoPattern.of("garden.skyhanni.GardenTabData.JACOB", "^\\s*Jacob's Contest:\\s*(?<t>.*)$");
+    private static final RepoPattern JACOB_CROP = RepoPattern.of("garden.skyhanni.GardenTabData.JACOB_CROP", "^\\s*[^\\w\\s]\\s*(?<crop>[A-Za-z ]+?)\\s*$");
+    private static final RepoPattern GARDEN_LEVEL = RepoPattern.of("garden.skyhanni.GardenTabData.GARDEN_LEVEL", "^\\s*Garden Level:\\s*(?<l>\\S+)");
+    private static final RepoPattern SPRAY = RepoPattern.of("garden.skyhanni.GardenTabData.SPRAY", "^\\s*Spray:\\s*(?<spray>[A-Za-z ]+?)\\s*(?:\\((?<time>[^)]*)\\))?\\s*$");
+    private static final RepoPattern TIME_PART = RepoPattern.of("garden.skyhanni.GardenTabData.TIME_PART", "(\\d+)\\s*([hms])");
 
     /** A crop's milestone row in the tab list: the tier it is on and the percent to the next one. */
     public record Milestone(int tier, double percent, boolean maxed, long seenAt) {}

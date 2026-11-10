@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.misc.chat;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.core.Sky2MChat;
@@ -16,7 +18,7 @@ import java.util.regex.Pattern;
  */
 public final class SkyBlockXpChat {
     /** SkyHanni's actionbar.skyblock.xp pattern, on colourless text. */
-    private static final Pattern XP = Pattern.compile(".*?\\+(\\d+) SkyBlock XP \\(([^()]+)\\) \\((\\d+/\\d+)\\).*");
+    private static final RepoPattern XP = RepoPattern.of("misc.chat.SkyBlockXpChat.XP", ".*?\\+(\\d+) SkyBlock XP \\(([^()]+)\\) \\((\\d+/\\d+)\\).*");
 
     private static String lastValue = "";
 

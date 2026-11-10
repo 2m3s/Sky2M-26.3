@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.events;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.tools.Sky2MCalculator;
 import com.epic60869.sky2m.misc.Sky2MTabWidgetManager;
 import com.epic60869.sky2m.custom.util.Compat;
@@ -28,10 +30,10 @@ public final class SpookFeatures {
     private static final long FEAR_COOLDOWN_MS = 6 * 60 * 1000L;
     /** The Great Spook is long over after this long without a Primal Fear. */
     private static final long STALE_MS = 60 * 60 * 1000L;
-    private static final Pattern SPAWN = Pattern.compile("^FEAR\\. A Primal Fear has been summoned!");
-    private static final Pattern MATH = Pattern.compile("^QUICK MATHS! Solve: (.+)$");
-    private static final Pattern CHEST = Pattern.compile("^(SPOOKY|PARTY)! A (Trick or Treat Chest|Party Chest) has appeared!");
-    private static final Pattern FEAR = Pattern.compile("Fear:\\D*(\\d+)");
+    private static final RepoPattern SPAWN = RepoPattern.of("events.SpookFeatures.SPAWN", "^FEAR\\. A Primal Fear has been summoned!");
+    private static final RepoPattern MATH = RepoPattern.of("events.SpookFeatures.MATH", "^QUICK MATHS! Solve: (.+)$");
+    private static final RepoPattern CHEST = RepoPattern.of("events.SpookFeatures.CHEST", "^(SPOOKY|PARTY)! A (Trick or Treat Chest|Party Chest) has appeared!");
+    private static final RepoPattern FEAR = RepoPattern.of("events.SpookFeatures.FEAR", "Fear:\\D*(\\d+)");
 
     private static long lastSpawn;
     private static boolean notified;

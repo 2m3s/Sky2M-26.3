@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.features.events;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.features.core.Sky2MChat;
 import com.epic60869.sky2m.features.core.Sky2MHuds;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
@@ -25,8 +27,8 @@ public final class WinterFeatures {
     private static final String FROZEN_KEY = "frozenTreasure";
     private static final long JYRRE_MS = 60 * 60 * 1000L;
     private static final String WORKSHOP = "Jerry's Workshop";
-    private static final Pattern REINDRAKE = Pattern.compile("^WOAH! .+ summoned (?:a Reindrake|TWO Reindrakes) from the depths!");
-    private static final Pattern TREASURE = Pattern.compile("^FROZEN TREASURE! You found (.+)!$");
+    private static final RepoPattern REINDRAKE = RepoPattern.of("events.WinterFeatures.REINDRAKE", "^WOAH! .+ summoned (?:a Reindrake|TWO Reindrakes) from the depths!");
+    private static final RepoPattern TREASURE = RepoPattern.of("events.WinterFeatures.TREASURE", "^FROZEN TREASURE! You found (.+)!$");
     private static final String COMPACT = "COMPACT! You found an Enchanted Ice!";
 
     /** What the cave drops, how many one find gives and how much ice that is worth each. */

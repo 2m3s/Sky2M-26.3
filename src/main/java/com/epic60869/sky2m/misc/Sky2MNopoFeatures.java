@@ -1,5 +1,7 @@
 package com.epic60869.sky2m.misc;
 
+import com.epic60869.sky2m.features.core.RepoPattern;
+
 import com.epic60869.sky2m.mixin.player.Sky2MPlayerTabOverlayAccessor;
 import com.epic60869.sky2m.sb.utils.Location;
 import com.epic60869.sky2m.sb.utils.Utils;
@@ -46,7 +48,7 @@ public final class Sky2MNopoFeatures {
     private static boolean initialized;
 
     private static volatile Set<String> EMOJIS = new HashSet<>();
-    private static final Pattern EMOJI_PATTERN = Pattern.compile(":([A-Za-z0-9_+\\-]+):");
+    private static final RepoPattern EMOJI_PATTERN = RepoPattern.of("misc.Sky2MNopoFeatures.EMOJI_PATTERN", ":([A-Za-z0-9_+\\-]+):");
     private static volatile Map<String, String> EMOJI_SYMBOLS = new LinkedHashMap<>();
     private static volatile Map<String, String> EMOJI_CANONICAL = new HashMap<>();
     private static volatile Map<String, String> EMOJI_UNICODE = new HashMap<>();
@@ -57,13 +59,13 @@ public final class Sky2MNopoFeatures {
     private static boolean slayerWorldChanged = false;
     private static Object lastLevel = null;
 
-    private static final Pattern SLAYER_START = Pattern.compile(" +(?<slayer>Wolf|Zombie|Blaze|Vampire|Spider|Enderman|Guardian) Slayer LVL \\d.*");
-    private static final Pattern SLAYER_DROP = Pattern.compile("(?:VERY RARE|RARE|INSANE|CRAZY RARE) DROP! \\((?<amount>\\d+x )?(?<item>[^)]+)\\)(?: .+)?");
+    private static final RepoPattern SLAYER_START = RepoPattern.of("misc.Sky2MNopoFeatures.SLAYER_START", " +(?<slayer>Wolf|Zombie|Blaze|Vampire|Spider|Enderman|Guardian) Slayer LVL \\d.*");
+    private static final RepoPattern SLAYER_DROP = RepoPattern.of("misc.Sky2MNopoFeatures.SLAYER_DROP", "(?:VERY RARE|RARE|INSANE|CRAZY RARE) DROP! \\((?<amount>\\d+x )?(?<item>[^)]+)\\)(?: .+)?");
 
-    private static final Pattern RARE_CROP = Pattern.compile("(?:VERY )?RARE CROP! (?<crop>[a-zA-Z ]+) \\(\\+[0-9,.]+.*?\\)(?: \\(automatically donated\\))?");
-    private static final Pattern PET_DROP = Pattern.compile("PET DROP! (?<pet>\\w+) \\(\\+[0-9,.]+.*?\\)");
-    private static final Pattern MOSQUITO = Pattern.compile("MOSQUITO! You found an? (?<crop>.*)!");
-    private static final Pattern RAT = Pattern.compile("RAT! You dropped an additional (?<crop>.*)!");
+    private static final RepoPattern RARE_CROP = RepoPattern.of("misc.Sky2MNopoFeatures.RARE_CROP", "(?:VERY )?RARE CROP! (?<crop>[a-zA-Z ]+) \\(\\+[0-9,.]+.*?\\)(?: \\(automatically donated\\))?");
+    private static final RepoPattern PET_DROP = RepoPattern.of("misc.Sky2MNopoFeatures.PET_DROP", "PET DROP! (?<pet>\\w+) \\(\\+[0-9,.]+.*?\\)");
+    private static final RepoPattern MOSQUITO = RepoPattern.of("misc.Sky2MNopoFeatures.MOSQUITO", "MOSQUITO! You found an? (?<crop>.*)!");
+    private static final RepoPattern RAT = RepoPattern.of("misc.Sky2MNopoFeatures.RAT", "RAT! You dropped an additional (?<crop>.*)!");
     private static final String CROP_FEVER = "WOAH! You caught a case of the CROP FEVER for 60 seconds!";
 
     private static List<Component> petDisplay = null;
@@ -272,15 +274,12 @@ public final class Sky2MNopoFeatures {
 
     // Matched anywhere in the row, like Skyblocker's PetWidget: Hypixel sometimes puts icons or
     // other text around "[Lvl N] Name".
-    private static final Pattern PET_ROW = Pattern.compile("^(?!Pet\\s*:).*?\\[Lvl\\s+(?<level>\\d+)\\]\\s*(?<name>.+?)(?:\\s*✦)?\\s*$",
-        Pattern.CASE_INSENSITIVE);
-    private static final Pattern PET_INLINE = Pattern.compile("^Pet\\s*:.*?\\[Lvl\\s+(?<level>\\d+)\\]\\s*(?<name>.+?)(?:\\s*✦)?\\s*$",
-        Pattern.CASE_INSENSITIVE);
-    private static final Pattern PET_XP_LINE = Pattern.compile("^(?:\\+)?[\\d,.]+(?:[kmb])?(?:\\s*/\\s*[\\d,.]+(?:[kmb])?)?\\s+XP.*$",
-        Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern PET_ROW = RepoPattern.of("misc.Sky2MNopoFeatures.PET_ROW", "^(?!Pet\\s*:).*?\\[Lvl\\s+(?<level>\\d+)\\]\\s*(?<name>.+?)(?:\\s*✦)?\\s*$", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern PET_INLINE = RepoPattern.of("misc.Sky2MNopoFeatures.PET_INLINE", "^Pet\\s*:.*?\\[Lvl\\s+(?<level>\\d+)\\]\\s*(?<name>.+?)(?:\\s*✦)?\\s*$", Pattern.CASE_INSENSITIVE);
+    private static final RepoPattern PET_XP_LINE = RepoPattern.of("misc.Sky2MNopoFeatures.PET_XP_LINE", "^(?:\\+)?[\\d,.]+(?:[kmb])?(?:\\s*/\\s*[\\d,.]+(?:[kmb])?)?\\s+XP.*$", Pattern.CASE_INSENSITIVE);
     // Past max level Hypixel shows only the extra XP (" +123,456.7 XP"); NopoMod adds the XP of the
     // capped levels back and recomputes the level on the legendary curve.
-    private static final Pattern PET_OVERFLOW_XP = Pattern.compile("^\\+(?<xp>[\\d,.]+) XP$");
+    private static final RepoPattern PET_OVERFLOW_XP = RepoPattern.of("misc.Sky2MNopoFeatures.PET_OVERFLOW_XP", "^\\+(?<xp>[\\d,.]+) XP$");
 
     private static void updatePetDisplay(Minecraft mc) {
         Sky2MConfig config = Sky2MConfig.current();
@@ -299,10 +298,10 @@ public final class Sky2MNopoFeatures {
          * "Pet:" + "[Lvl ...] ..." or a single "Pet: [Lvl ...] ..." component.
          * In both cases the pet data is authoritative in these rows.
          */
-        Pattern petPattern = PET_ROW;
-        Pattern inlinePattern = PET_INLINE;
-        Pattern xpPattern = PET_XP_LINE;
-        Pattern overflowXpPattern = PET_OVERFLOW_XP;
+        RepoPattern petPattern = PET_ROW;
+        RepoPattern inlinePattern = PET_INLINE;
+        RepoPattern xpPattern = PET_XP_LINE;
+        RepoPattern overflowXpPattern = PET_OVERFLOW_XP;
         int shownOverflow = -1;
         // Whether the pet's XP line was in the tab yet: right after Autopet swaps pets the name can arrive first.
         boolean sawXp = false;
