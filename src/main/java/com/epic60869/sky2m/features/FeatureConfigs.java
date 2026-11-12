@@ -1453,9 +1453,14 @@ public final class FeatureConfigs {
 
     public static final class Garden {
         @Expose
-        @ConfigOption(name = "Greenhouse Preview", desc = "Enables /s2 greenhouse paste: copy a layout link from SkyMutations and preview the greenhouse layout (crops and mutation spots) in a screen. /s2 greenhouse reopens it.")
+        @ConfigOption(name = "Greenhouse Preview", desc = "Enables /s2 greenhouse paste: copy a layout link from SkyMutations and see the greenhouse layout (crops and mutation spots). /s2 greenhouse opens it as a grid.")
         @ConfigEditorBoolean
         public boolean greenhousePreview = true;
+
+        @Expose
+        @ConfigOption(name = "Greenhouse Paste In World", desc = "/s2 greenhouse paste shows the layout on your greenhouse plot, like Skyblocker: each spot still to plant gets a box in the crop's colour with its name, a wrong crop a red box and a mutation spot a green outline. Spots planted right show nothing. /s2 greenhouse rotate left|right, mirror and clear. Off: paste opens the grid screen.")
+        @ConfigEditorBoolean
+        public boolean greenhouseInWorld = true;
 
         @Expose
         @ConfigOption(name = "Yaw and Pitch", desc = "HUD showing your yaw, pitch and facing direction.")

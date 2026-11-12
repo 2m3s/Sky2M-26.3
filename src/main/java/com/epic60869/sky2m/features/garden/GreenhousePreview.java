@@ -18,9 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * /s2 greenhouse paste: like Skyblocker's greenhouse paste, but as a preview screen. Copy a layout link (or code) from
- * SkyMutations, run the command and the 10x10 greenhouse layout is shown, with the mutation spots (left empty for the
- * mutation to grow) outlined in gold. /s2 greenhouse opens the last pasted layout again.
+ * /s2 greenhouse paste: like Skyblocker's greenhouse paste. Copy a layout link (or code) from SkyMutations and run the
+ * command: the layout is shown on your greenhouse plot ({@link GreenhouseWorld}), or with Show In World off, as a 10x10
+ * grid on a screen with the mutation spots (left empty for the mutation to grow) outlined in gold. /s2 greenhouse opens
+ * the grid of the last pasted layout; /s2 greenhouse rotate left|right, mirror and clear change what's shown.
  *
  * The SkyMutations code is an LZ-string (encoded URI component) JSON array of [x, z, "crop name", value] entries, where
  * value 0 marks a desired mutation spot and 1 a crop to plant.
@@ -29,11 +30,13 @@ public final class GreenhousePreview {
     private static final int SIZE = 10;
     /** Layout [column][row] of crop names: "" = nothing, null never. Mutation spots are MUTATION. */
     private static String[][] layout;
-    private static final String MUTATION = "\u0000mutation";
+    /** A mutation spot in the layout. Public for the game test. */
+    public static final String MUTATION = "\u0000mutation";
 
     private GreenhousePreview() {}
 
     public static void init() {
+        GreenhouseWorld.init();
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("greenhouse")
@@ -44,9 +47,35 @@ public final class GreenhousePreview {
                     .then(ClientCommands.literal("paste").executes(c -> {
                         paste();
                         return 1;
-                    }))));
+                    }))
+                    .then(ClientCommands.literal("clear").executes(c -> {
+                        GreenhouseWorld.hide();
+                        message("Greenhouse layout hidden. /s2 greenhouse paste shows one again.", ChatFormatting.GREEN);
+                        return 1;
+                    }))
+                    .then(ClientCommands.literal("rotate")
+                        .then(ClientCommands.literal("left").executes(c -> turn(rotatedLeft(layout), "Rotated left.")))
+                        .then(ClientCommands.literal("right").executes(c -> turn(rotated(layout), "Rotated right."))))
+                    .then(ClientCommands.literal("mirror").executes(c -> turn(mirrored(layout), "Mirrored.")))));
             }
         });
+    }
+
+    /** Rotate / mirror from a command: changes the layout, in the world too. */
+    private static int turn(String[][] changed, String done) {
+        if (layout == null) {
+            message("No layout yet: copy one from SkyMutations and run /s2 greenhouse paste.", ChatFormatting.RED);
+            return 1;
+        }
+        setLayout(changed);
+        message(done, ChatFormatting.GREEN);
+        return 1;
+    }
+
+    /** A new layout (pasted, rotated or mirrored): what's shown in the world follows it. */
+    private static void setLayout(String[][] changed) {
+        layout = changed;
+        if (GreenhouseWorld.showing()) GreenhouseWorld.show(layout);
     }
 
     private static boolean enabled() {
@@ -71,7 +100,16 @@ public final class GreenhousePreview {
             return;
         }
         layout = parsed;
-        open();
+        if (!GreenhouseWorld.inWorld()) {
+            open();
+            return;
+        }
+        // On your greenhouse plot, like Skyblocker's paste; /s2 greenhouse still opens the grid.
+        if (GreenhouseWorld.show(layout)) {
+            message("Greenhouse layout shown on your greenhouse. /s2 greenhouse rotate left|right, mirror, clear; /s2 greenhouse for the grid.", ChatFormatting.GREEN);
+        } else {
+            message("Greenhouse layout loaded: go to your greenhouse plot (with the Carpenter) to see it. /s2 greenhouse opens the grid.", ChatFormatting.YELLOW);
+        }
     }
 
     private static void open() {
@@ -226,6 +264,7 @@ public final class GreenhousePreview {
     // ---- preview screen ----
 
     private static String[][] rotated(String[][] grid) {
+        if (grid == null) return null;
         String[][] out = new String[SIZE][SIZE];
         for (int x = 0; x < SIZE; x++) {
             for (int z = 0; z < SIZE; z++) out[SIZE - 1 - z][x] = grid[x][z];
@@ -233,7 +272,12 @@ public final class GreenhousePreview {
         return out;
     }
 
+    private static String[][] rotatedLeft(String[][] grid) {
+        return rotated(rotated(rotated(grid)));
+    }
+
     private static String[][] mirrored(String[][] grid) {
+        if (grid == null) return null;
         String[][] out = new String[SIZE][SIZE];
         for (int x = 0; x < SIZE; x++) {
             for (int z = 0; z < SIZE; z++) out[SIZE - 1 - x][z] = grid[x][z];
@@ -260,11 +304,11 @@ public final class GreenhousePreview {
         protected void init() {
             int y = top() + CELL * SIZE + 8;
             int x = width / 2 - 123;
-            addRenderableWidget(Button.builder(Component.literal("Rotate left"), b -> layout = rotated(rotated(rotated(layout))))
+            addRenderableWidget(Button.builder(Component.literal("Rotate left"), b -> setLayout(rotatedLeft(layout)))
                 .bounds(x, y, 80, 20).build());
-            addRenderableWidget(Button.builder(Component.literal("Rotate right"), b -> layout = rotated(layout))
+            addRenderableWidget(Button.builder(Component.literal("Rotate right"), b -> setLayout(rotated(layout)))
                 .bounds(x + 83, y, 80, 20).build());
-            addRenderableWidget(Button.builder(Component.literal("Mirror"), b -> layout = mirrored(layout))
+            addRenderableWidget(Button.builder(Component.literal("Mirror"), b -> setLayout(mirrored(layout)))
                 .bounds(x + 166, y, 80, 20).build());
             addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose())
                 .bounds(width / 2 - 40, y + 24, 80, 20).build());
