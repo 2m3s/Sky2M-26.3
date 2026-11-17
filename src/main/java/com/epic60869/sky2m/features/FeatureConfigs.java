@@ -1187,10 +1187,6 @@ public final class FeatureConfigs {
         @Expose
         public String rngOverbloom = "";
         @Expose
-        public String rngLooting = "";
-        @Expose
-        public String rngLuck = "";
-        @Expose
         public String rngSearch = "";
         @Expose
         public String rngCategory = "ALL";

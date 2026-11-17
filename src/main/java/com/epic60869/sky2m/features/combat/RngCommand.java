@@ -19,13 +19,13 @@ import java.util.regex.Pattern;
  * every RNG drop the mod knows about (the drops the RNG drop totem tracks) with its base chance from the item list's
  * mob drop data and what it becomes with your stats.
  *
- * <p>Formulas, from the Hypixel SkyBlock wiki:
+ * <p>Formulas (Magic Find Rework, SkyBlock 0.27.3, Nov 2026, from the release candidate notes):
  * <ul>
- * <li>Mob drops: https://hypixelskyblock.minecraft.wiki/w/Magic_Find and https://hypixelskyblock.minecraft.wiki/w/Drop_Chance :
- *     chance = base x (1 + 0.15 x Looting) x (1 + 0.05 x Luck) x (1 + MF / 100), where Magic Find only applies while the
- *     base chance (after Looting) is strictly below 5%.</li>
- * <li>Pet drops: https://hypixelskyblock.minecraft.wiki/w/Pet_Luck : chance = base x (1 + (MF + Pet Luck) / 100); Looting
- *     does not apply to pets.</li>
+ * <li>Mob drops: chance = base x (1 + MF / 100) for every mob drop (the old "under 5%" limit is gone), with Magic Find
+ *     capped at 500. Looting, Luck and Chance are now one Looting enchant that gives Magic Find, so they are part of the
+ *     stat. Above 100% the extra is a chance of another roll that doubles the stack, so the value is kept uncapped as
+ *     the expected number of base stacks.</li>
+ * <li>Pet drops: chance = base x (1 + (MF + Pet Luck) / 100). Whether 0.27.3 changed Pet Luck isn't known.</li>
  * <li>Pests / rare crops: https://hypixelskyblock.minecraft.wiki/w/Overbloom : chance = base x (1 + Overbloom / 100);
  *     Overbloom replaces Magic Find there.</li>
  * </ul>
@@ -38,10 +38,10 @@ public final class RngCommand {
 
     /** The formula that applies to a drop. */
     public enum Formula {
-        MOB("Mob", "base x (1 + 0.15 x Looting) x (1 + 0.05 x Luck) x (1 + MF / 100)",
-            "Magic Find only applies while the chance (after Looting) is under 5%. Wiki: Magic Find, Drop Chance."),
+        MOB("Mob", "base x (1 + MF / 100)",
+            "Since 0.27.3 Magic Find (max 500) applies to every mob drop, and Looting is part of it. Over 100% gives extra drops."),
         PET("Pet", "base x (1 + (MF + Pet Luck) / 100)",
-            "Pet Luck adds to Magic Find for pet drops; Looting does not apply to pets. Wiki: Pet Luck."),
+            "Pet Luck adds to Magic Find for pet drops. Pets no longer give Magic Find themselves (0.27.3)."),
         PEST("Pest", "base x (1 + Overbloom / 100)",
             "Garden pests and rare crops use Overbloom instead of Magic Find. Wiki: Overbloom."),
         PEST_PET("Pest pet", "base x (1 + Overbloom / 100 + Pet Luck / 600)",
@@ -59,6 +59,9 @@ public final class RngCommand {
             this.note = note;
         }
     }
+
+    /** The Magic Find stat's cap since 0.27.3 (was 900). */
+    public static final double MAX_MAGIC_FIND = 500;
 
     private RngCommand() {}
 
@@ -113,10 +116,9 @@ public final class RngCommand {
 
     /** Which of Magic Find, Pet Luck and Overbloom change a drop with this base chance: {mf, pl, overbloom}. */
     static boolean[] affectedBy(Formula formula, double base) {
-        boolean small = base < 0.05;
         return switch (formula) {
-            case MOB -> new boolean[] {small, false, false};
-            case PET -> new boolean[] {small, small, false};
+            case MOB -> new boolean[] {true, false, false};
+            case PET -> new boolean[] {true, true, false};
             case PEST -> new boolean[] {false, false, true};
             case PEST_PET -> new boolean[] {false, true, true};
             default -> new boolean[] {false, false, false};
@@ -140,19 +142,23 @@ public final class RngCommand {
     }
 
     /** The chance with your stats under the drop's formula (see the class comment), at most 100%. */
-    static double chance(Formula formula, double base, double magicFind, double petLuck, double overbloom, double looting, double luck) {
-        double p;
-        switch (formula) {
-            case PET -> p = base < 0.05 ? base * (1 + (magicFind + petLuck) / 100.0) : base;
-            case PEST -> p = base * (1 + overbloom / 100.0);
-            case PEST_PET -> p = base * (1 + overbloom / 100.0 + petLuck / 600.0);
-            case NONE -> p = base;
-            default -> {
-                double withLooting = base * (1 + 0.15 * looting) * (1 + 0.05 * luck);
-                p = withLooting < 0.05 ? withLooting * (1 + magicFind / 100.0) : withLooting;
-            }
-        }
-        return Math.min(1.0, p);
+    public static double chance(Formula formula, double base, double magicFind, double petLuck, double overbloom) {
+        return Math.min(1.0, expected(formula, base, magicFind, petLuck, overbloom));
+    }
+
+    /**
+     * Like {@link #chance} but not capped: above 1 it's the expected number of base stacks per kill, since 0.27.3 turns
+     * Magic Find past 100% into a chance of another roll that doubles the stack (8 Lily Pads at 150% = 16, half the time 24).
+     */
+    public static double expected(Formula formula, double base, double magicFind, double petLuck, double overbloom) {
+        double mf = Math.max(0, Math.min(MAX_MAGIC_FIND, magicFind));
+        return switch (formula) {
+            case PET -> base * (1 + (mf + petLuck) / 100.0);
+            case PEST -> base * (1 + overbloom / 100.0);
+            case PEST_PET -> base * (1 + overbloom / 100.0 + petLuck / 600.0);
+            case NONE -> base;
+            default -> base * (1 + mf / 100.0);
+        };
     }
 
     static String percent(double p) {

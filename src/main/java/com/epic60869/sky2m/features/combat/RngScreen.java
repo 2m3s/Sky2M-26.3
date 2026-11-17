@@ -116,8 +116,6 @@ public final class RngScreen extends Screen {
     private EditBox magicFind;
     private EditBox petLuck;
     private EditBox overbloom;
-    private EditBox looting;
-    private EditBox luck;
     private EditBox search;
     private Button[] filterButtons;
     private Button unaffectedButton;
@@ -186,15 +184,13 @@ public final class RngScreen extends Screen {
         String mf = magicFind != null ? magicFind.getValue() : s == null ? "" : s.rngMagicFind;
         String pl = petLuck != null ? petLuck.getValue() : s == null ? "" : s.rngPetLuck;
         String ob = overbloom != null ? overbloom.getValue() : s == null ? "" : s.rngOverbloom;
-        String lo = looting != null ? looting.getValue() : s == null ? "" : s.rngLooting;
-        String lu = luck != null ? luck.getValue() : s == null ? "" : s.rngLuck;
         String q = search != null ? search.getValue() : initialSearch != null ? initialSearch : s == null ? "" : s.rngSearch;
         int bw = (w - 4 * 4) / 5;
-        magicFind = box("Magic Find", l, bw, mf);
-        petLuck = box("Pet Luck", l + (bw + 4), bw, pl);
-        overbloom = box("Overbloom", l + (bw + 4) * 2, bw, ob);
-        looting = box("Looting", l + (bw + 4) * 3, bw, lo);
-        luck = box("Luck", l + (bw + 4) * 4, bw, lu);
+        // Looting and Luck are part of Magic Find since 0.27.3, so only three stats are asked for.
+        int sw = (w - 4 * 2) / 3;
+        magicFind = box("Magic Find", l, sw, mf);
+        petLuck = box("Pet Luck", l + (sw + 4), sw, pl);
+        overbloom = box("Overbloom", l + (sw + 4) * 2, sw, ob);
         search = new EditBox(font, l, 42, w, 16, Component.literal("Search"));
         search.setMaxLength(64);
         search.setValue(q);
@@ -490,9 +486,9 @@ public final class RngScreen extends Screen {
         int w = panelW();
         int r = l + w;
         g.centeredText(font, "RNG Drop Chances" + (built ? "  -  " + shown + " drops" : ""), width / 2, 4, 0xFFFFD35A);
-        int bw = (w - 4 * 4) / 5;
-        String[] labels = {"Magic Find", "Pet Luck", "Overbloom", "Looting lvl", "Luck lvl (armor)"};
-        for (int i = 0; i < 5; i++) g.text(font, clip(labels[i], bw), l + (bw + 4) * i, 13, 0xFFAAAAAA, false);
+        int sw = (w - 4 * 2) / 3;
+        String[] labels = {"Magic Find (max 500)", "Pet Luck", "Overbloom"};
+        for (int i = 0; i < labels.length; i++) g.text(font, clip(labels[i], sw), l + (sw + 4) * i, 13, 0xFFAAAAAA, false);
 
         // Category tabs.
         List<Cat> tabs = tabs();
@@ -528,7 +524,7 @@ public final class RngScreen extends Screen {
             g.centeredText(font, items.isEmpty() ? "No drop chances found in the item list yet." : "No drop matches.", width / 2, top + 20, 0xFFFF5555);
             return;
         }
-        double mf = num(magicFind), pl = num(petLuck), ob = num(overbloom), lo = num(looting), lu = num(luck);
+        double mf = num(magicFind), pl = num(petLuck), ob = num(overbloom);
         int visible = (bottom - top - 2) / ROW;
         scroll = Math.max(0, Math.min(scroll, lines.size() - visible));
         Line hovered = null;
@@ -545,7 +541,8 @@ public final class RngScreen extends Screen {
             }
             if (hover) g.fill(l + 1, y, r - 1, y + ROW, 0x20FFFFFF);
             Src s = line.src();
-            double now = RngCommand.chance(s.formula(), s.base(), mf, pl, ob, lo, lu);
+            double now = RngCommand.chance(s.formula(), s.base(), mf, pl, ob);
+            double drops = RngCommand.expected(s.formula(), s.base(), mf, pl, ob);
             boolean boosted = now > s.base() * 1.0000001;
             if (line.type() == ITEM) {
                 String more = line.count() > 1 ? " +" + (line.count() - 1) : "";
@@ -564,7 +561,9 @@ public final class RngScreen extends Screen {
             }
             g.text(font, RngCommand.percent(s.base()), l + 250, y + 1, 0xFF888888, false);
             g.text(font, RngCommand.percent(now), l + 304, y + 1, boosted ? 0xFF55FF55 : 0xFFCCCCCC, false);
-            g.text(font, "1 in " + abbreviate(1.0 / now), l + 358, y + 1, 0xFFCCCCCC, false);
+            // Past 100% Magic Find gives extra drops: show how many base stacks a kill gives on average.
+            String tries = drops > 1.0000001 ? String.format(java.util.Locale.US, "x%.2f each", drops) : "1 in " + abbreviate(1.0 / now);
+            g.text(font, tries, l + 358, y + 1, 0xFFCCCCCC, false);
         }
         g.disableScissor();
         if (hovered != null && hovered.type() != GROUP && hovered.src() != null) {
@@ -627,8 +626,6 @@ public final class RngScreen extends Screen {
         s.rngMagicFind = magicFind.getValue();
         s.rngPetLuck = petLuck.getValue();
         s.rngOverbloom = overbloom.getValue();
-        s.rngLooting = looting.getValue();
-        s.rngLuck = luck.getValue();
         s.rngSearch = search.getValue();
         s.rngCategory = cat.name();
         Sky2MConfig.saveCurrent(Sky2MConfig.current());

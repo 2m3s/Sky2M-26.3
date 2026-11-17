@@ -158,7 +158,7 @@ public final class DianaTracker {
     private static final RepoPattern DUG_MOB = RepoPattern.of("combat.DianaTracker.DUG_MOB", "^(?:Oh|Uh oh|Yikes|Oi|Good Grief|Danger|Woah)! You dug out (?:an? )?(?<mob>[A-Za-z ]+)!");
     private static final RepoPattern RARE_DROP = RepoPattern.of("combat.DianaTracker.RARE_DROP", "^RARE DROP! (?<drop>.+)$");
     private static final RepoPattern DUG_TREASURE = RepoPattern.of("combat.DianaTracker.DUG_TREASURE", "^RARE DROP! You dug out an? (?<drop>.+?)!$");
-    private static final RepoPattern MAGIC_FIND = RepoPattern.of("combat.DianaTracker.MAGIC_FIND", "\\(\\+(?<mf>\\d+) ✯ Magic Find\\)");
+    private static final RepoPattern MAGIC_FIND = RepoPattern.of("combat.DianaTracker.MAGIC_FIND", "\\(\\+(?<mf>\\d+(?:\\.\\d+)?)%? ✯ Magic Find\\)");
     private static final RepoPattern DYE = RepoPattern.of("combat.DianaTracker.DYE", "^WOW! (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+) found an? Mythological Dye");
     private static final RepoPattern CHARM = RepoPattern.of("combat.DianaTracker.CHARM", "^CHARM! You charmed the (?<mob>.+?) and received (?<n>\\d+) (?<shard>.+?) Shards?!$");
     private static final RepoPattern LS_SHARDS = RepoPattern.of("combat.DianaTracker.LS_SHARDS", "^LOOT SHARE You received (?<n>\\d+) (?<shard>.+?) Shards? for assisting .+!$");
@@ -437,7 +437,8 @@ public final class DianaTracker {
             // "Enchanted Book (Chimera 1)"; other books aren't Diana drops.
             if (drop == null || (dropText.startsWith("Enchanted Book") && drop != Drop.CHIMERA)) return;
             Matcher mf = MAGIC_FIND.matcher(dropText);
-            int magicFind = mf.find() ? Integer.parseInt(mf.group("mf")) : 0;
+            // Since 0.27.3 Magic Find can have a decimal (Looting gives +2.5 steps): rounded.
+            int magicFind = mf.find() ? (int) Math.round(Double.parseDouble(mf.group("mf"))) : 0;
             onDrop(drop, magicFind, gotLootShareRecently());
             return;
         }

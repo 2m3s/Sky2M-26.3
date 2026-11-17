@@ -404,7 +404,8 @@ public final class DianaAchievements {
             CompoundTag enchants = Compat.getCustomData(stack).getCompoundOrEmpty("enchantments");
             if (enchants.isEmpty()) continue;
             boolean chim = enchants.getIntOr("ultimate_chimera", 0) == 5;
-            boolean looting = enchants.getIntOr("looting", 0) == 5;
+            // 0.27.3 raised Looting to VII (old Looting V became VII), so V or higher counts.
+            boolean looting = enchants.getIntOr("looting", 0) >= 5;
             boolean gift = enchants.getIntOr("divine_gift", 0) == 3;
             if (chim) unlock(52);
             if (looting) unlock(53);

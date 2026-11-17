@@ -118,6 +118,7 @@ final class RngSelfTest {
                 forms.add("RARE DROP! You dug out a " + item + "!");
                 forms.add("Wow! You dug out a " + item + "!");
                 forms.add(tag + " " + item + " (+300% ✯ Magic Find)");
+                forms.add(tag + " " + item + " (+212.5 ✯ Magic Find)"); // 0.27.3: flat, can have a decimal
             } else if (cat.startsWith("Other:Fishing")) {
                 forms.add(tag + " " + item + " (+142% ✯ Magic Find)");
                 forms.add("OUTSTANDING CATCH! You caught a " + item + "!");
@@ -129,6 +130,7 @@ final class RngSelfTest {
                 forms.add("PET DROP! [Lvl 1] Spirit (+50% ✯ Magic Find)");
             } else {
                 forms.add(tag + " (" + item + ") (+312% ✯ Magic Find)");
+                forms.add(tag + " (" + item + ") (+87.5 ✯ Magic Find)");
                 forms.add(tag + " " + item);
                 forms.add("RNGESUS INCARNATE DROP! (" + item + ") (+999% ✯ Magic Find)");
                 forms.add("RARE REWARD! epic60869 found a " + item + " in their Obsidian Chest!");

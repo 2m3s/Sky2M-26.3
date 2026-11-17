@@ -79,8 +79,8 @@ public final class FishingFeatures {
     private static final String LOOTSHARE = "Lootshare!";
     private static final RepoPattern YOU_DIED = RepoPattern.of("fishing.FishingFeatures.YOU_DIED", "^ ☠ You were killed by (Ragnarok|Thunder|Lord Jawbus|Jawbus Follower|Wiki Tiki|Wiki Tiki Laser Totem|Titanoboa|Nessie|Torrid|Silkbreeze|Giant Isopod)\\.$");
     // Rare drops, read from the plain text (Feesh reads the § codes; the rarity of a pet comes from its colour here).
-    private static final RepoPattern RARE_DROP_BOOK = RepoPattern.of("fishing.FishingFeatures.RARE_DROP_BOOK", "^RARE DROP! Enchanted Book \\((.+?)\\)(?: \\(\\+(\\d+) . Magic Find\\))?$");
-    private static final RepoPattern RARE_DROP = RepoPattern.of("fishing.FishingFeatures.RARE_DROP", "^RARE DROP! (.+?)(?: \\(\\+(\\d+) . Magic Find\\))?$");
+    private static final RepoPattern RARE_DROP_BOOK = RepoPattern.of("fishing.FishingFeatures.RARE_DROP_BOOK", "^RARE DROP! Enchanted Book \\((.+?)\\)(?: \\(\\+(\\d+(?:\\.\\d+)?)%? . Magic Find\\))?$");
+    private static final RepoPattern RARE_DROP = RepoPattern.of("fishing.FishingFeatures.RARE_DROP", "^RARE DROP! (.+?)(?: \\(\\+(\\d+(?:\\.\\d+)?)%? . Magic Find\\))?$");
     private static final RepoPattern PET_DROP = RepoPattern.of("fishing.FishingFeatures.PET_DROP", "^PET DROP! (?:(?:LEGENDARY|EPIC|RARE|UNCOMMON|COMMON) )?(.+?)(?: \\(\\+\\d+.*\\))?$");
     private static final RepoPattern PET_CATCH = RepoPattern.of("fishing.FishingFeatures.PET_CATCH", "^. (?:GREAT|OUTSTANDING) CATCH! You caught a \\[Lvl 1] (?:(?:LEGENDARY|EPIC|RARE|UNCOMMON|COMMON) )?(.+?)!$");
     private static final RepoPattern DYE_DROP = RepoPattern.of("fishing.FishingFeatures.DYE_DROP", "^WOW! (.+?) found an? (.+? Dye)(?: #\\d+)?!.*$");
@@ -417,10 +417,10 @@ public final class FishingFeatures {
         Matcher m;
         if ((m = RARE_DROP_BOOK.matcher(text)).matches()) {
             item = m.group(1);
-            magicFind = m.group(2) == null ? null : Integer.valueOf(m.group(2));
+            magicFind = m.group(2) == null ? null : (int) Math.round(Double.parseDouble(m.group(2)));
         } else if ((m = RARE_DROP.matcher(text)).matches()) {
             item = m.group(1);
-            magicFind = m.group(2) == null ? null : Integer.valueOf(m.group(2));
+            magicFind = m.group(2) == null ? null : (int) Math.round(Double.parseDouble(m.group(2)));
         } else if ((m = PET_DROP.matcher(text)).matches() || (m = PET_CATCH.matcher(text)).matches()) {
             item = m.group(1) + " (" + rarityName(colourOf(component, m.group(1))) + ")";
         } else if ((m = PHOENIX_DROP.matcher(text)).matches()) {

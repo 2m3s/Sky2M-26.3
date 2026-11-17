@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 public final class GhostTracker {
     /** SkyHanni-REPO's GhostDrops.json ghost_drops, by name. */
     private static final List<String> DROPS = RepoTable.list("combat.extra.GhostTracker.DROPS", List.of("Sorrow", "Plasma", "Volta", "Ghostly Boots"));
-    private static final RepoPattern DROP = RepoPattern.of("combat.extra.GhostTracker.DROP", "^RARE DROP! (?<item>.+?) \\(\\+(?<mf>\\d+)%?[^)]*Magic Find\\)");
+    private static final RepoPattern DROP = RepoPattern.of("combat.extra.GhostTracker.DROP", "^RARE DROP! (?<item>.+?) \\(\\+(?<mf>\\d+(?:\\.\\d+)?)%?[^)]*Magic Find\\)");
     private static final RepoPattern COMBO = RepoPattern.of("combat.extra.GhostTracker.COMBO", "Your Kill Combo has expired! You reached a (?<kill>[\\d,.]+) Kill Combo!");
     private static final RepoPattern BAG = RepoPattern.of("combat.extra.GhostTracker.BAG", "The ghost's death materialized 1,000,000 coins from the mists!");
     private static final RepoPattern BESTIARY = RepoPattern.of("combat.extra.GhostTracker.BESTIARY", "\\s*Ghost (?<level>\\d+|[XVI]+): (?<kills>[\\d,.]+)/(?<next>[\\d,.]+)");
@@ -101,7 +101,7 @@ public final class GhostTracker {
             String item = drop.group("item").trim();
             if (!DROPS.contains(item)) return;
             data.drops.merge(item, 1L, Long::sum);
-            data.mfTotal += Long.parseLong(drop.group("mf"));
+            data.mfTotal += Math.round(Double.parseDouble(drop.group("mf")));
             data.mfKills++;
             if (item.equals("Sorrow")) data.sinceSorrow = 0;
             dirty = true;
