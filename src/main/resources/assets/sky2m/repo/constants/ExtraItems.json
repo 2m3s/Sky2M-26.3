@@ -1,246 +1,48 @@
 {
   "formatVersion": 1,
-  "_comment": "Items the NotEnoughUpdates-REPO does not have yet, in its item format. The Item List adds each one only while NEU lacks that id, so NEU wins once it has it. Remove entries after NEU merges them.",
+  "_comment": "Items and recipes the NotEnoughUpdates-REPO doesn't have yet, in its item format. An item NEU lacks is added whole; for an item NEU has without a recipe, only the recipes and crafttext are used. NEU's own data wins once it has them, so remove entries then.",
   "items": {
-    "PERSONAL_COMPACTOR_FARMING_4000": {
+    "CATACOMBS_GOBBLER": {
       "itemid": "minecraft:paper",
-      "displayname": "§fPersonal Farming Compactor 4000",
-      "nbttag": "{ExtraAttributes:{id:\"PERSONAL_COMPACTOR_FARMING_4000\"},HideFlags:254,ItemModel:\"minecraft:crafter\",display:{Lore:[0:\"§7Accessory Power: §6+3\",1:\"\",2:\"§7Automatically compacts various\",3:\"§aFarming §7items that are in your Sacks.\",4:\"§8Keeps 25% of Sack capacity uncompacted!\",5:\"§8Does not grant Carpentry XP!\",6:\"\",7:\"§eRight-click to configure!\",8:\"\",9:\"§8Works while in Accessory Bag!\",10:\"§f§lCOMMON ACCESSORY\"],Name:\"§fPersonal Farming Compactor 4000\"},ench:[]}",
+      "displayname": "§5Catacombs Gobbler",
+      "nbttag": "{ExtraAttributes:{id:\"CATACOMBS_GOBBLER\"},HideFlags:254,ItemModel:\"hypixel_skyblock:item/island_relevant/dungeons/catacombs_gobbler\",display:{Lore:[0:\"§7Accessory Power: §6+12\",1:\"\",2:\"§7Automatically gobbles drops from\",3:\"§7mobs in §cThe Catacombs §7that are at\",4:\"§7or below the selected rarity and\",5:\"§7refunds §a10% §7of their essence into\",6:\"§7your Dungeon Chests.\",7:\"\",8:\"§7Selected Rarity: §8None\",9:\"§7Gobble Perfect Quality: §c§lDISABLED\",10:\"\",11:\"§eRight-click to configure!\",12:\"\",13:\"§8Works while in Accessory Bag!\",14:\"§5§lEPIC DUNGEON ACCESSORY\"],Name:\"§5Catacombs Gobbler\"}}",
       "damage": 0,
       "lore": [
-        "§7Accessory Power: §6+3",
+        "§7Accessory Power: §6+12",
         "",
-        "§7Automatically compacts various",
-        "§aFarming §7items that are in your Sacks.",
-        "§8Keeps 25% of Sack capacity uncompacted!",
-        "§8Does not grant Carpentry XP!",
+        "§7Automatically gobbles drops from",
+        "§7mobs in §cThe Catacombs §7that are at",
+        "§7or below the selected rarity and",
+        "§7refunds §a10% §7of their essence into",
+        "§7your Dungeon Chests.",
+        "",
+        "§7Selected Rarity: §8None",
+        "§7Gobble Perfect Quality: §c§lDISABLED",
         "",
         "§eRight-click to configure!",
         "",
         "§8Works while in Accessory Bag!",
-        "§f§lCOMMON ACCESSORY"
+        "§5§lEPIC DUNGEON ACCESSORY"
       ],
-      "internalname": "PERSONAL_COMPACTOR_FARMING_4000",
+      "internalname": "CATACOMBS_GOBBLER",
       "clickcommand": "",
-      "crafttext": "Requires: Carrot IV",
+      "crafttext": "",
       "infoType": "",
       "info": [],
       "recipes": [
         {
-          "A1": "",
-          "A2": "ENCHANTED_CARROT:1",
-          "A3": "",
-          "B1": "ENCHANTED_CARROT:1",
-          "B2": "",
-          "B3": "ENCHANTED_CARROT:1",
-          "C1": "ENCHANTED_CARROT:1",
-          "C2": "ENCHANTED_CARROT:1",
-          "C3": "ENCHANTED_CARROT:1",
+          "A1": "WITHER_CATALYST:2",
+          "A2": "",
+          "A3": "WITHER_CATALYST:2",
+          "B1": "WITHER_CATALYST:2",
+          "B2": "DEVOURER:1",
+          "B3": "WITHER_CATALYST:2",
+          "C1": "WITHER_CATALYST:2",
+          "C2": "WITHER_CATALYST:2",
+          "C3": "WITHER_CATALYST:2",
           "type": "crafting",
           "count": 1,
-          "overrideOutputId": "PERSONAL_COMPACTOR_FARMING_4000"
-        }
-      ]
-    },
-    "PERSONAL_COMPACTOR_MINING_4000": {
-      "itemid": "minecraft:paper",
-      "displayname": "§fPersonal Mining Compactor 4000",
-      "nbttag": "{ExtraAttributes:{id:\"PERSONAL_COMPACTOR_MINING_4000\"},HideFlags:254,ItemModel:\"minecraft:crafter\",display:{Lore:[0:\"§7Accessory Power: §6+3\",1:\"\",2:\"§7Automatically compacts various §6Mining\",3:\"§7items that are in your Sacks.\",4:\"§8Keeps 25% of Sack capacity uncompacted!\",5:\"§8Does not grant Carpentry XP!\",6:\"\",7:\"§eRight-click to configure!\",8:\"\",9:\"§8Works while in Accessory Bag!\",10:\"§f§lCOMMON ACCESSORY\"],Name:\"§fPersonal Mining Compactor 4000\"},ench:[]}",
-      "damage": 0,
-      "lore": [
-        "§7Accessory Power: §6+3",
-        "",
-        "§7Automatically compacts various §6Mining",
-        "§7items that are in your Sacks.",
-        "§8Keeps 25% of Sack capacity uncompacted!",
-        "§8Does not grant Carpentry XP!",
-        "",
-        "§eRight-click to configure!",
-        "",
-        "§8Works while in Accessory Bag!",
-        "§f§lCOMMON ACCESSORY"
-      ],
-      "internalname": "PERSONAL_COMPACTOR_MINING_4000",
-      "clickcommand": "",
-      "crafttext": "Requires: Redstone Dust IV",
-      "infoType": "",
-      "info": [],
-      "recipes": [
-        {
-          "A1": "",
-          "A2": "ENCHANTED_REDSTONE:1",
-          "A3": "",
-          "B1": "ENCHANTED_REDSTONE:1",
-          "B2": "",
-          "B3": "ENCHANTED_REDSTONE:1",
-          "C1": "ENCHANTED_REDSTONE:1",
-          "C2": "ENCHANTED_REDSTONE:1",
-          "C3": "ENCHANTED_REDSTONE:1",
-          "type": "crafting",
-          "count": 1,
-          "overrideOutputId": "PERSONAL_COMPACTOR_MINING_4000"
-        }
-      ]
-    },
-    "PERSONAL_COMPACTOR_COMBAT_4000": {
-      "itemid": "minecraft:paper",
-      "displayname": "§fPersonal Combat Compactor 4000",
-      "nbttag": "{ExtraAttributes:{id:\"PERSONAL_COMPACTOR_COMBAT_4000\"},HideFlags:254,ItemModel:\"minecraft:crafter\",display:{Lore:[0:\"§7Accessory Power: §6+3\",1:\"\",2:\"§7Automatically compacts various\",3:\"§cCombat §7items that are in your Sacks.\",4:\"§8Keeps 25% of Sack capacity uncompacted!\",5:\"§8Does not grant Carpentry XP!\",6:\"\",7:\"§eRight-click to configure!\",8:\"\",9:\"§8Works while in Accessory Bag!\",10:\"§f§lCOMMON ACCESSORY\"],Name:\"§fPersonal Combat Compactor 4000\"},ench:[]}",
-      "damage": 0,
-      "lore": [
-        "§7Accessory Power: §6+3",
-        "",
-        "§7Automatically compacts various",
-        "§cCombat §7items that are in your Sacks.",
-        "§8Keeps 25% of Sack capacity uncompacted!",
-        "§8Does not grant Carpentry XP!",
-        "",
-        "§eRight-click to configure!",
-        "",
-        "§8Works while in Accessory Bag!",
-        "§f§lCOMMON ACCESSORY"
-      ],
-      "internalname": "PERSONAL_COMPACTOR_COMBAT_4000",
-      "clickcommand": "",
-      "crafttext": "Requires: Spider Eye IV",
-      "infoType": "",
-      "info": [],
-      "recipes": [
-        {
-          "A1": "",
-          "A2": "ENCHANTED_SPIDER_EYE:1",
-          "A3": "",
-          "B1": "ENCHANTED_SPIDER_EYE:1",
-          "B2": "",
-          "B3": "ENCHANTED_SPIDER_EYE:1",
-          "C1": "ENCHANTED_SPIDER_EYE:1",
-          "C2": "ENCHANTED_SPIDER_EYE:1",
-          "C3": "ENCHANTED_SPIDER_EYE:1",
-          "type": "crafting",
-          "count": 1,
-          "overrideOutputId": "PERSONAL_COMPACTOR_COMBAT_4000"
-        }
-      ]
-    },
-    "PERSONAL_COMPACTOR_FORAGING_4000": {
-      "itemid": "minecraft:paper",
-      "displayname": "§fPersonal Foraging Compactor 4000",
-      "nbttag": "{ExtraAttributes:{id:\"PERSONAL_COMPACTOR_FORAGING_4000\"},HideFlags:254,ItemModel:\"minecraft:crafter\",display:{Lore:[0:\"§7Accessory Power: §6+3\",1:\"\",2:\"§7Automatically compacts various\",3:\"§2Foraging §7items that are in your\",4:\"§7Sacks.\",5:\"§8Keeps 25% of Sack capacity uncompacted!\",6:\"§8Does not grant Carpentry XP!\",7:\"\",8:\"§eRight-click to configure!\",9:\"\",10:\"§8Works while in Accessory Bag!\",11:\"§f§lCOMMON ACCESSORY\"],Name:\"§fPersonal Foraging Compactor 4000\"},ench:[]}",
-      "damage": 0,
-      "lore": [
-        "§7Accessory Power: §6+3",
-        "",
-        "§7Automatically compacts various",
-        "§2Foraging §7items that are in your",
-        "§7Sacks.",
-        "§8Keeps 25% of Sack capacity uncompacted!",
-        "§8Does not grant Carpentry XP!",
-        "",
-        "§eRight-click to configure!",
-        "",
-        "§8Works while in Accessory Bag!",
-        "§f§lCOMMON ACCESSORY"
-      ],
-      "internalname": "PERSONAL_COMPACTOR_FORAGING_4000",
-      "clickcommand": "",
-      "crafttext": "Requires: Spruce Log IV",
-      "infoType": "",
-      "info": [],
-      "recipes": [
-        {
-          "A1": "",
-          "A2": "ENCHANTED_SPRUCE_LOG:1",
-          "A3": "",
-          "B1": "ENCHANTED_SPRUCE_LOG:1",
-          "B2": "",
-          "B3": "ENCHANTED_SPRUCE_LOG:1",
-          "C1": "ENCHANTED_SPRUCE_LOG:1",
-          "C2": "ENCHANTED_SPRUCE_LOG:1",
-          "C3": "ENCHANTED_SPRUCE_LOG:1",
-          "type": "crafting",
-          "count": 1,
-          "overrideOutputId": "PERSONAL_COMPACTOR_FORAGING_4000"
-        }
-      ]
-    },
-    "PERSONAL_COMPACTOR_FISHING_4000": {
-      "itemid": "minecraft:paper",
-      "displayname": "§fPersonal Fishing Compactor 4000",
-      "nbttag": "{ExtraAttributes:{id:\"PERSONAL_COMPACTOR_FISHING_4000\"},HideFlags:254,ItemModel:\"minecraft:crafter\",display:{Lore:[0:\"§7Accessory Power: §6+3\",1:\"\",2:\"§7Automatically compacts various\",3:\"§bFishing §7items that are in your Sacks.\",4:\"§8Keeps 25% of Sack capacity uncompacted!\",5:\"§8Does not grant Carpentry XP!\",6:\"\",7:\"§eRight-click to configure!\",8:\"\",9:\"§8Works while in Accessory Bag!\",10:\"§f§lCOMMON ACCESSORY\"],Name:\"§fPersonal Fishing Compactor 4000\"},ench:[]}",
-      "damage": 0,
-      "lore": [
-        "§7Accessory Power: §6+3",
-        "",
-        "§7Automatically compacts various",
-        "§bFishing §7items that are in your Sacks.",
-        "§8Keeps 25% of Sack capacity uncompacted!",
-        "§8Does not grant Carpentry XP!",
-        "",
-        "§eRight-click to configure!",
-        "",
-        "§8Works while in Accessory Bag!",
-        "§f§lCOMMON ACCESSORY"
-      ],
-      "internalname": "PERSONAL_COMPACTOR_FISHING_4000",
-      "clickcommand": "",
-      "crafttext": "Requires: Clay Ball IV",
-      "infoType": "",
-      "info": [],
-      "recipes": [
-        {
-          "A1": "",
-          "A2": "ENCHANTED_CLAY_BALL:1",
-          "A3": "",
-          "B1": "ENCHANTED_CLAY_BALL:1",
-          "B2": "",
-          "B3": "ENCHANTED_CLAY_BALL:1",
-          "C1": "ENCHANTED_CLAY_BALL:1",
-          "C2": "ENCHANTED_CLAY_BALL:1",
-          "C3": "ENCHANTED_CLAY_BALL:1",
-          "type": "crafting",
-          "count": 1,
-          "overrideOutputId": "PERSONAL_COMPACTOR_FISHING_4000"
-        }
-      ]
-    },
-    "PERSONAL_COMPACTOR_HUSBANDRY_4000": {
-      "itemid": "minecraft:paper",
-      "displayname": "§fPersonal Husbandry Compactor 4000",
-      "nbttag": "{ExtraAttributes:{id:\"PERSONAL_COMPACTOR_HUSBANDRY_4000\"},HideFlags:254,ItemModel:\"minecraft:crafter\",display:{Lore:[0:\"§7Accessory Power: §6+3\",1:\"\",2:\"§7Automatically compacts various\",3:\"§fHusbandry §7items that are in your\",4:\"§7Sacks.\",5:\"§8Keeps 25% of Sack capacity uncompacted!\",6:\"§8Does not grant Carpentry XP!\",7:\"\",8:\"§eRight-click to configure!\",9:\"\",10:\"§8Works while in Accessory Bag!\",11:\"§f§lCOMMON ACCESSORY\"],Name:\"§fPersonal Husbandry Compactor 4000\"},ench:[]}",
-      "damage": 0,
-      "lore": [
-        "§7Accessory Power: §6+3",
-        "",
-        "§7Automatically compacts various",
-        "§fHusbandry §7items that are in your",
-        "§7Sacks.",
-        "§8Keeps 25% of Sack capacity uncompacted!",
-        "§8Does not grant Carpentry XP!",
-        "",
-        "§eRight-click to configure!",
-        "",
-        "§8Works while in Accessory Bag!",
-        "§f§lCOMMON ACCESSORY"
-      ],
-      "internalname": "PERSONAL_COMPACTOR_HUSBANDRY_4000",
-      "clickcommand": "",
-      "crafttext": "Requires: Leather IV",
-      "infoType": "",
-      "info": [],
-      "recipes": [
-        {
-          "A1": "",
-          "A2": "ENCHANTED_LEATHER:1",
-          "A3": "",
-          "B1": "ENCHANTED_LEATHER:1",
-          "B2": "",
-          "B3": "ENCHANTED_LEATHER:1",
-          "C1": "ENCHANTED_LEATHER:1",
-          "C2": "ENCHANTED_LEATHER:1",
-          "C3": "ENCHANTED_LEATHER:1",
-          "type": "crafting",
-          "count": 1,
-          "overrideOutputId": "PERSONAL_COMPACTOR_HUSBANDRY_4000"
+          "overrideOutputId": "CATACOMBS_GOBBLER"
         }
       ]
     }

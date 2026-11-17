@@ -318,14 +318,17 @@ public final class ItemListData {
                 addItem(item, byId, recipes, usages, craftText);
             }
         }
-        // New items NEU doesn't have yet (e.g. 0.27.3's per-skill Personal Compactors), from Sky2M-REPO's
-        // ExtraItems.json in NEU's item format. NEU's own copy wins once it has the id.
+        // Items and recipes NEU doesn't have yet, from Sky2M-REPO's ExtraItems.json in NEU's item format: a new item
+        // is added whole; for an item NEU has without a recipe (0.27.3's Catacombs Gobbler), only its recipes and
+        // "Requires" text. NEU's own data wins once it has them.
         JsonObject extra = com.epic60869.sky2m.features.core.Sky2MRepo.fetch("ExtraItems");
         if (extra != null && extra.has("items") && extra.get("items").isJsonObject()) {
             for (var e : extra.getAsJsonObject("items").entrySet()) {
-                if (byId.containsKey(e.getKey()) || !e.getValue().isJsonObject()) continue;
+                if (!e.getValue().isJsonObject()) continue;
                 try {
-                    addItem(e.getValue().getAsJsonObject(), byId, recipes, usages, craftText);
+                    JsonObject item = e.getValue().getAsJsonObject();
+                    if (!byId.containsKey(e.getKey())) addItem(item, byId, recipes, usages, craftText);
+                    else if (recipes.getOrDefault(e.getKey(), List.of()).isEmpty()) addRecipes(e.getKey(), item, recipes, usages, craftText);
                 } catch (Exception bad) {
                     System.err.println("[Sky2M] Item List: skipping extra item " + e.getKey() + ": " + bad);
                 }
@@ -350,14 +353,20 @@ public final class ItemListData {
         Entry entry = entry(item);
         if (entry == null) return;
         byId.put(entry.id(), entry);
+        addRecipes(entry.id(), item, recipes, usages, craftText);
+    }
+
+    /** Adds a NEU-format item's "Requires ..." text, recipes and usages under {@code id}. */
+    private static void addRecipes(String id, JsonObject item, Map<String, List<Recipe>> recipes,
+                                   Map<String, List<Recipe>> usages, Map<String, String> craftText) {
         // "Requires Wheat VIII": the collection (or other) unlock the repo notes for crafting it.
         String requires = str(item, "crafttext");
-        if (requires != null && !requires.isBlank()) craftText.put(entry.id(), requires.trim());
-        for (Recipe recipe : recipesOf(entry.id(), item)) {
+        if (requires != null && !requires.isBlank()) craftText.put(id, requires.trim());
+        for (Recipe recipe : recipesOf(id, item)) {
             for (Ingredient out : recipe.outputs()) add(recipes, out.id(), recipe);
             for (Ingredient in : recipe.inputs()) add(usages, in.id(), recipe);
             // An NPC's shop and a mob's drops are listed under the NPC or mob too.
-            if (recipe instanceof Shop || recipe instanceof Drops) add(usages, entry.id(), recipe);
+            if (recipe instanceof Shop || recipe instanceof Drops) add(usages, id, recipe);
         }
     }
 

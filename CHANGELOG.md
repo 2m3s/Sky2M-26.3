@@ -203,6 +203,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Item List: the Catacombs Gobbler's recipe (14 Wither Catalysts and a Devourer) now shows. Sky2M-REPO can now add a recipe to an item NotEnoughUpdates has without one.
 - Item List: the new Personal Compactors for each skill (Farming, Mining, Combat, Foraging, Fishing and Husbandry) now show, with their recipes and the collection that unlocks them. Items Hypixel adds before NotEnoughUpdates has them can now be added from Sky2M-REPO.
 - Fix the location being empty when Hypixel's sidebar shows its new pin icon instead of ⏣ (as at the Carnival), which hid location-based features like Carnival Goals. The location line is now a Sky2M-REPO pattern, so a new icon can be fixed without an update.
 - Fix the location (the sidebar's ⏣ line) sometimes being empty when Hypixel sends more than one SKYBLOCK scoreboard, which hid location-based HUDs like Carnival Goals. `/s2 debug` now lists the scoreboard objectives.
