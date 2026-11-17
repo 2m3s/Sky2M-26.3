@@ -40,6 +40,25 @@ public final class Sky2MRepo {
         });
     }
 
+    /**
+     * Blocking: the live constant (downloaded or from the disk cache), or the bundled copy when that fails. Null when
+     * neither is readable or the file is a newer format than this jar reads. Call it off the render thread.
+     */
+    public static JsonObject fetch(String name) {
+        JsonObject json = null;
+        try {
+            json = JsonParser.parseString(RepoItems.sky2mRepoFile("constants/" + name + ".json")).getAsJsonObject();
+        } catch (Exception e) {
+            LOGGER.warn("[Sky2M] Couldn't download Sky2M-REPO's {}.json, using the bundled copy: {}", name, e.toString());
+        }
+        if (json == null || !readable(json)) json = bundled(name);
+        return json != null && readable(json) ? json : null;
+    }
+
+    private static boolean readable(JsonObject json) {
+        return !json.has("formatVersion") || json.get("formatVersion").getAsInt() <= FORMAT_VERSION;
+    }
+
     private static void accept(String name, JsonObject json, Consumer<JsonObject> consumer, String source) {
         int format = json.has("formatVersion") ? json.get("formatVersion").getAsInt() : 1;
         if (format > FORMAT_VERSION) {

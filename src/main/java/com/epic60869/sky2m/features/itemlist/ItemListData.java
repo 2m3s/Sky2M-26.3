@@ -315,17 +315,19 @@ public final class ItemListData {
                 } catch (Exception bad) {
                     continue;
                 }
-                Entry entry = entry(item);
-                if (entry == null) continue;
-                byId.put(entry.id(), entry);
-                // "Requires Wheat VIII": the collection (or other) unlock the repo notes for crafting it.
-                String requires = str(item, "crafttext");
-                if (requires != null && !requires.isBlank()) craftText.put(entry.id(), requires.trim());
-                for (Recipe recipe : recipesOf(entry.id(), item)) {
-                    for (Ingredient out : recipe.outputs()) add(recipes, out.id(), recipe);
-                    for (Ingredient in : recipe.inputs()) add(usages, in.id(), recipe);
-                    // An NPC's shop and a mob's drops are listed under the NPC or mob too.
-                    if (recipe instanceof Shop || recipe instanceof Drops) add(usages, entry.id(), recipe);
+                addItem(item, byId, recipes, usages, craftText);
+            }
+        }
+        // New items NEU doesn't have yet (e.g. 0.27.3's per-skill Personal Compactors), from Sky2M-REPO's
+        // ExtraItems.json in NEU's item format. NEU's own copy wins once it has the id.
+        JsonObject extra = com.epic60869.sky2m.features.core.Sky2MRepo.fetch("ExtraItems");
+        if (extra != null && extra.has("items") && extra.get("items").isJsonObject()) {
+            for (var e : extra.getAsJsonObject("items").entrySet()) {
+                if (byId.containsKey(e.getKey()) || !e.getValue().isJsonObject()) continue;
+                try {
+                    addItem(e.getValue().getAsJsonObject(), byId, recipes, usages, craftText);
+                } catch (Exception bad) {
+                    System.err.println("[Sky2M] Item List: skipping extra item " + e.getKey() + ": " + bad);
                 }
             }
         }
@@ -342,7 +344,24 @@ public final class ItemListData {
         return new Data(Collections.unmodifiableList(entries), byId, recipes, usages, craftText);
     }
 
-    private static final RepoPattern PET_ID = RepoPattern.of("itemlist.ItemListData.PET_ID", "(.+);(\\d)");
+    /** Adds one NEU-format item: its entry, "Requires ..." text, recipes and usages. */
+    private static void addItem(JsonObject item, Map<String, Entry> byId, Map<String, List<Recipe>> recipes,
+                                Map<String, List<Recipe>> usages, Map<String, String> craftText) {
+        Entry entry = entry(item);
+        if (entry == null) return;
+        byId.put(entry.id(), entry);
+        // "Requires Wheat VIII": the collection (or other) unlock the repo notes for crafting it.
+        String requires = str(item, "crafttext");
+        if (requires != null && !requires.isBlank()) craftText.put(entry.id(), requires.trim());
+        for (Recipe recipe : recipesOf(entry.id(), item)) {
+            for (Ingredient out : recipe.outputs()) add(recipes, out.id(), recipe);
+            for (Ingredient in : recipe.inputs()) add(usages, in.id(), recipe);
+            // An NPC's shop and a mob's drops are listed under the NPC or mob too.
+            if (recipe instanceof Shop || recipe instanceof Drops) add(usages, entry.id(), recipe);
+        }
+    }
+
+    private static final RepoPattern PET_ID =RepoPattern.of("itemlist.ItemListData.PET_ID", "(.+);(\\d)");
     private static final RepoPattern PET_PLACEHOLDER = RepoPattern.of("itemlist.ItemListData.PET_PLACEHOLDER", "\\{([A-Z_]+|\\d+)}");
 
     /**
