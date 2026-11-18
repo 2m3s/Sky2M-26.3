@@ -31,8 +31,9 @@ public final class ProfileStats {
         {"foraging", "Foraging", "jungle_sapling"}, {"fishing", "Fishing", "fishing_rod"}, {"enchanting", "Enchanting", "enchanting_table"},
         {"alchemy", "Alchemy", "brewing_stand"}, {"taming", "Taming", "bone"}, {"carpentry", "Carpentry", "crafting_table"},
         {"runecrafting", "Runecrafting", "magma_cream"}, {"social", "Social", "emerald"}, {"hunting", "Hunting", "lead"}};
-    /** Skills in the skill average. */
-    private static final List<String> AVERAGE = List.of("farming", "mining", "combat", "foraging", "fishing", "enchanting", "alchemy", "taming", "carpentry");
+    /** Skills in the skill average: Hypixel's non-cosmetic skills (all but Runecrafting and Social). */
+    private static final List<String> AVERAGE = List.of("farming", "mining", "combat", "foraging", "fishing", "enchanting", "alchemy", "taming", "carpentry",
+        "hunting");
 
     public static final String[][] SLAYERS = {{"zombie", "Revenant Horror", "rotten_flesh"}, {"spider", "Tarantula Broodfather", "spider_eye"},
         {"wolf", "Sven Packmaster", "mutton"}, {"enderman", "Voidgloom Seraph", "ender_pearl"}, {"blaze", "Inferno Demonlord", "blaze_powder"},
@@ -82,6 +83,12 @@ public final class ProfileStats {
         };
         // Anita's farming level cap upgrades.
         if (skill.equals("farming")) cap += (int) Json.num(Json.path(member, "jacobs_contest.perks"), "farming_level_cap");
+        // Taming starts capped at 50 and each pet type sacrificed at the Pet Care raises it by one.
+        if (skill.equals("taming")) {
+            JsonObject care = Json.path(member, "pets_data.pet_care");
+            JsonElement sacrificed = care == null ? null : care.get("pet_types_sacrificed");
+            if (sacrificed != null && sacrificed.isJsonArray()) cap = Math.min(cap, 50 + sacrificed.getAsJsonArray().size());
+        }
         if (overflow && !skill.equals("runecrafting") && !skill.equals("social")) return overflowLevel(xp, table, cap);
         return level(xp, table, cap, 0);
     }
@@ -116,11 +123,13 @@ public final class ProfileStats {
         return xp != null && xp.has("SKILL_" + skill.toUpperCase(Locale.ROOT));
     }
 
-    /** The skill average (without Runecrafting, Social and Hunting), counting progress into the next level. */
+    /**
+     * The skill average the way Hypixel's Your Skills menu shows it ("45.6 Skill Avg. (non-cosmetic)"): whole capped
+     * levels of every skill but Runecrafting and Social, Hunting included.
+     */
     public static double skillAverage(JsonObject member) {
         double total = 0;
-        // Capped levels, like SkyCrypt and SkyHanni's averages.
-        for (String s : AVERAGE) total += skill(member, s, false).exact();
+        for (String s : AVERAGE) total += skill(member, s, false).level();
         return total / AVERAGE.size();
     }
 
