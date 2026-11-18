@@ -78,6 +78,8 @@ public final class ItemListStacks {
         for (String line : entry.lore()) lore.add(SbcItems.parseLegacy(line).withStyle(s -> s.withItalic(false)));
         stack.set(DataComponents.LORE, new ItemLore(lore));
         if (entry.glint()) stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        // Leather armour's dye.
+        if (entry.colour() >= 0) stack.set(DataComponents.DYED_COLOR, new net.minecraft.world.item.component.DyedItemColor(entry.colour()));
         CompoundTag tag = new CompoundTag();
         tag.putString("id", entry.id());
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));

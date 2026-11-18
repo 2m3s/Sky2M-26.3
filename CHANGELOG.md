@@ -204,6 +204,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Fix dyed leather armour showing as plain brown in the Item List, recipes and profit trackers.
 - Fix the skill average on your nametag and in the profile viewer: it now matches Hypixel's Your Skills menu (whole levels, Hunting included), and Taming is capped by the pet types you've sacrificed.
 - Sack Display no longer covers the hovered item's tooltip.
 - Missing Accessories (`/s2 mp`) and the accessory tooltip read the new Accessory Bag again (0.27.3 titles it "(1/6) Accessory Bag"), and read your total from "Accessory Power", Hypixel's new name for Magical Power. SPECIAL accessories now count as 0, as on Hypixel, and the Rift Prism is listed as an accessory to own instead of being skipped. `/s2 mp` says Accessory Power (AP) instead of Magical Power (MP).

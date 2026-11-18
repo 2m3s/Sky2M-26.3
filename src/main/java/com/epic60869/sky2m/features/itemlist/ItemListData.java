@@ -46,7 +46,9 @@ public final class ItemListData {
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))
         .followRedirects(HttpClient.Redirect.NORMAL).build();
     private static final Pattern TEXTURE = Pattern.compile("Value:\\\\?\"([A-Za-z0-9+/=]+)\\\\?\"");
-    private static final Pattern ITEM_MODEL = Pattern.compile("ItemModel:\\\\?\"([a-z0-9_.:/-]+)\\\\?\"");
+    /** Leather armour's dye in the NEU nbt: "display:{...,color:16711680}". */
+    private static final Pattern COLOUR = Pattern.compile("\\bcolor:(\\d{1,8})\\b");
+    private static final Pattern ITEM_MODEL =Pattern.compile("ItemModel:\\\\?\"([a-z0-9_.:/-]+)\\\\?\"");
 
     public enum Category {
         ALL("All"), ITEM("Items"), ATTRIBUTE("Attributes"), ENCHANTMENT("Enchants"), MOB("Mobs"), NPC("NPCs"),
@@ -72,7 +74,7 @@ public final class ItemListData {
      */
     public record Entry(String id, String name, List<String> lore, Category category, String itemId, int damage,
                         String texture, String itemModel, boolean glint, String parent, String wiki, String searchName,
-                        String searchLore, boolean vanilla, int rarity, String type) {
+                        String searchLore, boolean vanilla, int rarity, String type, int colour) {
         public boolean isArmor() {
             return type.endsWith("HELMET") || type.endsWith("CHESTPLATE") || type.endsWith("LEGGINGS") || type.endsWith("BOOTS");
         }
@@ -406,7 +408,7 @@ public final class ItemListData {
         for (String line : entry.lore()) lore.add(fillPlaceholders(line, values));
         return new Entry(entry.id(), fillPlaceholders(entry.name(), values), lore, entry.category(), entry.itemId(), entry.damage(),
             entry.texture(), entry.itemModel(), entry.glint(), entry.parent(), entry.wiki(), entry.searchName(), entry.searchLore(),
-            entry.vanilla(), entry.rarity(), entry.type());
+            entry.vanilla(), entry.rarity(), entry.type(), entry.colour());
     }
 
     private static String fillPlaceholders(String text, Map<String, String> values) {
@@ -453,9 +455,12 @@ public final class ItemListData {
         String nbt = str(item, "nbttag");
         String texture = null, model = null;
         boolean glint = false;
+        int colour = -1;
         if (nbt != null) {
             Matcher t = TEXTURE.matcher(nbt);
             if (t.find()) texture = t.group(1);
+            Matcher c = COLOUR.matcher(nbt);
+            if (c.find()) colour = Integer.parseInt(c.group(1)) & 0xFFFFFF;
             Matcher m = ITEM_MODEL.matcher(nbt);
             if (m.find()) model = m.group(1);
             glint = nbt.contains("ench:[");
@@ -496,7 +501,7 @@ public final class ItemListData {
             type = "PET";
         }
         return new Entry(id, name, List.copyOf(lore), category, itemId == null ? "minecraft:barrier" : itemId, damage,
-            texture, model, glint, str(item, "parent"), wiki, plainName, plainLore.toString(), vanilla, rarity, type);
+            texture, model, glint, str(item, "parent"), wiki, plainName, plainLore.toString(), vanilla, rarity, type, colour);
     }
 
     private static Category category(String id, String itemId, String name, JsonObject item) {

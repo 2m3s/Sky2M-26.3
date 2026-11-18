@@ -50,7 +50,7 @@ public final class RepoItems {
 	private static final List<Runnable> AFTER_ITEMS_LOADED = new ArrayList<>();
 	private static volatile boolean itemsLoaded;
 
-	private record RepoItem(String id, String name, Item item, @Nullable String texture, @Nullable String itemModel, @Nullable String tier) {}
+	private record RepoItem(String id, String name, Item item, @Nullable String texture, @Nullable String itemModel, @Nullable String tier, int colour) {}
 
 	/** A SkyBlock player head, without creating an item stack. */
 	public record Head(String id, String name, String texture) {}
@@ -336,6 +336,20 @@ public final class RepoItems {
 		return stack;
 	}
 
+	/** "255,0,0" as 0xFF0000; -1 when missing or not a colour. */
+	private static int colour(@Nullable JsonElement value) {
+		if (value == null || !value.isJsonPrimitive()) return -1;
+		String[] parts = value.getAsString().split(",");
+		if (parts.length != 3) return -1;
+		try {
+			int rgb = 0;
+			for (String p : parts) rgb = rgb << 8 | Math.clamp(Integer.parseInt(p.trim()), 0, 255);
+			return rgb;
+		} catch (NumberFormatException e) {
+			return -1;
+		}
+	}
+
 	private static ItemStack createStack(RepoItem repoItem) {
 		Identifier model = repoItem.itemModel() == null ? null : Identifier.tryParse(repoItem.itemModel());
 		// Newer items have no vanilla material, only Hypixel's model: draw them as paper rather than a barrier.
@@ -343,6 +357,8 @@ public final class RepoItems {
 		ItemStack stack = repoItem.texture() != null ? Compat.createSkull(repoItem.texture()) : new ItemStack(base);
 		// Newer items are paper with Hypixel's model on top; use the model when it's loaded (Hypixel's pack, or vanilla).
 		if (model != null && repoItem.texture() == null && hasItemModel(model)) stack.set(DataComponents.ITEM_MODEL, model);
+		// Leather armour's dye (Hypixel's "color": "R,G,B").
+		if (repoItem.colour() >= 0) stack.set(DataComponents.DYED_COLOR, new net.minecraft.world.item.component.DyedItemColor(repoItem.colour()));
 		stack.set(DataComponents.CUSTOM_NAME, Component.literal(repoItem.name()));
 		CompoundTag tag = new CompoundTag();
 		tag.putString("id", repoItem.id());
@@ -364,7 +380,7 @@ public final class RepoItems {
 				String texture = skinTexture(item.get("skin"));
 				String itemModel = item.has("item_model") ? item.get("item_model").getAsString() : null;
 				String tier = item.has("tier") ? item.get("tier").getAsString() : null;
-				loaded.put(id, new RepoItem(id, name, material(material, durability), texture, itemModel, tier));
+				loaded.put(id, new RepoItem(id, name, material(material, durability), texture, itemModel, tier, colour(item.get("color"))));
 				if (item.has("upgrade_costs")) {
 					loadedStarable.add(id);
 					if (item.get("upgrade_costs").isJsonArray()) loadedStarCosts.put(id, item.getAsJsonArray("upgrade_costs"));
