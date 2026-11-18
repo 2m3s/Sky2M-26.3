@@ -5045,6 +5045,24 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Compact Numbers", desc = "Write amounts and coins short (1.2k, 3.45M) instead of in full.")
         @ConfigEditorBoolean
         public boolean compactNumbers = true;
+
+        @Expose
+        @ConfigOption(name = "Panel Side", desc = "Which side of the sack menu the panel goes on. It moves to the other side when there's no room. The hovered item's Estimated Item Value moves out of its way.")
+        @ConfigEditorDropdown
+        public PanelSide side = PanelSide.LEFT;
+
+        @Expose
+        @ConfigOption(name = "Panel Background", desc = "Draw the panel's dark background and border. Off: only the text, with a shadow.")
+        @ConfigEditorBoolean
+        public boolean background = true;
+    }
+
+    public enum PanelSide {
+        LEFT("Left"), RIGHT("Right");
+
+        private final String label;
+        PanelSide(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public static final class MissingAccessories {

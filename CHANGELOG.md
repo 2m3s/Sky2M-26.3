@@ -121,6 +121,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Portfolio: set a row's quantity yourself with the Qty box instead of it being counted (leave it empty and Set qty to count again), and enter copies bought at different prices as "2x1.5m + 1x1.2m" in the buy box; profit uses their average.
 
 ### Changed
+- Sack Display: the panel now sits left of the sack menu (Panel Side to put it back on the right), and Panel Background turns its background off. The hovered item's Estimated Item Value moves to the other side when the panel is in its way.
 - Updated for the Magic Find Rework (SkyBlock 0.27.3). `/s2 rng` now applies Magic Find to every mob drop (not just drops under 5%), caps it at 500, and shows the average number of drops when your chance goes over 100% (like x1.50 each). Looting and Luck are part of Magic Find now, so their boxes are gone; enter your total Magic Find.
 - RARE DROP messages with Magic Find written without a % or with a decimal (like `(+212.5 ✯ Magic Find)`) are still read by the Diana tracker, Fishing rare drops and the Ghost tracker.
 - The Diana achievement for Looting V on a Daedalus Axe also counts Looting VI and VII.
@@ -203,6 +204,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Sack Display no longer covers the hovered item's tooltip.
 - Missing Accessories (`/s2 mp`) and the accessory tooltip read the new Accessory Bag again (0.27.3 titles it "(1/6) Accessory Bag"), and read your total from "Accessory Power", Hypixel's new name for Magical Power. SPECIAL accessories now count as 0, as on Hypixel, and the Rift Prism is listed as an accessory to own instead of being skipped. `/s2 mp` says Accessory Power (AP) instead of Magical Power (MP).
 - Item List: the Catacombs Gobbler's recipe (14 Wither Catalysts and a Devourer) now shows. Sky2M-REPO can now add a recipe to an item NotEnoughUpdates has without one.
 - Item List: the new Personal Compactors for each skill (Farming, Mining, Combat, Foraging, Fishing and Husbandry) now show, with their recipes and the collection that unlocks them. Items Hypixel adds before NotEnoughUpdates has them can now be added from Sky2M-REPO.

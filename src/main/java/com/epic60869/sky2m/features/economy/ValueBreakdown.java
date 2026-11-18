@@ -205,6 +205,12 @@ public final class ValueBreakdown {
         if (x < 4) x = left + image + 6;
         if (x + w > screen.width - 4) x = Math.max(4, screen.width - w - 4);
         int y = Math.clamp(top, 4, Math.max(4, screen.height - h - 4));
+        // Out of the way of the Sack Display panel when it's on this side.
+        int[] sack = com.epic60869.sky2m.features.misc.items.SackDisplay.panelBox();
+        if (sack[2] > 0 && x < sack[0] + sack[2] && sack[0] < x + w) {
+            x = sack[0] < left ? left + image + 6 : left - w - 6;
+            if (x < 4 || x + w > screen.width - 4) x = Math.max(4, Math.min(x, screen.width - w - 4));
+        }
 
         // No background: the text has a shadow instead.
         g.nextStratum();

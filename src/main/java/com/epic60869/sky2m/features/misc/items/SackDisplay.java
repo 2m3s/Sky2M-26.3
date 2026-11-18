@@ -85,14 +85,14 @@ public final class SackDisplay {
         file = configDir.resolve("sky2m").resolve("sack-display.json");
         load();
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
-            if (!(screen instanceof AbstractContainerScreen<?> container)) return;
+            panelBox = new int[4];
+            if (!(screen instanceof AbstractContainerScreen<?>)) return;
             if (sackName(screen.getTitle().getString()) == null) return;
             view = null;
             scroll = 0;
             lastRefresh = 0;
             panelBox = new int[4];
             Sky2MPriceTooltip.warmup();
-            ScreenEvents.afterExtract(screen).register((s, g, mouseX, mouseY, delta) -> render(g, container));
             ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> !click(event.x(), event.y(), event.button()));
             ScreenMouseEvents.allowMouseScroll(screen).register((s, x, y, horizontal, vertical) -> !scroll(x, y, vertical));
         });
@@ -268,6 +268,20 @@ public final class SackDisplay {
 
     // ----- The panel -----
 
+    /**
+     * Draws the panel for a sack menu. Called by Sky2MBeforeContainerTooltipMixin just before the menu draws the hovered
+     * item's tooltip, so the tooltip stays in front of the panel.
+     */
+    public static void beforeTooltip(GuiGraphicsExtractor g, AbstractContainerScreen<?> screen) {
+        if (sackName(screen.getTitle().getString()) == null) return;
+        render(g, screen);
+    }
+
+    /** Where the panel was last drawn ({x, y, w, h}; all 0 when it isn't showing), for panels that should avoid it. */
+    public static int[] panelBox() {
+        return panelBox.clone();
+    }
+
     private static void render(GuiGraphicsExtractor g, AbstractContainerScreen<?> screen) {
         if (!enabled()) {
             panelBox = new int[4];
@@ -325,19 +339,26 @@ public final class SackDisplay {
         scroll = Math.max(0, Math.min(scroll, v.rows().size() - shown));
         int h = headerH + shown * ROW_HEIGHT + footerH;
 
-        // Right of the menu (the hovered item's value panel uses the left), else left of it, else the screen's edge.
+        // The chosen side of the menu (left by default), else the other side, else the screen's edge. The hovered
+        // item's value panel (ValueBreakdown) moves to the other side when this one is in its way.
         var access = (Sky2MContainerScreenAccessor) screen;
         int left = access.sky2m$getLeftPos(), top = access.sky2m$getTopPos(), image = access.sky2m$getImageWidth();
-        int x = left + image + 6;
-        if (x + w > screen.width - 4) x = left - w - 6;
-        if (x < 4) x = Math.max(4, screen.width - w - 4);
+        boolean onLeft = c == null || c.side != FeatureConfigs.PanelSide.RIGHT;
+        int leftX = left - w - 6, rightX = left + image + 6;
+        int x = onLeft ? leftX : rightX;
+        if (onLeft && x < 4) x = rightX;
+        else if (!onLeft && x + w > screen.width - 4) x = leftX;
+        if (x < 4 || x + w > screen.width - 4) x = Math.max(4, Math.min(x, screen.width - w - 4));
         int y = Math.clamp(top, 4, Math.max(4, screen.height - h - 4));
         panelBox = new int[]{x, y, w, h};
 
         g.nextStratum();
-        g.fill(x, y, x + w, y + h, 0xE0101216);
-        g.fill(x, y, x + w, y + 2, 0xFFFFAA00);
-        g.outline(x, y, w, h, 0xFF2C313A);
+        boolean background = c == null || c.background;
+        if (background) {
+            g.fill(x, y, x + w, y + h, 0xE0101216);
+            g.fill(x, y, x + w, y + 2, 0xFFFFAA00);
+            g.outline(x, y, w, h, 0xFF2C313A);
+        }
         int line = y + 5;
         g.text(font, title, x + PAD, line, 0xFFFFFFFF, true);
         line += 12;

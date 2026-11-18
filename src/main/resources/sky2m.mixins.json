@@ -17,6 +17,7 @@
     "world.Sky2MPestSoundMixin",
     "world.Sky2MFloor7PacketsMixin",
     "gui.Sky2MQuickNavMixin",
+    "gui.Sky2MBeforeContainerTooltipMixin",
     "chat.Sky2MChatScreenMixin",
     "chat.Sky2MEmojiSuggestionsMixin",
     "chat.Sky2MEmojiPreviewMixin",
