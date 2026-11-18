@@ -203,6 +203,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Missing Accessories (`/s2 mp`) and the accessory tooltip read the new Accessory Bag again (0.27.3 titles it "(1/6) Accessory Bag"), and read your total from "Accessory Power", Hypixel's new name for Magical Power. SPECIAL accessories now count as 0, as on Hypixel, and the Rift Prism is listed as an accessory to own instead of being skipped. `/s2 mp` says Accessory Power (AP) instead of Magical Power (MP).
 - Item List: the Catacombs Gobbler's recipe (14 Wither Catalysts and a Devourer) now shows. Sky2M-REPO can now add a recipe to an item NotEnoughUpdates has without one.
 - Item List: the new Personal Compactors for each skill (Farming, Mining, Combat, Foraging, Fishing and Husbandry) now show, with their recipes and the collection that unlocks them. Items Hypixel adds before NotEnoughUpdates has them can now be added from Sky2M-REPO.
 - Fix the location being empty when Hypixel's sidebar shows its new pin icon instead of ⏣ (as at the Carnival), which hid location-based features like Carnival Goals. The location line is now a Sky2M-REPO pattern, so a new icon can be fixed without an update.

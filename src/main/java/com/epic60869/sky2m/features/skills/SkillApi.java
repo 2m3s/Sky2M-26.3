@@ -223,7 +223,7 @@ public final class SkillApi {
             String title = screen.getTitle().getString();
             if (title.equals(SKILL_MENU_NAME)) {
                 ScreenEvents.afterTick(screen).register(s -> readSkillMenu(container));
-            } else if (title.startsWith("Accessory Bag")) {
+            } else if (com.epic60869.sky2m.features.misc.items.AccessoryTooltip.bagPage(title) >= 0) {
                 ScreenEvents.afterTick(screen).register(s -> {
                     List<ItemStack> items = new ArrayList<>();
                     for (Slot slot : container.getMenu().slots) items.add(slot.getItem());

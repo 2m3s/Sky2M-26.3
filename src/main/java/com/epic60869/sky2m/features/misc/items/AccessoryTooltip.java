@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
  */
 public final class AccessoryTooltip {
     private static final String ACCESSORIES_URL = "https://hysky.de/api/accessories";
-    static final RepoPattern ACCESSORY_BAG_TITLE = RepoPattern.of("misc.items.AccessoryTooltip.ACCESSORY_BAG_TITLE", "Accessory Bag(?: \\((?<page>\\d+)/\\d+\\))?");
+    static final RepoPattern ACCESSORY_BAG_TITLE = RepoPattern.of("misc.items.AccessoryTooltip.ACCESSORY_BAG_TITLE", "(?:\\((?<pre>\\d+)/\\d+\\) )?Accessory Bag(?: \\((?<page>\\d+)/\\d+\\))?");
     /** Built on first use (on the repo thread), not while the mod starts. */
     private static final class Http {
         static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))
@@ -96,7 +96,7 @@ public final class AccessoryTooltip {
                 if (matcher.matches()) {
                     ScreenEvents.afterTick(screen).register(s -> {
                         ChestMenu handler = genericContainerScreen.getMenu();
-                        int page = matcher.group("page") != null ? Integer.parseInt(matcher.group("page")) : 1;
+                        int page = bagPage(genericContainerScreen.getTitle().getString());
 
                         collectAccessories(handler.slots.subList(0, handler.getRowCount() * 9), page);
                     });
@@ -129,6 +129,17 @@ public final class AccessoryTooltip {
     /** See {@link #bagVersion}. */
     public static int bagVersion() {
         return bagVersion;
+    }
+
+    /**
+     * The Accessory Bag page a menu title is ("Accessory Bag (2/6)", or "(2/6) Accessory Bag" since 0.27.3; 1 when it has
+     * no page), or -1 when it isn't the Accessory Bag.
+     */
+    public static int bagPage(String title) {
+        Matcher m = ACCESSORY_BAG_TITLE.matcher(title == null ? "" : title);
+        if (!m.matches()) return -1;
+        String page = m.group("pre") != null ? m.group("pre") : m.group("page");
+        return page != null ? Integer.parseInt(page) : 1;
     }
 
     /** Whether any page of the current profile's Accessory Bag has been read. */

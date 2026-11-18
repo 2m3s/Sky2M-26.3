@@ -28,7 +28,7 @@ import java.util.Locale;
  */
 public final class MissingAccessoriesScreen extends Screen {
     private enum Sort {
-        COINS_PER_MP("Coins / MP"), PRICE("Price"), GAIN("MP Gain");
+        COINS_PER_MP("Coins / AP"), PRICE("Price"), GAIN("AP Gain");
 
         final String label;
 
@@ -43,7 +43,7 @@ public final class MissingAccessoriesScreen extends Screen {
     private static final int GOLD = 0xFFFFAA00;
     private static final int GREEN = 0xFF55FF55;
     private static final int RED = 0xFFFF5555;
-    private static final String[] HEADERS = {"Accessory", "MP", "Price", "Coins / MP", "How"};
+    private static final String[] HEADERS = {"Accessory", "AP", "Price", "Coins / AP", "How"};
 
     private static Sort sort = Sort.COINS_PER_MP;
     private static String search = "";
@@ -142,7 +142,7 @@ public final class MissingAccessoriesScreen extends Screen {
         int x = left() + 4, w = panelWidth() - 9;
         Component title = Sky2MGuiStyle.title("Missing Accessories");
         String status = view.magicalPower() < 0 ? ""
-            : "Magical Power: " + (view.estimated() ? "~" : "") + String.format(Locale.US, "%,d", view.magicalPower());
+            : "Accessory Power: " + (view.estimated() ? "~" : "") + String.format(Locale.US, "%,d", view.magicalPower());
         int titleX = x + (w - font.width(title)) / 2;
         int statusRoom = x + w - 6 - (titleX + font.width(title) + 10);
         if (statusRoom < font.width(status)) {
@@ -316,7 +316,7 @@ public final class MissingAccessoriesScreen extends Screen {
             : Component.literal("Cheapest " + n + ": ").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(Portfolio.coins(coins) + " coins").withStyle(ChatFormatting.GOLD))
                 .append(Component.literal(" for ").withStyle(ChatFormatting.GRAY))
-                .append(Component.literal("+" + mp + " MP").withStyle(ChatFormatting.GREEN));
+                .append(Component.literal("+" + mp + " AP").withStyle(ChatFormatting.GREEN));
         g.text(font, text, insetLeft() + 1, insetBottom() + 6, Sky2MGuiStyle.DESCRIPTION, true);
     }
 
@@ -357,7 +357,7 @@ public final class MissingAccessoriesScreen extends Screen {
             tip.addAll(Sky2MPriceTooltip.itemListTooltip(stack(row.id())));
         }
         tip.add(Component.empty());
-        tip.add(Component.literal("+" + row.gain() + " Magical Power").withStyle(ChatFormatting.GREEN));
+        tip.add(Component.literal("+" + row.gain() + " Accessory Power").withStyle(ChatFormatting.GREEN));
         if (row.kind() == MissingAccessories.Kind.UPGRADE && row.note() != null && !row.note().isEmpty()) {
             tip.add(Component.literal("Price is the upgrade's, less what your " + row.note().substring("after selling ".length()) + " sells for")
                 .withStyle(ChatFormatting.GRAY));
@@ -378,7 +378,7 @@ public final class MissingAccessoriesScreen extends Screen {
                 default -> "craft cost";
             };
             tip.add(Component.literal(Portfolio.coins(row.price()) + " coins (" + via + ")").withStyle(ChatFormatting.GOLD));
-            if (row.reason() == null) tip.add(Component.literal(Portfolio.coins(row.coinsPerMp()) + " coins per Magical Power").withStyle(ChatFormatting.GRAY));
+            if (row.reason() == null) tip.add(Component.literal(Portfolio.coins(row.coinsPerMp()) + " coins per Accessory Power").withStyle(ChatFormatting.GRAY));
         }
         if (row.reason() != null) tip.add(Component.literal(row.reason()).withStyle(ChatFormatting.RED));
         String item = row.buyName() == null ? row.name() : row.buyName();

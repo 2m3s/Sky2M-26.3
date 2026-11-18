@@ -75,16 +75,21 @@ import java.util.regex.Pattern;
  * sorting run on one background thread; the screen only reads the last finished, immutable {@link View}.
  */
 public final class MissingAccessories {
-    /** Accessories that never go in the bag (the Rift Prism is consumed for its Magical Power). */
-    private static final Set<String> EXCLUDED = RepoTable.set("misc.items.MissingAccessories.EXCLUDED", Set.of("RIFT_PRISM"));
-    /** Magical Power by rarity (Hypixel's values; Divine has no accessories of its own, only recombobulated Mythics). */
+    /** Accessories that never go in the bag. Since 0.27.3 the Rift Prism goes in the bag instead of being consumed. */
+    private static final Set<String> EXCLUDED = RepoTable.set("misc.items.MissingAccessories.EXCLUDED", Set.of());
+    /** Rift accessories that go in the main bag (the rest are for the Rift's own bag since 0.27.3). */
+    private static final Set<String> RIFT_IN_MAIN_BAG = RepoTable.set("misc.items.MissingAccessories.RIFT_IN_MAIN_BAG", Set.of("RIFT_PRISM"));
+    /**
+     * Magical Power (Accessory Power since 0.27.3) by rarity (Hypixel's values; Divine has no accessories of its own, only
+     * recombobulated Mythics). SPECIAL and VERY SPECIAL accessories give none since 0.27.3.
+     */
     private static final Map<String, Integer> MAGICAL_POWER = RepoTable.intMap("misc.items.MissingAccessories.MAGICAL_POWER", Map.of("COMMON", 3, "UNCOMMON", 5, "RARE", 8, "EPIC", 12,
-        "LEGENDARY", 16, "MYTHIC", 22, "DIVINE", 22, "SPECIAL", 3, "VERY_SPECIAL", 5));
+        "LEGENDARY", 16, "MYTHIC", 22, "DIVINE", 22, "SPECIAL", 0, "VERY_SPECIAL", 0));
     private static final List<String> RARITY_ORDER = List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "DIVINE");
     /** The Hegemony Artifact counts its own Magical Power twice. */
     private static final String HEGEMONY = "HEGEMONY_ARTIFACT";
     /** "Magical Power: 1,234" (Accessory Bag) or "1,234 Magical Power" (Thaumaturgy). */
-    private static final RepoPattern MP_LINE = RepoPattern.of("misc.items.MissingAccessories.MP_LINE", "Magical Power: ([\\d,]+)|^([\\d,]+) Magical Power$");
+    private static final RepoPattern MP_LINE = RepoPattern.of("misc.items.MissingAccessories.MP_LINE", "(?:Magical|Accessory) Power: ([\\d,]+)|^([\\d,]+) (?:Magical|Accessory) Power$");
     /** API refreshes: in the background this often, and when /s2 mp opens on data older than {@link #OPEN_REFRESH_MS}. */
     private static final long API_REFRESH_MS = 5 * 60 * 1000L;
     private static final long OPEN_REFRESH_MS = 2 * 60 * 1000L;
@@ -219,7 +224,7 @@ public final class MissingAccessories {
         ClientTickEvents.END_CLIENT_TICK.register(MissingAccessories::tick);
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
             if (!(screen instanceof ContainerScreen container) || !tracking()) return;
-            if (!container.getTitle().getString().startsWith("Accessory Bag")) return;
+            if (AccessoryTooltip.bagPage(container.getTitle().getString()) < 0) return;
             int[] ticks = {0};
             ScreenEvents.afterTick(screen).register(s -> {
                 if (ticks[0]++ % 10 == 0) readMagicalPower(container.getMenu());
@@ -423,7 +428,8 @@ public final class MissingAccessories {
             if (lore == null) continue;
             for (Component line : lore.lines()) {
                 String text = ChatFormatting.stripFormatting(line.getString());
-                if (text == null || !text.contains("Magical Power")) continue;
+                // 0.27.3 renamed Magical Power to Accessory Power ("Total Accessory Power: 1,234").
+                if (text == null || !(text.contains("Magical Power") || text.contains("Accessory Power"))) continue;
                 Matcher m = MP_LINE.matcher(text.trim());
                 if (!m.find()) continue;
                 String number = m.group(1) != null ? m.group(1) : m.group(2);
@@ -610,7 +616,8 @@ public final class MissingAccessories {
                 if (id != null && ("ACCESSORY".equals(category) || "HATCESSORY".equals(category))) byId.put(id, new Acc(id, null, 0));
             }
         }
-        byId.keySet().removeIf(id -> EXCLUDED.contains(id) || "RIFT".equals(string(items.get(id), "origin")));
+        byId.keySet().removeIf(id -> EXCLUDED.contains(id)
+            || ("RIFT".equals(string(items.get(id), "origin")) && !RIFT_IN_MAIN_BAG.contains(id)));
         Map<String, List<Acc>> groups = new LinkedHashMap<>();
         for (Acc a : byId.values()) groups.computeIfAbsent(a.family() != null ? a.family() : "#" + a.id(), k -> new ArrayList<>()).add(a);
         for (Map.Entry<String, List<Acc>> e : groups.entrySet()) e.setValue(List.copyOf(e.getValue()));
