@@ -1836,7 +1836,7 @@ public final class FeatureConfigs {
         public boolean partySharingGroup = false;
 
         @Expose
-        @ConfigOption(name = "Share Sea Creatures to Party", desc = "Says in party chat when you catch a sea creature from the list below (\"--> A YETI has spawned <--\"). Only while you're in a party.")
+        @ConfigOption(name = "Share Sea Creatures to Party", desc = "Says in party chat when you catch a sea creature from the list below (\"--> A YETI has spawned <--\"). Out of a party it goes where If Not in a Party says.")
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 902)
         public boolean share = true;
@@ -1852,6 +1852,12 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 902)
         public boolean shareCocooned = false;
+
+        @Expose
+        @ConfigOption(name = "If Not in a Party", desc = "Where a shared sea creature (or cocoon) goes when you're not in a party. Don't Send: nowhere. All Chat: Hypixel's all chat (/ac), for your lobby. Sky2M Global Chat: Sky2M's own chat, for Sky2M users on every server.")
+        @ConfigEditorDropdown
+        @ConfigAccordionId(id = 902)
+        public NoPartyShare noPartyShare = NoPartyShare.OFF;
 
         @Expose
         @ConfigOption(name = "Tell Party When Killed", desc = "Says so in party chat when a fishing boss kills you, so your party's Sky2M alerts them to wait for you.")
@@ -5055,6 +5061,15 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Panel Background", desc = "Draw the panel's dark background and border. Off: only the text, with a shadow.")
         @ConfigEditorBoolean
         public boolean background = true;
+    }
+
+    /** Where a shared sea creature goes when you're not in a party. */
+    public enum NoPartyShare {
+        OFF("Don't Send"), ALL_CHAT("All Chat"), SKY2M_GLOBAL("Sky2M Global Chat");
+
+        private final String label;
+        NoPartyShare(String label) { this.label = label; }
+        @Override public String toString() { return label; }
     }
 
     public enum PanelSide {

@@ -230,9 +230,8 @@ public final class FishingFeatures {
         if (c.seaCreatures.share && listed(c.seaCreatures.shareList, creature.name())) {
             String upper = creature.name().toUpperCase(Locale.ROOT);
             String custom = RareSc.catchMessage(rareVars);
-            if (custom != null) FishingParty.send(custom);
-            else FishingParty.send(dh ? "--> DOUBLE HOOK! Two " + upper + "s have spawned <--"
-                : "--> " + FishingData.article(creature.name(), false) + " " + upper + " has spawned <--");
+            FishingParty.sendCatch(custom != null ? custom : dh ? "--> DOUBLE HOOK! Two " + upper + "s have spawned <--"
+                : "--> " + FishingData.article(creature.name(), false) + " " + upper + " has spawned <--", c.seaCreatures.noPartyShare);
         }
         if (SHARKS.contains(creature.name()) && (c.alerts.festivalEnded || c.alerts.festivalPersonalBest)) {
             long now = System.currentTimeMillis();
@@ -251,8 +250,8 @@ public final class FishingFeatures {
         RareSc.onOwnCocoon(creature);
         if (c.seaCreatures.share && c.seaCreatures.shareCocooned && listed(c.seaCreatures.shareList, creature.name())) {
             String custom = RareSc.cocoonMessage(creature);
-            if (custom != null) FishingParty.send(custom);
-            else FishingParty.send("--> " + FishingData.article(creature.name(), false) + " " + creature.name().toUpperCase(Locale.ROOT) + " was cocooned <--");
+            FishingParty.sendCatch(custom != null ? custom
+                : "--> " + FishingData.article(creature.name(), false) + " " + creature.name().toUpperCase(Locale.ROOT) + " was cocooned <--", c.seaCreatures.noPartyShare);
         }
     }
 
@@ -891,17 +890,54 @@ public final class FishingFeatures {
      * Party messages, one at a time (Hypixel drops messages sent too fast) and only while you're in a party, as
      * Sky2M's Diana sharing does; party membership is read from Hypixel's party messages.
      */
+    /**
+     * Where a shared sea creature goes: "party" (party chat; dropped when you're known to be out of one), "outside"
+     * (the If Not in a Party choice), or "try" (party chat first, the choice if Hypixel says you aren't in a party).
+     * {@code inParty} is null while unknown.
+     */
+    public static String catchRoute(Boolean inParty, FeatureConfigs.NoPartyShare noParty) {
+        if (noParty == null || noParty == FeatureConfigs.NoPartyShare.OFF || Boolean.TRUE.equals(inParty)) return "party";
+        return Boolean.FALSE.equals(inParty) ? "outside" : "try";
+    }
+
     static final class FishingParty {
         private static final long SEND_INTERVAL_MS = 600L;
         private static final List<String> queue = new ArrayList<>();
         /** Null until a party message says either way: then messages are sent, as you may already be in one. */
         private static Boolean inParty;
         private static long lastSentAt;
+        /** A sea creature sent to party chat before we knew you were in one: resent elsewhere if Hypixel says you aren't. */
+        private static String pendingFallback;
+        private static FeatureConfigs.NoPartyShare pendingMode;
+        private static long pendingAt;
+        private static final long FALLBACK_WINDOW_MS = 8000L;
 
         private FishingParty() {}
 
         static void send(String message) {
-            if (!Boolean.FALSE.equals(inParty)) queue.add(message);
+            if (!Boolean.FALSE.equals(inParty)) queue.add("pc " + message);
+        }
+
+        /** A shared sea creature: party chat, or where {@code noParty} says when you're not in a party. */
+        static void sendCatch(String message, FeatureConfigs.NoPartyShare noParty) {
+            switch (catchRoute(inParty, noParty)) {
+                case "party" -> send(message);
+                case "outside" -> sendOutsideParty(message, noParty);
+                default -> {
+                    queue.add("pc " + message);
+                    pendingFallback = message;
+                    pendingMode = noParty;
+                    pendingAt = System.currentTimeMillis();
+                }
+            }
+        }
+
+        private static void sendOutsideParty(String message, FeatureConfigs.NoPartyShare mode) {
+            switch (mode) {
+                case ALL_CHAT -> queue.add("ac " + message);
+                case SKY2M_GLOBAL -> com.epic60869.sky2m.chat.Sky2MGlobalChat.send(message);
+                default -> {}
+            }
         }
 
         static void tick(Minecraft mc) {
@@ -911,7 +947,7 @@ public final class FishingFeatures {
                 queue.clear();
                 return;
             }
-            mc.getConnection().sendCommand("pc " + queue.removeFirst());
+            mc.getConnection().sendCommand(queue.removeFirst());
             lastSentAt = now;
         }
 
@@ -924,11 +960,17 @@ public final class FishingFeatures {
             if (text.startsWith("Party > ") || text.startsWith("Party Leader: ") || text.startsWith("Party Members (")
                 || text.matches("^You have joined .+ party!$") || text.matches("^.+ joined the party\\.$")) {
                 inParty = true;
+                pendingFallback = null;
             } else if (text.equals("You left the party.") || text.startsWith("The party was disbanded")
                 || text.startsWith("You have been kicked from the party") || text.startsWith("You are not currently in a party")
                 || text.startsWith("You are not in a party")) {
                 inParty = false;
                 queue.clear();
+                // The sea creature we tried in party chat goes to the fallback instead.
+                if (pendingFallback != null && System.currentTimeMillis() - pendingAt < FALLBACK_WINDOW_MS) {
+                    sendOutsideParty(pendingFallback, pendingMode);
+                }
+                pendingFallback = null;
             }
         }
     }
