@@ -93,7 +93,20 @@ public final class MsdfFont {
             for (var element : root.getAsJsonArray("glyphs")) {
                 JsonArray g = element.getAsJsonArray();
                 float advance = g.get(1).getAsFloat() * size;
-                GlyphInfo info = () -> advance;
+                // Bold draws each letter twice, this far apart: Minecraft's 1 pixel is wider than Inter's thin
+                // strokes, leaving a gap the shadow shows through (lines through bold text), so half a pixel as
+                // Minecraft's own .ttf fonts use.
+                GlyphInfo info = new GlyphInfo() {
+                    @Override
+                    public float getAdvance() {
+                        return advance;
+                    }
+
+                    @Override
+                    public float getBoldOffset() {
+                        return 0.5f;
+                    }
+                };
                 if (g.size() < 10) {
                     // A space: advance only.
                     glyphs.put(g.get(0).getAsInt(), new Glyph(info, 0, 0, 0, 0, 0, 0, 0, 0));

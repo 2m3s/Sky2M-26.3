@@ -205,6 +205,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Fix lines through bold text with the Inter font (HUD titles, sea creature names).
 - Fix dyed leather armour showing as plain brown in the Item List, recipes and profit trackers.
 - Fix the skill average on your nametag and in the profile viewer: it now matches Hypixel's Your Skills menu (whole levels, Hunting included), and Taming is capped by the pet types you've sacrificed.
 - Sack Display no longer covers the hovered item's tooltip.
