@@ -194,6 +194,18 @@ public final class ProfitTracker {
     private static long lastCraftingAt;
     /** When a menu was last open, and a Sack menu: SkyHanni ignores purse gains for 2s after a menu, sack changes for 10s after a Sack. */
     private static long lastScreenAt, lastSackMenuAt;
+
+    /**
+     * Bought items (Auction House, Bazaar) aren't profit. The item can come in a moment before or after the chat
+     * message, so gains are kept for a few seconds ({@link #recentGains}) to take back, and gains just after a
+     * purchase aren't counted.
+     */
+    private static final Pattern BOUGHT = Pattern.compile(
+        "^(?:You purchased|You claimed|\\[Bazaar] Bought|\\[Bazaar] Claimed) (?:(\\d[\\d,]*)x )?(.+?) (?:for|from|worth) .*");
+    private static final long BOUGHT_WINDOW_MS = 3_000L;
+    private static long boughtAt;
+    private record Gain(Preset preset, String id, long amount, long at) {}
+    private static final List<Gain> recentGains = new ArrayList<>();
     private static double lastPurse = -1;
     private static long lastFarmed;
     private static Preset shownPreset;
@@ -642,6 +654,7 @@ public final class ProfitTracker {
     }
 
     private static void onChat(Component component, String text) {
+        if (onBought(text, System.currentTimeMillis())) return;
         if (!anyEnabled() || !Sky2MLocation.onSkyblock()) return;
         Preset current = currentPreset();
         if (current == Preset.FARMING) {
@@ -715,6 +728,33 @@ public final class ProfitTracker {
             }
             countSacks(target, changes, System.currentTimeMillis());
         }
+    }
+
+    /**
+     * "You purchased Burnt Texts for 75,000,000 coins!", "You claimed X from Y's auction!", "[Bazaar] Bought 64x X
+     * for ...", "[Bazaar] Claimed 64x X worth ...": the next few seconds' gains aren't counted, and that item counted
+     * in the last few seconds is taken back.
+     */
+    /** Whether you bought something on the Auction House or Bazaar in the last few seconds. */
+    public static boolean boughtLately(long now) {
+        return now - boughtAt < BOUGHT_WINDOW_MS;
+    }
+
+    public static boolean onBought(String text, long now) {
+        Matcher m = BOUGHT.matcher(text);
+        if (!m.matches()) return false;
+        boughtAt = now;
+        String id = normalise(RepoItems.idByLooseName(m.group(2)));
+        long left = m.group(1) == null ? Long.MAX_VALUE : Long.parseLong(m.group(1).replace(",", ""));
+        for (var it = recentGains.iterator(); it.hasNext() && left > 0; ) {
+            Gain g = it.next();
+            if (now - g.at() > BOUGHT_WINDOW_MS || id == null || !id.equals(g.id())) continue;
+            long back = Math.min(left, g.amount());
+            addItem(g.preset(), g.id(), -back);
+            if (left != Long.MAX_VALUE) left -= back;
+            it.remove();
+        }
+        return true;
     }
 
     /** A "[Sacks]" message's changes, by item id (+ added, - taken out). */
@@ -818,13 +858,16 @@ public final class ProfitTracker {
         countPending(now);
         removals.values().removeIf(r -> r[1] < now);
         trackPurse(mc, current, now);
-        if (mc.gui.screen() != null) {
+        recentGains.removeIf(g -> now - g.at() > BOUGHT_WINDOW_MS);
+        // Chat open isn't a menu: items that come in then (clicking "pick them up" for your stash) still count.
+        boolean menuOpen = mc.gui.screen() != null && !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen);
+        if (menuOpen) {
             String title = mc.gui.screen().getTitle().getString();
             if (title.equals("Craft Item") || title.endsWith(" Recipe")) lastCraftingAt = now;
             if (title.contains("Sack")) lastSackMenuAt = now;
             lastScreenAt = now;
         }
-        if (mc.gui.screen() != null || current == null) {
+        if (menuOpen || current == null) {
             if (current == null) beforeScreen = null;
             else if (lastInventory != null) beforeScreen = lastInventory;
             lastInventory = null;
@@ -878,7 +921,12 @@ public final class ProfitTracker {
                 replenishCosts.remove(cost.getKey());
             }
         }
-        for (Map.Entry<String, Long> e : counted.entrySet()) addItem(preset, e.getKey(), e.getValue());
+        boolean bought = boughtLately(now);
+        for (Map.Entry<String, Long> e : counted.entrySet()) {
+            if (e.getValue() > 0 && bought) continue;
+            addItem(preset, e.getKey(), e.getValue());
+            if (e.getValue() > 0 && recentGains.size() < 100) recentGains.add(new Gain(preset, e.getKey(), e.getValue(), now));
+        }
     }
 
     /**

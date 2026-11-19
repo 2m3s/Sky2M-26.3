@@ -300,12 +300,13 @@ public final class DianaProfitTracker {
             for (Data d : targets()) d.activeMs += delta;
             if (++ticks % 200 == 0) dirty = true;
         }
-        // Items that come into your inventory while no menu is open (moving them from chests doesn't count).
-        if (mc.gui.screen() != null) {
+        // Items that come into your inventory while no menu is open (moving them from chests doesn't count; with
+        // chat open, picking up your stash, does). Bought items (Auction House, Bazaar) don't count.
+        if (mc.gui.screen() != null && !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen)) {
             lastInventory = null;
         } else {
             Map<String, Integer> now_ = inventory(mc);
-            if (lastInventory != null && doingDiana()) {
+            if (lastInventory != null && doingDiana() && !com.epic60869.sky2m.features.misc.profit.ProfitTracker.boughtLately(now)) {
                 for (Map.Entry<String, Integer> e : now_.entrySet()) {
                     int gained = e.getValue() - lastInventory.getOrDefault(e.getKey(), 0);
                     if (gained > 0 && DROP_IDS.contains(e.getKey())) add(e.getKey(), gained);
