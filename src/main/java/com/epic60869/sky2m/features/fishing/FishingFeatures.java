@@ -433,8 +433,16 @@ public final class FishingFeatures {
         FishingData.RareDrop drop = FishingData.drop(item);
         if (drop == null) return true;
         if (c.rareDrops.alert && dropListed(c.rareDrops.alertList, drop)) showDrop(c, drop.name(), ownName(), true);
+        // Counted whether or not it's shown, so the numbers are right when it's turned on.
+        String since = RareSc.onDrop(drop.name(), System.currentTimeMillis());
+        boolean showSince = since != null && c.rareDrops.catchesSinceLast;
+        if (showSince) {
+            chat(Component.literal(drop.name() + ": ").withStyle(drop.colour())
+                .append(Component.literal(since).withStyle(ChatFormatting.GRAY)), true);
+        }
         if (c.rareDrops.share && dropListed(c.rareDrops.shareList, drop)) {
             String extra = magicFind != null && c.rareDrops.shareMagicFind ? " (+" + magicFind + " ✯ Magic Find)" : "";
+            if (showSince) extra += " (" + since + ")";
             FishingParty.send("--> " + FishingData.article(drop.name(), false) + " " + drop.name() + " has dropped" + extra + " <--");
         }
         return true;

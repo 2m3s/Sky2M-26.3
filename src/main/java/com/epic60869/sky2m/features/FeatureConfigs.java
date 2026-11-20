@@ -1932,6 +1932,12 @@ public final class FeatureConfigs {
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 1002)
         public boolean shareMagicFind = false;
+
+        @Expose
+        @ConfigOption(name = "Catches Since Last Drop", desc = "When a fishing rare drop drops, say how many sea creatures you caught since your last one of it and how long ago that was: \"(Took 7 catches, 45d 23h since last)\". Shown in your chat, and added to the party message when sharing is on.")
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 1002)
+        public boolean catchesSinceLast = true;
     }
 
     public static final class FishingCatchMessages {

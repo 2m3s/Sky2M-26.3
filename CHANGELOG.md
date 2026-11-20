@@ -5,6 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.5
 
 ### Added
+- Add Catches Since Last Drop (Fishing > Rare Drops, on by default): when a fishing rare drop drops, Sky2M says how many sea creatures you caught since your last one and how long ago that was ("Took 7 catches, 45d 23h since last"), and adds it to the party message when sharing is on. It starts counting from your first drop of each item.
 - Add [+ Add Item] to profit trackers (over a menu): pick a drop the tracker missed from your inventory, then set how many. It counts as the item it is, so it gets its normal price.
 - Add "If Not in a Party" to Sea Creature sharing: when you're not in a party, a shared sea creature can go to all chat or Sky2M Global Chat instead.
 - Sky2M-REPO now covers most of the Hypixel text the mod reads: about 700 chat, menu, lore, tab list and scoreboard patterns and 68 data tables (drop lists, NPC, mob and area names, Fetchur's and the Sphinx's answers, warps, fishing and garden lists, slayer areas) can be fixed from the repo without a new version. A broken fix is ignored and the mod keeps working as before.

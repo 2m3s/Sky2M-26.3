@@ -254,6 +254,8 @@ public final class RareSc {
         String area = Sky2MLocation.area();
         long now = System.currentTimeMillis();
         lastCatchAt = now;
+        countDropCatches(doubleHook ? 2 : 1);
+        saveDrops();
         Map<String, String> vars = null;
         for (Map.Entry<String, Stats> entry : RECORDS.entrySet()) {
             if (!entry.getKey().equals(creature.name()) && entry.getValue().area.equals(area)) entry.getValue().count++;
@@ -279,6 +281,75 @@ public final class RareSc {
         }
         save();
         return vars;
+    }
+
+    // ------------------------------------------------------------------------------------------------ rare drops
+
+    /** Per rare drop: sea creatures caught since the last one, and when it last dropped (0 = never seen). */
+    private static final class DropSince {
+        int count;
+        long time;
+    }
+
+    private static final Map<String, DropSince> DROPS = new LinkedHashMap<>();
+    private static boolean dropsLoaded;
+
+    private static Path dropsFile() {
+        return FabricLoader.getInstance().getConfigDir().resolve("sky2m").resolve("rare-drop-since.json");
+    }
+
+    private static void loadDrops() {
+        if (dropsLoaded) return;
+        dropsLoaded = true;
+        try {
+            if (!Files.exists(dropsFile())) return;
+            Map<String, DropSince> loaded = GSON.fromJson(Files.readString(dropsFile(), StandardCharsets.UTF_8), new TypeToken<LinkedHashMap<String, DropSince>>() {}.getType());
+            if (loaded != null) DROPS.putAll(loaded);
+        } catch (Exception e) {
+            System.err.println("[Sky2M] Couldn't read rare drop stats: " + e.getMessage());
+        }
+    }
+
+    private static void saveDrops() {
+        try {
+            Files.createDirectories(dropsFile().getParent());
+            Files.writeString(dropsFile(), GSON.toJson(DROPS), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.err.println("[Sky2M] Couldn't save rare drop stats: " + e.getMessage());
+        }
+    }
+
+    /** {@code catches} sea creatures caught: one more for every rare drop's count. */
+    private static void countDropCatches(int catches) {
+        loadDrops();
+        for (DropSince d : DROPS.values()) d.count += catches;
+    }
+
+    /**
+     * {@code drop} dropped: "Took 7 catches, 45d 23h since last" (or "Took 7 catches" the first time, counted from when
+     * Sky2M started tracking it), and starts counting again. Null the first time Sky2M sees it with no catches counted.
+     */
+    static String onDrop(String drop, long now) {
+        loadDrops();
+        DropSince d = DROPS.get(drop);
+        String out;
+        if (d == null) {
+            d = new DropSince();
+            DROPS.put(drop, d);
+            out = null;
+        } else {
+            out = "Took " + d.count + (d.count == 1 ? " catch" : " catches") + (d.time > 0 ? ", " + duration(now - d.time) + " since last" : "");
+        }
+        d.count = 0;
+        d.time = now;
+        saveDrops();
+        return out;
+    }
+
+    /** For game tests: counts {@code catches} catches, then a drop of {@code drop}; returns its text. */
+    public static String testDrop(String drop, int catches, long now) {
+        countDropCatches(catches);
+        return onDrop(drop, now);
     }
 
     static void onOwnCocoon(FishingData.SeaCreature creature) {
