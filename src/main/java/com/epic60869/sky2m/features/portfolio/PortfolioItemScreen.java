@@ -1,5 +1,6 @@
 package com.epic60869.sky2m.features.portfolio;
 
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -186,7 +187,9 @@ public final class PortfolioItemScreen extends Screen {
         g.fill(l, t, l + w, t + panelHeight(), 0xFF181B21);
         g.fill(l, t, l + w, t + 2, 0xFFFFAA00);
 
-        g.item(Portfolio.icon(entry), l + 8, t + 8);
+        // Items with no repo entry (books, some bazaar ids) have no icon: drawing null crashed the game.
+        ItemStack icon = Portfolio.icon(entry);
+        if (icon != null && !icon.isEmpty()) g.item(icon, l + 8, t + 8);
         g.text(font, Component.literal(entry.name).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), l + 30, t + 12, 0xFFFFFFFF, true);
 
         // Summary.

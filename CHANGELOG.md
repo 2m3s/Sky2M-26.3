@@ -208,6 +208,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Fix the game crashing when you open an item in /s2 portfolio that has no repo icon (enchanted books, shards, runes, pets), and give every portfolio item an icon.
 - Fix enchanted books on profit trackers showing as "Enchanted Book" or their id: they now show the enchant and level ("Pyroclasm 6"), with Magmarizer under its current name, Pyroclasm.
 - Fix profit trackers missing enchanted books, runes and pets on their drop lists (Pyroclasm, Fire Protection, Charm, Guardian and Squid pets, foraging books and runes, and the farming and mining lists). Pyroclasm books added by hand before now show their price.
 - Fix the Dragon tracker never counting Ender Dragon pets or dragon shards.

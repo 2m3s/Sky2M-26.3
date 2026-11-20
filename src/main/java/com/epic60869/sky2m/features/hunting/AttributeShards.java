@@ -215,6 +215,13 @@ public final class AttributeShards {
         return BY_NAME.get(key);
     }
 
+    /** The shard with this bazaar id ("SHARD_LAVA_FLAME"), or null. */
+    public static Shard byBazaarName(String bazaarName) {
+        if (bazaarName == null) return null;
+        for (Shard shard : BY_INTERNAL.values()) if (shard.bazaarName().equals(bazaarName)) return shard;
+        return null;
+    }
+
     public static Shard byInternalName(String internalName) {
         return internalName == null ? null : BY_INTERNAL.get(internalName);
     }

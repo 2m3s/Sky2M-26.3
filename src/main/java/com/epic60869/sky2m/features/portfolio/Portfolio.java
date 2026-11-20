@@ -449,10 +449,37 @@ public final class Portfolio {
             SAMPLES.put(entry.id, head);
             return head;
         }
-        if (com.epic60869.sky2m.custom.RepoItems.displayName(entry.id) == null) return null;
-        ItemStack stack = com.epic60869.sky2m.custom.RepoItems.itemStack(entry.id);
-        SAMPLES.put(entry.id, stack);
+        ItemStack stack = iconFor(entry.id);
+        // Not cached while the item list is still loading, so the real icon replaces the fallback once it has.
+        if (com.epic60869.sky2m.custom.RepoItems.itemsLoaded()) SAMPLES.put(entry.id, stack);
         return stack;
+    }
+
+    /**
+     * An icon for any price id, never null: the repo item, else the repo item it's another name for (a book
+     * ENCHANTMENT_SHARPNESS_5 is SHARPNESS;5, a rune X_RUNE_1 is X_RUNE;1, a pet LVL_1_EPIC_X is X;3, a shard SHARD_X its
+     * ATTRIBUTE_SHARD_X;1), else an enchanted book for books and paper for anything else.
+     */
+    static ItemStack iconFor(String id) {
+        var repo = new java.util.ArrayList<String>();
+        repo.add(id);
+        java.util.regex.Matcher m;
+        if ((m = java.util.regex.Pattern.compile("^ENCHANTMENT_(.+)_(\\d+)$").matcher(id)).matches()) repo.add(m.group(1) + ";" + m.group(2));
+        if ((m = java.util.regex.Pattern.compile("^(.+_RUNE)_(\\d+)$").matcher(id)).matches()) repo.add(m.group(1) + ";" + m.group(2));
+        if ((m = java.util.regex.Pattern.compile("^LVL_\\d+_([A-Z]+)_(.+)$").matcher(id)).matches()) {
+            int tier = java.util.List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC").indexOf(m.group(1));
+            if (tier >= 0) repo.add(m.group(2) + ";" + tier);
+        }
+        if (id.startsWith("SHARD_")) {
+            var shard = com.epic60869.sky2m.features.hunting.AttributeShards.byBazaarName(id);
+            if (shard != null) repo.add(shard.internalName());
+        }
+        for (String candidate : repo) {
+            if (com.epic60869.sky2m.custom.RepoItems.displayName(candidate) == null) continue;
+            ItemStack stack = com.epic60869.sky2m.custom.RepoItems.itemStack(candidate);
+            if (stack != null && !stack.isEmpty()) return stack;
+        }
+        return new ItemStack(id.startsWith("ENCHANTMENT_") ? net.minecraft.world.item.Items.ENCHANTED_BOOK : net.minecraft.world.item.Items.PAPER);
     }
 
     /** Profit per hour: each row's profit divided by the hours since it was added (at least one hour), summed. */
