@@ -293,9 +293,11 @@ public final class ProfitTracker {
                 Set<String> items = new LinkedHashSet<>();
                 if (data.has("items")) for (String item : strings(data.getAsJsonArray("items"))) items.add(item.replace('-', ':'));
                 PRESET_ITEMS.addAll(items);
+                Set<String> matched = new HashSet<>();
+                for (String item : items) addKeys(matched, item);
                 PRESETS.put(preset, new PresetData(data.has("anyIsland") && data.get("anyIsland").getAsBoolean(),
                     data.has("islands") ? strings(data.getAsJsonArray("islands")) : Set.of(),
-                    data.has("areas") ? strings(data.getAsJsonArray("areas")) : Set.of(), islandAreas, items));
+                    data.has("areas") ? strings(data.getAsJsonArray("areas")) : Set.of(), islandAreas, matched));
             }
         } catch (Exception e) {
             System.err.println("[Sky2M] Couldn't read the profit tracker presets: " + e.getMessage());
@@ -311,18 +313,55 @@ public final class ProfitTracker {
             if (fishing != null) {
                 JsonObject root = JsonParser.parseReader(new InputStreamReader(fishing, StandardCharsets.UTF_8)).getAsJsonObject();
                 for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("categories").entrySet()) {
-                    for (String item : strings(e.getValue().getAsJsonArray())) SKYHANNI_FISHING.add(item.replace('-', ':'));
+                    for (String item : strings(e.getValue().getAsJsonArray())) addKeys(SKYHANNI_FISHING, item.replace('-', ':'));
                 }
             }
+            // Newer drops SkyHanni's list doesn't have yet: Pyroclasm books from lava sea creatures.
+            for (int level = 1; level <= 7; level++) addKeys(SKYHANNI_FISHING, "PYROCLASM;" + level);
             if (foraging != null) {
                 JsonObject root = JsonParser.parseReader(new InputStreamReader(foraging, StandardCharsets.UTF_8)).getAsJsonObject();
                 for (String key : List.of("uncommon_drops", "enchanted_books", "boosters", "shards", "runes", "misc_drops")) {
-                    if (root.has(key)) SKYHANNI_FORAGING.addAll(strings(root.getAsJsonArray(key)));
+                    if (root.has(key)) for (String item : strings(root.getAsJsonArray(key))) addKeys(SKYHANNI_FORAGING, item);
                 }
             }
         } catch (Exception e) {
             System.err.println("[Sky2M] Couldn't read SkyHanni's profit tracker items: " + e.getMessage());
         }
+    }
+
+    /**
+     * The ids a listed item (NEU's ids, as the lists use) has in your inventory: "MAGMARIZER;6" is the book
+     * ENCHANTMENT_MAGMARIZER_6, "AXE_FADING_WHITE_RUNE;1" the rune AXE_FADING_WHITE_RUNE_1, "GUARDIAN;4" a Guardian
+     * pet (any level, "PET:GUARDIAN"), "ATTRIBUTE_SHARD_CHOP;1" also ATTRIBUTE_SHARD_CHOP.
+     */
+    static void addKeys(Set<String> out, String neuId) {
+        out.add(neuId);
+        int semi = neuId.indexOf(';');
+        if (semi <= 0 || semi == neuId.length() - 1) return;
+        String base = neuId.substring(0, semi), level = neuId.substring(semi + 1);
+        out.add("ENCHANTMENT_" + base + "_" + level);
+        out.add(base + "_" + level);
+        out.add("PET:" + base);
+        if (base.startsWith("ATTRIBUTE_SHARD_")) out.add(base);
+    }
+
+    private static final Pattern PET_KEY = Pattern.compile("^LVL_\\d+_[A-Z]+_(.+)$");
+
+    /** For game tests: whether {@code preset}'s tracker counts the inventory id {@code id}. */
+    public static boolean testTracks(String preset, String id) {
+        return tracked(Preset.valueOf(preset), id);
+    }
+
+    /** For game tests: the tracker id [+ Add Item] uses for a NEU repo id ("PYROCLASM;6"). */
+    public static String testAddId(String neuId) {
+        return ProfitItemAddScreen.trackerId(neuId);
+    }
+
+    /** Whether a list (of {@link #addKeys} ids) has this inventory id; pets match whatever their level. */
+    private static boolean listed(Set<String> list, String id) {
+        if (list.contains(id)) return true;
+        Matcher pet = PET_KEY.matcher(id);
+        return pet.matches() && list.contains("PET:" + pet.group(1));
     }
 
     private static Set<String> strings(JsonArray array) {
@@ -463,11 +502,11 @@ public final class ProfitTracker {
         switch (preset) {
             case FISHING -> {
                 // FishingProfitTracker.isAllowedItem: only items in one of SkyHanni-REPO's FishingProfitItems categories.
-                return SKYHANNI_FISHING.contains(id);
+                return listed(SKYHANNI_FISHING, id);
             }
             case FORAGING -> {
                 // ForagingTracker: logs (its "(ENCHANTED_)<TREE>_LOG" pattern) and the tree gift bonus drops.
-                return id.endsWith("_LOG") || SKYHANNI_FORAGING.contains(id);
+                return id.endsWith("_LOG") || listed(SKYHANNI_FORAGING, id);
             }
             case MYTHOLOGICAL_RITUAL -> {
                 // DianaProfitTracker: SkyHanni-REPO's Diana drops.
@@ -475,7 +514,7 @@ public final class ProfitTracker {
             }
             default -> { }
         }
-        return trackedItems(preset).contains(id) || compactedFrom(preset, id);
+        return listed(trackedItems(preset), id) || compactedFrom(preset, id);
     }
 
     /**
