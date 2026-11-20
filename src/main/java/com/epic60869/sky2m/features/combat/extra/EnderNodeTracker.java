@@ -173,7 +173,10 @@ public final class EnderNodeTracker {
     }
 
     private static double price(String name, boolean armour) {
-        return armour ? 10_000 : ItemPriceResolver.valueByName(name);
+        if (armour) return 10_000;
+        // Runes are priced by their id (MAGICAL_RUNE_1), which no item is named.
+        if (name.equals("Magical Rune I")) return com.epic60869.sky2m.price.Sky2MPriceTooltip.unitPrice("MAGICAL_RUNE_1");
+        return ItemPriceResolver.valueByName(name);
     }
 
     private static List<Component> lines() {

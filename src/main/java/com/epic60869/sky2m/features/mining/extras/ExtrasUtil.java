@@ -46,13 +46,44 @@ final class ExtrasUtil {
         String id = IDS.get(name);
         if (id == null) {
             if (!RepoItems.itemsLoaded()) return -1;
-            String found = RepoItems.idByLooseName(name);
+            String found = bookOrShardId(name);
+            if (found == null) found = RepoItems.idByLooseName(name);
             id = found == null ? "" : found;
             IDS.put(name, id);
         }
         if (id.isEmpty()) return -1;
         double price = Sky2MPriceTooltip.unitPrice(id);
         return price > 0 ? price : -1;
+    }
+
+    /**
+     * The price id of a book ("Enchanted Book (Ice Cold I)" is ENCHANTMENT_ICE_COLD_1) or a shard ("Glacite Walker
+     * Shard", its bazaar id), which no repo item is named; null for anything else.
+     */
+    static String bookOrShardId(String name) {
+        Matcher book = BOOK.matcher(name);
+        if (book.matches()) {
+            String level = book.group(2);
+            int n = level.chars().allMatch(Character::isDigit) ? Integer.parseInt(level) : roman(level);
+            return "ENCHANTMENT_" + book.group(1).trim().toUpperCase(java.util.Locale.ROOT).replaceAll("[ '-]+", "_") + "_" + n;
+        }
+        if (name.endsWith(" Shard") || name.endsWith(" Shards")) {
+            var shard = com.epic60869.sky2m.features.hunting.AttributeShards.byName(name.replaceAll(" Shards?$", ""));
+            if (shard != null) return shard.bazaarName();
+        }
+        return null;
+    }
+
+    private static final Pattern BOOK = Pattern.compile("^Enchanted Book \\((.+) ([IVXL]+|\\d+)\\)$");
+
+    private static int roman(String s) {
+        int total = 0, prev = 0;
+        for (int i = s.length() - 1; i >= 0; i--) {
+            int v = switch (s.charAt(i)) { case 'I' -> 1; case 'V' -> 5; case 'X' -> 10; case 'L' -> 50; default -> 0; };
+            total += v < prev ? -v : v;
+            prev = Math.max(prev, v);
+        }
+        return total;
     }
 
     /** What one item costs to get (a key), 0 when unknown. */
