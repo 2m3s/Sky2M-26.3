@@ -154,7 +154,7 @@ public final class EnderNodeTracker {
             return;
         }
         // Mite Gel that comes into your inventory (the rest of the loot is read from chat).
-        if (mc.gui.screen() == null) {
+        if (mc.gui.screen() == null || mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen) {
             int gel = 0;
             var inventory = mc.player.getInventory();
             for (int i = 0; i < 36; i++) {

@@ -699,7 +699,7 @@ public final class DianaTracker {
      * count when one comes into your inventory right after a Diana mob died near you.
      */
     private static void pickupDrops(Minecraft mc) {
-        if (mc.player == null || mc.gui.screen() != null || !inHub()) {
+        if (mc.player == null || (mc.gui.screen() != null && !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen)) || !inHub()) {
             lastInventory = null;
             return;
         }

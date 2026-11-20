@@ -237,7 +237,7 @@ public final class GemstoneTracker {
             total.activeMs += delta;
         }
         credits.values().removeIf(c -> c[1] < now);
-        if (mc.gui.screen() != null) {
+        if (mc.gui.screen() != null && !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen)) {
             // Menus move items around (storage, sacks, crafting): start again from what's there once it's closed.
             lastInventory = null;
         } else {
