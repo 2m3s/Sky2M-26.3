@@ -264,6 +264,7 @@ public final class ProfitTracker {
             SESSION.put(preset, new Stats());
         }
         load(configDir);
+        renamePyroclasm();
         ClientTickEvents.END_CLIENT_TICK.register(ProfitTracker::tick);
         Sky2MChat.onChat(message -> onChat(message.component(), message.text().trim()));
         ClientPlayerBlockBreakEvents.AFTER.register((level, player, pos, state) -> onBreak(state.getBlock(), level.getGameTime()));
@@ -316,8 +317,6 @@ public final class ProfitTracker {
                     for (String item : strings(e.getValue().getAsJsonArray())) addKeys(SKYHANNI_FISHING, item.replace('-', ':'));
                 }
             }
-            // Newer drops SkyHanni's list doesn't have yet: Pyroclasm books from lava sea creatures.
-            for (int level = 1; level <= 7; level++) addKeys(SKYHANNI_FISHING, "PYROCLASM;" + level);
             if (foraging != null) {
                 JsonObject root = JsonParser.parseReader(new InputStreamReader(foraging, StandardCharsets.UTF_8)).getAsJsonObject();
                 for (String key : List.of("uncommon_drops", "enchanted_books", "boosters", "shards", "runes", "misc_drops")) {
@@ -352,9 +351,26 @@ public final class ProfitTracker {
         return tracked(Preset.valueOf(preset), id);
     }
 
-    /** For game tests: the tracker id [+ Add Item] uses for a NEU repo id ("PYROCLASM;6"). */
-    public static String testAddId(String neuId) {
-        return ProfitItemAddScreen.trackerId(neuId);
+    /**
+     * Pyroclasm is Hypixel's name for the Magmarizer enchantment (its id is still MAGMARIZER): books added by hand as
+     * ENCHANTMENT_PYROCLASM_n had no price, so they move to ENCHANTMENT_MAGMARIZER_n.
+     */
+    private static void renamePyroclasm() {
+        for (Preset preset : Preset.values()) {
+            List<Stats> all = new ArrayList<>();
+            for (Period period : Period.values()) all.add(stats(preset, period));
+            all.add(SessionTracker.stats(preset));
+            for (Stats stats : all) {
+                if (stats == null) continue;
+                for (String id : List.copyOf(stats.items.keySet())) {
+                    if (!id.startsWith("ENCHANTMENT_PYROCLASM_")) continue;
+                    long amount = stats.items.remove(id);
+                    stats.items.merge(id.replace("PYROCLASM", "MAGMARIZER"), amount, Long::sum);
+                    dirty = true;
+                    SessionTracker.markDirty();
+                }
+            }
+        }
     }
 
     /** Whether a list (of {@link #addKeys} ids) has this inventory id; pets match whatever their level. */
@@ -923,6 +939,7 @@ public final class ProfitTracker {
             if (lastInventory != null) countInventory(current, inventory, now);
             lastInventory = inventory;
         }
+        if (ticks == 200) renamePyroclasm(); // again once the Session Tracker has loaded today's session
         if (ticks % 200 == 0 && current != null) dirty = true;
         if (dirty && ticks % 100 == 0) save();
     }

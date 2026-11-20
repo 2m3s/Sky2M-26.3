@@ -206,7 +206,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
-- Fix profit trackers missing enchanted books, runes and pets on their drop lists (Magmarizer, Fire Protection, Charm, Guardian and Squid pets, foraging books and runes, and the farming and mining lists), and add Pyroclasm books to the Fishing tracker.
+- Fix profit trackers missing enchanted books, runes and pets on their drop lists (Pyroclasm, Fire Protection, Charm, Guardian and Squid pets, foraging books and runes, and the farming and mining lists). Pyroclasm books added by hand before now show their price.
 - Fix the Dragon tracker never counting Ender Dragon pets or dragon shards.
 - Fix the Gemstone, Diana, Ender Node and Dragon trackers missing items you pick up from your stash by clicking the chat message.
 - Fix Glacite Mineshaft corpse loot leaving out enchanted books and shards (no price), and the Ender Node tracker giving Magical Runes no value.
