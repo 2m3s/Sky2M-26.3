@@ -288,6 +288,39 @@ public final class EnchantParser {
             + a.useAdvancedPoorColor + a.advancedPoorColor;
     }
 
+    /**
+     * A book's price id as its enchant's current name and level: ENCHANTMENT_MAGMARIZER_6 is "§9Pyroclasm 6" (Hypixel
+     * renamed Magmarizer), ENCHANTMENT_ULTIMATE_WISE_5 "§d§lUltimate Wise 5". Null if {@code id} isn't a book.
+     */
+    public static String bookName(String id) {
+        if (id == null || !id.startsWith("ENCHANTMENT_")) return null;
+        int last = id.lastIndexOf('_');
+        if (last <= "ENCHANTMENT_".length()) return null;
+        String nbt = id.substring("ENCHANTMENT_".length(), last).toLowerCase(Locale.ROOT);
+        String level = id.substring(last + 1);
+        if (!level.chars().allMatch(Character::isDigit)) return null;
+        Repo r = repo;
+        Enchant found = null;
+        for (Map<String, Enchant> section : List.of(r.normal(), r.ultimate(), r.stacking())) {
+            for (Enchant e : section.values()) {
+                if (e.nbtName.equalsIgnoreCase(nbt)) {
+                    found = e;
+                    break;
+                }
+            }
+            if (found != null) break;
+        }
+        boolean ultimate = found != null ? found.kind == Kind.ULTIMATE : nbt.startsWith("ultimate_");
+        String name;
+        if (found != null && !found.loreName.isEmpty()) name = found.loreName;
+        else {
+            StringBuilder b = new StringBuilder();
+            for (String w : nbt.split("_")) if (!w.isEmpty()) b.append(b.isEmpty() ? "" : " ").append(Character.toUpperCase(w.charAt(0))).append(w.substring(1));
+            name = b.toString();
+        }
+        return (ultimate ? "§d§l" : "§9") + name + " " + level;
+    }
+
     static int roman(String numeral) {
         int total = 0, previous = 0;
         for (int i = numeral.length() - 1; i >= 0; i--) {

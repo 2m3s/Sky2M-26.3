@@ -312,6 +312,9 @@ final class ProfitTrackerHud {
      * shortened to "Ench", without the resource pack glyphs some names start with. Its rarity colour if it has none.
      */
     static String name(String id) {
+        // Books by their enchant and level ("Pyroclasm 6"), not "Enchanted Book" or the price id.
+        String book = com.epic60869.sky2m.features.misc.items.EnchantParser.bookName(id);
+        if (book != null) return book;
         String name = RepoItems.displayName(id);
         if (name == null) return RepoItems.tierColour(RepoItems.tier(id)) + id.replace('_', ' ');
         name = name.replaceAll("[\\x{E000}-\\x{F8FF}]", "").replaceAll("^((?:§.)*)\\s+", "$1").trim().replace("Enchanted ", "Ench ");
