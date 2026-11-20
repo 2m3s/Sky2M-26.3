@@ -5,7 +5,6 @@ import com.epic60869.sky2m.config.Sky2MConfig;
 import com.epic60869.sky2m.custom.util.Compat;
 import com.epic60869.sky2m.features.combat.CombatFeatures;
 import com.epic60869.sky2m.features.core.Sky2MLocation;
-import com.epic60869.sky2m.features.core.Sky2MWorldRender;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -63,15 +62,33 @@ public final class SlayerItemsOnGround {
                 if (text != null) labels.put(item, new Label(text, now));
             }
         });
-        Sky2MWorldRender.register(collector -> {
-            if (labels.isEmpty()) return;
-            for (Map.Entry<ItemEntity, Label> entry : labels.entrySet()) {
-                ItemEntity item = entry.getKey();
-                if (item.isRemoved()) continue;
-                // Drawn through blocks like SkyHanni's, which also keeps the colours bright (depth-tested text is faded).
-                collector.submitText(entry.getValue().text(), item.position().add(0, 0.8, 0), 1.0f, true);
-            }
-        });
+        // Drawn as real text (the gizmo text the other world labels use has one colour, so these came out all white),
+        // through blocks like SkyHanni's, on a dark backing so it reads over any ground.
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(SlayerItemsOnGround::render);
+    }
+
+    private static void render(net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext context) {
+        if (labels.isEmpty()) return;
+        Minecraft mc = Minecraft.getInstance();
+        net.minecraft.client.gui.Font font = mc.font;
+        net.minecraft.world.phys.Vec3 cam = com.epic60869.sky2m.sim.compat.McRender.cameraPos(context);
+        com.mojang.blaze3d.vertex.PoseStack pose = context.poseStack();
+        float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        for (Map.Entry<ItemEntity, Label> entry : labels.entrySet()) {
+            ItemEntity item = entry.getKey();
+            if (item.isRemoved()) continue;
+            net.minecraft.world.phys.Vec3 at = item.getPosition(partial).add(0, 0.8, 0);
+            // A little bigger further away, so a far label stays readable.
+            float scale = 0.035f * (float) Math.max(1.0, Math.sqrt(at.distanceToSqr(cam)) / 8.0);
+            pose.pushPose();
+            pose.translate(at.x - cam.x, at.y - cam.y, at.z - cam.z);
+            pose.mulPose(new org.joml.Matrix4f().rotation(com.epic60869.sky2m.sim.compat.McRender.cameraRotation(context)));
+            pose.scale(scale, -scale, scale);
+            Component text = entry.getValue().text();
+            com.epic60869.sky2m.sim.compat.McRender.drawText(context, font, text, -font.width(text) / 2f, -font.lineHeight / 2f,
+                0xFFFFFFFF, false, pose, net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH, 0x70000000, 0xF000F0);
+            pose.popPose();
+        }
     }
 
     /**
@@ -97,10 +114,10 @@ public final class SlayerItemsOnGround {
         double total = unit * stack.getCount();
         if (total <= 0 || total < minimum) return null;
         MutableComponent text = Component.empty();
-        if (stack.getCount() > 1) text.append(Component.literal(stack.getCount() + "x ").withStyle(ChatFormatting.WHITE));
+        if (stack.getCount() > 1) text.append(Component.literal(stack.getCount() + "x ").withStyle(ChatFormatting.YELLOW));
         return text.append(name(id, stack))
-            .append(Component.literal(" (").withStyle(ChatFormatting.GRAY))
-            .append(Component.literal(CombatFeatures.formatCoins(total)).withStyle(ChatFormatting.GOLD))
-            .append(Component.literal(")").withStyle(ChatFormatting.GRAY));
+            .append(Component.literal(" (").withStyle(ChatFormatting.DARK_GRAY))
+            .append(Component.literal(CombatFeatures.formatCoins(total)).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD))
+            .append(Component.literal(")").withStyle(ChatFormatting.DARK_GRAY));
     }
 }
