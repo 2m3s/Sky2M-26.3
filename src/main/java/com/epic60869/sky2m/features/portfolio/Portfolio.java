@@ -451,7 +451,7 @@ public final class Portfolio {
         }
         ItemStack stack = iconFor(entry.id);
         // Not cached while the item list is still loading, so the real icon replaces the fallback once it has.
-        if (com.epic60869.sky2m.custom.RepoItems.itemsLoaded()) SAMPLES.put(entry.id, stack);
+        if (com.epic60869.sky2m.custom.RepoItems.itemsLoaded() && com.epic60869.sky2m.features.itemlist.ItemListData.loaded()) SAMPLES.put(entry.id, stack);
         return stack;
     }
 
@@ -473,6 +473,14 @@ public final class Portfolio {
         if (id.startsWith("SHARD_")) {
             var shard = com.epic60869.sky2m.features.hunting.AttributeShards.byBazaarName(id);
             if (shard != null) repo.add(shard.internalName());
+        }
+        // The NEU item list first: it has items Hypixel's item list doesn't (pet skins, runes by level).
+        com.epic60869.sky2m.features.itemlist.ItemListData.ensureLoaded();
+        for (String candidate : repo) {
+            var entry = com.epic60869.sky2m.features.itemlist.ItemListData.entry(candidate);
+            if (entry == null) continue;
+            ItemStack stack = com.epic60869.sky2m.features.itemlist.ItemListStacks.stack(entry);
+            if (stack != null && !stack.isEmpty()) return stack;
         }
         for (String candidate : repo) {
             if (com.epic60869.sky2m.custom.RepoItems.displayName(candidate) == null) continue;
