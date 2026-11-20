@@ -253,9 +253,9 @@ public final class SimRelay {
             if (response.statusCode() != 200) throw new IllegalStateException("The Sky2M server didn't answer (HTTP " + response.statusCode() + ")");
             String serverId = JsonParser.parseString(response.body()).getAsJsonObject().get("serverId").getAsString();
             try {
-                mc.services().sessionService().joinServer(mc.getUser().getProfileId(), mc.getUser().getAccessToken(), serverId);
+                com.epic60869.sky2m.social.MojangSession.join(serverId);
             } catch (Exception e) {
-                throw new IllegalStateException("Mojang login failed (this needs a real Minecraft account)");
+                throw new IllegalStateException(com.epic60869.sky2m.social.MojangSession.waiting() ? "Mojang's login server is busy (too many logins), trying again in a few minutes" : "Mojang login failed (this needs a real Minecraft account)");
             }
             return serverId;
         }).thenCompose(serverId -> HTTP.newWebSocketBuilder()

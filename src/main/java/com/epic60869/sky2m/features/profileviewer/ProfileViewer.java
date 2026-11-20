@@ -28,7 +28,8 @@ public final class ProfileViewer {
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             com.epic60869.sky2m.features.profileviewer.networth.SkyHelperNetworth.warm();
             ProfileApi.loadTables();
-            ProfileApi.warmBackend();
+            // No backend sign-in here: it costs a Mojang login every launch, right when you join a server (Mojang
+            // limits those). The first museum, garden or rank lookup signs in.
         });
     }
 

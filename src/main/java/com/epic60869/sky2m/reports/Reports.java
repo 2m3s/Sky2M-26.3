@@ -758,7 +758,7 @@ public final class Reports {
             if (r.statusCode() != 200) throw new IllegalStateException("challenge HTTP " + r.statusCode());
             String serverId = JsonParser.parseString(r.body()).getAsJsonObject().get("serverId").getAsString();
             try {
-                mc.services().sessionService().joinServer(mc.getUser().getProfileId(), mc.getUser().getAccessToken(), serverId);
+                com.epic60869.sky2m.social.MojangSession.join(serverId);
             } catch (Exception e) {
                 throw new IllegalStateException("Mojang session: " + e.getMessage());
             }

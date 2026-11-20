@@ -205,6 +205,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Fix Sky2M adding to Mojang's login limit (status 429, which stops you joining servers): the profile viewer no longer signs in at every launch and keeps its sign-in for 23 hours across restarts, and after a refused Mojang login it waits (1 minute, up to 10) before trying again.
 - Fix profit trackers counting items you buy on the Auction House or Bazaar, and missing items you pick up from your stash by clicking the chat message.
 - Fix lines through bold text with the Inter font (HUD titles, sea creature names).
 - Fix dyed leather armour showing as plain brown in the Item List, recipes and profit trackers.

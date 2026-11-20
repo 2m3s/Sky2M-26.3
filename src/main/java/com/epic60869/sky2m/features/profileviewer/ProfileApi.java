@@ -385,7 +385,43 @@ public final class ProfileApi {
         });
     }
 
+    /**
+     * The backend token is kept on disk (per account) for its 23 hours, so restarting the game doesn't cost another
+     * Mojang login: Mojang limits those, and joining servers shares the limit.
+     */
+    private static java.nio.file.Path tokenFile() {
+        return net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("sky2m").resolve("pv-backend-token.json");
+    }
+
+    private static boolean tokenLoaded;
+
+    private static void loadSavedToken() {
+        if (tokenLoaded) return;
+        tokenLoaded = true;
+        try {
+            java.nio.file.Path file = tokenFile();
+            if (!java.nio.file.Files.exists(file)) return;
+            JsonObject saved = JsonParser.parseString(java.nio.file.Files.readString(file)).getAsJsonObject();
+            String name = net.minecraft.client.Minecraft.getInstance().getUser().getName();
+            if (!name.equals(saved.get("user").getAsString())) return;
+            backendToken = saved.get("token").getAsString();
+            backendTokenAt = saved.get("at").getAsLong();
+        } catch (Exception ignored) {}
+    }
+
+    private static void saveToken(String token, long at) {
+        try {
+            JsonObject saved = new JsonObject();
+            saved.addProperty("user", net.minecraft.client.Minecraft.getInstance().getUser().getName());
+            saved.addProperty("token", token);
+            saved.addProperty("at", at);
+            java.nio.file.Files.createDirectories(tokenFile().getParent());
+            java.nio.file.Files.writeString(tokenFile(), saved.toString());
+        } catch (Exception ignored) {}
+    }
+
     private static synchronized CompletableFuture<String> backendToken() {
+        loadSavedToken();
         String token = backendToken;
         if (token != null && System.currentTimeMillis() - backendTokenAt < 23L * 60 * 60 * 1000) return CompletableFuture.completedFuture(token);
         if (tokenInFlight != null && !tokenInFlight.isDone()) return tokenInFlight;
@@ -394,7 +430,7 @@ public final class ProfileApi {
             net.minecraft.client.User user = mc.getUser();
             String serverId = UUID.randomUUID().toString().replace("-", "");
             try {
-                mc.services().sessionService().joinServer(user.getProfileId(), user.getAccessToken(), serverId);
+                com.epic60869.sky2m.social.MojangSession.join(serverId);
             } catch (Exception e) {
                 // The backend decides: it may still hand out a guest token.
                 System.err.println("[Sky2M] Profile Viewer: Mojang sign-in failed, asking the SkyBlockPV backend anyway");
@@ -409,6 +445,7 @@ public final class ProfileApi {
             if (r.statusCode() != 200 || body.isEmpty()) throw new IllegalStateException("sign-in to the SkyBlockPV backend failed (HTTP " + r.statusCode() + ")");
             backendToken = body;
             backendTokenAt = System.currentTimeMillis();
+            saveToken(body, backendTokenAt);
             return body;
         });
         return tokenInFlight;
