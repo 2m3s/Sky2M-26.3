@@ -321,6 +321,20 @@ public final class CombatFeatures {
         return false;
     }
 
+    /** Drops copied within this long of the last one go in the same copy (a mob that drops several at once). */
+    private static final long DROP_BATCH_MS = 2_000L;
+    private static final StringBuilder dropBatch = new StringBuilder();
+    private static long lastDropCopyAt;
+
+    /** What to copy for this drop: it alone, or added on a new line to the drops copied just before it. */
+    public static String batchDrop(String text, long now) {
+        if (now - lastDropCopyAt > DROP_BATCH_MS) dropBatch.setLength(0);
+        if (!dropBatch.isEmpty()) dropBatch.append('\n');
+        dropBatch.append(text);
+        lastDropCopyAt = now;
+        return dropBatch.toString();
+    }
+
     private static void onRareDrop(FeatureConfigs.RareDrops config, String text, String item, int amount,
                                    boolean rng, boolean slayer, boolean garden, Component petLabel) {
         Minecraft mc = Minecraft.getInstance();
@@ -329,8 +343,10 @@ public final class CombatFeatures {
         boolean copy = garden ? config.copyGarden : config.copy || (config.copyRng && rng) || (config.copySlayer && slayer);
         if (copy) {
             mc.execute(() -> {
-                mc.keyboardHandler.setClipboard(text);
-                com.epic60869.sky2m.features.misc.chat.CopyChat.showPreview("Drop copied", text);
+                String copied = batchDrop(text, System.currentTimeMillis());
+                mc.keyboardHandler.setClipboard(copied);
+                int lines = copied.split("\n").length;
+                com.epic60869.sky2m.features.misc.chat.CopyChat.showPreview(lines > 1 ? lines + " drops copied" : "Drop copied", copied);
             });
         }
         if (config.dropMessage) {
