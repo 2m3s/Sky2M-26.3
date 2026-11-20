@@ -44,7 +44,7 @@ public final class DragonTracker {
     private static final RepoPattern SCORE_DAMAGE = RepoPattern.of("combat.extra.DragonTracker.SCORE_DAMAGE", "Your Damage: (?<dmg>[\\d.,]+[kKmMbB]?)");
     private static final RepoPattern TAB_DAMAGE = RepoPattern.of("combat.extra.DragonTracker.TAB_DAMAGE", "\\s*(?<name>[^:]+): (?<dmg>[\\d.]+[kKmM]?)❤?");
     /** SkyHanni-REPO's DragonProfitTrackerItems, plus the dragon armour sets (matched by name). */
-    private static final RepoPattern LOOT = RepoPattern.of("combat.extra.DragonTracker.LOOT", "(?:OLD|PROTECTOR|YOUNG|STRONG|WISE|SUPERIOR|UNSTABLE)_DRAGON_(?:HELMET|CHESTPLATE|LEGGINGS|BOOTS)|DRAGON_HORN|DRAGON_CLAW|DRAGON_SCALE|DRAGON_NEST_TRAVEL_SCROLL|ASPECT_OF_THE_DRAGON|ATTRIBUTE_SHARD_DRAGON_ESSENCE.*|DYE_PEARLESCENT|ENDER_DRAGON.*");
+    private static final RepoPattern LOOT = RepoPattern.of("combat.extra.DragonTracker.LOOT", "(?:OLD|PROTECTOR|YOUNG|STRONG|WISE|SUPERIOR|UNSTABLE)_DRAGON_(?:HELMET|CHESTPLATE|LEGGINGS|BOOTS)|DRAGON_HORN|DRAGON_CLAW|DRAGON_SCALE|DRAGON_NEST_TRAVEL_SCROLL|ASPECT_OF_THE_DRAGON|ATTRIBUTE_SHARD_DRAGON_ESSENCE.*|DYE_PEARLESCENT|ENDER_DRAGON.*|LVL_[0-9]+_[A-Z]+_ENDER_DRAGON");
 
     private static final class Data {
         Map<String, Long> kills = new LinkedHashMap<>();
@@ -220,12 +220,12 @@ public final class DragonTracker {
             }
         }
         // Dragon loot that comes into your inventory in the nest, while no menu is open.
-        if (c.profitTracker && inNest() && mc.gui.screen() == null) {
+        if (c.profitTracker && inNest() && (mc.gui.screen() == null || mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen)) {
             Map<String, Integer> now = inventory(mc);
             if (lastInventory != null) {
                 for (Map.Entry<String, Integer> e : now.entrySet()) {
                     int gained = e.getValue() - lastInventory.getOrDefault(e.getKey(), 0);
-                    if (gained > 0 && LOOT.matcher(e.getKey()).matches()) {
+                    if (gained > 0 && (LOOT.matcher(e.getKey()).matches() || LOOT.matcher(SHARD_IDS.getOrDefault(e.getKey(), "")).matches())) {
                         data.items.merge(e.getKey(), (long) gained, Long::sum);
                         dirty = true;
                     }
@@ -245,10 +245,19 @@ public final class DragonTracker {
             ItemStack stack = inventory.getItem(i);
             if (stack.isEmpty()) continue;
             String id = Sky2MPriceTooltip.marketId(stack);
+            // A shard is counted by its bazaar id (for its price) and matched by its repo id (ATTRIBUTE_SHARD_..;1).
+            var shard = com.epic60869.sky2m.features.hunting.AttributeShards.of(stack);
+            if (shard != null) {
+                id = shard.bazaarName();
+                SHARD_IDS.put(id, shard.internalName());
+            }
             if (!id.isEmpty()) counts.merge(id, stack.getCount(), Integer::sum);
         }
         return counts;
     }
+
+    /** Shard bazaar id -> its repo id, which the loot list names. */
+    private static final Map<String, String> SHARD_IDS = new HashMap<>();
 
     // ------------------------------------------------------------------------------------------------ HUDs
 

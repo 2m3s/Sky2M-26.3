@@ -207,6 +207,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 
 ### Fixed
 - Fix profit trackers missing enchanted books, runes and pets on their drop lists (Magmarizer, Fire Protection, Charm, Guardian and Squid pets, foraging books and runes, and the farming and mining lists), and add Pyroclasm books to the Fishing tracker.
+- Fix the Dragon tracker never counting Ender Dragon pets or dragon shards.
 - Fix Sky2M adding to Mojang's login limit (status 429, which stops you joining servers): the profile viewer no longer signs in at every launch and keeps its sign-in for 23 hours across restarts, and after a refused Mojang login it waits (1 minute, up to 10) before trying again.
 - Fix profit trackers counting items you buy on the Auction House or Bazaar, and missing items you pick up from your stash by clicking the chat message.
 - Fix lines through bold text with the Inter font (HUD titles, sea creature names).
