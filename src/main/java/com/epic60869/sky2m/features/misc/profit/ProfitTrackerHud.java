@@ -49,7 +49,7 @@ final class ProfitTrackerHud {
     static final int KERNELS_PER_ITEM = 25;
     private static final ThreadLocal<DecimalFormat> SHORT = ThreadLocal.withInitial(() -> new DecimalFormat("#,##0.#", DecimalFormatSymbols.getInstance(Locale.US)));
 
-    enum Control { PERIOD, PRICE_SOURCE, RESET, CANCEL, CONFIRM, ITEM }
+    enum Control { PERIOD, PRICE_SOURCE, RESET, CANCEL, CONFIRM, ITEM, ADD }
 
     /** A line of the tracker: Skysoft's ProfitLine. */
     private record Row(String left, String middle, String right, ItemStack icon, int height, int textY, Control control,
@@ -267,6 +267,7 @@ final class ProfitTrackerHud {
         if (inventoryOpen) {
             rows.add(control("§7Display Mode §a§l[" + period.label + "]", Control.PERIOD));
             rows.add(control("§7Price Source §e§l[" + source + "]", Control.PRICE_SOURCE));
+            rows.add(control("§a[+ Add Item]", Control.ADD));
             if (System.currentTimeMillis() < resetPendingUntil) {
                 rows.add(new Row("§c[Cancel]", null, "§a[Confirm]", null, ROW_HEIGHT, 0, Control.CANCEL, Control.CONFIRM, false, null, 0, textWidth("§c[Cancel]"), null));
             } else {
@@ -459,6 +460,10 @@ final class ProfitTrackerHud {
                     editItem(preset, area.itemId());
                     return true;
                 }
+                case ADD -> {
+                    addItem(preset);
+                    return true;
+                }
             }
             ROW_CACHE.clear();
             com.epic60869.sky2m.config.Sky2MConfig.saveCurrent(com.epic60869.sky2m.config.Sky2MConfig.current());
@@ -473,6 +478,28 @@ final class ProfitTrackerHud {
      * Total, by the same difference) and today's /s2 session, so they stay in step.
      */
     private static void editItem(ProfitTracker.Preset preset, String id) {
+        editItem(preset, id, Minecraft.getInstance().gui.screen());
+    }
+
+    /**
+     * [+ Add Item]: the item you're carrying on the cursor (a drop the tracker missed), else a search for one; then its
+     * editor to set how many.
+     */
+    private static void addItem(ProfitTracker.Preset preset) {
+        Minecraft mc = Minecraft.getInstance();
+        Screen parent = mc.gui.screen();
+        ItemStack carried = mc.player == null ? ItemStack.EMPTY : mc.player.containerMenu.getCarried();
+        String carriedId = carried.isEmpty() ? "" : com.epic60869.sky2m.price.Sky2MPriceTooltip.marketId(carried);
+        com.epic60869.sky2m.gui.Sky2MGuiStyle.click();
+        if (!carriedId.isEmpty()) {
+            editItem(preset, carriedId, parent);
+            return;
+        }
+        com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(new ProfitItemAddScreen(parent, preset.displayName + " Tracker",
+            id -> editItem(preset, id, parent)));
+    }
+
+    private static void editItem(ProfitTracker.Preset preset, String id, Screen parent) {
         if (id == null) return;
         ProfitTracker.Period shown = period(preset);
         List<ProfitTracker.Stats> targets = new ArrayList<>();
@@ -481,7 +508,6 @@ final class ProfitTrackerHud {
         SessionTracker.Session today = SessionTracker.session(-1);
         if (today != null) targets.add(today.get(preset));
         long amount = targets.getFirst().items.getOrDefault(id, 0L);
-        Screen parent = Minecraft.getInstance().gui.screen();
         FeatureConfigs.ProfitTrackerSettings c = config(preset);
         FeatureConfigs.ProfitPriceSource source = c == null ? FeatureConfigs.ProfitPriceSource.INSTANT_SELL : priceSource(c);
         com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(new ProfitItemEditScreen(parent, id, amount, targets, source,
