@@ -481,20 +481,10 @@ final class ProfitTrackerHud {
         editItem(preset, id, Minecraft.getInstance().gui.screen());
     }
 
-    /**
-     * [+ Add Item]: the item you're carrying on the cursor (a drop the tracker missed), else a search for one; then its
-     * editor to set how many.
-     */
+    /** [+ Add Item]: pick an item from your inventory (a drop the tracker missed), then its editor to set how many. */
     private static void addItem(ProfitTracker.Preset preset) {
-        Minecraft mc = Minecraft.getInstance();
-        Screen parent = mc.gui.screen();
-        ItemStack carried = mc.player == null ? ItemStack.EMPTY : mc.player.containerMenu.getCarried();
-        String carriedId = carried.isEmpty() ? "" : com.epic60869.sky2m.price.Sky2MPriceTooltip.marketId(carried);
+        Screen parent = Minecraft.getInstance().gui.screen();
         com.epic60869.sky2m.gui.Sky2MGuiStyle.click();
-        if (!carriedId.isEmpty()) {
-            editItem(preset, carriedId, parent);
-            return;
-        }
         com.epic60869.sky2m.custom.util.Compat.queueOpenScreen(new ProfitItemAddScreen(parent, preset.displayName + " Tracker",
             id -> editItem(preset, id, parent)));
     }

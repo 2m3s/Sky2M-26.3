@@ -5,7 +5,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 ## 1.0.5
 
 ### Added
-- Add [+ Add Item] to profit trackers (over a menu): add a drop the tracker missed by carrying it on your cursor and clicking, or by searching for it (books like "pyroclasm 6" too), then set how many.
+- Add [+ Add Item] to profit trackers (over a menu): pick a drop the tracker missed from your inventory, then set how many. It counts as the item it is, so it gets its normal price.
 - Add "If Not in a Party" to Sea Creature sharing: when you're not in a party, a shared sea creature can go to all chat or Sky2M Global Chat instead.
 - Sky2M-REPO now covers most of the Hypixel text the mod reads: about 700 chat, menu, lore, tab list and scoreboard patterns and 68 data tables (drop lists, NPC, mob and area names, Fetchur's and the Sphinx's answers, warps, fishing and garden lists, slayer areas) can be fixed from the repo without a new version. A broken fix is ignored and the mod keeps working as before.
 - Sky2M-REPO (https://github.com/2m3s/Sky2M-REPO): Hypixel wording and values the mod relies on can now be fixed without a new version. The mod downloads them (checked every 12 hours) and falls back to the copy in the jar. Carnival goals, game start and end lines, Fruit Digging hints and fruit values, and Quick Start's NPCs come from it first.

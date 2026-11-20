@@ -1,42 +1,27 @@
 package com.epic60869.sky2m.features.misc.profit;
 
-import com.epic60869.sky2m.custom.RepoItems;
 import com.epic60869.sky2m.gui.Sky2MGuiStyle;
-import net.minecraft.ChatFormatting;
+import com.epic60869.sky2m.price.Sky2MPriceTooltip;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
- * Adding an item to a profit tracker by hand (the tracker's [+ Add Item] over a menu): type part of its name, or a book
- * like "pyroclasm 6", and pick it; the item's editor opens to set how many. Drawn like {@link ProfitItemEditScreen}.
+ * Adding an item to a profit tracker by hand (the tracker's [+ Add Item] over a menu): your inventory is shown, and
+ * clicking an item picks it, by the id the tracker counts it as (so it's priced like a drop); the item's editor then
+ * opens to set how many. Only SkyBlock items (with an id) can be picked. Drawn like {@link ProfitItemEditScreen}.
  */
 final class ProfitItemAddScreen extends Screen {
-    private static final int W = 240, H = 196, ROWS = 7, ROW_H = 16;
-    private static final Pattern BOOK = Pattern.compile("^(?:enchanted book\\s*\\(?)?([a-z][a-z' _-]*?)\\s+([0-9]+|[ivx]+)\\)?$");
+    private static final int SLOT = 18, COLS = 9, W = COLS * SLOT + 20, H = 4 * SLOT + 4 + 70;
 
     private final Screen parent;
     private final String trackerName;
     private final Consumer<String> picked;
-    private EditBox box;
-    private String lastQuery;
-    /** Tracker id -> label, for what's typed. */
-    private Map<String, String> results = new LinkedHashMap<>();
-
-    private record Hit(int x0, int y0, int x1, int y1, Runnable action) {}
-
-    private final List<Hit> hits = new ArrayList<>();
 
     ProfitItemAddScreen(Screen parent, String trackerName, Consumer<String> picked) {
         super(Component.literal("Add Tracked Item"));
@@ -48,139 +33,72 @@ final class ProfitItemAddScreen extends Screen {
     private int left() { return (width - W) / 2; }
     private int top() { return (height - H) / 2; }
 
-    @Override
-    protected void init() {
-        String typed = box == null ? "" : box.getValue();
-        box = new EditBox(font, 0, 0, 80, 10, Component.literal("Item"));
-        box.setMaxLength(64);
-        box.setValue(typed);
-        Sky2MGuiStyle.placeSearch(box, left() + 10, top() + 30, W - 20);
-        addRenderableWidget(box);
-        setInitialFocus(box);
+    /** Inventory slot for grid cell {@code i}: the 27 main slots, then the hotbar below them as in the inventory. */
+    private static int slot(int i) {
+        return i < 27 ? i + 9 : i - 27;
     }
 
-    /** The tracker's id for a NEU repo id: books, runes and pets are named as they are in your inventory. */
-    static String trackerId(String neuId) {
-        int semi = neuId.indexOf(';');
-        if (semi <= 0 || semi == neuId.length() - 1) return neuId;
-        String base = neuId.substring(0, semi), level = neuId.substring(semi + 1);
-        if (base.endsWith("_RUNE")) return base + "_" + level;
-        if (base.startsWith("ATTRIBUTE_SHARD_")) return base;
-        String name = RepoItems.displayName(neuId);
-        if (name != null && ChatFormatting.stripFormatting(name).contains("[Lvl")) {
-            List<String> tiers = List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC");
-            try {
-                int tier = Integer.parseInt(level);
-                if (tier >= 0 && tier < tiers.size()) return "LVL_1_" + tiers.get(tier) + "_" + base;
-            } catch (NumberFormatException ignored) {}
-            return neuId;
+    /** Where cell {@code i} is drawn: a gap above the hotbar row, like the inventory. */
+    private int cellX(int i) { return left() + 10 + (i % COLS) * SLOT; }
+    private int cellY(int i) { return top() + 30 + (i / COLS) * SLOT + (i >= 27 ? 4 : 0); }
+
+    private ItemStack stack(int i) {
+        return minecraft.player == null ? ItemStack.EMPTY : minecraft.player.getInventory().getItem(slot(i));
+    }
+
+    private int cellAt(double mx, double my) {
+        for (int i = 0; i < 36; i++) {
+            int x = cellX(i), y = cellY(i);
+            if (mx >= x && mx < x + SLOT && my >= y && my < y + SLOT) return i;
         }
-        return "ENCHANTMENT_" + base + "_" + level;
-    }
-
-    private static int roman(String s) {
-        int total = 0, prev = 0;
-        for (int i = s.length() - 1; i >= 0; i--) {
-            int v = switch (s.charAt(i)) { case 'i' -> 1; case 'v' -> 5; case 'x' -> 10; default -> 0; };
-            total += v < prev ? -v : v;
-            prev = Math.max(prev, v);
-        }
-        return total;
-    }
-
-    private void search(String query) {
-        Map<String, String> out = new LinkedHashMap<>();
-        String q = query.trim().toLowerCase(Locale.ROOT);
-        if (!q.isEmpty()) {
-            Matcher book = BOOK.matcher(q);
-            if (book.matches()) {
-                String level = book.group(2).chars().allMatch(Character::isDigit) ? book.group(2) : Integer.toString(roman(book.group(2)));
-                String enchant = book.group(1).trim().toUpperCase(Locale.ROOT).replaceAll("[ '-]+", "_");
-                if (!level.equals("0")) out.put("ENCHANTMENT_" + enchant + "_" + level, "Enchanted Book (" + titleCase(book.group(1).trim()) + " " + level + ")");
-            }
-            for (String id : RepoItems.allIds()) {
-                if (out.size() >= ROWS) break;
-                String name = RepoItems.displayName(id);
-                String plain = name == null ? "" : ChatFormatting.stripFormatting(name);
-                if (plain == null) continue;
-                if (plain.toLowerCase(Locale.ROOT).contains(q) || id.toLowerCase(Locale.ROOT).replace('_', ' ').contains(q)) {
-                    // Every book is "Enchanted Book" in the repo: say which.
-                    out.putIfAbsent(trackerId(id), plain.equals("Enchanted Book") ? "§fEnchanted Book §7(" + id + ")" : name);
-                }
-            }
-            if (out.isEmpty() && q.matches("[a-z0-9_;:]+")) out.put(q.toUpperCase(Locale.ROOT), q.toUpperCase(Locale.ROOT));
-        }
-        results = out;
-    }
-
-    private static String titleCase(String s) {
-        StringBuilder b = new StringBuilder();
-        for (String w : s.split("\\s+")) if (!w.isEmpty()) b.append(b.isEmpty() ? "" : " ").append(Character.toUpperCase(w.charAt(0))).append(w.substring(1));
-        return b.toString();
+        return -1;
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        if (!box.getValue().equals(lastQuery)) {
-            lastQuery = box.getValue();
-            search(lastQuery);
-        }
         int x = left(), y = top();
         Sky2MGuiStyle.backdrop(g, width, height);
         Sky2MGuiStyle.panel(g, x, y, W, H, true);
         Sky2MGuiStyle.header(g, font, x + 4, y + 4, W - 8, Sky2MGuiStyle.title("Add to " + trackerName));
-        Sky2MGuiStyle.field(g, box);
-        hits.clear();
-        int ry = y + 48;
-        if (results.isEmpty()) {
-            g.text(font, box.getValue().isBlank() ? "Type an item's name, or a book like pyroclasm 6." : "No items found.",
-                x + 10, ry + 4, Sky2MGuiStyle.DESCRIPTION, false);
+        int hovered = cellAt(mouseX, mouseY);
+        for (int i = 0; i < 36; i++) {
+            int cx = cellX(i), cy = cellY(i);
+            ItemStack stack = stack(i);
+            boolean usable = !stack.isEmpty() && !Sky2MPriceTooltip.marketId(stack).isEmpty();
+            g.fill(cx, cy, cx + SLOT - 1, cy + SLOT - 1, i == hovered && usable ? 0x60FFFFFF : 0x40000000);
+            if (stack.isEmpty()) continue;
+            g.item(stack, cx + 1, cy + 1);
+            g.itemDecorations(font, stack, cx + 1, cy + 1);
+            if (!usable) g.fill(cx, cy, cx + SLOT - 1, cy + SLOT - 1, 0x90000000);
         }
-        for (Map.Entry<String, String> e : results.entrySet()) {
-            String id = e.getKey();
-            boolean over = mouseX >= x + 8 && mouseX < x + W - 8 && mouseY >= ry && mouseY < ry + ROW_H;
-            if (over) g.fill(x + 8, ry, x + W - 8, ry + ROW_H, 0x30FFFFFF);
-            g.item(RepoItems.itemStack(id), x + 10, ry);
-            String label = e.getValue() == null ? id : e.getValue();
-            g.text(font, com.epic60869.sky2m.features.sbc.SbcItems.parseLegacy(font.plainSubstrByWidth(label, W - 44)), x + 30, ry + 4, Sky2MGuiStyle.TEXT, true);
-            hits.add(new Hit(x + 8, ry, x + W - 8, ry + ROW_H, () -> picked.accept(id)));
-            ry += ROW_H + 1;
-        }
+        int ty = cellY(35) + SLOT + 6;
+        g.text(font, "Click an item to add it.", x + 10, ty, Sky2MGuiStyle.DESCRIPTION, false);
         int by = y + H - 24;
-        Hit cancel = new Hit(x + W - 90, by, x + W - 10, by + 16, this::onClose);
-        hits.add(cancel);
-        Sky2MGuiStyle.button(g, font, Component.translatable("gui.cancel").getString(), x + W - 90, by, 80, 16,
-            mouseX >= cancel.x0() && mouseX < cancel.x1() && mouseY >= cancel.y0() && mouseY < cancel.y1());
-        g.text(font, "Tip: carry an item and click Add Item.", x + 10, by + 4, 0xFF808080, false);
+        boolean overCancel = mouseX >= x + W - 70 && mouseX < x + W - 10 && mouseY >= by && mouseY < by + 16;
+        Sky2MGuiStyle.button(g, font, Component.translatable("gui.cancel").getString(), x + W - 70, by, 60, 16, overCancel);
         super.extractRenderState(g, mouseX, mouseY, delta);
+        if (hovered >= 0 && !stack(hovered).isEmpty()) {
+            g.setTooltipForNextFrame(font, Screen.getTooltipFromItem(minecraft, stack(hovered)), Optional.empty(), mouseX, mouseY);
+        }
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (super.mouseClicked(event, doubleClick)) return true;
         if (event.button() != com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) return false;
-        if (Sky2MGuiStyle.inField(box, event.x(), event.y())) {
-            setFocused(box);
+        int x = left(), by = top() + H - 24;
+        if (event.x() >= x + W - 70 && event.x() < x + W - 10 && event.y() >= by && event.y() < by + 16) {
+            Sky2MGuiStyle.click();
+            onClose();
             return true;
         }
-        for (Hit hit : List.copyOf(hits)) {
-            if (event.x() >= hit.x0() && event.x() < hit.x1() && event.y() >= hit.y0() && event.y() < hit.y1()) {
-                Sky2MGuiStyle.click();
-                hit.action().run();
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key();
-        if ((key == com.mojang.blaze3d.platform.InputConstants.KEY_RETURN || key == com.mojang.blaze3d.platform.InputConstants.KEY_NUMPADENTER) && !results.isEmpty()) {
-            picked.accept(results.keySet().iterator().next());
-            return true;
-        }
-        return super.keyPressed(event);
+        int cell = cellAt(event.x(), event.y());
+        if (cell < 0) return false;
+        String id = Sky2MPriceTooltip.marketId(stack(cell));
+        if (id.isEmpty()) return true;
+        Sky2MGuiStyle.click();
+        picked.accept(id);
+        return true;
     }
 
     @Override
