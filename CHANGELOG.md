@@ -124,7 +124,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Portfolio: set a row's quantity yourself with the Qty box instead of it being counted (leave it empty and Set qty to count again), and enter copies bought at different prices as "2x1.5m + 1x1.2m" in the buy box; profit uses their average.
 
 ### Changed
-- Copy Rare Drops copies drops that come together (a mob dropping several items) as one copy, one drop per line, instead of each replacing the last.
+- Copy Rare Drops copies drops that come together (a mob dropping several items) as one copy, one drop per line, instead of each replacing the last. The chat preview names each drop as it is added.
 - Sack Display: the panel now sits left of the sack menu (Panel Side to put it back on the right), and Panel Background turns its background off. The hovered item's Estimated Item Value moves to the other side when the panel is in its way.
 - Updated for the Magic Find Rework (SkyBlock 0.27.3). `/s2 rng` now applies Magic Find to every mob drop (not just drops under 5%), caps it at 500, and shows the average number of drops when your chance goes over 100% (like x1.50 each). Looting and Luck are part of Magic Find now, so their boxes are gone; enter your total Magic Find.
 - RARE DROP messages with Magic Find written without a % or with a decimal (like `(+212.5 ✯ Magic Find)`) are still read by the Diana tracker, Fishing rare drops and the Ghost tracker.

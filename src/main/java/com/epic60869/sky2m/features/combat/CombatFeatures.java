@@ -346,7 +346,8 @@ public final class CombatFeatures {
                 String copied = batchDrop(text, System.currentTimeMillis());
                 mc.keyboardHandler.setClipboard(copied);
                 int lines = copied.split("\n").length;
-                com.epic60869.sky2m.features.misc.chat.CopyChat.showPreview(lines > 1 ? lines + " drops copied" : "Drop copied", copied);
+                // The preview shows the drop just added, not the whole copy again (cut off after the first drop).
+                com.epic60869.sky2m.features.misc.chat.CopyChat.showPreview(lines > 1 ? lines + " drops copied, added" : "Drop copied", text);
             });
         }
         if (config.dropMessage) {
