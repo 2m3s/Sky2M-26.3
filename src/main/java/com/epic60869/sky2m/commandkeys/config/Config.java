@@ -255,6 +255,25 @@ public class Config {
     }
 
     /**
+     * A profile you chose yourself (the activate button, or the command): activates it and keeps it for next time, as
+     * the multiplayer default on a server (the singleplayer default in a world), and takes over the link of the server
+     * or world you're on if another profile had it. Otherwise joining again switched back to the default.
+     */
+    public void chooseProfile(int index) {
+        activateProfile(index);
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        boolean singleplayer = mc.hasSingleplayerServer();
+        if (singleplayer) spDefault = 0;
+        else mpDefault = 0;
+        String here = com.epic60869.sky2m.commandkeys.CommandKeys.lastConnection;
+        if (here != null && !here.isEmpty()) {
+            Profile linked = LINK_PROFILE_MAP.get(here);
+            if (linked != null && linked != profiles.getFirst()) linked.removeLink(here);
+        }
+        save();
+    }
+
+    /**
      * Activates the profile linked to the level ID, if one exists, else activates the singleplayer
      * default profile.
      */

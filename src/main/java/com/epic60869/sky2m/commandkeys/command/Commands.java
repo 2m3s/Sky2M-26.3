@@ -67,7 +67,7 @@ public class Commands {
                                     int i = 0;
                                     for (Profile profile : Config.get().getProfiles()) {
                                         if (profile.getDisplayName().equals(name)) {
-                                            Config.get().activateProfile(i);
+                                            Config.get().chooseProfile(i);
                                             success = true;
                                             break;
                                         }

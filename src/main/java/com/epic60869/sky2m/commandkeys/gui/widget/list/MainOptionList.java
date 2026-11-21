@@ -261,7 +261,7 @@ public class MainOptionList extends OptionList {
                         // Activate button
                         Button activateButton = Button.builder(
                                 Component.literal("\u2191"), (button) -> {
-                                    Config.get().activateProfile(index);
+                                    Config.get().chooseProfile(index);
                                     list.init();
                                 }
                         ).pos(x, 0).size(smallWidgetWidth, height).build();

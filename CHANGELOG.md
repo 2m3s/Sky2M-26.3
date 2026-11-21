@@ -208,6 +208,7 @@ All notable changes to Sky2M for Minecraft 26.3 are listed here, newest first. T
 - Remove the Dungeon Sim's own dungeon map (its HUD map, peek key and Interactive Map settings): the sim uses the mod's Dungeon Map.
 
 ### Fixed
+- Fix the Command Keys profile you switch to going back to the default after a restart: a profile you pick becomes the default for multiplayer (or singleplayer, in a world) and is used on this server from then on.
 - Fix Slayer Items on Ground labels showing all in white: the amount, the name in its rarity colour and the price in gold now show, bigger, on a dark backing, and growing a little with distance.
 - Fix the game crashing when you open an item in /s2 portfolio that has no repo icon (enchanted books, shards, runes, pets), and give every portfolio item its icon (pet skins and runes too, from the NEU repo).
 - Fix enchanted books on profit trackers showing as "Enchanted Book" or their id: they now show the enchant and level ("Pyroclasm 6"), with Magmarizer under its current name, Pyroclasm.
